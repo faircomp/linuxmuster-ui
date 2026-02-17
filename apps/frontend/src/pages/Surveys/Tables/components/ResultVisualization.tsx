@@ -29,8 +29,8 @@ const visuPanelOptions = {
   haveCommercialLicense: true,
   defaultChartType: 'bar',
   showToolbar: false,
-  allowDynamicLayout: false,
-  allowHideQuestions: false,
+  allowDynamicLayout: true,
+  allowHideQuestions: true,
 };
 
 interface ResultVisualizationDialogBodyProps {
@@ -72,7 +72,7 @@ const ResultVisualization = (props: ResultVisualizationDialogBodyProps) => {
   }, [visuPanel]);
 
   return (
-    <div className="rounded">
+    <div className="result-visualization rounded">
       <div id="surveyVisuPanel" />
     </div>
   );

@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+.result-visualization {
+  select.sa-question__select {
+    border-radius: 0.4rem;
+    color: var(--primary-foreground) !important;
+    background-color: var(--accent) !important;
+  }
+  span.sa-toolbar__button {
+    border-radius: 0.4rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    background-color: transparent;
+    color: var(--secondary);
+    border: solid 1px var(--secondary);
+
+    &:hover {
+      background-color: var(--muted-light);
+    }
+  }
+}
+.sa-question__title.sa-question__title--draggable {
+  &:after {
+    background-image: url("data:image/svg+xml,%3Csvg version=%271.1%27 xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cg%3E%3Cpolygon style=%27fill: %23d1d5db%27 points=%2713,5 12,6 13,7 9,7 9,3 10,4 11,3 8,0 5,3 6,4 7,3 7,7 3,7 4,6 3,5 0,8 3,11 4,10 3,9 7,9 7,13 6,12 5,13 8,16 11,13 10,12 9,13 9,9 13,9 12,10 13,11 16,8 %27/%3E%3C/g%3E%3C/svg%3E");
+  }
+  &:hover,
+  &:focus {
+    &:after {
+      background-image: url("data:image/svg+xml,%3Csvg version=%271.1%27 xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cg%3E%3Cpolygon style=%27fill: %230281c7%27 points=%2713,5 12,6 13,7 9,7 9,3 10,4 11,3 8,0 5,3 6,4 7,3 7,7 3,7 4,6 3,5 0,8 3,11 4,10 3,9 7,9 7,13 6,12 5,13 8,16 11,13 10,12 9,13 9,9 13,9 12,10 13,11 16,8 %27/%3E%3C/g%3E%3C/svg%3E");
+    }
+  }
+}
+.sa-text-table {
+  color: var(--secondary) !important;
+  background: transparent !important;
+}
+.sa-text-table__cell {
+  color: var(--secondary) !important;
+  background: transparent !important;
+  border: solid 1px var(--secondary) !important;
+}
+
 .sa-visualizer,
 .sa-visualizer__content {
   color: var(--foreground);

@@ -30,8 +30,6 @@
 /* Fix input color */
 .sa-table input {
   border-radius: var(--radius);
-  background-color: var(--accent) !important;
-  color: var(--background) !important;
   justify-content: center;
   border-color: var(--background) !important;
 }
@@ -117,17 +115,17 @@
 }
 
 /* Fix tables background color: Remove the white backtgrounds */
-.sa-tabulator {
-  background: transparent !important;
-  background-color: transparent !important;
+.result-table {
+  div {
+    background-color: transparent !important;
+  }
 }
+
 .sa-tabulator__header {
   width: fit-content !important;
   position: sticky;
   top: 0;
   left: 0;
-  background: transparent !important;
-  background-color: transparent !important;
   display: inline-flex;
   flex-direction: row-reverse;
 }
@@ -158,25 +156,13 @@
   overflow-x: auto !important;
   overflow-y: auto !important;
   border: none !important;
-  background: transparent !important;
-  background-color: transparent !important;
-}
-.tabulator-header {
-  background: transparent !important;
-  background-color: transparent !important;
 }
 .tabulator-col {
   border: none !important;
   border-bottom: 1px solid var(--secondary) !important;
-  background: transparent !important;
-  background-color: transparent !important;
 }
 .tabulator-cell {
   border: none !important;
-}
-.tabulator-row {
-  background: transparent !important;
-  background-color: transparent !important;
 }
 
 .tabulator {
