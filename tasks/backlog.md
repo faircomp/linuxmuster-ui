@@ -43,6 +43,8 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - `[?] human-gate: Erst-Image-Push + GHCR-Packages public` — UI/API (`p1-own-ci-registry` T11) **und** Installer (`p1-installer-ci` T1/T7): erster CI-Image-Push, dann `linuxmuster-{ui,api,ui-installer}` auf **public** (anonymer `docker pull`); Verify auf crabbox/echtem Actions-Runner.
   - `[?] human-gate: Repo-Freigabe (public) erst nach Rebrand-Gate` — `p1-installer-rebrand-dist` T7 (+ `p1-rebrand`) müssen gelandet sein, bevor ein Repo public wird (sonst edulution-Branding/Netzint-Header öffentlich); erfüllt zugleich AGPL-§13.
   - Box-gated Verifies zum Nachziehen am P1-Voll-Stack: `p1-own-ci-registry` T3/T5, `p0-realm-diff-baseline` T4/T6, `p1-installer-ci` CI-Run/skopeo.
+  - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
+  - **In Arbeit:** `p1-port-api-specs-ci` (3/11 — T1–T3 authored: `test:api:ci`-Gate, CI-Step, Contract-Reflection-Helper; als Nächstes T4–T8 = 14 Controller-Smoke/Contract-Specs, jest-Lauf box-gated).
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
@@ -1172,7 +1174,7 @@ Abhängt von: T3, T4
 ---
 
 ## p2-install-e2e [P2] ⭐ — Erstinstallation end-to-end über den EIGENEN Installer (der Beweis)
-_Ziel:_ Leere Ubuntu-Box → unser Bootstrap → Wizard → laufende Instanz am echten LMN + Login · _Abhängt-von:_ p1-installer-ci, p1-installer-rebrand-dist · _Status:_ geplant · _Tasks:_ 7
+_Ziel:_ Leere Ubuntu-Box → unser Bootstrap → Wizard → laufende Instanz am echten LMN + Login · _Abhängt-von:_ p1-installer-ci, p1-installer-rebrand-dist · _Status:_ blockiert (human-gate: realer Install-Beweis — frische Box + Bootstrap-Lauf + echter LMN + 7-Service-Stack + Playwright-Login; alle Verifies „auf der Box" am echten LMN = ask-first/box-gated; Harness hängt zusätzlich am noch nicht rekonstruierten Deploy-/shots-Harness) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** (Test-Harness ggf. im UI-Repo unter `scripts/crabbox/`) · Soll: `apps/public-page/public/installer` (Bootstrap) · `apps/webinstaller-api/app/main.py:206 /api/configure`, `:435 /api/finish` · `/test`-Skill (crabbox-Rezept)
 
 > **Warum dieses Paket existiert:** Kein anderes Paket beweist, dass die **Installation** funktioniert.
@@ -1182,7 +1184,7 @@ Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** (Test-Harness
 > **Abgrenzung zu `/test`:** Der `/test`-Skill deployt den Stack per `deploy.sh` (Entwickler-Weg).
 > Dieses Paket geht bewusst den **Endnutzer-Weg**: nur `curl … | bash`, sonst nichts.
 
-### T1 — Frische Box + Vorbedingungen (bewusst OHNE Vor-Provisionierung)  [ ]
+### T1 — Frische Box + Vorbedingungen (bewusst OHNE Vor-Provisionierung) [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh` (neu, **SPDX AGPL-3.0-or-later**)
 Soll: `/test`-Skill (CPU=host-Pflicht!) · Bootstrap installiert Docker **selbst** (`installer:120–150`)
 Änderung: Skript least eine **frische** Box (eigener Slug, CPU=host, 4C/8G) und provisioniert **nichts** außer dem Nötigsten — kein Docker, kein Node (der Bootstrap muss das selbst können). Ubuntu 22.04/24.04 (Bootstrap prüft das).
@@ -1190,7 +1192,7 @@ Verify: `bash scripts/crabbox/install-e2e.sh --lease-only` → Box ready, `comma
 i18n: keine
 Doku: keine (intern)
 
-### T2 — Unseren Bootstrap fahren (Endnutzer-Weg)  [ ]
+### T2 — Unseren Bootstrap fahren (Endnutzer-Weg) [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
 Soll: `installer:213/216` (pull+run eigenes Image), Templates aus dem Image (`p1-installer-rebrand-dist` T2)
 Änderung: Auf der frischen Box unser Bootstrap-Script ausführen (`curl -sSL <eigene Quelle>/installer | bash` bzw. lokal kopiert + `bash`), Default-Tag = gepinnter `2.0.x`. Erwartung: Docker wird installiert, Installer-Image **anonym** gezogen, Wizard auf :443 erreichbar.
@@ -1199,7 +1201,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — Wizard headless durchsteuern (LMN-Parameter)  [ ]
+### T3 — Wizard headless durchsteuern (LMN-Parameter) [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
 Soll: `apps/webinstaller-api/app/main.py:206` (`POST /api/configure`: organizationType, deploymentTarget, lmnExternalDomain, lmnBinduserDn/Pw, lmnLdapSchema/Port, edulutionExternalDomain), `:435` (`POST /api/finish`), LDAP-Checks `:270/:287`
 Änderung: Wizard per REST durchsteuern statt klicken: `/api/configure` mit den echten LMN-Werten (Host/Binduser aus `.claude/settings.local.json`, **nie hardcoden**), LDAP-Checks abfragen, `/api/finish`. Danach läuft die Installer-Kette weiter (Prepare-Keycloak → `edulution.env` → Compose-Up).
@@ -1208,7 +1210,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2
 
-### T4 — Stack-Hochlauf abwarten + Health prüfen  [ ]
+### T4 — Stack-Hochlauf abwarten + Health prüfen [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
 Soll: Compose-Template (7 Services) · bekannte Stolpersteine aus `/test` (Mongo-First-Init langsam → `up -d` ggf. erneut)
 Änderung: Auf `healthy` warten (Timeout + Log-Dump bei Fehler). Assertion: **alle 7** Services `healthy`.
@@ -1217,7 +1219,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T5 — Login-Smoke gegen den echten LMN  [ ]
+### T5 — Login-Smoke gegen den echten LMN [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`, wiederverwendet `scripts/crabbox/shots.py`
 Soll: `/test`-Skill (edulutions **eigenes** Login-Formular `input[name=username]`; Erfolg = `→ /dashboard`, `/edu-api/lmn-api/auth` = 200; nach Login **kein** `networkidle` erwarten — SSE)
 Änderung: Playwright-Login als LMN-Admin gegen die frisch installierte Instanz; Screenshot als Beleg.
@@ -1226,7 +1228,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4
 
-### T6 — Herkunfts-Assertion: alles aus der eigenen Registry  [ ]
+### T6 — Herkunfts-Assertion: alles aus der eigenen Registry [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
 Soll: Ziel des ganzen Repoints (`p1-installer-repoint` + `p1-installer-rebrand-dist`)
 Änderung: Nach der Installation belegen, dass **zur Laufzeit** nichts mehr von edulution kommt: alle App-Container-Images aus `ghcr.io/faircomp/*`, keine `get.edulution.io`-/`edulution-io`-Referenz in den erzeugten Dateien.
@@ -1235,7 +1237,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4
 
-### T7 — Install-Runbook dokumentieren + Box reapen  [ ]
+### T7 — Install-Runbook dokumentieren + Box reapen [?] human-gate: realer Install-Beweis (Box+LMN+Voll-Stack, s. Section-Status)
 Komponente: linuxmuster-ui-installer · Dateien: `docs/install.md` (DE+EN+FR)
 Soll: Der real gelaufene Ablauf aus T1–T6
 Änderung: Die verifizierte Installationsanleitung schreiben (Voraussetzungen, ein `curl`-Befehl, Wizard-Felder, LMN-Voraussetzung `linuxmuster-api7`, Troubleshooting). Am Ende `crabbox stop` + `crabbox list` (keine geleakte Lease).
@@ -1245,7 +1247,7 @@ Doku: `docs/install.md` DE+EN+FR
 Abhängt von: T5, T6
 
 ## p1-migration-upgrade-test [P1] — Migrations-Upgrade-Test (echte 1.6-DB → eigenes Image)
-_Ziel:_ 1.6-DB→eigenes Image Upgrade-Pfad real testen · _Abhängt-von:_ p1-installer-repoint, p0-migrations-inventory · _Status:_ geplant · _Tasks:_ 8
+_Ziel:_ 1.6-DB→eigenes Image Upgrade-Pfad real testen · _Abhängt-von:_ p1-installer-repoint, p0-migrations-inventory · _Status:_ blockiert (box-gated: echtes 1.6.266-Image + Mongo + api-Boot-Logs auf der Box; zusätzlich abhängig vom noch NICHT rekonstruierten Deploy-Harness deploy.sh/generate_env.py/shots.py — Scripts nicht verifizierbar-authorbar ohne Box) · _Tasks:_ 8
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-migration-upgrade-test.md` · Soll: main.js:2676 (Engine) · main.js:2678/2681 (Log-Strings) · main.js:9214 (getMasterKey) · main.js:7950 (unwrapEncryptKey) · docs/migrations/2.0-migrations-inventory.md (p0) · .reference/2.0.200/baselines/dashboard.png
 
 > Voraussetzungen (Abhängt-von, paketweit): `p0-migrations-inventory` (Inventar + gedraftetes
@@ -1256,7 +1258,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-migration-upgrade-test.md`
 
 ---
 
-### T1 — Reproduzierbares 1.6.266-DB-Fixture (Dump + master.key) erzeugen  [ ]
+### T1 — Reproduzierbares 1.6.266-DB-Fixture (Dump + master.key) erzeugen [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox · Dateien: scripts/crabbox/seed-1.6-db.sh (neu, SPDX AGPL), .gitignore
 Soll: main.js:9214 (getMasterKey — Auto-Gen des `./data/master.key`) · p0-migrations-inventory §Inventar-Kern (welche Collections `schemaVersion` tragen)
 Änderung: Skript zieht **einmalig/throwaway** ein echtes 1.6.266-Image (OF1) fresh auf der Box hoch, legt via API/Login minimal repräsentative Bestandsdaten in **jede migrierte Collection** an (appConfig-Set, ≥1 user, ≥1 bulletin+category, ≥1 survey+template+answer, ≥1 webdavShare, globalSettings; je Collection zusätzlich möglichst 1 Doc ohne `schemaVersion`, OF4), fährt `mongodump --archive` aus und kopiert `./data/master.key` daneben → Fixture-Paar `scratchpad/upgrade-fixtures/1.6.266/{dump.archive,master.key}`. `.gitignore` schließt `scratchpad/upgrade-fixtures/` **und** `master.key` aus.
@@ -1264,7 +1266,7 @@ Verify: `iter.sh cmd 'bash scripts/crabbox/seed-1.6-db.sh && test -s scratchpad/
 i18n: keine
 Doku: docs/migrations/upgrade-1.6-to-2.0.md — Fixture-Herkunft (DE, intern) — vollständiger Runbook-Abschnitt in T8
 
-### T2 — deploy.sh: Seed-Restore-Modus (Restore vor api-Boot)  [ ]
+### T2 — deploy.sh: Seed-Restore-Modus (Restore vor api-Boot) [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox · Dateien: scripts/crabbox/deploy.sh (erweitern; falls noch nicht im Repo, mit-committen — Fresh-Verhalten unverändert)
 Soll: main.js:2676 (Migrationen laufen in onModuleInit → Restore MUSS davor) · /test-Skill Ablauf 5 (phased bring-up)
 Änderung: Neue Env `SEED_DUMP`/`SEED_MASTERKEY`. Wenn gesetzt: **phased bring-up** — erst `docker compose up -d` für infra (mongo/redis/keycloak/traefik), auf `mongo healthy` warten, dann `mongorestore --archive=$SEED_DUMP` in die Ziel-DB, dann `$SEED_MASTERKEY` nach `./data/master.key` ins api-Bind-Mount kopieren, **erst danach** `docker compose up -d edu-api edu-ui`. Ohne die Envs: unverändertes Fresh-Install.
@@ -1273,7 +1275,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — upgrade-test.sh: Orchestrator + Boot-Log-Assertion  [ ]
+### T3 — upgrade-test.sh: Orchestrator + Boot-Log-Assertion [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox · Dateien: scripts/crabbox/upgrade-test.sh (neu, SPDX AGPL)
 Soll: main.js:2678 (`Executing <model>: N migrations`) · main.js:2681 (`Migration "<name>" completed`)
 Änderung: Skript ruft `deploy.sh` im Seed-Modus (Fixture-Pfade), sammelt `docker compose logs edu-api`, prüft: (a) für **jedes aktuell verdrahtete Modell** erscheint `Executing <model>: N migrations`, (b) **kein** `Error`/`Exception`/`UnhandledPromiseRejection` im Migrations-Boot-Fenster, (c) api-Log enthält `Nest application successfully started`. Exit ≠0 bei Verstoß; klare Fehlermeldung + relevanter Log-Tail.
@@ -1282,7 +1284,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2
 
-### T4 — Terminal-schemaVersion-Assertion (Uniform-Modus) einbinden  [ ]
+### T4 — Terminal-schemaVersion-Assertion (Uniform-Modus) einbinden [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox + scripts/migrations · Dateien: scripts/crabbox/upgrade-test.sh, scripts/migrations/assert-schema-versions.* (aus p0; ggf. `--uniform`-Flag ergänzen)
 Soll: p0 `scripts/migrations/assert-schema-versions` + docs/migrations/2.0-migrations-inventory.md (Terminal-Tabelle)
 Änderung: `upgrade-test.sh` ruft die p0-Assertion gegen die restored+migrated Mongo im **Uniform-Modus** (OF3): pro migrierter Collection müssen **alle** Dokumente dieselbe (maximale) `schemaVersion` tragen — **keine Straggler**. Sekundär (best-effort, nicht-fatal am P1-Stand): Exaktzahl-Abgleich gegen die 2.0-final-Tabelle, nur für Modelle mit vollständig gelandetem Delta (am P1: appConfig=10, globalSettings=8, surveyTemplates/surveyAnswers=4, übrige 1.6-Terminal).
@@ -1291,7 +1293,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T5 — Idempotenz-Re-Boot-Check  [ ]
+### T5 — Idempotenz-Re-Boot-Check [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox · Dateien: scripts/crabbox/upgrade-test.sh
 Soll: p0-migrations-inventory §Idempotenz-Muster (`model.find({schemaVersion: previousSchemaVersion})` → leere Menge = No-Op)
 Änderung: Nach dem ersten Migrationslauf startet `upgrade-test.sh` die api ein zweites Mal (`docker compose up -d --force-recreate edu-api`), wartet auf Boot, und prüft: Uniform-Terminal-Assertion (T4) **unverändert** grün, und die zweiten Boot-Logs zeigen **keine** `documents to update`/`modifiedCount > 0`-Zeile (No-Op). Exit ≠0 bei Abweichung.
@@ -1300,7 +1302,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4
 
-### T6 — master.key-Kopplungs-Check  [ ]
+### T6 — master.key-Kopplungs-Check [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox · Dateien: scripts/crabbox/upgrade-test.sh
 Soll: main.js:9214 (getMasterKey — Log „No master key found. Generated new master key…") · main.js:7950 (unwrapEncryptKey)
 Änderung: `upgrade-test.sh` prüft, dass die api mit dem Fixture-`master.key` bootet **ohne** die Zeile `No master key found. Generated new master key` (Positiv: Key reiste korrekt mit dem Dump). Negativer Kontroll-Modus (optional, `--no-key`): ohne `master.key` erscheint die Auto-Gen-Zeile — Beleg, dass ein Restore ohne Key den Master-Key regeneriert (nach künftiger `users`-wrap-Portierung = unlesbare gewrappte Keys). Am P1-Stand (wrap noch nicht verdrahtet) ist nur der Positiv-Check fatal.
@@ -1309,7 +1311,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T7 — iter.sh-Ziel `upgrade` verdrahten  [ ]
+### T7 — iter.sh-Ziel `upgrade` verdrahten [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: scripts/crabbox · Dateien: scripts/crabbox/iter.sh
 Soll: — (Wiring; scripts/crabbox/iter.sh:13–25 case-Block)
 Änderung: Neues Ziel `upgrade) CMD='bash scripts/crabbox/upgrade-test.sh';;` im case-Block; Usage-Kommentar-Zeile (`iter.sh upgrade  # Migrations-Upgrade-Test 1.6-DB → eigenes Image`) ergänzen. Macht den Upgrade-Test zum Ein-Befehl-Phase-Gate.
@@ -1318,7 +1320,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T8 — Ausführungs-Runbook + P1-Exit-Checkliste  [ ]
+### T8 — Ausführungs-Runbook + P1-Exit-Checkliste [?] human-gate: box + Deploy-Harness-gated (s. Section-Status)
 Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md (aus p0, ergänzen)
 Soll: PLAN-openedulution-fork.md §6 Z308 (Exit-Kriterium je Phase) · §3.3 Z166 (forward-only, Rollback = Dump + master.key + Image-Tag)
 Änderung: Abschnitt „Ausführung (P1)" ergänzen: (1) Fixture erzeugen (`seed-1.6-db.sh`), (2) `iter.sh upgrade`, (3) Assertionen (Uniformität/Idempotenz/master.key). **P1-Exit-Checkliste** eintragen. Guardrails festhalten: `mongodump` **+ `./data/master.key` gemeinsam** sichern (nie einzeln); Harness ist **wiederkehrendes Phase-Gate** (jede spätere Delta-Migration re-verifiziert die volle 1.6→aktuell-Kette); Rollback = Dump + master.key + vorheriger Image-Tag. DE (intern).
@@ -1328,7 +1330,7 @@ Doku: docs/migrations/upgrade-1.6-to-2.0.md (DE, intern) — diese Task IST die 
 Abhängt von: T7
 
 ## p1-port-api-specs-ci [P1] — API-Specs als CI-Green-Gate + Smoke/Contract-Tests
-_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ geplant · _Tasks:_ 11
+_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ in Arbeit (3/11: T1–T3 authored+lokal-verifiziert; T4–T8 Controller-Specs, T9–T11 Guard/Wiring/Doku offen) · _Tasks:_ 11
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-port-api-specs-ci.md` · Soll: PLAN §6/Zeile 317 · §5.1/Zeile 252 · §3.2/Zeile 156 · §6.8/Zeile 314 · §8-P1/Zeile 362 · app.module.ts:150–158 (globaler AuthGuard+AccessGuard) · Bestands-Specs sse.controller.spec.ts / users.controller.spec.ts · scripts/checkFilenames.ts (Check-Muster) · Guard-Anker main.js:11219/56551/56883/59956/63161
 
 > Kontext: 28 Bestands-Specs (nativ aus 1.6.266). 29 Controller, davon 14 ohne Spec:
@@ -1341,7 +1343,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-port-api-specs-ci.md` · S
 
 ---
 
-### T1 — Baseline: alle 28 Bestands-Specs remote grün + deterministischer `test:api:ci`-Script  [ ]
+### T1 — Baseline: alle 28 Bestands-Specs remote grün + deterministischer `test:api:ci`-Script  [x] OK package.json `test:api:ci` = `nx run api:test --skip-nx-cache --detectOpenHandles -- --ci --runInBand`; keine Spec geändert; JSON valid. Baseline-Lauf (28 Specs remote grün) box-gated
 Komponente: apps/api (Test-Infra) · Dateien: `package.json`
 Soll: PLAN §6/Zeile 317 („die 28 vorhandenen Specs sofort übernehmen") · §8-P1/Zeile 362
 Änderung: `package.json`-Script `"test:api:ci": "nx run api:test --skip-nx-cache --detectOpenHandles -- --ci --runInBand"` ergänzen (deterministischer, cache-freier Gate-Lauf). Keine Spec-Datei ändern.
@@ -1349,7 +1351,7 @@ Verify: `bash scripts/crabbox/iter.sh cmd 'npm run test:api:ci'` → alle 28 Sui
 i18n: keine
 Doku: keine (intern)
 
-### T2 — API-Unit-Tests als benannter Green-Gate-Step in build-and-test.yml  [ ]
+### T2 — API-Unit-Tests als benannter Green-Gate-Step in build-and-test.yml  [x] OK API-Test aus dem Sammel-Step in benannten Step „Run API unit tests" (`npm run test:api:ci`) herausgelöst; Sammel-Step → „Run Checks" behält alle Checks inkl. P0-Zusätze (check-external-references/pii-fixtures/test:scripts); yaml-Parse + grep lokal PASS
 Komponente: CI · Dateien: `.github/workflows/build-and-test.yml`
 Soll: PLAN §5.1/Zeile 252 · §6/Zeile 315 (Green-Gate; Merge-Gate)
 Änderung: Im Job `test` (Zeile 154–187) den API-Unit-Test aus dem Sammel-Step „Run Checks and Tests" herauslösen in einen eigenen, benannten Step „Run API unit tests" mit `run: npm run test:api:ci`; der Sammel-Step behält nur die Checks (`check-circular-deps`, `check-translations`, `check-error-message-translations`, `pretty-quick`, `lint`). So ist der Test-Gate einzeln benennbar/erzwingbar. Branch-Protection-Konfiguration ist NICHT Teil dieser Task (→ p1-own-ci-registry).
@@ -1358,7 +1360,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1 · p1-own-ci-registry (liefert die Fork-eigene build-and-test.yml)
 
-### T3 — Reflection-Helper für Auth-Contract-Assertions  [ ]
+### T3 — Reflection-Helper für Auth-Contract-Assertions  [x] OK `apps/api/src/common/controllerContractReflection.ts` (SPDX AGPL): Default-Export `{ getClassGuards, getRouteGuards, isRoutePublic }` via `Reflect.getMetadata(GUARDS_METADATA/PUBLIC_ROUTE_KEY)` (Klasse bzw. `prototype[method]`), keine Magic-Strings, kein `expect`; isolierter `tsc --noEmit` grün; eslint box-gated
 Komponente: apps/api · Dateien: `apps/api/src/common/controllerContractReflection.ts` (neu, SPDX AGPL)
 Soll: app.module.ts:150–158 · public.decorator.ts (`PUBLIC_ROUTE_KEY`) · PLAN §3.2/Zeile 156
 Änderung: Purer (jest-freier) Helper mit Default-Export `controllerContractReflection` = `{ getClassGuards(controller), getRouteGuards(controller, methodName), isRoutePublic(controller, methodName) }`. Guards via `Reflect.getMetadata(GUARDS_METADATA, ...)` (`GUARDS_METADATA` aus `@nestjs/common/constants`) auf Klasse bzw. `controller.prototype[method]`; Public via `Reflect.getMetadata(PUBLIC_ROUTE_KEY, controller.prototype[method])`. Keine Magic-Strings, kein `expect` im Helper.
