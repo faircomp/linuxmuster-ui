@@ -184,6 +184,7 @@ jobs:
           npm run check-external-references
           npm run check:pii-fixtures
           npm run test:scripts
+          npm run check-spec-coverage
           npx pretty-quick --check
           npm run lint
 
