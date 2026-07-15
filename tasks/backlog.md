@@ -598,7 +598,7 @@ Doku: keine (intern)
 Abhängt von: T6
 
 ## p1-rebrand [P1] ⭐ — P1
-_Ziel:_ edulution-io-Refs/Marken/Lizenz-Header per Deny/Allowlist auf faircomp · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 16
+_Ziel:_ edulution-io-Refs/Marken/Lizenz-Header per Deny/Allowlist auf faircomp · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ erledigt (16/16) · _Tasks:_ 16
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-rebrand.md` · Soll: reiner Rebrand/Legal (kein main.js-Anker/Rescue-Branch); Belege: PLAN §2.3/2.4/2.5/4.1/9 · nx.json:3 · scripts/addLicenseHeader.ts:23–39 · libs/src/common/constants/urls.ts:20–22 · .github/workflows/{container-build,build-and-test,api-tag,frontend-tag}.yml · package.json:19–22 · README.md · LICENSE_EXCEPTIONS.md · apps/frontend/index.html
 
 > Platzhalter-Zielwerte bis OF1 entschieden: Org `faircomp`, Images `ghcr.io/faircomp/linuxmuster-ui` / `ghcr.io/faircomp/linuxmuster-api`, Anzeigename „linuxmuster", Repo-URL `https://github.com/faircomp/linuxmuster-ui`. Allowlist (nicht anfassen): `@edulution-io/ui-kit`, `edu-*`, `isEdulutionApp`/`EDULUTION_APP_AGENT_IDENTIFIER`, `EDULUTION_MANAGER_*`, `edulution-manager`, `edu_`-Icon-Pfade, `edulution-binduser-*`-Keys, `/opt/edulution/api`, Issue-URL-Kommentare, sämtliche Netzint-Copyright-Header auf Bestandsdateien.
@@ -724,7 +724,7 @@ Verify: `! grep -riE "edulution|netzint" AGENTS.md CLAUDE.md` und `test -f docs/
 i18n: keine
 Doku: docs/adr/* (DE, intern)
 
-### T16 — Rebrand-Schlussaudit (Denylist-Grep als Regressions-Guard)  [ ]
+### T16 — Rebrand-Schlussaudit (Denylist-Grep als Regressions-Guard)  [x] OK Denylist 0 Treffer (apps/libs/.github/package.json/README); Allowlist erhalten (@edulution-io/ui-kit in tsconfig.base.json+Imports, nicht package.json — Task-Verify-Pfad korrigiert)
 Komponente: Repo-weit · Dateien: keine Code-Änderung (nur Assertion; optional kurzer Eintrag in CHANGELOG.md)
 Änderung: Schluss-Assertion, dass **keine** verbotenen Refs mehr existieren, während Allowlist unberührt bleibt. Denylist: `ghcr.io/edulution-io/edulution`, `docs.edulution.io`, `apps.apple.com/de/app/edulution`, `<title>edulution.io`. Allowlist-Gegenprobe: `@edulution-io/ui-kit`, `isEdulutionApp`, `EDULUTION_MANAGER`, `edulution-binduser`, `EDU_PLUGINS_GITHUB_URL`, `/opt/edulution/api` **müssen** noch vorhanden sein.
 Verify: `! grep -rnE "ghcr.io/edulution-io/edulution|docs\.edulution\.io|apps\.apple\.com/de/app/edulution" apps libs .github package.json README.md` und Gegenprobe `grep -rq "EDU_PLUGINS_GITHUB_URL" libs && grep -rq "isEdulutionApp" apps/frontend/src && grep -rq "@edulution-io/ui-kit" package.json`
