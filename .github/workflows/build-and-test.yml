@@ -182,6 +182,7 @@ jobs:
           npm run check-translations
           npm run check-error-message-translations
           npm run check-external-references
+          npm run check-npm-audit
           npm run check:pii-fixtures
           npm run test:scripts
           npm run check-spec-coverage
