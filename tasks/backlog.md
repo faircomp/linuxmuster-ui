@@ -1573,7 +1573,7 @@ Doku: Checklisten-Eintrag im DR-Runbook (T3)
 Abhängt von: T1
 
 ## p1-dr-runbook [P1] — Betriebs-/DR-Runbook + Backup-/Restore-Skript
-_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ geplant · _Tasks:_ 6
+_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ in Arbeit (2/6: T1 Runbook + T2 dr-lib.sh authored+lokal-verifiziert; T3 backup, T4 restore, T5 drill, T6 wiring offen) · _Tasks:_ 6
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-dr-runbook.md` · Soll: main.js:9207-9235 (getMasterKey/master.key) · main.js:55805 (edulution.pem) · main.js:8854-8856 (Redis flüchtig/BullMQ) · docker-compose.yml.template:60-68/147-162/88-89 · PLAN §5.6/§2.6/§6.2/R4
 
 > Hinweis: Ops-Paket. Deliverables = 1 Runbook-Doc + Shell-Skripte unter `scripts/ops/`. Kein
@@ -1586,7 +1586,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-dr-runbook.md` · Soll: ma
 
 ---
 
-### T1 — DR-Runbook-Dokument schreiben  [ ]
+### T1 — DR-Runbook-Dokument schreiben  [x] OK docs/ops/dr-runbook.md (SPDX): Topologie-Tabelle (7 Services), Backup-Reihenfolge+Begründung (mongodump→pg_dump→tar, DB-Dump vor Tar wg. master.key-Match), master.key-Kopplung+Totalverlust, Verschlüsselung/Offsite/Escrow, RPO/RTO, Restore-Schritte, Drill-Kadenz, Redis-flüchtig, Contract-Sync; alle grep-Terme + SPDX PASS
 Komponente: docs · Dateien: docs/ops/dr-runbook.md (neu)
 Soll: PLAN §5.6/§2.6/§6.2/R4 · main.js:9207-9235 · docker-compose.yml.template:60-68/147-162/88-89
 Änderung: Runbook (DE) mit Abschnitten: **Topologie** (Container `edu-db`/`edu-keycloak-db`/`edu-keycloak`/`edu-api`/`edu-redis`/`edu-traefik`, `./data`-Layout, `edulution.env`-Sibling) · **Backup-Reihenfolge + Begründung** (mongodump → pg_dump → `./data`-Tar; warum DB-Dump VOR Tar: `master.key` muss die gedumpten `encryptKey` wrappen) · **`master.key`-Kopplung + Totalverlust-Warnung** (Neustart ohne persistentes `./data`+Env = Totalverlust) · **Verschlüsselung/Offsite/Escrow** · **RPO/RTO** · **Restore-Schritte** · **Restore-Drill-Kadenz** · **Redis flüchtig / kein Queue-Backup** · **Contract-Sync-Punkt** (Installer-Service-/Var-Namen). Kopf mit SPDX.
@@ -1594,7 +1594,7 @@ Verify: `iter.sh cmd 'test -f docs/ops/dr-runbook.md && for s in Topologie mongo
 i18n: keine
 Doku: docs/ops/dr-runbook.md (dies ist das Deliverable) · EN deferred (Spec-Offene-Frage 3)
 
-### T2 — Geteilte Ops-Bibliothek `dr-lib.sh`  [ ]
+### T2 — Geteilte Ops-Bibliothek `dr-lib.sh`  [x] OK scripts/ops/dr-lib.sh (SPDX): dr_log/dr_die (fail-fast), dr_container (compose ps -q + `/?`-optionaler container_name-Fallback — Review-Fix für Dockers `/`-Präfix), dr_mongo_env/dr_pg_env (Creds via docker-exec-printenv, stirbt bei fehlenden Creds — kein Hardcode/Zeilen-Shift), dr_require, DR_*-Defaults; bash -n + shellcheck CLEAN + docker-Stub-Tests grün. Review approve (1 wichtig-Fix)
 Komponente: scripts/ops · Dateien: scripts/ops/dr-lib.sh (neu)
 Soll: docker-compose.yml.template (Service-Namen `edu-db`/`edu-keycloak-db`) · Spec „Contract-Drift"
 Änderung: POSIX-/bash-Helfer: `dr_log`/`dr_die` (Fail-Fast, `set -euo pipefail`-tauglich); `dr_container <service>` löst Container über Compose auf (`docker compose -f "$DR_COMPOSE" ps -q <service>`, Fallback container_name); `dr_mongo_env`/`dr_pg_env` ziehen DB-Creds via `docker exec … printenv` aus dem Container (kein Hardcode); `dr_require <bin>`; `DR_STACK_DIR`/`DR_COMPOSE`/`DR_OUT_DIR`-Defaults. SPDX-Header. Wird von T3–T5 gesourct.
