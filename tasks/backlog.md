@@ -930,7 +930,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-installer-repoint.md` · S
 
 ---
 
-### T1 — Installer-Compose-Template: edu-ui/edu-api → eigene Registry + gepinnter Tag  [ ]
+### T1 — Installer-Compose-Template: edu-ui/edu-api → eigene Registry + gepinnter Tag  [x] OK (Installer-Repo cf830a1) images→ghcr.io/faircomp/linuxmuster-{ui,api}:2.0.0 gepinnt; Companions unberührt; Realm/Traefik sauber
 Komponente: linuxmuster-ui-installer · Dateien: apps/public-page/public/download/docker-compose.yml.template
 Soll: docker-compose.yml.template:4 (`image: ghcr.io/edulution-io/edulution-ui`), :18 (`…/edulution-api`) — ohne Tag
 Änderung: Beide first-party Image-Refs auf `<REG>/linuxmuster-ui:<PINNED_TAG>` bzw. `<REG>/linuxmuster-api:<PINNED_TAG>` setzen (Tag zwingend gepinnt, kein `latest`). Companion-Images (mongo:7/redis:8.2/traefik:v3.1/keycloak:26.4/postgres:16) unangetastet lassen (bereits gepinnt, nicht first-party). Realm-/Traefik-Template mit-auditieren (Verify unten) — beide enthalten keine first-party Registry-Ref, daher kein Change.
@@ -938,7 +938,7 @@ Verify (crabbox): `python3 -c "import yaml,sys; d=yaml.safe_load(open('apps/publ
 i18n: keine
 Doku: Installer-README kurzer Registry-/Tag-Hinweis (DE/EN nach Repo-Stand)
 
-### T2 — Installer-Self-Pull + Bootstrap → eigenes Image/Repo  [ ]
+### T2 — Installer-Self-Pull + Bootstrap → eigenes Image/Repo  [x] OK installer+bootstrap.sh→faircomp/linuxmuster-ui-installer (GITHUB_REPO/RAW); bash -n grün
 Komponente: linuxmuster-ui-installer · Dateien: apps/public-page/public/installer, edulution-lmninstaller/bootstrap.sh
 Soll: installer:213/216 (`docker pull … ghcr.io/edulution-io/edulution-installer:${EDULUTION_INSTALLER_TAG}`) · bootstrap.sh:14 (`GITHUB_REPO="edulution-io/edulution-installer"`), :16 (`GITHUB_RAW`)
 Änderung: Installer-Image-Ref → `<REG>/linuxmuster-ui-installer:${EDULUTION_INSTALLER_TAG}` (Tag-Var bleibt, Default-Wert auf gepinnten eigenen Tag). `GITHUB_REPO`/`GITHUB_RAW` → `faircomp/linuxmuster-ui-installer`. Keine Branding-URLs (`get.edulution.io`/Logos) anfassen — die gehören zum Rebrand-Pass des Installer-Repos.
@@ -946,7 +946,7 @@ Verify (crabbox): `! grep -rnE 'edulution-io/edulution-installer' apps/public-pa
 i18n: keine
 Doku: keine (intern)
 
-### T3 — webinstaller-api BOOTSTRAP_URL → eigenes Repo-Raw  [ ]
+### T3 — webinstaller-api BOOTSTRAP_URL → eigenes Repo-Raw  [x] OK main.py BOOTSTRAP_URL→faircomp/linuxmuster-ui-installer; py_compile grün
 Komponente: linuxmuster-ui-installer · Dateien: apps/webinstaller-api/app/main.py
 Soll: main.py:462 (`BOOTSTRAP_URL = f"https://raw.githubusercontent.com/edulution-io/edulution-installer/{BOOTSTRAP_BRANCH}/edulution-lmninstaller/bootstrap.sh"`)
 Änderung: Repo-Segment `edulution-io/edulution-installer` → `faircomp/linuxmuster-ui-installer`. Branch-Var unverändert.
