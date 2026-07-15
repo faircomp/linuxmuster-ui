@@ -845,7 +845,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — Dockerfiles: ARG/ENV/LABEL (Build-Metadaten + OCI)  [ ]
+### T3 — Dockerfiles: ARG/ENV/LABEL (Build-Metadaten + OCI)  [x] OK beide Dockerfiles: 4 ARG + 4 ENV (COMMIT_SHA/BUILD_DATE/BUILD_NUMBER/APP_VERSION) + OCI-LABELs (revision=$COMMIT_SHA etc., licenses=AGPL-3.0-or-later); docker-build+inspect-Verify box-gated → an P1-Voll-Stack
 Komponente: apps/api, apps/frontend · Dateien: apps/api/Dockerfile, apps/frontend/Dockerfile
 Soll: main.js:59718–59722 (Env-Namen) · Master-Plan §2.4/§5.5 (image.source-Label, tote buildId/version-Args)
 Änderung: In **beide** Dockerfiles `ARG COMMIT_SHA` `ARG BUILD_DATE` `ARG BUILD_NUMBER` `ARG APP_VERSION` → korrespondierende `ENV` (für die Runtime-Health-Config) + statische OCI-`LABEL` (`org.opencontainers.image.title/description/source/licenses=AGPL-3.0-or-later`) und dynamische `LABEL org.opencontainers.image.revision=$COMMIT_SHA` / `.created=$BUILD_DATE` / `.version=$APP_VERSION`. Die toten `buildId/version`-Args ersetzt T4 CI-seitig.
@@ -853,7 +853,7 @@ Verify: `iter.sh cmd 'docker build -f apps/api/Dockerfile --build-arg COMMIT_SHA
 i18n: keine
 Doku: keine (intern)
 
-### T4 — container-build.yml: metadata-action + echte Build-Args  [ ]
+### T4 — container-build.yml: metadata-action + echte Build-Args  [x] OK docker/metadata-action je Image + labels durchgereicht; build-args COMMIT_SHA/BUILD_DATE/BUILD_NUMBER/APP_VERSION (buildId/version raus)
 Komponente: CI · Dateien: .github/workflows/container-build.yml
 Soll: container-build.yml:109–111/159–161 (tote buildId/version-Args) · Master-Plan §5.5 (metadata-action)
 Änderung: `docker/metadata-action` (Image-Ref aus dem rebrand-Ist-Wert / zentraler `env`) je Image ergänzen; dessen `labels`-Output an `build-push-action` (`labels:`) durchreichen; die `build-args` von `buildId/version` auf `COMMIT_SHA=${{ github.sha }}` / `BUILD_DATE=${{ steps.meta.outputs.… bzw. date }}` / `BUILD_NUMBER=${{ github.run_number }}` / `APP_VERSION=<tag>` umstellen (Namen exakt wie T3/SOLL).
@@ -887,7 +887,7 @@ Verify: `iter.sh cmd '! test -e .github/workflows/auto-merge-master-back-in-dev.
 i18n: keine
 Doku: keine (intern)
 
-### T8 — Version-Bumper auf eigenen contents:write-Token  [ ]
+### T8 — Version-Bumper auf eigenen contents:write-Token  [x] OK beide Bumper: RELEASE_BUMP_TOKEN (Checkout+Push, kein GITHUB_TOKEN/App-Token), concurrency version-bump, patch-Trigger dev→main
 Komponente: CI · Dateien: .github/workflows/bump-patch-version-tag.yml, .github/workflows/bump-minor-version-tag.yml
 Soll: bump-patch:19–20 / bump-minor:16–17 (tote VERSION_BUMPER_APPID/_SECRET) · bump-minor:38–39 (Push via GITHUB_TOKEN) · Master-Plan §2.2/§2.3/§9.4/R6
 Änderung: `create-github-app-token`-Schritt + `vars.VERSION_BUMPER_APPID`/`secrets.VERSION_BUMPER_SECRET` durch `token: ${{ secrets.RELEASE_BUMP_TOKEN }}` (fine-grained PAT, contents:write) in Checkout **und** Push ersetzen — **nie** `GITHUB_TOKEN` (sonst kein container-build-Trigger). `concurrency: { group: version-bump, cancel-in-progress: false }` ergänzen; `git push --follow-tags` (genau 1 Tag/Push) beibehalten; Patch-Trigger `on: push: branches: [dev]` → `[main]`. (App-Variante = offene Frage in der Spec.)

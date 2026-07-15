@@ -137,12 +137,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker metadata
+        id: meta_frontend
+        uses: docker/metadata-action@v5.5.1
+        with:
+          images: ghcr.io/faircomp/linuxmuster-ui
+
       - name: Build and push docker image
         uses: docker/build-push-action@v6.10.0
         with:
           build-args: |
-            buildId=${{ github.sha }}
-            version=${{ needs.prepare.outputs.frontend-docker-tags }}
+            COMMIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ fromJSON(steps.meta_frontend.outputs.json).labels['org.opencontainers.image.created'] }}
+            BUILD_NUMBER=${{ github.run_number }}
+            APP_VERSION=${{ github.ref_name }}
+          labels: ${{ steps.meta_frontend.outputs.labels }}
           context: .
           file: apps/frontend/Dockerfile
           push: true
@@ -187,12 +196,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker metadata
+        id: meta_api
+        uses: docker/metadata-action@v5.5.1
+        with:
+          images: ghcr.io/faircomp/linuxmuster-api
+
       - name: Build and push docker image
         uses: docker/build-push-action@v6.10.0
         with:
           build-args: |
-            buildId=${{ github.sha }}
-            version=${{ needs.prepare.outputs.api-docker-tags }}
+            COMMIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ fromJSON(steps.meta_api.outputs.json).labels['org.opencontainers.image.created'] }}
+            BUILD_NUMBER=${{ github.run_number }}
+            APP_VERSION=${{ github.ref_name }}
+          labels: ${{ steps.meta_api.outputs.labels }}
           context: .
           file: apps/api/Dockerfile
           push: true
