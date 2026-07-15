@@ -815,7 +815,7 @@ i18n: keine · Doku: keine
 Abhängt von: T4, T5, T6
 
 ## p1-own-ci-registry [P1] ⭐ — Eigene CI-Pipeline & Container-Registry (Härtung)
-_Ziel:_ Eigene CI+Registry: Images grün-gegated+gehärtet nach ghcr/faircomp · _Abhängt-von:_ p1-rebrand · _Status:_ geplant · _Tasks:_ 11
+_Ziel:_ Eigene CI+Registry: Images grün-gegated+gehärtet nach ghcr/faircomp · _Abhängt-von:_ p1-rebrand · _Status:_ erledigt (11/11 authored; T3-docker/T5-jest-Verify box-gated, T11-Smoke human-gate) · _Tasks:_ 11
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-own-ci-registry.md` · Soll: main.js:59718–59722 (Health-Env-Contract) · container-build.yml:100/104/109–111/159–161 · bump-{patch,minor}-version-tag.yml · publish-ui-kit.yml:14–16 (permissions-Referenz) · kein Rescue-Branch/Screenshot (CI-Infra)
 
 > Kontext-Notiz: Abhängt von `p1-rebrand` (Image-Name-Strings `edulution-io`→`faircomp`,
@@ -903,7 +903,7 @@ Verify: `iter.sh cmd 'grep -A5 "^on:" .github/workflows/publish-ui-kit.yml | gre
 i18n: keine
 Doku: keine (intern)
 
-### T10 — Alle Actions SHA-pinnen  [ ]
+### T10 — Alle Actions SHA-pinnen  [x] OK 14 Action-Refs → 40-hex-SHA (via GitHub-API aufgelöst) + Versionskommentar; 0 bewegliche @vN, $-verankert (v4≠v4.2.2)
 Komponente: CI · Dateien: .github/workflows/*.yml (alle verbleibenden)
 Soll: Master-Plan §5.1/R10/Finding 13 (tag-gepinnte Actions = mutable Refs)
 Änderung: Jede `uses: <owner>/<action>@<tag>`-Zeile in allen verbleibenden Workflows auf den vollen 40-stelligen Commit-SHA der jeweiligen Release umstellen, mit Versions-Kommentar (`@<sha> # v4.2.2`). Betrifft `actions/checkout`, `actions/setup-node`, `actions/cache`, `docker/login-action`, `docker/build-push-action`, `docker/setup-buildx-action`, `docker/metadata-action`, `actions/create-github-app-token`.
@@ -912,7 +912,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4, T8
 
-### T11 — Erst-Push-Smoke-Test + CI-/Release-Runbook  [?]
+### T11 — Erst-Push-Smoke-Test + CI-/Release-Runbook  [?] human-gate: docs/ci-release.md geschrieben ✓ (Secret/Org-Setting/Env-Vertrag); Erst-Push-Smoke + Packages-public = ops/manuell (echter Actions-Runner+Org nötig)
 Komponente: Doku/Ops · Dateien: docs/ci-release.md (neu)
 Soll: Master-Plan §2.1 (permissions/Org-Setting/Smoke) · §5.5 (Build-Metadaten sichtbar)
 Änderung: Kurzes deutsches Runbook: (a) Repo-Secret `RELEASE_BUMP_TOKEN` provisionieren (Scope contents:write; App-Alternative nennen); (b) Org-/Repo-Setting „Actions → Workflow permissions" prüfen; (c) Erst-Push-Smoke: ein `v*.*.*`-Tag pushen → Green-Gate läuft → beide Images erscheinen unter `ghcr.io/faircomp/…` → `docker inspect` zeigt `org.opencontainers.image.revision` + `/actuator/health` (bzw. Health-Endpoint) liefert `commitSha` ≠ `unknown`; (d) die vier Build-Metadaten-Env-Vars dokumentieren. **Diese E2E-Prüfung läuft NICHT auf der crabbox** (echter Actions-Runner/Org nötig) → manuell/ops, daher `[?]`.
