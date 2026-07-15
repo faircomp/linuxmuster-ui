@@ -828,7 +828,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-own-ci-registry.md` · Sol
 
 ---
 
-### T1 — permissions-Block auf container-build.yml  [ ]
+### T1 — permissions-Block auf container-build.yml  [x] OK permissions {contents:read, packages:write} (GHCR-Push 403-Schutz)
 Komponente: CI · Dateien: .github/workflows/container-build.yml
 Soll: container-build.yml:100/104 (Push via GITHUB_TOKEN ohne permissions) · Referenz publish-ui-kit.yml:14–16
 Änderung: Top-Level `permissions: { contents: read, packages: write }` in `container-build.yml` ergänzen, damit der GHCR-Push auf frischer Org nicht 403t. Kein weiterer inhaltlicher Umbau.
@@ -836,7 +836,7 @@ Verify: `iter.sh cmd 'grep -Pzoq "(?s)^permissions:\s*\n\s*contents:\s*read\s*\n
 i18n: keine
 Doku: keine (intern)
 
-### T2 — Green-Gate: lint+test vor dem Image-Build  [ ]
+### T2 — Green-Gate: lint+test vor dem Image-Build  [x] OK checks-Job (lint+test+nx test frontend+check-translations); build-frontend/api needs [prepare, checks]
 Komponente: CI · Dateien: .github/workflows/container-build.yml
 Soll: build-and-test.yml:179–186 (Gate-Schritte) · Master-Plan §5.1/§6 (Release-Green-Gate)
 Änderung: Neuen Job `checks` in `container-build.yml` (Checkout + Node 22 + `npm ci` + `npm run lint && npm run test && npx nx test frontend && npm run check-translations`); `build-frontend` und `build-api` bekommen `needs: [prepare, checks]`, sodass ein Bumper-Tag ohne grünen Stand keine Images verschifft. `workflow_dispatch` bleibt als Notausgang.
@@ -871,7 +871,7 @@ i18n: keine
 Doku: keine (intern) — Env-Vertrag wird in T11 dokumentiert
 SPDX: neue `configuration.spec.ts` bekommt AGPL-3.0-or-later-Header (rebrand-Stempel).
 
-### T6 — Redundante Tag-Build-Workflows löschen  [ ]
+### T6 — Redundante Tag-Build-Workflows löschen  [x] OK api-tag.yml + frontend-tag.yml gelöscht (container-build deckt beide Images)
 Komponente: CI · Dateien: .github/workflows/api-tag.yml, .github/workflows/frontend-tag.yml
 Soll: Master-Plan §2.5 (drei Workflows auf v*.*.* = Race auf :latest; container-build deckt beide Images ab)
 Änderung: `api-tag.yml` und `frontend-tag.yml` löschen — die konsolidierte `container-build.yml` (build-frontend + build-api) deckt beide Images ab; drei Tag-Trigger auf `v*.*.*` racen sonst auf `:latest`.
@@ -879,7 +879,7 @@ Verify: `iter.sh cmd '! test -e .github/workflows/api-tag.yml && ! test -e .gith
 i18n: keine
 Doku: keine (intern)
 
-### T7 — auto-merge-master-back-in-dev.yml löschen  [ ]
+### T7 — auto-merge-master-back-in-dev.yml löschen  [x] OK gelöscht (Single-main, tote Netzint-App)
 Komponente: CI · Dateien: .github/workflows/auto-merge-master-back-in-dev.yml
 Soll: Master-Plan §2.3 (dev/master-Dual aufgeben → Single-main)
 Änderung: Workflow löschen — er merged `master`→`dev` und nutzt die tote Netzint-App; unter Single-`main` (Fork-Default) obsolet.
@@ -895,7 +895,7 @@ Verify: `iter.sh cmd 'grep -q "secrets.RELEASE_BUMP_TOKEN" .github/workflows/bum
 i18n: keine
 Doku: keine (intern) — Secret-Provisioning in T11
 
-### T9 — publish-ui-kit.yml einfrieren  [?]
+### T9 — publish-ui-kit.yml einfrieren  [x] OK on: nur workflow_dispatch (ui-kit-v*-Tag-Trigger raus); Namespace-Repoint bleibt Cross-Ref p1-rebrand/installer
 Komponente: CI · Dateien: .github/workflows/publish-ui-kit.yml
 Soll: Master-Plan §4/§196 (ui-kit bleibt Source-Alias, keine npm-Dependency) · §2.5 (publish-ui-kit deaktivieren/umbiegen)
 Änderung: Trigger auf **nur** `workflow_dispatch` reduzieren (Tag-Trigger `ui-kit-v*` entfernen), damit nicht versehentlich nach dem nicht-eigenen `@edulution-io`-Namespace publiziert wird. Ownership klären: Namespace-Repoint gehört zu `p1-rebrand` (siehe offene Frage 3).

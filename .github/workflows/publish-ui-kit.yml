@@ -1,9 +1,6 @@
 name: Publish UI-Kit
 
 on:
-  push:
-    tags:
-      - 'ui-kit-v*'
   workflow_dispatch:
     inputs:
       version:
