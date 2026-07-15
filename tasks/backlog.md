@@ -733,7 +733,7 @@ Doku: keine (intern)
 Abhängt von: T1–T14
 
 ## x-i18n-fr [P1] — FR-Locale erstwertig aktivieren (DE+EN → DE+EN+FR)
-_Ziel:_ FR als gepflegte Locale aktivieren (supportedLngs, fr.json-Backfill, check-translations DE+EN+FR) · _Abhängt-von:_ p1-rebrand · _Status:_ geplant · _Tasks:_ 7
+_Ziel:_ FR als gepflegte Locale aktivieren (supportedLngs, fr.json-Backfill, check-translations DE+EN+FR) · _Abhängt-von:_ p1-rebrand · _Status:_ erledigt (7/7) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · Spec: `docs/features/x-i18n-fr.md` · Soll: forkeigen (kein main.js-Anker) · Audit: i18n.ts:44 (fr schon in supportedLngs), scripts/checkTranslations.ts:50/52/62 (FR nicht erzwungen), scripts/checkErrorMessages.ts:26-28/89-100 (kein FR)
 
 > Kalibrierung: einmalige Konsolidierung, kein 2.0-Delta. Wiring (i18n, UserLanguage, LanguageSelector,
@@ -742,7 +742,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/x-i18n-fr.md` · Soll: forkei
 
 ---
 
-### T1 — Audit-Snapshot + Diff-Listen erzeugen (nur Analyse, kein Commit)  [ ]
+### T1 — Audit-Snapshot + Diff-Listen erzeugen (nur Analyse, kein Commit)  [x] OK 187 fehlen / 22 überzählig (matcht Audit); Listen im Scratchpad
 Komponente: scripts (Wegwerf) · Dateien: keine (Ausgabe in Scratchpad)
 Soll: Ist-Stand exakt festhalten, bevor gefüllt wird.
 Änderung: Ein-Zeiler/Node-Snippet, das (a) die **187** DE-Keys listet, die FR fehlen, und (b) die **22**
@@ -751,7 +751,7 @@ Referenz-Flatten-Logik wie in `scripts/checkTranslations.ts:29-42`.
 Verify: Zahlen matchen die Audit-Angabe (187 / 22); Listen nicht leer.
 i18n: keine · Doku: keine (intern)
 
-### T2 — FR-Backfill: 187 fehlende DE-Keys nach FR übersetzen und einsortieren  [ ]
+### T2 — FR-Backfill: 187 fehlende DE-Keys nach FR übersetzen und einsortieren  [x] OK 187 FR-Werte (Platzhalter-Parität geprüft), DE-Keys missing in FR=0
 Komponente: apps/frontend · Dateien: apps/frontend/src/locales/fr/translation.json
 Soll: FR bekommt für **jeden** in T1 gelisteten fehlenden Key einen französischen Wert; Platzierung an
 derselben verschachtelten Stelle wie in DE/EN.
@@ -762,7 +762,7 @@ Verify: Node-Snippet zeigt „DE-Keys missing in FR: 0"; `npm run build` grün; 
 Platzhaltern haben identische `{{...}}`-Menge wie DE.
 i18n: FR-Backfill (dieses Paket ist das i18n) · Doku: keine
 
-### T3 — 22 überzählige FR-Keys entfernen (nach grep-Absicherung)  [ ]
+### T3 — 22 überzählige FR-Keys entfernen (nach grep-Absicherung)  [x] OK alle 22 stale (0 Code-Refs; `content`=react-hook-form-Feld) → gelöscht, FR-only=0
 Komponente: apps/frontend · Dateien: apps/frontend/src/locales/fr/translation.json
 Soll: FR = exakte DE-Key-Menge (Voraussetzung für symmetrische Erzwingung in T4).
 Änderung: Die 22 aus T1 gelisteten FR-only-Keys löschen. Vorher je Key `grep -rn "'<key>'\|\"<key>\""`
@@ -772,7 +772,7 @@ Verify: Node-Snippet zeigt „FR-only keys not in DE: 0"; `npm run build` grün.
 i18n: FR-Aufräumen · Doku: keine
 Abhängt von: T1
 
-### T4 — checkTranslations.ts: FR gleichrangig zu DE/EN erzwingen  [ ]
+### T4 — checkTranslations.ts: FR gleichrangig zu DE/EN erzwingen  [x] OK extraNestedInFR + FR→console.error + in exit-Bedingung; Gegenproben (FR-Lücke/FR-Extra → exit1) grün
 Komponente: scripts · Dateien: scripts/checkTranslations.ts
 Soll: heutiges Verhalten (checkTranslations.ts:48-65) — Exit nur bei EN/DE-Lücken; FR nur `console.info`.
 Änderung: (a) `extraNestedInFR = frNestedKeys.filter(k => !deNestedKeys.includes(k))` ergänzen (überzählige
@@ -784,7 +784,7 @@ Skript exit 1 mit „Missing nested keys in FR"; temporär einen FR-only-Key hin
 i18n: keine · Doku: keine
 Abhängt von: T2, T3
 
-### T5 — checkErrorMessages.ts: FR-Locale gegen errorMessage.ts-Enums prüfen  [ ]
+### T5 — checkErrorMessages.ts: FR-Locale gegen errorMessage.ts-Enums prüfen  [x] OK frKeySet + „✔ FR is awesome!"; Gegenprobe (fehlender lmnApi.errors-Key → exit1) grün
 Komponente: scripts · Dateien: scripts/checkErrorMessages.ts
 Soll: heute (checkErrorMessages.ts:26-28, 89-100) nur DE + EN.
 Änderung: `frTranslationFilePath` ergänzen, `frJson`/`frKeySet` bauen, `checkFilePaths(enumImportPaths,
@@ -794,7 +794,7 @@ Verify: `npm run check-error-message-translations` grün und gibt eine FR-Zeile 
 i18n: keine · Doku: keine
 Abhängt von: T2
 
-### T6 — Konvention: AGENTS.md auf „DE+EN+FR" nachziehen  [ ]
+### T6 — Konvention: AGENTS.md auf „DE+EN+FR" nachziehen  [x] OK Translations-Bullet (de/en/fr, check-translations erzwingt Parität, pre-commit-blockierend)
 Komponente: docs · Dateien: AGENTS.md
 Soll: AGENTS.md nennt bisher nur „Pre-commit runs checks (... translations ...)" ohne Sprachpflicht.
 Änderung: Unter „Coding Style" bzw. „Security & Configuration Tips" eine explizite Zeile: Übersetzungen
@@ -804,7 +804,7 @@ Verify: `npm run check-translations` unberührt grün; Review bestätigt, dass d
 i18n: keine · Doku: AGENTS.md
 Abhängt von: T4
 
-### T7 — Abschluss-Verify + Smoke  [ ]
+### T7 — Abschluss-Verify + Smoke  [x] OK check-translations + check-error-message-translations grün; DE/EN/FR je 1930; supportedLngs enthält fr
 Komponente: — · Dateien: keine
 Soll: Gesamtpaket grün und FR real umschaltbar.
 Änderung: keine (nur Verifikation).
