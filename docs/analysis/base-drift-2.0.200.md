@@ -136,4 +136,88 @@ Echte Drift konzentriert sich auf **Mail** (+26, Neubau), **Filesharing** (Split
 **Ausgliederungen** (Linbo, ProfilePicture). Diese sind bereits als eigene Backlog-Abschnitte
 erfasst — die Route-Zahlen dort als Aufwands-Anker nutzen.
 
-<!-- T3–T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->
+## T3 — Service-Drift (Bestands-Services)
+
+**Zählung (Verify):** `MJ` `class …Service ` = **58** · 1.6 `apps/api/src` = **41** → **17 neue**
+Services, **0 entfernt/umbenannt** (`comm -13` leer). → **Additive-These auch auf Service-Ebene
+bestätigt.** Zusammen mit T1 (Module 32→38, 0 entfernt) und T2 (23/29 Controller 0-Drift) gilt:
+**der Bestand ist auf allen drei Klassen-Ebenen additiv** — kein Rename/Entfernen, das eine
+Integrationsreibung „unter" den Modul-Nachbauten erzeugen würde.
+
+### Die 17 neuen Services → Modul-Zuordnung (Aufwands-Signal)
+
+| Modul / Split | Neue Services |
+|---|---|
+| **Mail-Split** (`p4-mail-rework`) | `MailImapService`, `MailSmtpService`, `ImapConfigService`, `RecipientsService` (4 — bestätigt die Zerlegung IMAP/SMTP/Config/Recipients) |
+| **Wiki** (`p3-wiki`) | `WikiPageService`, `WikiFolderService`, `WikiTreeService`, `WikiSearchService` (4 — service-schwer) |
+| **MobileDevices** (`p6-mobile-devices`, deferred) | `MobileDevicesService`, `RelutionUserTokenService` (2 — Relution) |
+| **Chat** (`p2-chat`) | `ChatService` |
+| **Calendar** (`p5-calendar`) | `CalendarService` |
+| **ParentChildPairing** (`p3-parent-child-pairing`) | `ParentChildPairingService` |
+| **Satellites** (`p6-satellites`, deferred) | `SatellitesService` |
+| **Filesharing/WOPI** (`p4-filesharing-wopi`) | `CollaboraService` |
+| **Linbo** (`p5-linbo`) | `LinboService` |
+| **ProfilePicture** (aus Users) | `ProfilePictureService` |
+
+Summe = 17 ✓. Jeder neue Service gehört zu einem bereits erfassten Backlog-Abschnitt — **kein
+verwaister Service** (kein „vergessenes" Feature).
+
+### Bestands-Services (41) — vollständiges Drift-Signal
+
+**Signal-Methodik** (Task: „Signal-Ebene, kein Handler-Byte-Diff"): `M(1.6)` = öffentliche
+Methoden der 1.6-Klasse (grep `^  [async|public|…] name(`). `Signal` = **stabil** (in 2.0
+vorhanden, keine Route/Dep-Drift aus T2/Supply-Chain) oder **gedriftet** (Route-/Dep-/Ziel-Drift
+belegt — Δ dann ↑). Kein 1.6-Service fehlt in 2.0 (`comm -13` leer, s. o.) → Spalte „in 2.0" = ✓
+für alle 41.
+
+| # | Service (1.6) | M(1.6) | Signal | Grund (bei gedriftet) |
+|--:|---|--:|---|---|
+| 1 | AppConfigService | 14 | stabil | — |
+| 2 | AuthService | 11 | stabil | — |
+| 3 | BulletinBoardService | 14 | stabil | — |
+| 4 | BulletinCategoryService | 10 | stabil | — |
+| 5 | ConferencesService | 23 | stabil | — |
+| 6 | DevCacheFlushService | 2 | stabil | — |
+| 7 | DockerService | 17 | **gedriftet ↑** | App-Store-Engine (Companion-Images, Plugins-Fetch) |
+| 8 | FilesharingService | 18 | **gedriftet ↑** | Filesharing-Split → PublicFilesharing/Wopi |
+| 9 | FilesystemService | 31 | stabil | — |
+| 10 | GlobalSettingsService | 10 | **gedriftet** | Branding/Theme-Settings |
+| 11 | GroupsService | 30 | stabil | — |
+| 12 | HealthService | 9 | **gedriftet** | Build-Metadaten (§ Observability) |
+| 13 | LdapKeycloakSyncService | 26 | **gedriftet** | neue Realm-Mapper |
+| 14 | LicenseService | 8 | **gedriftet** | Lizenzserver-URL `license.edulution.io` (Supply-Chain) |
+| 15 | LmnApiService | 39 | **gedriftet** | Linbo-Ausgliederung (→ LinboService) |
+| 16 | MailIdleService | 22 | **gedriftet ↑** | Mail-Rework (→ Imap/Smtp/Config/Recipients) |
+| 17 | MailsService | 17 | **gedriftet ↑** | Mail-Rework, Controller 10→36 |
+| 18 | MetricsService | 2 | stabil | — |
+| 19 | MigrationService | 0 | stabil | (0 Methoden = reine `migrate()`-Registry; Migrations-Inventar = §3.3) |
+| 20 | MobileAppService | 5 | stabil | — |
+| 21 | NotificationsService | 22 | **gedriftet** | +Routen (Push/SSE) |
+| 22 | OnlyofficeService | 4 | **gedriftet** | DocumentEditor-Selektor (Collabora-Nebengleis) |
+| 23 | QueueService | 8 | stabil | — |
+| 24 | ScriptsService | 3 | stabil | — |
+| 25 | SseService | 11 | stabil | — |
+| 26 | SurveyAnswerAttachmentsService | 12 | stabil | — |
+| 27 | SurveyAnswersService | 18 | stabil | — |
+| 28 | SurveysAttachmentService | 11 | stabil | — |
+| 29 | SurveysService | 10 | stabil | — |
+| 30 | SurveysTemplateService | 6 | stabil | — |
+| 31 | ThumbnailService | 12 | stabil | — |
+| 32 | TLDrawSyncService | 11 | stabil | — |
+| 33 | UserPreferencesService | 5 | stabil | — |
+| 34 | UsersService | 19 | **gedriftet** | ProfilePicture-Ausgliederung (→ ProfilePictureService) |
+| 35 | VdiService | 12 | stabil | — |
+| 36 | VeyonService | 9 | stabil | — |
+| 37 | WebdavService | 20 | **gedriftet ↑** | WOPI/Collabora-Pfad |
+| 38 | WebdavSharesService | 9 | stabil | — |
+| 39 | WebhookClientsService | 7 | stabil | — |
+| 40 | WebhookService | 6 | stabil | — |
+| 41 | WireguardService | 19 | stabil | — |
+
+**13 gedriftet / 28 stabil.** Alle 13 gedrifteten decken sich 1:1 mit T2-Controller-Drift bzw.
+den 6 neuen Modulen — **kein Service driftet „unerwartet"** (ohne zugehörigen Backlog-Abschnitt).
+
+**T3-Fazit:** Additive-These auf Service-Ebene bestätigt; die Service-Drift deckt sich 1:1 mit
+den in T2 identifizierten Hotspots und den 6 neuen Modulen — **keine neuen Überraschungen**.
+
+<!-- T4–T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->

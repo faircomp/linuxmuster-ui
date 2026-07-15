@@ -163,7 +163,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T3 — Service-Drift-Signal (Bestands-Services)  [ ]
+### T3 — Service-Drift-Signal (Bestands-Services)  [x] ✓ 41/41 abgedeckt; 13 gedriftet/28 stabil, 0 entfernt — additive-These auf Service-Ebene bestätigt
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `class …Service ` ↔ 1.6 41 Service-Klassen in apps/api/src/**
 Änderung: **Signal-Ebene** (kein Handler-Byte-Diff): je Bestands-Service die öffentlichen
