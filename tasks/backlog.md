@@ -693,7 +693,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T8
 
-### T12 — index.html Produktname/OG/Description  [ ]
+### T12 — index.html Produktname/OG/Description  [x] OK Title/Description/OG → „linuxmuster UI", 0 edulution.io
 Komponente: `apps/frontend` · Dateien: `apps/frontend/index.html`
 Soll: index.html:26 (`<title>edulution.io</title>`), :29 (description), :41 (og:title)
 Änderung: Title/Description/OG-Title auf Produktnamen „linuxmuster" (OF1) umstellen. Favicon-Ref/Loader-Logo hier nicht — s. T13.
@@ -701,7 +701,7 @@ Verify: `! grep -nE "edulution\.io" apps/frontend/index.html` und `grep -qi "lin
 i18n: keine
 Doku: keine (intern)
 
-### T13 — Favicon + Loader-Logo neutralisieren (Platzhalter)  [ ]
+### T13 — Favicon + Loader-Logo neutralisieren (Platzhalter)  [x] OK favicon.svg = neutrales L-Monogramm, Loader-base64 = neutraler Ring; edulution-Gradient 8fc046/1084c0 weg
 Komponente: `apps/frontend` · Dateien: `apps/frontend/public/favicon.svg`, `apps/frontend/index.html` (Base64-Loader-SVG :51ff)
 Soll: markenrechtlich geschütztes edulution-Blatt-Logo muss vor Image-Publish raus (PLAN §2.5/§4.1)
 Änderung: das edulution-Blatt-Logo (favicon.svg + der inline Base64-Loader-SVG in index.html) durch einen **neutralen Platzhalter** (schlichtes geometrisches/Monogramm-SVG) ersetzen. Finales Logo-Design = OF5 (separater Schritt).
