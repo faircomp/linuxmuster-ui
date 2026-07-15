@@ -3,23 +3,24 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import SYNTHETIC_PERSONAS, { SYNTHETIC_NAMESPACE, personaViolations, PERSONA_ROLE } from './synthetic-personas';
+import SYNTHETIC_PERSONAS, { SYNTHETIC_NAMESPACE, personaViolations } from './synthetic-personas';
 import type { SyntheticPersona } from './synthetic-personas';
 
-const REAL_PII_PROBE: SyntheticPersona = {
-  id: 'real.user.42',
-  username: 'jdoe',
-  email: 'john.doe@realschool.example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  role: PERSONA_ROLE.STUDENT,
-  isMinor: true,
-  school: 'realschule-berlin',
+const [validPersona] = SYNTHETIC_PERSONAS;
+
+const SELF_TEST_PROBES: Record<string, SyntheticPersona> = {
+  id: { ...validPersona, id: 'real.user.42' },
+  username: { ...validPersona, username: 'jdoe' },
+  email: { ...validPersona, email: 'john.doe@realschool.example.com' },
+  school: { ...validPersona, school: 'realschule-berlin' },
 };
 
 const run = (): number => {
-  if (personaViolations(REAL_PII_PROBE).length === 0) {
-    console.error('Gate defekt: eine Nicht-synth.-Kennung wurde NICHT beanstandet.');
+  const undetected = Object.entries(SELF_TEST_PROBES)
+    .filter(([, probe]) => personaViolations(probe).length === 0)
+    .map(([field]) => field);
+  if (undetected.length > 0) {
+    console.error(`Gate defekt: Nicht-synth.-Werte NICHT beanstandet in: ${undetected.join(', ')}`);
     return 1;
   }
 

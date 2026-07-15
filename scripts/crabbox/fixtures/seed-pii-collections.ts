@@ -5,13 +5,20 @@
 
 import SYNTHETIC_PERSONAS, { personaViolations } from './synthetic-personas';
 
-const TEST_DB_PATTERN = /(_e2e|-test|_test|^test-)/i;
+const TEST_DB_PATTERN = /^test-|[-_](test|e2e)$/i;
 
 const byId = Object.fromEntries(SYNTHETIC_PERSONAS.map((p) => [p.id, p]));
-const student1 = byId['synth.student.student01'];
-const student2 = byId['synth.student.student02'];
-const teacher1 = byId['synth.teacher.teacher01'];
-const parent1 = byId['synth.parent.parent01'];
+
+const requirePersona = (id: string) => {
+  const found = byId[id];
+  if (!found) throw new Error(`Persona fehlt im Katalog: ${id}`);
+  return found;
+};
+
+const student1 = requirePersona('synth.student.student01');
+const student2 = requirePersona('synth.student.student02');
+const teacher1 = requirePersona('synth.teacher.teacher01');
+const parent1 = requirePersona('synth.parent.parent01');
 
 const buildDocuments = () => ({
   conversations: [
@@ -68,8 +75,17 @@ const run = async (): Promise<number> => {
     await client.connect();
     const db = client.db(dbName);
     for (const [collection, docs] of Object.entries(documents)) {
-      await db.collection(collection).insertMany(docs, { ordered: false }).catch(() => undefined);
-      console.info(`[seed-pii] ${collection}: ${docs.length} Dokument(e) geschrieben nach '${dbName}'.`);
+      try {
+        const result = await db.collection(collection).insertMany(docs, { ordered: false });
+        console.info(`[seed-pii] ${collection}: ${result.insertedCount} Dokument(e) geschrieben nach '${dbName}'.`);
+      } catch (error) {
+        const code = (error as { code?: number }).code;
+        if (code === 11000) {
+          console.info(`[seed-pii] ${collection}: bereits vorhanden (idempotent übersprungen).`);
+        } else {
+          throw error;
+        }
+      }
     }
     return 0;
   } finally {
