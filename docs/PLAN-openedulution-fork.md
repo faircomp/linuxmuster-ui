@@ -136,6 +136,16 @@ Die These „rein additiv" ist bewiesen nur auf **Modul-Ebene** (32→38 Verzeic
 
 (PT = Personentage Backend, **reine Coding-Schätzung ohne Verifikations-Overhead**; Basis-Drift-Puffer +20–30 % separat.)
 
+> **Aktualisierung (Basis-Drift-Analyse abgeschlossen, `docs/analysis/base-drift-2.0.200.md`):**
+> Der §3.0-Pauschalpuffer +20–30 % ist **bestätigt und modul-scharf aufgelöst**. Die additive-These
+> hält auf **jeder** Klassen-Ebene (Module 32→38, Controller 29, Services 41→58, Schemas 29→39 — je
+> **0 entfernt/umbenannt**); Gesamt-Drift-Ampel überwiegend 🟢, **kein 🔴**. Verfeinerte Aufschläge:
+> **Chat +25 %** (SSE-Rework), **Mail +30 %** (Controller 10→36 + Service-Split), **Filesharing +25 %**,
+> **Wiki +20 %**, **Calendar +20 %**, **ParentChildPairing +15 %**, **Linbo +15 %** (ruhige Contracts).
+> Gelb/Orange nur bei **additiven** Contract-Erweiterungen (appconfig-Hülle `usesPushNotifications`/
+> `isPinned`, SSE-Reconnect/Heartbeat-Schicht, defaultAppConfig-Seed +WIKI). Details + Ampel-Tabelle
+> je Schicht: der Report; Fresh-Install-Seed-Gap → §6.2.
+
 | # | Modul/Controller | Routen | Neue Deps / externe Infra | PT | crabbox-verifizierbar |
 |---|---|---|---|---|---|
 | 0 | **ProfilePicture** (`main.js:18961`, in `UsersModule`) | 4 | keine (`sharp` vorhanden) | ~0,5 | ja |

@@ -120,7 +120,7 @@ Der Vollständigkeit halber bereits in den P1-Ledgern verankert: **9.1** Org `fa
 # Arbeitspakete (in Reihenfolge abarbeiten)
 
 ## p0-base-drift-analysis [P0] — Basis-Drift-Analyse (32 Bestandsklassen, libs/, appconfig, SSE, Guards)
-_Ziel:_ Bestands-Drift 1.6→2.0.200 (Module/libs/appconfig/SSE/Guards) mit Ankern messen · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 12
+_Ziel:_ Bestands-Drift 1.6→2.0.200 (Module/libs/appconfig/SSE/Guards) mit Ankern messen · _Abhängt-von:_ — · _Status:_ erledigt (12/12) · _Tasks:_ 12
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-base-drift-analysis.md` · Soll: main.js:11219/32604/56393/56551/56883/59854/59956/63161/64484 (Guards) · main.js:10661/55022 (SSE) · main.js:55581/65115 (Gateways) · main.js:2335/2380–2468 (defaultAppConfig) · 1.6-Source apps/api/src + libs/src
 
 > **Analyse-Paket — Verify-Realität:** Dies sind **Investigations-Tasks (kein Produktivcode)**.
@@ -292,7 +292,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T11 — FE-App-Shell-/Routing-/Store-Struktur-Drift (Signal, §4.1)  [ ]
+### T11 — FE-App-Shell-/Routing-/Store-Struktur-Drift (Signal, §4.1)  [x] ✓ Shell-Muster stabil (native 205×), Routen additiv (alle Slugs), Glass+--code-* bestätigt
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: 1.6 `apps/frontend/src/{routes,components/structure/layout/NativeAppPageManager.tsx,store}`
 ↔ 2.0 `.reference/2.0.200/ui` index-Bundle (minifiziert) + `.reference/2.0.200/baselines/*` Live-Referenz
@@ -310,7 +310,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T12 — Synthese: Drift-Bewertung + Aufwands-Fixierung P2–P5  [ ]
+### T12 — Synthese: Drift-Bewertung + Aufwands-Fixierung P2–P5  [x] ✓ Ampel je Schicht (überwiegend 🟢, kein 🔴); Aufschläge P2–P5 fixiert; PLAN §3.2 rückverwiesen
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md · PLAN-openedulution-fork.md (§3.2/§8 Rückverweis)
 Soll: Aggregat aus T2–T11
 Änderung: Aus allen Schicht-Befunden je Schicht eine **Drift-Ampel** (grün/gelb/rot) setzen und

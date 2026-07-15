@@ -398,4 +398,73 @@ SSE → die Nachrichtentyp-Menge fast verdreifacht.
 muss gegen den **2.0-SSE-Contract** (Reconnect/Heartbeat/Persist/Channel-Prefix) bauen, nicht
 gegen die simplere 1.6-Variante; das ist ein realer Aufwands-Aufschlag-Input für Chat/Notifications.
 
-<!-- T11, T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->
+## T11 — FE-App-Shell-/Routing-/Store-Struktur-Drift (Signal)
+
+**Methoden-Vorbehalt (explizit):** Das 2.0.200-FE-Bundle (`.reference/2.0.200/ui/assets/
+index-C92ywU1P.js` + `index-B8gBpk3Y.css`) ist **minifiziert, ohne Quell-Namen** — dies ist eine
+**String-Signal-Ebene**, kein exakter Diff. Aussagen sind „stabil/gedriftet"-Plausibilisierungen
+gegen die 1.6-Struktur (14 Routes-Dateien, `NativeAppPageManager.tsx` vorhanden) + Baselines.
+
+**(a) App-Shell / Store-Pattern — stabil.** `appType: native` (NATIVE-Registrierung, das
+`NativeAppPageManager`-Muster) taucht **205×** im Bundle auf → die App-Shell-/Registrierungs-
+Architektur der 1.6 ist strukturell erhalten, nicht ersetzt.
+
+**(b) Routing — additiv (alle neuen Modul-Routen registriert).** Slug-Signal im Haupt-Bundle:
+`calendar` 16×, `mail` 12×, `wiki` 6×, `chat` 3×, `conferences` 3×, `filesharing` 4×,
+`satellites` 6×, `parentChild` 49× (+`parent-child-pairing` 5×), `mobiledevices` 168×
+(+`mobileDevices` 6×). → Sämtliche neuen Modul-Routen sind im FE präsent; die Route-Struktur
+wuchs **additiv** um die 6 neuen Module.
+
+**(c) Design-Sprache — Glass + Code-Highlight bestätigt (Assertion).** `bg-glass`
+(Glassmorphism) 20× (CSS) / 19× (JS) → das 2.0-Glass-Design ist im Bundle. Die **4 neuen
+CSS-Variablen `--code-keyword` / `--code-number` / `--code-string` / `--code-title` sind
+bestätigt** — in `index-B8gBpk3Y.css` **und** `MarkdownRenderer-Bd3sgb1n.css` (Code-Syntax-
+Highlighting für Wiki/Markdown).
+
+**T11-Fazit:** FE-App-Shell/Routing/Store-Struktur **stabil auf Muster-Ebene**; die Drift ist
+**additiv** (neue Modul-Routen + Code-Highlight-CSS-Vars + Glass-Design) — kein Bruch der
+Shell-Architektur. (Signal-Level; exakter FE-Diff bleibt Modul-Arbeit in P2–P5.)
+
+## T12 — Synthese: Drift-Ampel + Aufwands-Fixierung P2–P5
+
+### (a) Drift-Ampel je Schicht
+
+| Schicht | Befund (T-Ref) | Ampel |
+|---|---|:--:|
+| Module (32→38) | 6 neu, **0 entfernt/umbenannt** (T1) | 🟢 |
+| Controller (29) | 23/29 0-Drift; Mail 10→36, Filesharing-Split, Linbo/ProfilePicture ausgegliedert (T2) | 🟡 |
+| Services (41→58) | 0 entfernt; 13 gedriftet decken sich mit T2/neuen Modulen (T3) | 🟢 |
+| DTO/Schema (29→39) | 0 Schema entfernt; DTO-Basen unverändert & nicht geteilt; additive Felder (WebdavShares wiki*) (T4) | 🟢 |
+| libs/Endpoints (32→41) | **0 Pfad-Änderung** an Bestands-Endpoints → FE↔API-Contract intakt (T5) | 🟢 |
+| appconfig-Shape | `appConfigOptionKeys` unverändert; **Hülle +usesPushNotifications+isPinned (cross-cutting)** (T6) | 🟡 |
+| defaultAppConfig-Seed | +WIKI, +2 Flags/Eintrag → **Fresh-Install-Layout weicht ab** (T7) | 🟡 |
+| SSE-Contract | 3 Routen erhalten; **Reconnect/Heartbeat/Persist-Schicht neu**, sseMessageType 23→67 (T8) | 🟠 |
+| Guards/Auth (7→9) | 7 Bestand stabil (Signing-Key + isPublic-Semantik gleich); +Throttle +MailRequestSize (T9) | 🟢 |
+| Gateway/Queue/Cron | Gateways 1→2, Queues 4→11, Cron-/registerAs-Anker-Formabweichung (T10) | 🟡 |
+| FE-Shell/Routing | Muster stabil (native 205×), Routen additiv, Glass+`--code-*` bestätigt (T11) | 🟢 |
+
+**Gesamt-Ampel: 🟢 überwiegend grün.** Kein 🔴 (kein Bruch/Entfernen auf irgendeiner Schicht).
+Die additive-These hält auf **jeder** Klassen-Ebene (Module/Controller/Services/Schemas — je 0
+entfernt). Die gelben/orangen Punkte sind **additive Contract-Erweiterungen** (appconfig-Hülle,
+SSE-Rework, Cron/Queue-Ops), kein Fundament-Umbau.
+
+### (b) Basis-Drift-Aufschlag je Modul-Paket (verfeinert §3.0)
+
+Der §3.0-Pauschalpuffer war **+20–30 %**. Aus den Schicht-Befunden verfeinert:
+
+| Paket (Phase) | Treibende Drift | Aufschlag | Begründung |
+|---|---|:--:|---|
+| **Chat (P2, Pilot)** | SSE 🟠 + appconfig-Hülle 🟡 + Migration | **+25 %** | Muss gegen den überarbeiteten SSE-Contract (Reconnect/Heartbeat/Persist) bauen; `usesPushNotifications`-Hülle; Chat-Schemas neu |
+| **ParentChildPairing (P3)** | Guards 🟢 + LMN-Gruppen + Migration | **+15 %** | Contract-Ebenen ruhig; Aufwand aus TTL-Pairing/Rollen + Migration, wenig Basis-Drift |
+| **Wiki (P3)** | Schema-Felder (WebdavShares wiki*) 🟢 + Fresh-Install-Seed 🟡 + TipTap-Chunk | **+20 %** | additive Schema-/Seed-Arbeit + eigener `wiki-editor`-Bundle-Chunk (Editor ist der Hauptaufwand, s. §3) |
+| **Mail (P4)** | Controller 10→36 🟡 + Service-Split + Guard | **+30 %** | Größte Controller-Drift der Bestandsschicht + Service-Zerlegung (Imap/Smtp/Config/Recipients) + `MailRequestSizeGuard`; unser Selektor ist Fork-Eigenbau |
+| **Filesharing/WOPI (P4)** | Filesharing-Split 🟡 + `ACTIVE_DOCUMENT_EDITOR` | **+25 %** | Controller-Split (Public/Wopi) + Collabora-Selektor-Shape |
+| **Calendar (P5)** | Schemas neu 🟢 + rrule-FE | **+20 %** | Contract-Ebenen ruhig; Aufwand aus rrule-Grid-FE, wenig Basis-Drift |
+| **Linbo (P5)** | lmn-api-Proxy-Endpoints 🟢 (additiv) | **+15 %** | reiner lmn-api-Proxy; Endpoint-Konstanten additiv, kein Contract-Bruch |
+
+**Fixierung:** Der §3.0-Puffer wird **bestätigt** und modul-scharf aufgelöst (P2/P4-Mail/
+Filesharing am oberen Rand +25–30 % wg. SSE/Controller-Drift; P3-Pairing/P5-Linbo am unteren Rand
++15 % wg. ruhiger Contracts). **Rückverweis-Notiz** → `PLAN-openedulution-fork.md` §3.2/§8.
+
+**Assertion erfüllt:** jede der 11 Schichten hat eine Ampel; jedes Modul-Paket P2–P5 hat einen
+belegten Prozent-Aufschlag mit Begründung.
