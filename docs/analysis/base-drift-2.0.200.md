@@ -220,4 +220,125 @@ den 6 neuen Modulen — **kein Service driftet „unerwartet"** (ohne zugehörig
 **T3-Fazit:** Additive-These auf Service-Ebene bestätigt; die Service-Drift deckt sich 1:1 mit
 den in T2 identifizierten Hotspots und den 6 neuen Modulen — **keine neuen Überraschungen**.
 
-<!-- T4–T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->
+## T4 — DTO-Basisklassen- & Mongoose-Schema-Drift
+
+### (a) Mongoose-Schemas
+
+**Zählung (Verify):** `MJ` `SchemaFactory.createForClass` = **39** · 1.6 `apps/api/src` = **29**
+→ **10 neue Schemas, 0 entfernt** (`comm -13` leer). → **additiv auch auf Schema-Ebene.**
+
+| Modul | Neue Schemas (10) |
+|---|---|
+| Chat | `Conversation`, `ChatMessage`, `ChatReadStatus` |
+| Calendar | `CalendarMetadata`, `CalendarShareEntry` |
+| ParentChildPairing | `ParentChildPairing` |
+| MobileDevices (deferred) | `RelutionUserToken` |
+| Satellites (deferred) | `Satellite` |
+| Mail-Rework | `SharedMailbox` |
+| Wiki/Filesharing-ACL | `aclSectionEmbedded_schema_1` |
+
+**Feld-Drift auf Bestands-Schemas (Signal; exaktes Feld-/Migrations-Inventar = `p0-migrations-inventory`):**
+Belegt am Hotspot **`WebdavShares`**: `wikiAccessGroups` (8×) und `wikiDisabled` (6×) existieren
+im `MJ`, in 1.6 **0 Dateien** → **2.0-only Felder auf einem Bestands-Schema** (Wiki-Zugriffs-
+steuerung). Das ist der Prototyp der additiven Schema-Feld-Erweiterung, die eine forward-only
+Migration mit `schemaVersion`++ braucht (serialisiert, s. Contract-Overlap §1). Weitere Feld-
+Zugänge (User→ProfilePicture-Ref, GlobalSettings→Branding) korrelieren mit den 13 T3-gedrifteten
+Services; die vollständige Feldliste je Schema ist bewusst nach `p0-migrations-inventory` delegiert
+(dort ist Feld-Genauigkeit die Aufgabe, hier nur das Signal „Schema X hat neue Felder").
+
+### (b) DTO-Basisklassen
+
+**Zählung:** `MJ` `class …Dto` = **241** · 1.6 `apps/api/src`+`libs/src` = **31**. Diese
+31↔241-Spanne ist **Zählflächen-Rauschen, kein Wachstum**: `main.js` aggregiert die DTOs des
+gesamten Backends in **einer** Datei, während die 1.6-Grep-Fläche DTOs teils als Interfaces/
+`type`-Aliase bzw. in nicht erfassten Pfaden führt. Die Task warnt genau davor („Anker exakt
+definieren, sonst rauscht der Diff") — die absolute DTO-Zahl ist **kein** verwertbares Signal.
+
+**Das verwertbare Signal ist die Vererbung** (ändert sich eine geteilte Basis, rippelt es in alle
+Erben): 1.6 hat **fast keine geteilte DTO-Hierarchie** — nur **2 echte `…Dto extends …Dto`**
+(`BulletinResponseDto extends CreateBulletinDto`, `BulletinCategoryResponseDto extends
+CreateBulletinCategoryDto`, beide **Bulletin-modul-intern**) plus `UpdateUserDto extends
+PartialType(…)`. **Keine modulübergreifende abstrakte Basis-DTO-Klasse**, die neue Module (Chat/
+Wiki/Calendar) extenden würden — jedes Modul definiert seine DTOs lokal. Beide Bulletin-Basen sind
+in 2.0 unverändert vorhanden (`CreateBulletinDto`/`CreateBulletinCategoryDto` je 1× im `MJ`).
+
+**T4-Fazit (Assertion erfüllt):** Schema 29→39/0-entfernt + DTO-Basisklassen **nachweislich
+unverändert und nicht querschnittlich geteilt** → von der DTO-Vererbung geht **keine
+Integrationsreibung** aus; die einzige reale Schema-Arbeit ist additive Feld-Erweiterung auf
+Bestands-Schemas (WebdavShares u. a.), sauber via `schemaVersion`++-Migration abzudecken.
+
+## T5 — libs/ Shared-Struktur- & Endpoint-Konstanten-Drift
+
+**Zählung (Verify):** 1.6 `libs/src`+`apps/api/src` `…_ENDPOINT = '…'` = **32** · `MJ` = **41**
+→ **9 neue Endpoint-Konstanten.** **Contract-kritisches Ergebnis: 0 Bestands-Endpoints haben ihren
+String-Pfad geändert** (Join über Namen-in-beiden → Pfad-Δ leer). → **Der FE↔API-Pfad-Vertrag der
+32 Bestands-Endpoints ist unverändert** — kein FE-Consumer bricht durch Endpoint-Rename.
+
+Die 9 neuen sind **additive Companion-Konstanten**, überwiegend die 2.0-Aufteilung in edu-api- vs.
+lmn-api-Proxy-Pfade bestehender Module: `CALENDAR_ENDPOINT` (Calendar), `LINBO_LMN_API_ENDPOINT`
+(Linbo), `DEVICES_LMN_API_ENDPOINT` (MobileDevices), `GROUPS_LMN_API_ENDPOINT`,
+`VDI_LMN_API_ENDPOINT`, `CONFERENCES_EDU_API_ENDPOINT` (Proxy-Refactor bestehender Module),
+`EDU_API_USERS_PASSWORD_ENDPOINT` + `EDU_API_USERS_PROFILE_PICTURE_ENDPOINT` (Users-Erweiterung),
+`GLOBAL_SETTINGS_PUBLIC_ORGANISATION_INFO_ENDPOINT` (öffentliche Org-Info).
+
+**Methoden-Vorbehalt:** Chat/Wiki-Endpoints tauchen im `_ENDPOINT`-Suffix-Set **nicht** auf (ihre
+Slugs laufen über `APPS.*`/andere Namensmuster bzw. nur im FE-Bundle) — für den BE-Pfad-Vertrag
+irrelevant, für T11 (FE-Signal) vermerkt. **Assertion erfüllt:** jeder Endpoint mit Pfad-Änderung
+wäre als Contract-Drift markiert — es gibt **keinen**; die 9 neuen sind rein additiv.
+
+## T9 — Guard-/Auth-Contract-Drift (7 → 9 Guards)
+
+**Zählung (Verify):** `MJ` `class …Guard ` = **9** (Zeilen belegt) · 1.6 = **7** → **2 neue, 0
+entfernt.** Alle 7 Bestands-Guards sind in 2.0 präsent:
+
+| Guard | 1.6 | 2.0 (`MJ`-Zeile) | Signal |
+|---|:--:|--:|---|
+| AccessGuard | ✓ | 59854 | stabil |
+| AdminGuard | ✓ | 11219 | stabil |
+| AuthGuard | ✓ | 59956 | stabil — Signing-Key-Pfad `edulution.pem` in beiden vorhanden (2.0: 3×, 1.6: 1 Datei) → Token-Verifikation unverändert |
+| DynamicAppAccessGuard | ✓ | 56393 | stabil |
+| IsPublicAppGuard | ✓ | 56551 | stabil — `@Public`/`isPublic`-Metadata-Semantik gleich; Vorkommen 59→76 (additiv mehr public-Routen markiert) |
+| LocalhostGuard | ✓ | 56883 | stabil |
+| WebhookGuard | ✓ | 63161 | stabil |
+| **MailRequestSizeGuard** | — | **32604** | **NEU** — Mail-Upload-Größenlimit (trägt Mail-Attachment-Routen) |
+| **ThrottleGuard** | — | **64484** | **NEU** — Rate-Limiting (globales/Route-Throttling) |
+
+**Assertion erfüllt:** `ThrottleGuard` + `MailRequestSizeGuard` als „neu in 2.0" markiert; die 7
+Bestands-Guards sind einzeln bewertet. **Auth-Bypass-Vorbehalt (Guardrail):** Beim Modul-Nachbau
+**jede Route mit ihrem Guard/`@Public` mit-portieren** — der Signing-Key-Pfad (`edulution.pem`) und
+die `isPublic`-Metadata-Semantik sind stabil, d. h. ein 1:1-Port erhält die Auth-Semantik; die
+2 neuen Guards nur dort anhängen, wo 2.0 sie trägt (Mail-Upload / Throttling).
+
+## T10 — Gateway-/Queue-/Cron-/registerAs-Drift (ops-kritisch, mit Anker-Kalibrierung)
+
+**Gateways 1 → 2:** 1.6 = 1 (`TLDrawSyncGateway`, stabil) · 2.0 = 2 (+ `SatellitesGateway`, P6
+deferred — Existenz belegt).
+
+**Queues 4 → 11 (+7):** Der 1.6-Anker `new Queue(` liefert im gebündelten `MJ` **0** Treffer →
+**kalibrierte Form** = `new bullmq…` = **11** (bzw. `bullmq_1.Queue` = 6; `registerQueue` = 1,
+`BullModule` = 2). → BullMQ-Queues von 4 (1.6 `new Queue(`) auf 11 (2.0) — 7 neue, den neuen
+Modulen (Chat/Mail-Idle/Notifications-Push u. a.) zuzuordnen; genaue Queue-Namen sind Ops-Detail
+für `p1-observability`/`p1b-tracking`.
+
+**Cron 4 → ~6 (Formabweichung):** 1.6 `@Cron(` = **4**. 2.0 `@Cron(`/`CronExpression`/
+`SchedulerRegistry`/`new CronJob(` = **alle 0** → **kalibrierte Form** = `schedule_1.`
+(`@nestjs/schedule`-Namespace-Import, **19** Refs) mit `Cron\b` = **6**, `handleCron` = 2,
+`ScheduleModule` = 1. → Scheduling ist da und additiv, aber im Bundle nur über den
+`schedule_1.`-Namespace greifbar.
+
+**registerAs / Config:** `registerAs(` = **1** in 2.0 (in 1.6 ebenso quasi-leer) → **kein**
+verwertbares `registerAs`-Signal; Config-Namespaces laufen über `configuration` (**45**) /
+`ConfigModule.forRoot` (`forRoot(` = 8, `ConfigModule` = 5) / `config_1.` (12).
+
+### Anker-Kalibrierungs-Tabelle (Anhang für die P1b-Release-Diff-Pipeline)
+
+| Konzept | 1.6-Quell-Anker | Roh-Treffer im `MJ` | **Kalibrierte Bundle-Form** | belegte 2.0-Zahl |
+|---|---|:--:|---|:--:|
+| BullMQ-Queue | `new Queue(` | 0 | `new bullmq…` | 11 |
+| Cron-Job | `@Cron(` | 0 | `schedule_1.` / `Cron\b` | 19 / 6 |
+| Config-Namespace | `registerAs('` | 0 | `configuration` / `ConfigModule.forRoot` | 45 / 8 |
+
+**Assertion erfüllt:** Queue-Δ (4→11) belegt; Gateways = 2 belegt; für **jeden** 0-Treffer-Anker
+(`new Queue(`, `@Cron(`, `registerAs('`) ist die funktionierende Alternativform dokumentiert.
+
+<!-- T6–T8, T11, T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->

@@ -177,7 +177,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T4 — DTO-Basisklassen- & Mongoose-Schema-Drift  [ ]
+### T4 — DTO-Basisklassen- & Mongoose-Schema-Drift  [x] ✓ Schemas 29→39/0 entfernt; DTO-Basen unverändert & nicht querschnittlich geteilt (31→241 = Zählrauschen)
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `SchemaFactory.createForClass` (39) + `class …Dto` (241) ↔ 1.6 (29 Schemas)
 Änderung: Zwei Sub-Tabellen. (a) **Schemas:** je Bestands-Schema die Felder im `MJ` gegen die
@@ -193,7 +193,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T5 — libs/ Shared-Struktur- & Endpoint-Konstanten-Drift  [ ]
+### T5 — libs/ Shared-Struktur- & Endpoint-Konstanten-Drift  [x] ✓ 32→41 Endpoints, 0 Pfad-Änderung (FE↔API-Contract intakt); 9 neu additiv
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `[A-Z0-9_]+_ENDPOINT = '…'` (41) ↔ 1.6 libs/src `_ENDPOINT` (32) + libs/src-Domänen
 Änderung: (a) Endpoint-Konstanten diffen: welche der 32 1.6-`*_ENDPOINT`-Werte änderten ihren
@@ -256,7 +256,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T9 — Guard-/Auth-Contract-Drift (7 → 9 Guards)  [ ]
+### T9 — Guard-/Auth-Contract-Drift (7 → 9 Guards)  [x] ✓ 7 Bestand stabil (edulution.pem-Signing + isPublic-Semantik gleich); +ThrottleGuard +MailRequestSizeGuard
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js Guards @11219/32604/56393/56551/56883/59854/59956/63161/64484 ↔ 1.6 7 Guards in
 apps/api/src/**
@@ -274,7 +274,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T10 — Gateway-/Queue-/Cron-/registerAs-Drift (ops-kritisch)  [ ]
+### T10 — Gateway-/Queue-/Cron-/registerAs-Drift (ops-kritisch)  [x] ✓ Gateways 1→2, Queues 4→11 (Anker `new bullmq`), Cron/registerAs-Formabweichung kalibriert
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `TLDrawSyncGateway`@55581 · `SatellitesGateway`@65115 · `new Queue(` (11×) ↔ 1.6
 1 Gateway + 4 Queues + 4 `@Cron`
