@@ -1,31 +1,33 @@
-# edulution UI
+# linuxmuster UI
 
 [![Node](https://img.shields.io/badge/node-22.x-brightgreen?style=for-the-badge)](https://nodejs.org)
 [![React](https://img.shields.io/badge/react-18.x-blue?style=for-the-badge)](https://reactjs.org/)
 [![NestJS](https://img.shields.io/badge/nestjs-%E2%9D%A4-red?style=for-the-badge)](https://nestjs.com)
 [![NX Monorepo](https://img.shields.io/badge/nx-monorepo-blue?style=for-the-badge)](https://nx.dev)
-[![License](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge)](https://github.com/edulution-io/edulution-ui/tree/master/LICENSE)
-[![Community Forum](https://img.shields.io/discourse/users?style=for-the-badge&logo=discourse&logoColor=white&server=https%3A%2F%2Fask.linuxmuster.net)](https://ask.linuxmuster.net/tag/edulution)
+[![License](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge)](https://github.com/faircomp/linuxmuster-ui/blob/main/LICENSE)
+[![Community Forum](https://img.shields.io/discourse/users?style=for-the-badge&logo=discourse&logoColor=white&server=https%3A%2F%2Fask.linuxmuster.net)](https://ask.linuxmuster.net)
 
 ## Overview
 
-Edulution is a comprehensive, all-in-one solution for modern educational institutions. The modular and scalable digital package for multi-school environments covers all aspects of educational operations and can be customized to meet a wide range of requirements.
+linuxmuster UI is a comprehensive, all-in-one web platform for schools running [linuxmuster.net](https://linuxmuster.net) — a modular, scalable package for multi-school environments that covers the day-to-day of educational operations.
+
+> **Fork notice.** linuxmuster UI is an independent **fork** of edulution (Community Edition) by
+> Netzint GmbH / edulution-io. The original is dual-licensed (AGPL-3.0-or-later **or** a Netzint
+> commercial license); this fork is distributed **exclusively under the AGPL-3.0-or-later** arm and
+> does **not** use the name or logo "edulution". See [`NOTICE`](./NOTICE) for attribution and
+> [`TRADEMARK.md`](./TRADEMARK.md) for the trademark statement.
 
 ## Development
 
 ### Description
 
-A Full Stack Application build with Vite+React (frontend) and Nest.js for the API. NX is used to organise the monorepo.
-
-   <a href="https://github.com/edulution-io/edulution-ui">
-        <img src="https://raw.githubusercontent.com/edulution-io/edulution-docs/main/source/_static/Grafik_edulution_Tech_Stack.png" alt="Tech-Stack" style="background-color: #0d1117 ;"/>
-    </a>
+A full-stack application built with Vite + React (frontend) and NestJS (API). NX organises the monorepo.
 
 ### Maintenance Details
 
-| [Community support](https://ask.linuxmuster.net/tag/edulution) | ✅ YES |
-| :------------------------------------------------------------: | :----: |
-|                       Actively developed                       | ✅ YES |
+| [Community support](https://ask.linuxmuster.net) | ✅ YES |
+| :----------------------------------------------: | :----: |
+|                Actively developed                | ✅ YES |
 
 ### Getting Started
 
@@ -37,7 +39,7 @@ A Full Stack Application build with Vite+React (frontend) and Nest.js for the AP
 
 #### Public Key
 
-Read the public key and certificate from oidc provider (Keycloak >> realm settings >> keys). Then add `edulution.pem` file to the project root. Insert the key/cert as follwed:
+Read the public key and certificate from the OIDC provider (Keycloak >> realm settings >> keys). Then add an `edulution.pem` file to the project root. Insert the key/cert as follows:
 
 ```
 -----BEGIN CERTIFICATE-----
@@ -89,7 +91,7 @@ Read the public key and certificate from oidc provider (Keycloak >> realm settin
 
 ## Documentation
 
-#### Visit https://docs.edulution.io/
+Project documentation lives in [`docs/`](./docs) and in the [faircomp/linuxmuster-ui](https://github.com/faircomp/linuxmuster-ui) repository.
 
 ## Build
 
@@ -97,15 +99,11 @@ Read the public key and certificate from oidc provider (Keycloak >> realm settin
 
 ```bash
 npm run build:all && \
-docker build -t ghcr.io/edulution-io/edulution-ui -f apps/frontend/Dockerfile . && \
-docker build -t ghcr.io/edulution-io/edulution-api -f apps/api/Dockerfile . && \
+docker build -t ghcr.io/faircomp/linuxmuster-ui -f apps/frontend/Dockerfile . && \
+docker build -t ghcr.io/faircomp/linuxmuster-api -f apps/api/Dockerfile . && \
 docker compose up -d
 ```
 
 ## Deploy
 
-#### Visit https://get.edulution.io to get the deployment script. Or copy:
-
-```bash
-bash <(curl -s https://get.edulution.io/installer)
-```
+Use the companion installer [faircomp/linuxmuster-ui-installer](https://github.com/faircomp/linuxmuster-ui-installer) to provision a full stack.

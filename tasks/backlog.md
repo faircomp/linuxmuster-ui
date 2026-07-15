@@ -605,21 +605,21 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-rebrand.md` · Soll: reine
 
 ---
 
-### T1 — NOTICE + Fork-CHANGELOG anlegen  [ ]
+### T1 — NOTICE + Fork-CHANGELOG anlegen  [x] OK NOTICE (Attribution+duale-Lizenz-Klarstellung, Fork-Basis 36050641d/2.0.200) + CHANGELOG (Keep-a-Changelog)
 Komponente: Repo-Root · Dateien: `NOTICE`, `CHANGELOG.md`
 Änderung: `NOTICE` mit Attribution anlegen — „Fork von edulution (Community Edition), Netzint GmbH / edulution-io; Fork-Basis v1.6.266 (`36050641d`); Verhaltens-/Design-Referenz Image 2.0.200 (`7356c68`); Lizenz AGPLv3" + **duale-Lizenz-Klarstellung** (Original dual-lizenziert AGPL-3.0-or-later ODER Netzint-Kommerz; dieser Fork ausschließlich AGPL-Arm; neuer Code ohne Kommerz-Arm). `CHANGELOG.md` mit erstem Fork-Eintrag anlegen (Format „Keep a Changelog").
 Verify: `test -f NOTICE && test -f CHANGELOG.md && grep -qi "AGPL" NOTICE && grep -qi "36050641d" NOTICE`
 i18n: keine
 Doku: NOTICE + CHANGELOG.md (dies IST die Doku)
 
-### T2 — LICENSE_EXCEPTIONS.md → eigenes TRADEMARK-Statement  [ ]
+### T2 — LICENSE_EXCEPTIONS.md → eigenes TRADEMARK-Statement  [x] OK git mv → TRADEMARK.md, Netzint-„must retain branding"-Klausel raus, edulution-Marke anerkannt/nicht geführt
 Komponente: Repo-Root · Dateien: `LICENSE_EXCEPTIONS.md` → `TRADEMARK.md` (löschen/ersetzen)
 Änderung: Netzint-Markenklausel entfernen und durch eigenes Trademark-Statement ersetzen, das Netzints Marke „edulution" **anerkennt** und klarstellt, dass der Fork den Namen/das Logo „edulution" **nicht** führt. `LICENSE` (AGPLv3) bleibt unverändert; **keine** Bestandsdatei-Copyright-Header berühren. (`git mv LICENSE_EXCEPTIONS.md TRADEMARK.md`, Inhalt neu schreiben.)
 Verify: `test -f TRADEMARK.md && ! test -f LICENSE_EXCEPTIONS.md && ! grep -qi "must retain the original branding" TRADEMARK.md && grep -qi "edulution" TRADEMARK.md`
 i18n: keine
 Doku: TRADEMARK.md (dies IST die Doku)
 
-### T3 — README.md rebranden (Name, Attribution, duale Lizenz, Repo-/Image-Refs)  [ ]
+### T3 — README.md rebranden (Name, Attribution, duale Lizenz, Repo-/Image-Refs)  [x] OK „linuxmuster UI", Fork-Notice, ghcr/docs/installer→faircomp; 0 edulution-io-Refs
 Komponente: Repo-Root · Dateien: `README.md`
 Soll: README.md:7,20,21,100,101 (edulution-io-Links + `ghcr.io/edulution-io/edulution-{ui,api}`)
 Änderung: Produktname/Überschrift → „linuxmuster" (OF1); `edulution-io`-Repo-/Badge-/Tech-Stack-Links auf eigenes Repo (`faircomp/linuxmuster-ui`) bzw. entfernen; Attribution-Absatz + duale-Lizenz-Klarstellung (Verweis auf NOTICE); Build-Kommandos `ghcr.io/edulution-io/edulution-{ui,api}` → `ghcr.io/faircomp/linuxmuster-{ui,api}`. Wiring-Nennungen (`@edulution-io/ui-kit`) unangetastet lassen.
