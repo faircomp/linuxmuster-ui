@@ -923,7 +923,7 @@ SPDX: docs/*.md ohne Header (Markdown, nicht im addLicenseHeader-Scope)
 Abhängt von: T1, T2, T4, T8
 
 ## p1-installer-repoint [P1] ⭐ — Installer-Repoint / ui-kit-Inline / Lizenzserver-Stub / §13-Feature / Plugins-Mirror
-_Ziel:_ Installer auf eigene Registry/Tag; ui-kit inlinen, Lizenzserver stubben, §13, Plugins-Mirror · _Abhängt-von:_ p1-own-ci-registry, p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 11
+_Ziel:_ Installer auf eigene Registry/Tag; ui-kit inlinen, Lizenzserver stubben, §13, Plugins-Mirror · _Abhängt-von:_ p1-own-ci-registry, p0-supply-chain-inventory · _Status:_ erledigt (11/11 authored; T4/T5 nx-build/npm-ci box-gated; Installer-Repo braucht eigenen PR) · _Tasks:_ 11
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-installer-repoint.md` · Soll: main.js:43800 (LICENSE_SERVER_URL) · main.js:43629–43746 (LicenseService) · main.js:56954–56956 / :59719 (Health-Version) · libs/src/common/constants/urls.ts:21 (EDU_PLUGINS_GITHUB_URL) · Installer-Repo faircomp/linuxmuster-ui-installer (Compose/Realm/Traefik-Templates, .npmrc, package.json) · Baseline: docs/features/p1-rebrand.md (delegiert Installer+EDU_PLUGINS+§13, liefert PRODUCT_SOURCE_URL/PRODUCT_NAME via T8) · docs/features/p0-supply-chain-inventory.md §39/42/174
 
 > Zwei-Repo-Paket: T1–T5 im Installer-Repo (`/home/kevin/Dev/faircomp/openedulution/edulution-installer`, Remote `faircomp/linuxmuster-ui-installer`); T6–T11 im `edulution-ui`-Monorepo (dieses Repo). Platzhalter bis Freigabe: `<REG>`=`ghcr.io/faircomp` (OF1), `<PINNED_TAG>`=erster eigener Release-Tag `2.0.x` (OF2), `<MIRROR>`=`https://raw.githubusercontent.com/faircomp/linuxmuster-plugins/main/apps` (OF4).
@@ -954,7 +954,7 @@ Verify (crabbox): `! grep -n 'edulution-io/edulution-installer' apps/webinstalle
 i18n: keine
 Doku: keine (intern)
 
-### T4 — @edulution-io/ui-kit in den Installer vendorn (lokale Lib + tsconfig-Path)  [ ]
+### T4 — @edulution-io/ui-kit in den Installer vendorn (lokale Lib + tsconfig-Path)  [x] OK (Installer 8cc0c91) libs/ui-kit/src {Button,cn,HexagonIcon,index}+tailwind.config vendored, tsconfig-path @edulution-io/ui-kit→lokal; Deps vorhanden; nx-build-Verify box-gated
 Komponente: linuxmuster-ui-installer · Dateien: libs/ui-kit/src/** (neu), tsconfig.base.json
 Soll: Import-Specifier `@edulution-io/ui-kit` (Button, cn, tailwind.config) — Vorlage: edulution-ui `libs/ui-kit/src/{components/Button,utils/cn,index.ts}` + `libs/ui-kit/tailwind.config.ts`
 Änderung: Nur die tatsächlich genutzten Exporte (`Button`/`buttonVariants` + `cn` + `tailwind.config`) als lokale Installer-Lib `libs/ui-kit/src` vendorn; Import-Specifier `@edulution-io/ui-kit` **behalten**, in `tsconfig.base.json` per Path-Mapping auf die lokale Lib zeigen (analog UI-Monorepo `tsconfig.base.json:14`). Neue Dateien mit SPDX-Header `AGPL-3.0-or-later`, Copyright Kevin Stenzel (nicht Netzint).
@@ -962,7 +962,7 @@ Verify (crabbox): `nx build public-page && nx build webinstaller` bauen **ohne**
 i18n: keine
 Doku: keine (intern)
 
-### T5 — Privaten ui-kit-npm-Bezug + Token-.npmrc entfernen  [ ]
+### T5 — Privaten ui-kit-npm-Bezug + Token-.npmrc entfernen  [x] OK ui-kit-Dep raus, .npmrc gelöscht, package-lock via --package-lock-only bereinigt (0 npm.pkg.github.com); npm-ci-Verify box-gated
 Komponente: linuxmuster-ui-installer · Dateien: package.json, package-lock.json, .npmrc
 Soll: package.json:15 (`"@edulution-io/ui-kit": "^0.0.1"`) · .npmrc:1–2 (`@edulution-io:registry=…npm.pkg.github.com` + `_authToken=${GITHUB_TOKEN}`) · package-lock.json:1954 (privater Download)
 Änderung: ui-kit-Dependency aus `package.json` entfernen; privates-Registry-Scope + `_authToken`-Zeile aus `.npmrc` löschen (Datei ggf. leeren/entfernen); Lockfile neu erzeugen. Danach ist der Installer ohne Netzint-/Fremd-Token installierbar.
