@@ -130,7 +130,7 @@
   "appstore": {
     "title": "App Store",
     "description": "Ici tu peux ajouter des applications {{ applicationName }}.",
-    "edulutionIcons": "edulution Icons",
+    "edulutionIcons": "linuxmuster Icons",
     "moreIcons": "Plus d'icônes",
     "searchIcons": "Rechercher des icônes...",
     "searchIconsHint": "Astuce: Utilisez des termes de recherche en anglais (p.ex. \"house\" au lieu de \"maison\")",
@@ -158,7 +158,7 @@
       "manual": "Instructions",
       "setupWithQrCode": "Configuration via un QR-code",
       "content": "Vous pouvez accéder au serveur scolaire à partir de nombreux appareils mobiles. Appuyez sur les instructions pour commencer.",
-      "scanAccessInfo": "Pour transférer les identifiants, veuillez scanner le QR-code suivant avec l'edulution App.",
+      "scanAccessInfo": "Pour transférer les identifiants, veuillez scanner le QR-code suivant avec l'application linuxmuster.",
       "setup": "Configuration avec code QR",
       "qrCode": "Code QR"
     },
@@ -1398,8 +1398,8 @@
     },
     "mobileAccess": {
       "title": "Accès à l'application",
-      "description": "Tu peux configurer ici l'accès mobile à l'application edulution.",
-      "docsDescription": "Tu trouveras le lien de téléchargement de l'application edulution et les instructions d'installation dans la documentation edulution.",
+      "description": "Tu peux configurer ici l'accès mobile à l'application linuxmuster.",
+      "docsDescription": "Tu trouveras le lien de téléchargement de l'application linuxmuster et les instructions d'installation dans la documentation linuxmuster.",
       "button": "Ouvrir le documentaire"
     },
     "faq": "FAQ",
@@ -1498,8 +1498,8 @@
     "remember_me": "Mémoriser",
     "enterMultiFactorCode": "Authentification à deux facteurs",
     "loginWithApp": "Se connecter avec un code QR",
-    "loginWithQrDescription": "Ouvrez l'application edulution.io pour vous identifer simplement avec le code QR.",
-    "infoQrCodeExpired": "Le temps de connexion avec l'application edulution.io a expiré."
+    "loginWithQrDescription": "Ouvrez l'application linuxmuster pour vous identifer simplement avec le code QR.",
+    "infoQrCodeExpired": "Le temps de connexion avec l'application linuxmuster a expiré."
   },
   "common": {
     "more": "Plus",

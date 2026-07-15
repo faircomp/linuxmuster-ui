@@ -709,7 +709,7 @@ Verify: `! grep -o "8fc046\|1084c0" apps/frontend/index.html` (edulution-Gradien
 i18n: keine
 Doku: keine (intern)
 
-### T14 — i18n Produktnamen-Sweep (user-sichtbare Displaystrings, DE+EN)  [ ]
+### T14 — i18n Produktnamen-Sweep (user-sichtbare Displaystrings, DE+EN)  [x] OK edulution-Werte→linuxmuster in DE+EN+FR (Keys unverändert; Allowlist Edulution-Manager/edu-file-proxy-Key/binduser in Ruhe); check-translations grün
 Komponente: `apps/frontend` · Dateien: `apps/frontend/src/locales/de/translation.json`, `apps/frontend/src/locales/en/translation.json` (FR optional)
 Soll: user-sichtbare „edulution"-Werte, u. a. `appstore.edulutionIcons`, `mobileAccessSetup.scanAccessInfo`, `auth.errors.EdulutionConnectionFailed`
 Änderung: **nur die Werte** user-sichtbarer Strings, die „edulution"/„edulution.io" als Produkt/Firma nennen, auf „linuxmuster" neutralisieren. **Keys nicht umbenennen** (Wiring), `edulution-binduser-*`-Feld-Keys/Werte in Ruhe lassen (Allowlist). DE+EN paritätisch.
@@ -717,7 +717,7 @@ Verify: `npm run check-translations` (Key-Parität grün) und Stichprobe `grep -
 i18n: keine neuen Keys — nur Werte DE+EN
 Doku: keine (intern)
 
-### T15 — AGENTS.md/CLAUDE.md Rebrand-Prüfung + ADRs  [ ]
+### T15 — AGENTS.md/CLAUDE.md Rebrand-Prüfung + ADRs  [x] OK AGENTS/CLAUDE 0 edulution/netzint (keine Änderung); ADR 0001-naming + 0002-mobile-hidden angelegt
 Komponente: Repo-Root · Dateien: `AGENTS.md`, `CLAUDE.md` (Prüfung), `docs/adr/0001-naming-registry.md`, `docs/adr/0002-mobile-access-hidden.md` (neu)
 Änderung: Guard-Prüfung, dass `AGENTS.md`/`CLAUDE.md` **keine** „edulution"/„netzint"-Produkt-Nennungen tragen (aktuell verifiziert sauber → i. d. R. keine Änderung; falls Treffer → neutralisieren, **kein** Copyright-Header). Zwei knappe ADRs für OF1 (Naming/Registry) und OF4 (Mobile-Access verborgen) anlegen, inkl. §13-Handoff-Notiz (verweist auf T8-Konstanten).
 Verify: `! grep -riE "edulution|netzint" AGENTS.md CLAUDE.md` und `test -f docs/adr/0001-naming-registry.md`

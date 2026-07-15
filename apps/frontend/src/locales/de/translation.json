@@ -135,7 +135,7 @@
   "appstore": {
     "title": "App-Store",
     "description": "Hier kannst du {{ applicationName }} Apps hinzufügen.",
-    "edulutionIcons": "edulution Icons",
+    "edulutionIcons": "linuxmuster Icons",
     "moreIcons": "Weitere Icons",
     "searchIcons": "Icons durchsuchen...",
     "searchIconsHint": "Tipp: Verwende englische Suchbegriffe (z.B. \"house\" statt \"Haus\")",
@@ -164,7 +164,7 @@
       "manual": "Anleitung",
       "setupWithQrCode": "Einrichtung via QR-Code",
       "content": "Du kannst von vielen mobilen Geräten aus auf den Schulserver zugreifen. Drücke auf Anleitung, um zu starten.",
-      "scanAccessInfo": "Um die Zugangsdaten zu übertragen, bitte folgenden QR-Code mit der edulution App scannen."
+      "scanAccessInfo": "Um die Zugangsdaten zu übertragen, bitte folgenden QR-Code mit der linuxmuster App scannen."
     },
     "quota": {
       "title": "Quotas",
@@ -187,7 +187,7 @@
       "TotpInvalid": "Totp ungültig.",
       "LmnConnectionFailed": "Verbindung zum Schulserver fehlgeschlagen.",
       "KeycloakConnectionFailed": "Verbindung zum Authentifizierungsserver fehlgeschlagen.",
-      "EdulutionConnectionFailed": "Verbindung zum edulution Server fehlgeschlagen. Bitte versuche es später noch einmal."
+      "EdulutionConnectionFailed": "Verbindung zum linuxmuster Server fehlgeschlagen. Bitte versuche es später noch einmal."
     },
     "logout": {
       "success": "Erfolgreich abgemeldet"
@@ -1237,7 +1237,7 @@
 
       "logo": {
         "title": "Logo",
-        "descriptionSchool": "Lade hier das Logo hoch. Es wird auf der Login-Seite und auf dem Ausweis in der edulution App angezeigt.",
+        "descriptionSchool": "Lade hier das Logo hoch. Es wird auf der Login-Seite und auf dem Ausweis in der linuxmuster App angezeigt.",
         "descriptionGeneric": "Lade hier das Logo hoch. Es wird auf der Login-Seite angezeigt.",
         "uploadLightLogo": "Helles Logo hochladen",
         "uploadDarkLogo": "Dunkles Logo hochladen",
@@ -1262,7 +1262,7 @@
       },
       "organisationInfo": {
         "title": "Organisationsinformationen",
-        "descriptionSchool": "Trage die offiziellen Angaben deiner Organisation ein. Diese Informationen werden in der edulution App angezeigt. Bitte gib den Namen, die Straße, die Postleitzahl und optional die Website der Schule an.",
+        "descriptionSchool": "Trage die offiziellen Angaben deiner Organisation ein. Diese Informationen werden in der linuxmuster App angezeigt. Bitte gib den Namen, die Straße, die Postleitzahl und optional die Website der Schule an.",
         "descriptionGeneric": "Trage die offiziellen Angaben deiner Organisation ein.",
         "name": "Organisation",
         "namePlaceholder": "Gemeinschaftsschule Musterstadt",
@@ -1548,8 +1548,8 @@
     },
     "mobileAccess": {
       "title": "App-Zugriff",
-      "description": "Hier kannst du den mobilen Zugriff für die edulution App einrichten.",
-      "docsDescription": "Den Download-Link zur edulution App und wie du sie einrichtest findest in der edulution Doku.",
+      "description": "Hier kannst du den mobilen Zugriff für die linuxmuster App einrichten.",
+      "docsDescription": "Den Download-Link zur linuxmuster App und wie du sie einrichtest findest in der linuxmuster Doku.",
       "button": "Doku öffnen",
       "setup": "Einrichten mit QR-Code",
       "qrCode": "QR-Code"
@@ -1654,8 +1654,8 @@
     "remember_me": "Merken",
     "enterMultiFactorCode": "Zwei-Faktor-Authentisierung",
     "loginWithApp": "Anmelden mit QR-Login",
-    "loginWithQrDescription": "Öffne die edulution.io APP um dich einfach mit dem QR-Code anzumelden.",
-    "infoQrCodeExpired": "Zeit für Login mit edulution.io APP abgelaufen."
+    "loginWithQrDescription": "Öffne die linuxmuster APP um dich einfach mit dem QR-Code anzumelden.",
+    "infoQrCodeExpired": "Zeit für Login mit linuxmuster APP abgelaufen."
   },
   "common": {
     "more": "Mehr",
@@ -2290,7 +2290,7 @@
     },
     "EDULUTION_MAIL_HOSTNAME": {
       "title": "Hostname",
-      "description": "Hostname des Mailservers. Dieser kann von der edulution Domain abweichen."
+      "description": "Hostname des Mailservers. Dieser kann von der linuxmuster Domain abweichen."
     },
     "EDU_WG_IPNETWORK": {
       "title": "IP-Netzwerk",
@@ -2375,9 +2375,9 @@
   },
   "Invalid user credentials": "Benutzername oder Passwort falsch",
   "For more on this error consult the server log at the debug level.": "Verbindung zum AD-Server fehlgeschlagen. Bitte versuche es später noch einmal.",
-  "Failed to fetch": "Verbindung zum edulution Server fehlgeschlagen. Bitte versuche es später noch einmal.",
+  "Failed to fetch": "Verbindung zum linuxmuster Server fehlgeschlagen. Bitte versuche es später noch einmal.",
   "Invalid client or Invalid client credentials": "Ungültige Serverkonfiguration. Bitte überprüfe die Client-ID oder das Client-Secret.",
-  "Not Found (404)": "Verbindung zum edulution Server fehlgeschlagen. Bitte versuche es später noch einmal.",
+  "Not Found (404)": "Verbindung zum linuxmuster Server fehlgeschlagen. Bitte versuche es später noch einmal.",
   "NetworkError when attempting to fetch resource.": "Netzwerkfehler beim Abrufen der Website.",
   "deploymentTarget": {
     "title": "Auswahl",
@@ -2395,7 +2395,7 @@
       "title": "WebDAV Server Schema",
       "description": "Bestimmt das Schema welches für die Verbindung zum WebDAV-Server verwendet wird.",
       "linuxmuster": "Linuxmuster",
-      "edu-file-proxy": "edulution File Proxy",
+      "edu-file-proxy": "linuxmuster File Proxy",
       "generic": "Generisch"
     },
     "status": "Status",

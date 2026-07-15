@@ -144,7 +144,7 @@
   "appstore": {
     "title": "App Store",
     "description": "Here you can add {{ applicationName }} apps.",
-    "edulutionIcons": "edulution Icons",
+    "edulutionIcons": "linuxmuster Icons",
     "moreIcons": "More icons",
     "searchIcons": "Search icons...",
     "searchIconsHint": "Tip: Use English search terms",
@@ -173,7 +173,7 @@
       "manual": "Setup",
       "setupWithQrCode": "Setup with QR code",
       "content": "You can access the school server from many mobile devices. Click on Manual to start.",
-      "scanAccessInfo": "To transfer the access data, please scan the following QR code with the edulution App."
+      "scanAccessInfo": "To transfer the access data, please scan the following QR code with the linuxmuster App."
     },
     "quota": {
       "title": "Quotas",
@@ -196,7 +196,7 @@
       "TotpInvalid": "Totp invalid.",
       "LmnConnectionFailed": "Connection to school server failed.",
       "KeycloakConnectionFailed": "Connection to authentication server failed.",
-      "EdulutionConnectionFailed": "Connection to edulution server failed. Please try again later."
+      "EdulutionConnectionFailed": "Connection to linuxmuster server failed. Please try again later."
     },
     "logout": {
       "success": "Logout successful"
@@ -1234,7 +1234,7 @@
 
       "logo": {
         "title": "Logo",
-        "descriptionSchool": "Upload your logo. It will be shown on the login screen and on the edulution app ID card.",
+        "descriptionSchool": "Upload your logo. It will be shown on the login screen and on the linuxmuster app ID card.",
         "descriptionGeneric": "Upload your logo. It will be shown on the login screen.",
         "uploadLightLogo": "Upload light logo",
         "uploadDarkLogo": "Upload dark logo",
@@ -1259,7 +1259,7 @@
       },
       "organisationInfo": {
         "title": "Organisational information",
-        "descriptionSchool": "Enter your organization’s official details. This information may be displayed in the edulution app. Please provide the name, street, postal code, and optionally the school website.",
+        "descriptionSchool": "Enter your organization’s official details. This information may be displayed in the linuxmuster app. Please provide the name, street, postal code, and optionally the school website.",
         "descriptionGeneric": "Enter your organization's official details.",
         "name": "Organization name",
         "namePlaceholder": "Sampletown Organization",
@@ -1545,8 +1545,8 @@
     },
     "mobileAccess": {
       "title": "Mobile Access",
-      "description": "Here you can set up the edulution app for mobile access.",
-      "docsDescription": "You can find the download link for the edulution app and instructions on how to set it up in the edulution documentation.",
+      "description": "Here you can set up the linuxmuster app for mobile access.",
+      "docsDescription": "You can find the download link for the linuxmuster app and instructions on how to set it up in the linuxmuster documentation.",
       "button": "Open Docs",
       "setup": "Setup with QR Code",
       "qrCode": "QR Code"
@@ -1651,8 +1651,8 @@
     "remember_me": "Remember me",
     "enterMultiFactorCode": "Two-Factor Authentication",
     "loginWithApp": "Login with QR-Login",
-    "loginWithQrDescription": "Open the edulution.io APP to simply log in with the QR code.",
-    "infoQrCodeExpired": "Time for login with edulution.io APP expired."
+    "loginWithQrDescription": "Open the linuxmuster APP to simply log in with the QR code.",
+    "infoQrCodeExpired": "Time for login with linuxmuster APP expired."
   },
   "edit": "Edit",
   "common": {
@@ -2288,7 +2288,7 @@
     },
     "EDULUTION_MAIL_HOSTNAME": {
       "title": "Hostname",
-      "description": "Hostname of the mail server. This could be different from the edulution domain name."
+      "description": "Hostname of the mail server. This could be different from the linuxmuster domain name."
     },
     "EDU_WG_IPNETWORK": {
       "title": "IP Network",
@@ -2373,9 +2373,9 @@
   },
   "Invalid user credentials": "Username or password incorrect.",
   "For more on this error consult the server log at the debug level.": "Connection to AD server failed. Please try again later.",
-  "Failed to fetch": "Connection to edulution server failed. Please try again later.",
+  "Failed to fetch": "Connection to linuxmuster server failed. Please try again later.",
   "Invalid client or Invalid client credentials": "Invalid server configuration. Please check the client ID or the client secret.",
-  "Not Found (404)": "Connection to edulution server failed. Please try again later.",
+  "Not Found (404)": "Connection to linuxmuster server failed. Please try again later.",
   "NetworkError when attempting to fetch resource.": "Network error when attempting to fetch resource.",
   "deploymentTarget": {
     "title": "Selection",
@@ -2393,7 +2393,7 @@
       "title": "WebDAV Server Schema",
       "description": "Here you can select the type of WebDAV server schema.",
       "linuxmuster": "Linuxmuster",
-      "edu-file-proxy": "edulution File Proxy",
+      "edu-file-proxy": "linuxmuster File Proxy",
       "generic": "Generic"
     },
     "status": "Status",
