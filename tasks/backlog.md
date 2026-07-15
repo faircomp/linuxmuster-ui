@@ -208,7 +208,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T6 — appconfig-Shapes-Drift (Cross-Cutting, jedes Modul betroffen)  [ ]
+### T6 — appconfig-Shapes-Drift (Cross-Cutting, jedes Modul betroffen)  [x] ✓ appConfigOptionKeys unverändert; AppConfigDto-Hülle +usesPushNotifications+isPinned (18×); +ACTIVE_DOCUMENT_EDITOR
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js appconfig-Strukturen ↔ 1.6 libs/src/appconfig/constants/*
 Änderung: Die appconfig-Shape-Dateien 1.6↔2.0 diffen: `appConfigOptionKeys` (1.6: url/apiKey/
@@ -225,7 +225,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T7 — defaultAppConfig-Seed-Diff (Fresh-Install-Fidelity, §3.0/§6.2)  [ ]
+### T7 — defaultAppConfig-Seed-Diff (Fresh-Install-Fidelity, §3.0/§6.2)  [x] ✓ Seed 6→7 (+WIKI) +usesPushNotifications+isPinned je Eintrag → Fresh-Install-Gap benannt
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `initializeCollection`@2335, `defaultAppConfig`-Array `main.js:2380–2468` ↔ 1.6
 `libs/src/appconfig/constants/defaultAppConfig.ts`
@@ -240,7 +240,7 @@ i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
 Abhängt von: T1
 
-### T8 — SSE-Contract-Drift (SseController/Service, sseMessageType, Events)  [ ]
+### T8 — SSE-Contract-Drift (SseController/Service, sseMessageType, Events)  [x] ✓ 3 @Sse-Routen erhalten (+1); sseMessageType 23→67; Reconnect/Heartbeat/Persist-Schicht neu (gedriftet)
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `SseService`@10661 · `SseController`@55022 · `sseMessageType` (68×) ↔ 1.6
 `apps/api/src/sse/*` (3 `@Sse`-Routen) + `libs/src/sse/*` + `eventEmitterEvents.ts`

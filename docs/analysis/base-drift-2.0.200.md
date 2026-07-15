@@ -341,4 +341,61 @@ verwertbares `registerAs`-Signal; Config-Namespaces laufen über `configuration`
 **Assertion erfüllt:** Queue-Δ (4→11) belegt; Gateways = 2 belegt; für **jeden** 0-Treffer-Anker
 (`new Queue(`, `@Cron(`, `registerAs('`) ist die funktionierende Alternativform dokumentiert.
 
-<!-- T6–T8, T11, T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->
+## T6 — appconfig-Shapes-Drift (Cross-Cutting)
+
+**`appConfigOptionKeys` (Verify-Assertion): UNVERÄNDERT.** Die inneren Options-Value-Keys
+`url`/`apiKey`/`proxyConfig` (1.6 `APP_CONFIG_OPTION_KEYS`) persistieren im `MJ` als Const-Refs
+(`proxyConfig` 5×, `PROXYCONFIG` 2×, `apiKey` vorhanden) — die Literale `APP_CONFIG_OPTION_KEYS`/
+`appConfigOptionKeys` = 0 nur wegen Import-Renaming im Bundle, die Werte bleiben. → Der
+Options-Value-Vertrag bricht nicht.
+
+**Der Drift sitzt an der `AppConfigDto`-Hülle (Cross-Cutting):** 2.0 fügt **`usesPushNotifications`**
+und **`isPinned`** hinzu (je **18×** im `MJ`, in 1.6 **0 Dateien**). Da **jedes** Modul-Appconfig
+diese Hülle erfüllt, ist das die „Drift hier = Reibung überall"-Schicht: jeder neue und jeder
+geseedete Appconfig-Eintrag muss die 2 Felder führen. **Neuer extendedOptions-Key:**
+`ACTIVE_DOCUMENT_EDITOR` (8×, 1.6 = 0) — Collabora/OnlyOffice-Selektor (`p4-filesharing-wopi`).
+Die 15 1.6-`extendedOptions/*`-Shape-Dateien bleiben ansonsten Bestand.
+
+**Fork-relevanter Befund:** `ACTIVE_MAIL_CLIENT` = **0 in beiden Ständen** → unser geplanter
+nativ⟷SOGo-Mail-Selektor (§9.10) ist eine **Fork-Eigenentwicklung, kein 2.0.200-Feature** — er
+wird in `p4-mail-rework` neu erfunden (Vorbild = `ACTIVE_DOCUMENT_EDITOR`), nicht nachgebaut.
+
+## T7 — defaultAppConfig-Seed-Diff (Fresh-Install-Fidelity)
+
+Direkter Array-Diff `MJ:2380–2470` (un-minifiziert) ↔ 1.6 `defaultAppConfig.ts`:
+
+| Aspekt | 1.6 | 2.0.200 | Δ |
+|---|---|---|---|
+| Seed-Apps | 6 (Dashboard, BulletinBoard, FileSharing, Surveys, ClassManagement, Whiteboard) | **7** (+ **WIKI** @Position 7) | **+WIKI** |
+| Pro-Eintrag-Felder | `name/icon/appType/options/accessGroups/extendedOptions/position/displayLocations` | **+ `usesPushNotifications` + `isPinned`** (7/7 Einträge) | +2 Felder je Eintrag |
+
+**Fresh-Install-Exit-Kriterium (§6.2):** Ein frischer, auf 1.6-`defaultAppConfig.ts` basierender
+Fork seedet beim Erststart ein **abweichendes** Standard-Layout gegenüber 2.0.200 — es fehlen die
+7. Default-App **WIKI** sowie `usesPushNotifications`/`isPinned` auf **allen** Einträgen. → Vor
+Fresh-Install-Parität muss `defaultAppConfig.ts` um den WIKI-Eintrag und die 2 Flags (je Eintrag)
+ergänzt werden (landet mit `p3-wiki` bzw. der appconfig-Erweiterung; Contract-Overlap §2). **Bis
+dahin: Fresh-Install-Layout weicht ab in genau diesen 2 Punkten.**
+
+## T8 — SSE-Contract-Drift (SseController/Service, sseMessageType, Events)
+
+**(a) `@Sse`-Routen — die 3 Bestands-Routen sind erhalten.** 1.6 = 3 (`@Sse()` root,
+`@Sse(${APPS.CONFERENCES}/public)`, `@Sse(AUTH_PATHS.AUTH_ENDPOINT)`). 2.0-`SseController`
+(Region ~55022) enthält **4** `(0, common_1.Sse)`-Dekoratoren — die **3 Bestands-Routen sind
+verifiziert vorhanden** (root, `CONFERENCES}/public`, `AUTH_ENDPOINT`) **+1 neue**. Keine
+entfernt.
+
+**(b) `sseMessageType` 23 → 67 (Signal: stark expandiert).** Chat und Notifications reiten auf
+SSE → die Nachrichtentyp-Menge fast verdreifacht.
+
+**(c) SSE-Contract inhaltlich überarbeitet (gedriftet).** 1.6 `eventEmitterEvents` = 5 Keys
+(`APPCONFIG_UPDATED`, `APP_ACCESS_MAP_UPDATED`, `WEBDAV_BASEURL_CHANGED`, `SSE_USER_CONNECTED`,
+`SSE_USER_DISCONNECTED`). 2.0 fügt eine **ganze Reconnect-/Heartbeat-/Persistenz-Schicht** hinzu:
+`SSE_CHANNEL_PREFIX`, `SSE_HEARTBEAT_INTERVAL_MS`, `SSE_PING_TIMEOUT_MS`, `SSE_RECONNECT_DELAY_MS`,
+`SSE_MAX_RECONNECT_ATTEMPTS`, `SSE_MAX_RECONNECT_DELAY_MS`, `SSE_DISCONNECT_GRACE_PERIOD_MS`,
+`SSE_PERSIST_DEBOUNCE_MS`, `SSE_USER_CONNECTIONS_CACHE_KEY` (die 2 User-Events bleiben).
+
+**T8-Signal für T12:** SSE ist eine **gedriftete Schicht (gelb/rot)** — der **Chat-Pilot** (P2)
+muss gegen den **2.0-SSE-Contract** (Reconnect/Heartbeat/Persist/Channel-Prefix) bauen, nicht
+gegen die simplere 1.6-Variante; das ist ein realer Aufwands-Aufschlag-Input für Chat/Notifications.
+
+<!-- T11, T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->
