@@ -37,6 +37,7 @@ import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
 import QRCodeDisplay from '@/components/ui/QRCodeDisplay';
 import PageTitle from '@/components/PageTitle';
+import isMobileLoginToggleVisible from './isMobileLoginToggleVisible';
 import SSE_EDU_API_ENDPOINTS from '@libs/sse/constants/sseEndpoints';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import delay from '@libs/common/utils/delay';
@@ -400,23 +401,25 @@ const LoginPage: React.FC = () => {
                   {totpIsLoading || isLoading ? t('common.loading') : t('common.login')}
                 </Button>
               )}
-              <Button
-                className="mx-auto w-full justify-center border-none text-black shadow-xl hover:bg-ciGrey/10 hover:text-black"
-                type="button"
-                variant="btn-outline"
-                size="lg"
-                disabled={isLoading || totpIsLoading}
-                onClick={handleCancelOrToggleQrCode}
-              >
-                {isEnterTotpVisible || showQrCode ? (
-                  t('common.cancel')
-                ) : (
-                  <>
-                    {t('login.loginWithApp')}
-                    <QrCodeIcon className="h-6 w-6 text-black" />
-                  </>
-                )}
-              </Button>
+              {isMobileLoginToggleVisible(isEnterTotpVisible) && (
+                <Button
+                  className="mx-auto w-full justify-center border-none text-black shadow-xl hover:bg-ciGrey/10 hover:text-black"
+                  type="button"
+                  variant="btn-outline"
+                  size="lg"
+                  disabled={isLoading || totpIsLoading}
+                  onClick={handleCancelOrToggleQrCode}
+                >
+                  {isEnterTotpVisible || showQrCode ? (
+                    t('common.cancel')
+                  ) : (
+                    <>
+                      {t('login.loginWithApp')}
+                      <QrCodeIcon className="h-6 w-6 text-black" />
+                    </>
+                  )}
+                </Button>
+              )}
             </form>
           </Form>
         )}

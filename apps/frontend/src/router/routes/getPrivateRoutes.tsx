@@ -36,6 +36,7 @@ import UserSettingsDetailsPage from '@/pages/UserSettings/Details/UserSettingsDe
 import UserSettingsMailsPage from '@/pages/UserSettings/Mails/UserSettingsMailsPage';
 import UserInterfaceSettingsPage from '@/pages/UserSettings/Language/UserInterfaceSettingsPage';
 import UserSettingsMobileAccess from '@/pages/UserSettings/MobileAccess/MobileFileAccessSetupBox';
+import { MOBILE_APP_ENABLED } from '@libs/common/constants/productInfo';
 import UserSettingsWireguardPage from '@/pages/UserSettings/WireguardAccess/UserSettingsWireguardPage';
 import getSettingsRoutes from '@/router/routes/getSettingsRoutes';
 import getClassManagementRoutes from '@/router/routes/getClassManagementRoutes';
@@ -91,10 +92,12 @@ const getPrivateRoutes = (appConfigs: AppConfigDto[]) => (
         path={USER_INTERFACE_PATH}
         element={<UserInterfaceSettingsPage />}
       />
-      <Route
-        path={MOBILE_ACCESS_PATH}
-        element={<UserSettingsMobileAccess />}
-      />
+      {MOBILE_APP_ENABLED && (
+        <Route
+          path={MOBILE_ACCESS_PATH}
+          element={<UserSettingsMobileAccess />}
+        />
+      )}
       <Route
         path={WIREGUARD_ACCESS_PATH}
         element={<UserSettingsWireguardPage />}

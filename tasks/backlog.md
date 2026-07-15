@@ -675,7 +675,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T8
 
-### T10 — QR-Login auf LoginPage verbergen (MOBILE_APP_ENABLED)  [ ]
+### T10 — QR-Login auf LoginPage verbergen (MOBILE_APP_ENABLED)  [x] OK QR-Toggle hinter isMobileLoginToggleVisible (TOTP-Cancel erhalten); vitest 2/2 (Review approve)
 Komponente: `apps/frontend` · Dateien: `apps/frontend/src/pages/LoginPage/LoginPage.tsx`, neuer Test `apps/frontend/src/pages/LoginPage/LoginPage.test.tsx` (**SPDX AGPL-3.0-or-later**)
 Soll: LoginPage.tsx:269/409ff (`handleCancelOrToggleQrCode`, QR-Toggle-Button), §9 Dec 13
 Änderung: QR-Login-Toggle/Button hinter `MOBILE_APP_ENABLED` verbergen (Empfehlung OF4); BE-Endpoint `AUTH_QRCODE` unberührt. Neuer vitest-Test: bei `MOBILE_APP_ENABLED=false` ist der QR-Toggle nicht im DOM.
@@ -684,7 +684,7 @@ i18n: keine (bestehende QR-Keys bleiben, ungenutzt)
 Doku: keine (intern)
 Abhängt von: T8
 
-### T11 — Mobile-Access-Route + Setup-Box verbergen (MOBILE_APP_ENABLED)  [ ]
+### T11 — Mobile-Access-Route + Setup-Box verbergen (MOBILE_APP_ENABLED)  [x] OK Route+Nav+Dashboard-Karte hinter Flag; getPrivateRoutes-Element-Tree-Test grün (Review: Dashboard-Karte-Fix)
 Komponente: `apps/frontend` · Dateien: `apps/frontend/src/router/routes/getPrivateRoutes.tsx`, ggf. Nav-Eintrag, neuer/erweiterter Test (**SPDX AGPL-3.0-or-later** falls neu)
 Soll: getPrivateRoutes.tsx:28,38,95,96 (`MOBILE_ACCESS_PATH`, `UserSettingsMobileAccess`), §9 Dec 13
 Änderung: `MOBILE_ACCESS_PATH`-Route + zugehörigen UserSettings-Nav-Eintrag nur bei `MOBILE_APP_ENABLED` rendern (Empfehlung OF4). Test: Route/Nav-Eintrag bei Flag=false nicht registriert/sichtbar.
