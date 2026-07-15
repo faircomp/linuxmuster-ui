@@ -45,6 +45,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - Box-gated Verifies zum Nachziehen am P1-Voll-Stack: `p1-own-ci-registry` T3/T5, `p0-realm-diff-baseline` T4/T6, `p1-installer-ci` CI-Run/skopeo.
   - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
   - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
+  - **`p1-security-cve-track` fertig** (8/8 authored) — Dependabot (npm/actions/docker), Base-Image-Digest-Pinning, npm-audit-Gate (severity-Ceiling + reviewBy-Ablauf), 2 Trivy-Image-Scan-Gates (PR + fail-closed Release), `scanImages.sh`-Cron-Scanner, Accepted-CVE-Register + Track-Doku. **Befund: 30 high/critical Prod-CVEs Alt-Last der v1.6.266-Basis** baselined (reviewBy 2026-10-15, [[cve-baseline-debt]]) — Remediation via Dependabot vor Public-Gehen priorisieren. Lokal verifiziert; Trivy-CI-Runs box-gated.
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
@@ -1441,7 +1442,7 @@ Doku: docs/testing/spec-policy.md (dies IST die Doku)
 Abhängt von: T3, T9
 
 ## p1-security-cve-track [P1] — Eigener Security-/CVE-Track (Dependabot + Trivy-Gate + Cron-Andock)
-_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ in Arbeit (4/8: T1/T2/T3/T4 authored+lokal-verifiziert; T5 scanImages.sh, T6/T7 Trivy-CI-Gates, T8 Doku offen) · _Tasks:_ 8
+_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ erledigt (8/8 authored; lokal verifiziert [yaml/grep/shellcheck/tsx]; Trivy-CI-Runs + scanImages-Self-Test box-gated) · _Tasks:_ 8
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-security-cve-track.md` · Soll: Greenfield-Ops-Track (kein main.js-Runtime-Anker · kein Rescue-Branch · kein Baseline-Shot). Belege: PLAN §5.1(:258/:256) · §5.2-P7(:270) · §7d/§7h(:337/:345) · §7i(:347) · §8-P1b(:363) · R10(:388) · §9-P5(:440) · apps/{api,frontend}/Dockerfile · .github/workflows/{build-and-test,container-build}.yml · package.json:19–22 · docker-compose.yml:4,22
 
 > Abhängt von Paket `p1-own-ci-registry`: Registry-Org + finale Image-Namen (Scan-Ziele) kommen von dort;
@@ -1485,7 +1486,7 @@ Verify: `iter.sh cmd 'test -f .trivyignore && grep -q "SPDX-License-Identifier: 
 i18n: keine
 Doku: docs/security/accepted-cves.md (dies IST die Doku)
 
-### T5 — Wiederverwendbarer Trivy-Scanner (`scanImages.sh`) mit Report-Modus  [ ]
+### T5 — Wiederverwendbarer Trivy-Scanner (`scanImages.sh`) mit Report-Modus  [x] OK scripts/security/scanImages.sh (SPDX): Trivy-On-Demand-Install nach gitignored bin/, `--severity HIGH,CRITICAL --ignorefile .trivyignore --exit-code 1` je Image, `--report` (eigenständige `## Security`-Sektion), `--self-test` (Base-Images aus Dockerfiles), `--advisory-grype` (informativ). shellcheck CLEAN + bash -n + Arg-Handling lokal; Trivy-Self-Test box-gated
 Komponente: `scripts` (Ops) · Dateien: `scripts/security/scanImages.sh` (neu, SPDX als `#`-Kommentar)
 Soll: PLAN §7h(:345) — „Trivy/Grype über die gebauten Images … an denselben Wochen-Cron andocken"; §7i(:347) — Report-Sektion
 Änderung: Shell-Skript, das (a) Trivy nachinstalliert, falls nicht vorhanden (offizieller Installer, lokales `bin/`), (b) für jede übergebene Image-Ref `trivy image --severity HIGH,CRITICAL --ignorefile .trivyignore --exit-code 1` läuft, (c) `--report <FILE>` eine Markdown-„Security"-Sektion schreibt (für den Cron/`reports/`), (d) `--self-test` die beiden Base-Digests aus den Dockerfiles ableitet und scannt (Selbst-Testbarkeit ohne App-Image-Build), (e) optional `--advisory-grype` Grype rein informativ ergänzt (OF4). Exit-Code = Gate-Ergebnis. Als **gemeinsamer Kern** für T6/T7 und den Tracking-Cron (T8).
@@ -1494,7 +1495,7 @@ i18n: keine
 Doku: keine (Nutzung dokumentiert in T8/`docs/security/cve-track.md`)
 Abhängt von: T4
 
-### T6 — Trivy-Gate im PR-Build (`build-and-test.yml`)  [ ]
+### T6 — Trivy-Gate im PR-Build (`build-and-test.yml`)  [x] OK beide Build-Jobs: `load: true` + SHA-gepinnter `aquasecurity/trivy-action@ed142fd… # v0.36.0` (severity HIGH,CRITICAL, exit-code 1, trivyignores .trivyignore); blockt neue HIGH/CRITICAL im PR; yaml+grep PASS; CI-Run box-gated
 Komponente: `.github` (CI) · Dateien: `.github/workflows/build-and-test.yml`
 Soll: build-and-test.yml:86–96 (`build-frontend` docker build) + :141–152 (`build-api` docker build) — Images werden gebaut, aber **nicht** gescannt
 Änderung: In `build-frontend` und `build-api` das gebaute Image lokal verfügbar machen (`load: true` bzw. `outputs: type=docker`) und im Anschluss einen `aquasecurity/trivy-action`-Step (per **Full-SHA** gepinnt, Versions-Kommentar → von Dependabot-github-actions bumpbar) mit `severity: HIGH,CRITICAL`, `exit-code: 1`, `trivyignores: .trivyignore` ergänzen. Gate blockt neue HIGH/CRITICAL im PR. Keine sonstige CI-Architektur-Änderung (Green-Gate-Verdrahtung = CI-Härtungs-Paket).
@@ -1503,7 +1504,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T5
 
-### T7 — Trivy-Gate vor Release-Push (`container-build.yml`)  [ ]
+### T7 — Trivy-Gate vor Release-Push (`container-build.yml`)  [x] OK **fail-closed**: beide Build-Jobs `push: true`→`push: false`+`load: true`, dann Scan-Ref (erster Tag), trivy-action-Scan (exit-code 1), dann `docker push`-Loop — kein unscanned/HIGH-CRITICAL-Image wird gepusht. Review bestätigt Ordering + alle Tags pushbar; yaml+grep PASS; CI-Run box-gated
 Komponente: `.github` (CI) · Dateien: `.github/workflows/container-build.yml`
 Soll: container-build.yml:106–115 (`build-frontend` push) + :156–165 (`build-api` push) — Push **ohne** vorgeschalteten Scan
 Änderung: Vor dem pushenden `build-push-action` (bzw. mit `load` und separatem Push-Step) einen Trivy-Scan-Step (Full-SHA-gepinnt, `severity: HIGH,CRITICAL`, `exit-code: 1`, `trivyignores: .trivyignore`) einziehen, sodass der Release **fail-closed** ist — kein Image mit neuem HIGH/CRITICAL wird veröffentlicht. Komponiert mit dem `needs: [lint, test]`-Green-Gate aus dem CI-Härtungs-Paket (nur Cross-Ref, hier nicht mitverdrahtet).
@@ -1512,7 +1513,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T5
 
-### T8 — CVE-Track-Doku + Wochen-Cron-Handoff-Kontrakt  [ ]
+### T8 — CVE-Track-Doku + Wochen-Cron-Handoff-Kontrakt  [x] OK docs/security/cve-track.md (SPDX): Dependabot, 3 Gates (npm-audit + 2 Trivy) + Allowlist-Prozess, Cron-Handoff (scanImages.sh --report → reports/-Pipeline, `<org>`-Platzhalter); grep-Verify PASS
 Komponente: `docs` (Ops) · Dateien: `docs/security/cve-track.md` (neu, SPDX)
 Soll: PLAN §7h(:345)/§7i(:347) — CVE-Scan am `openedulution-tracking`-Wochen-Cron, Findings in `reports/` (Sektion „Security"); §8-P1b(:363)
 Änderung: Deutsche Ops-Doku, die den gesamten Track beschreibt: (1) Dependabot-Ökosysteme + Rhythmus (T1), (2) die zwei Trivy-Gates (T6/T7) + Allowlist-Prozess (Verweis T4), (3) npm-audit-Gate (T3), (4) **Cron-Handoff-Kontrakt**: wie der `openedulution-tracking`-Wochen-Cron `scripts/security/scanImages.sh --report <reports/…>` (T5) gegen die **veröffentlichten** `ghcr.io/<org>/linuxmuster-{ui,api}`-Digests aufruft und die Ausgabe als „Security"-Sektion in die `reports/<from>..<to>.md`-Pipeline einhängt. Registry-Org als Platzhalter mit Verweis auf `p1-own-ci-registry`.
