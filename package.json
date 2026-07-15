@@ -5,6 +5,7 @@
   "scripts": {
     "test": "nx run-many --target=test --projects=api",
     "test:api": "nx run api:test --detectOpenHandles",
+    "test:api:ci": "nx run api:test --skip-nx-cache --detectOpenHandles -- --ci --runInBand",
     "test:frontend": "nx run frontend:test",
     "test-with-ui": "vitest --ui",
     "coverage": "vitest run --coverage",

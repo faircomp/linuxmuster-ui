@@ -176,7 +176,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Run Checks and Tests
+      - name: Run Checks
         run: |
           npm run check-circular-deps
           npm run check-translations
@@ -186,4 +186,6 @@ jobs:
           npm run test:scripts
           npx pretty-quick --check
           npm run lint
-          npm run test
+
+      - name: Run API unit tests
+        run: npm run test:api:ci
