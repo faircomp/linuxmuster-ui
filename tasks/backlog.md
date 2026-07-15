@@ -659,14 +659,14 @@ Verify: `npx tsx scripts/addLicenseHeader.ts && npx tsx scripts/addLicenseHeader
 i18n: keine
 Doku: keine (intern)
 
-### T8 — Brand-/Produkt-Konstanten anlegen (+ §13-Vorbereitung)  [ ]
+### T8 — Brand-/Produkt-Konstanten anlegen (+ §13-Vorbereitung)  [x] OK productInfo.ts (PRODUCT_NAME=linuxmuster, SOURCE_URL, DOCS_URL leer, MOBILE_APP_ENABLED=false) + index-Export; tsc grün
 Komponente: `libs` · Dateien: `libs/src/common/constants/productInfo.ts` (neu, **SPDX AGPL-3.0-or-later**), ggf. `libs/src/common/constants/index.ts`
 Änderung: neue Konstanten `PRODUCT_NAME='linuxmuster'`, `PRODUCT_SOURCE_URL='https://github.com/faircomp/linuxmuster-ui'`, `PRODUCT_DOCS_URL` (OF2, Default leer/Repo), `MOBILE_APP_ENABLED=false` (OF4). Diese zentralisieren den Rebrand und liefern die Grundlage für das spätere §13-UI-Feature (Repo-URL + Version). SPDX-Header (kein Netzint) selbst setzen, da `addLicenseHeader` bis zum Merge von T7 noch den alten stempeln würde.
 Verify: `npm run build` (Konstanten importierbar, keine Typfehler)
 i18n: keine
 Doku: keine (intern); §13-Handoff-Notiz in docs/adr (T15/ADR) referenziert diese Konstanten
 
-### T9 — In-App-Fremd-URLs repointen (urls.ts + webdavTutorialLinks)  [ ]
+### T9 — In-App-Fremd-URLs repointen (urls.ts + webdavTutorialLinks)  [x] OK EDU_DOCS_URL=PRODUCT_DOCS_URL, APPSTORE entfernt (0 Consumer), webdav→PRODUCT_DOCS_URL; EDU_PLUGINS unangetastet; tsc grün
 Komponente: `libs` · Dateien: `libs/src/common/constants/urls.ts`, `libs/src/filesharing/constants/webdavTutorialLinks.ts`
 Soll: urls.ts:20 (`EDU_APP_APPSTORE_URL`), urls.ts:22 (`EDU_DOCS_URL`); webdavTutorialLinks.ts:21,25,29 (3× `docs.edulution.io`)
 Änderung: `EDU_DOCS_URL`/`webdavTutorialLinks`-URLs → `PRODUCT_DOCS_URL` (OF2) bzw. bei leerem Docs-Ziel neutralisieren; `EDU_APP_APPSTORE_URL` entfernen/leeren (OF3). **`EDU_PLUGINS_GITHUB_URL` (urls.ts:21) NICHT anfassen** (Supply-Chain-Paket). Netzint-Header der Datei nicht anfassen.
