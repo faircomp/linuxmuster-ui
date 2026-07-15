@@ -1573,7 +1573,7 @@ Doku: Checklisten-Eintrag im DR-Runbook (T3)
 Abhängt von: T1
 
 ## p1-dr-runbook [P1] — Betriebs-/DR-Runbook + Backup-/Restore-Skript
-_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ in Arbeit (2/6: T1 Runbook + T2 dr-lib.sh authored+lokal-verifiziert; T3 backup, T4 restore, T5 drill, T6 wiring offen) · _Tasks:_ 6
+_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ in Arbeit (3/6: T1/T2/T3 authored+lokal-verifiziert; T4 restore, T5 drill, T6 wiring offen) · _Tasks:_ 6
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-dr-runbook.md` · Soll: main.js:9207-9235 (getMasterKey/master.key) · main.js:55805 (edulution.pem) · main.js:8854-8856 (Redis flüchtig/BullMQ) · docker-compose.yml.template:60-68/147-162/88-89 · PLAN §5.6/§2.6/§6.2/R4
 
 > Hinweis: Ops-Paket. Deliverables = 1 Runbook-Doc + Shell-Skripte unter `scripts/ops/`. Kein
@@ -1602,7 +1602,7 @@ Verify: `iter.sh cmd 'bash -n scripts/ops/dr-lib.sh && d=$(mktemp -d); printf "#
 i18n: keine
 Doku: keine (intern)
 
-### T3 — Backup-Skript `dr-backup.sh` (Dump→Tar, verschlüsselt)  [ ]
+### T3 — Backup-Skript `dr-backup.sh` (Dump→Tar, verschlüsselt)  [x] OK scripts/ops/dr-backup.sh (SPDX): Preflight (Key-Material + Recipient + Container-Erreichbarkeit fail-fast) → mongodump → pg_dump → tar ./data (excl DB-Dirs) → sha256-Manifest → **pflicht-verschlüsselt** (age/gpg, sonst dr_die) → 0600 → optional Offsite/--quiesce. **Security-gehärtet (Review, 2 wichtig + 1 Blocker):** Klartext nur im mktemp-Workdir (trap EXIT/INT/TERM, kein Leak — auch bei Neustart-Fehler verifiziert), edu-api-Neustart via trap, DB-PW via forwarded-env (nicht auf Host-argv), umask 077. shellcheck CLEAN + docker-Stub-Tests (Order/Refuse/Quiesce-Restart/PW-Hygiene). Review approve nach 2 Runden
 Komponente: scripts/ops · Dateien: scripts/ops/dr-backup.sh (neu)
 Soll: PLAN §5.6 (Reihenfolge, Offsite) · main.js:9207-9235 (`./data/master.key`) · docker-compose.yml.template:64/155 (DB-Mounts exkludieren)
 Änderung: Reihenfolge **(1)** Preflight (Container erreichbar; `./data`, `./data/master.key`, `edulution.env` vorhanden — sonst `dr_die` „Totalverlust-Risiko"); **(2)** `mongodump --archive --gzip` (ganze Instanz, Creds aus Container-Env) via `docker exec`; **(3)** `pg_dump`/`pg_dumpall` Keycloak-DB (`-U keycloak keycloak`) via `docker exec`; **(4) danach** `tar` von `./data` **inkl.** `master.key`/`apps`/`traefik/ssl`/`letsencrypt`/`edulution.pem`, **exkl.** `db/` + `keycloak/db/`, **plus** `edulution.env`; **(5)** Bundle → `age`/`gpg`-verschlüsseln + `sha256sum`-Manifest, `0600`; **(6)** optional `DR_OFFSITE_CMD`. Optionaler `--quiesce` stoppt/startet `edu-api` um die Dumps. `mktemp -d`+`trap` Cleanup.
