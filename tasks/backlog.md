@@ -1,0 +1,3364 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Kevin Stenzel -->
+
+# Backlog — linuxmuster-ui (edulution-2.0-Fork)  ·  EIN Ledger, EIN Loop
+
+Dies ist das **einzige** Task-Ledger. `/feature-build tasks/backlog.md` (unter `/loop`)
+arbeitet es **von oben nach unten** ab: jede Task surgical, alle Tests/Builds REMOTE auf der
+**einmal warm-geleasten** crabbox (`scripts/crabbox/warm.sh` → `iter.sh` → `reap.sh`, über den
+ganzen Loop wiederverwendet), frischer `feature-review` + Commit pro Task.
+
+**Branch-/PR-Modell (WICHTIG — ein mitwachsender Integrationsbranch, KEINE Branches von `main` pro Abschnitt):**
+Alle Tasks committen auf **einen** durchlaufenden Branch **`feat/2.0-backlog`** — je einen **pro Repo**
+(`linuxmuster-ui` und, für Installer-Abschnitte, `linuxmuster-ui-installer`). So sieht jeder Abschnitt
+die Arbeit der vorigen (Abhängigkeiten stimmen) und die Modul-**Migrationen bleiben monoton** (jede setzt
+auf der vorigen auf — löst die „nie zwei Migrations-Branches offen"-Regel strukturell). **PR pro Phase:**
+am Ende jeder abgeschlossenen Phase (P0 · P1 · P1b · P2 · P3 · P4 · P5) ein Draft-PR je berührtem Repo
+(`git push` + `gh pr create` sind prompt-pflichtig). Die `##`-Abschnitte sind Commit-Gruppen, keine
+eigenen Branches.
+
+**Autonomie-/Parking-Regel:** Code + **Remote-Unit-Verify** (`iter.sh lint/test`) laufen autonom im Loop.
+Alles **Ask-first / prompt-pflichtig** — Voll-Stack-Deploy am echten LMN (`iter.sh deploy/shots`),
+`linuxmuster-api7`-Install, Packages/Repos public, Push/PR — wird **nicht** blind ausgeführt: Task auf
+`[?] human-gate` setzen, kurz vermerken, **weiterlaufen**. Diese `[?]` sammelt der Mensch am Phasenende ab.
+
+**Analyse-/Ops-Abschnitte** (`p0-*`, `p1-dr-runbook`, `p4-app-store-verify`, `p2-install-e2e`, `x-i18n-fr`-Backfill):
+„Done" = der committete Report/das Artefakt (Doc/Skript) + sein `Verify:`, **nicht** „Unit-Tests grün".
+
+Status: aktiv · Branch: `feat/2.0-backlog` (mitwachsend, je Repo) · PR: pro Phase · Commit-Granularität: pro Task · Review: pro Task (feature-review) · Modell: Opus
+Übergeordnete Spec: `PLAN-openedulution-fork.md` (Master-Plan). Detail-Specs je Paket unter `docs/features/<slug>.md`.
+Verify: REMOTE auf warmer crabbox (`scripts/crabbox/iter.sh`) — nichts lokal.
+DoD je Task: Tests grün · `npm run lint` sauber · **i18n DE+EN+FR** gepflegt · SPDX AGPL-3.0-or-later bei neuen Dateien · Doku im selben Commit (Augenmaß).
+Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]` braucht Entscheidung.
+
+**Vorstufe erledigt:** V0 Fork-Setup (Repos `faircomp/linuxmuster-ui` + `-ui-installer`, `main`@v1.6.266, Tags + `upstream/*`-Rescue-Branches).
+
+**Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
+
+## Reihenfolge (Topo-Sort; ⭐ = kritischer Pfad)
+
+| # | KP | Abschnitt | Phase | Abhängt von | Ziel |
+|---|----|-----------|-------|-------------|------|
+| 1 |  | p0-base-drift-analysis | P0 | — | Bestands-Drift 1.6→2.0.200 (Module/libs/appconfig/SSE/Guards) mit Ankern messen |
+| 2 |  | p0-migrations-inventory | P0 | — | Alle 2.0-Migrationen + Delta 1.6→2.0 als Upgrade-Pfad-Grundlage inventarisieren |
+| 3 | ⭐ | p0-supply-chain-inventory | P0 | — | Alle edulution-io-Außenreferenzen (Datei:Zeile, Policy) + Manifest |
+| 4 |  | p0-realm-diff-baseline | P0 | — | Keycloak-Realm der 2.0.200 exportieren, scrubben, als Soll-Baseline |
+| 5 |  | p0-pii-inventory | P0 | — | DSGVO/PII-Datenfluss je Collection + master.key-Fluss + Drittempfänger |
+| 6 | ⭐ | p1-rebrand | P1 | p0-supply-chain-inventory | edulution-io-Refs/Marken/Lizenz-Header per Deny/Allowlist auf faircomp |
+| 7 |  | x-i18n-fr | P1 | p1-rebrand | FR als gepflegte Locale aktivieren (supportedLngs, fr.json-Backfill, check-translations DE+EN+FR) |
+| 8 | ⭐ | p1-own-ci-registry | P1 | p1-rebrand | Eigene CI+Registry: Images grün-gegated+gehärtet nach ghcr/faircomp |
+| 9 | ⭐ | p1-installer-repoint | P1 | p1-own-ci-registry, p0-supply-chain-inventory | Installer auf eigene Registry/Tag; ui-kit inlinen, Lizenzserver stubben, §13, Plugins-Mirror |
+| 10 | ⭐ | p1-installer-ci | P1 | p1-installer-repoint | Installer-Image: eigene CI, Tags, **Package-Sichtbarkeit public** (sonst kann niemand pullen) |
+| 11 | ⭐ | p1-installer-rebrand-dist | P1 | p1-installer-repoint, p1-installer-ci | Installer-Rebrand + **eigene Template-Auslieferung** statt `get.edulution.io` (Templates ins Image) |
+| 12 | ⭐ | p2-install-e2e | P2 | p1-installer-ci, p1-installer-rebrand-dist | **Erstinstallation end-to-end** über den eigenen Installer am echten LMN (der Beweis) |
+| 13 |  | p1-migration-upgrade-test | P1 | p1-installer-repoint, p0-migrations-inventory | 1.6-DB→eigenes Image Upgrade-Pfad real testen |
+| 14 |  | p1-port-api-specs-ci | P1 | p1-own-ci-registry | 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract |
+| 15 |  | p1-security-cve-track | P1 | p1-own-ci-registry | Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron |
+| 16 |  | p1-master-key-provisioning | P1 | p1-installer-repoint | Installer erzeugt MASTER_ENCRYPT_KEY + koppelt ihn ans Backup-Set |
+| 17 |  | p1-dr-runbook | P1 | p1-master-key-provisioning | DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) |
+| 18 |  | p1-observability | P1 | — | Health liefert Build-Metadaten; Observability + Sentry-Entscheidung |
+| 19 |  | p1b-tracking-pipeline | P1b | p0-supply-chain-inventory | Repo linuxmuster-tracking: skopeo-Release-Erkennung + Image-Diff-Pipeline |
+| 20 | ⭐ | p2-chat | P2 | p1-installer-repoint | PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept |
+| 21 |  | p3-parent-child-pairing | P3 | p2-chat | ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege |
+| 22 |  | p3-wiki | P3 | p2-chat | WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor |
+| 23 |  | p4-mail-rework | P4 | p2-chat | Mail BEIDES: ACTIVE_MAIL_CLIENT-Selector (nativ⟷SOGo), phasiert + Mailcow-Admin |
+| 24 |  | p4-filesharing-wopi | P4 | p2-chat | Filesharing/WOPI/Collabora + ACTIVE_DOCUMENT_EDITOR-Selektor |
+| 25 |  | p4-app-store-verify | P4 | p1-installer-repoint | DockerService-App-Store auf 2.0-Parität + Store-Fetch-Contract |
+| 26 |  | p5-calendar | P5 | p2-chat | CalendarModule (7 Routen) + FE-Grid mit rrule |
+| 27 |  | p5-linbo | P5 | p2-chat | LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs |
+| 28 |  | p6-mobile-devices | P6 | — | DEFERRED: MobileDevices/MDM (Relution kommerziell) |
+| 29 |  | p6-satellites | P6 | — | DEFERRED: Satellites (Multi-Host/WireGuard) |
+
+Gesamt: **308 Tasks** über 29 Abschnitte (2 deferred).
+
+## Kritischer Pfad
+
+```mermaid
+flowchart LR
+  P0["P0-Analyse (5 Ledger, parallel)"] --> SC["p0-supply-chain-inventory"]
+  SC --> RB["p1-rebrand"] --> CI["p1-own-ci-registry"] --> IR["p1-installer-repoint"]
+  IR --> ICI["p1-installer-ci (Packages public)"] --> IRD["p1-installer-rebrand-dist (Templates ins Image)"] --> E2E["p2-install-e2e — INSTALL-BEWEIS"]
+  IR --> CH["p2-chat — PILOT"]
+  CH --> MOD["P3–P5-Module (parallelisierbar)"]
+  IR -. "nur installer" .-> AS["p4-app-store-verify"]
+```
+
+**Spine:** `P0-Analyse` → `p0-supply-chain-inventory` → `p1-rebrand` → `p1-own-ci-registry` → **`p1-installer-repoint`** → **`p2-chat` (Pilot)** → **P3–P5 parallelisierbar**.
+
+Der Pilot (Chat) validiert das **gesamte End-to-End-Rezept** — BE aus `main.js` + Rescue-Branch, FE, Migration/`schemaVersion`, Auth-Guards, crabbox-Verify, Draft-PR — **bevor** die teuren Module (Wiki/Calendar/Mail) starten. Alles außerhalb des Spines (restliche P0-Analysen, P1-Härtung, Tracking) ist parallelisierbar; nach dem Pilot sind P3–P5 untereinander parallel — mit den Serialisierungs-Ausnahmen unten.
+
+## Contract-Overlap-Warnungen (seriell landen)
+
+Mehrere Ledger fassen dieselben **geteilten Contracts** an. Auch wo die Abhängigkeits-Spalte Parallelität erlaubt, müssen die folgenden Berührungen **seriell** gemerged werden (ein Ledger vor dem nächsten branchen/rebasen), sonst kollidieren Schema-Versionen oder es entstehen Same-File-Merge-Konflikte.
+
+1. **Mongoose-Schema + Migration (`schemaVersion`) — härteste Serialisierung.** `p2-chat`, `p3-parent-child-pairing`, `p3-wiki` (WebdavShares + `wikiAccessGroups`/`wikiDisabled`), `p5-calendar` (+ ggf. `p4-mail-rework`) fügen je eine **forward-only** Migration hinzu, die `schemaVersion` erhöht. **Nie zwei migrations-schreibende Branches gleichzeitig offen** → strikt nacheinander mergen, damit die Versionsnummern monoton bleiben und die Kette lückenlos triggert. Der FE-Teil der P3–P5-Module parallelisiert, der **Migrations-/Schema-Commit serialisiert**.
+2. **`defaultAppConfig` (appconfig).** `p2-chat`, `p3-parent-child-pairing`, `p3-wiki`, `p4-mail-rework`, `p4-filesharing-wopi`, `p4-app-store-verify`, `p5-calendar`, `p5-linbo` erweitern alle dasselbe `defaultAppConfig`-Array — additiv, aber **eine Datei**. Vor dem Merge rebasen; einen appconfig-Eintrag nach dem anderen landen.
+3. **i18n `de`/`en`.** Jedes FE-Modul (Chat, Wiki, Pairing, Mail, Filesharing, App-Store, Calendar, Linbo) hängt Keys an die geteilten `de.json`/`en.json`. Pro-Modul-Namespaces führen, rebasen; der Pre-Commit-Translation-Check ist das Gate (DE+EN Pflicht).
+4. **Keycloak-Realm-Templates.** `p1-rebrand` (Default-Härtung: CORS-/`redirectUris`-/`webOrigins`-Wildcards) und `p1-installer-repoint` (Repoint) editieren beide die Realm-Templates — beide gegen die scrubbte `p0-realm-diff-baseline` als Soll. Die Abhängigkeitskette serialisiert sie bereits; die Baseline bleibt maßgeblich.
+5. **ghcr-Ref ↔ Installer.** Der ghcr-Namespace/Tag wird von `p1-own-ci-registry` (Push), `p1-installer-repoint` (Self-Pull), `p1b-tracking-pipeline` (skopeo inspect) und `p1-security-cve-track` (Digest-Pin) referenziert. Namespace **einmal** festlegen (§9.1 → `faircomp`) und in allen vieren identisch halten; die Abhängigkeitskette serialisiert die Schreiber.
+
+## Übernommene Default-Entscheidungen (§9 des Plans)
+
+Die Ledger sind gegen die **empfohlenen** Defaults aus §9 geplant. Alle **vom Menschen bestätigbar/änderbar** — sie blockieren keinen Start, aber eine Umkehr wird teurer, je später sie kommt.
+
+| §9 | Entscheidung | Default (übernommen) | Verankert in |
+|---|---|---|---|
+| 9.2 | Versionsschema | **`2.0.x`** (matcht Ziel-Image) | p1-own-ci-registry, p1b-tracking-pipeline |
+| 9.3 | Branch-Modell | **Single `main`** (+ `nx.json defaultBase→main`) | p1-rebrand, p1-own-ci-registry |
+| 9.8 | P6-Scope | **MobileDevices + Satellites deferred** (Relution kommerziell; WireGuard-Föderation) | p6-mobile-devices, p6-satellites (Stubs) |
+| 9.12 | Sentry/Telemetrie | **deaktiviert** — nie Fremd-DSN erben | p1-observability |
+| 9.13 | QR-Login/„Mobile Access" | **Kacheln verbergen** (solange keine eigene Mobile-App) | FE-Rebrand / Modul-Sichtbarkeit |
+
+**Noch OFFEN (Mensch entscheidet, Default bewusst nicht gesetzt):**
+- **9.10 Mail-UI** — nativer 2.0-Webmail-Client + Mailcow-Admin (Parität, teuer) **vs.** 1.6-SOGo-Iframe (billig). **Bewusst offengehalten in der `p4-mail-rework`-Spec** (Swing-Faktor §8); der Ledger trägt beide Pfade.
+- **9.11 FR-Locale** — FR mitpflegen **vs.** aus `supportedLngs` streichen (DE+EN bleiben Pre-Commit-Pflicht). Offen.
+
+Der Vollständigkeit halber bereits in den P1-Ledgern verankert: **9.1** Org `faircomp` + Name `linuxmuster-ui` (ohne Marke), **9.5** Lizenzserver **stubben** (AGPL-Arm).
+
+---
+
+# Arbeitspakete (in Reihenfolge abarbeiten)
+
+## p0-base-drift-analysis [P0] — Basis-Drift-Analyse (32 Bestandsklassen, libs/, appconfig, SSE, Guards)
+_Ziel:_ Bestands-Drift 1.6→2.0.200 (Module/libs/appconfig/SSE/Guards) mit Ankern messen · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 12
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-base-drift-analysis.md` · Soll: main.js:11219/32604/56393/56551/56883/59854/59956/63161/64484 (Guards) · main.js:10661/55022 (SSE) · main.js:55581/65115 (Gateways) · main.js:2335/2380–2468 (defaultAppConfig) · 1.6-Source apps/api/src + libs/src
+
+> **Analyse-Paket — Verify-Realität:** Dies sind **Investigations-Tasks (kein Produktivcode)**.
+> Der Ledger-Kopf oben ist die Standard-Vorlage; **crabbox/iter.sh und Voll-Stack-Verify laufen
+> hier leer** (es gibt keinen Runtime-Diff). Der **reale Verify jeder Task** ist der angegebene
+> `grep`/`diff` gegen `scratchpad/api-img/opt/edulution/api/main.js` (2.0.200) und die
+> Repo-Source (1.6.266) **plus** der belegte Report-Abschnitt in
+> `docs/analysis/base-drift-2.0.200.md` (Assertion: „Diff erzeugt / Tabelle vollständig /
+> Bewertung gesetzt"). `npm run lint` ist nur für ein optional angelegtes Skript relevant.
+> Abkürzung unten: `MJ` = `scratchpad/api-img/opt/edulution/api/main.js`.
+
+---
+
+### T1 — Report-Gerüst + Modul-Inventar (32 ↔ 38, additive-These je Modul)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md (neu)
+Soll: main.js `class …Module` (38) ↔ 1.6 `apps/api/src/**` `class …Module` (32)
+Änderung: Report-Datei anlegen (SPDX AGPL-Header, DE, Abschnitts-Gerüst für T2–T12 + Legende
+„bestätigt/gedriftet/gebrochen"). Erste Sektion: Modul-Mapping-Tabelle — jedes der 32
+1.6-Module auf sein 2.0-Pendant abbilden, die **6 neuen** (Wiki/Chat/ParentChildPairing/
+Calendar/MobileDevices/Satellites) listen, **belegen dass keines der 32 entfernt/umbenannt** ist.
+Verify: `grep -oE "class [A-Za-z0-9_]+Module " "$MJ" | sort -u | wc -l` = 38 UND
+`grep -rhoE "class [A-Za-z0-9_]+Module" apps/api/src --include=*.ts | sort -u | wc -l` = 32;
+Report enthält 32-Zeilen-Mapping + 6-neu-Liste + Aussage „0 entfernt". Assertion: Tabelle
+vollständig, jede 1.6-Modulklasse hat genau eine Zeile.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE) — ist das Deliverable
+
+### T2 — Controller-Route-Drift der 29 Bestands-Controller  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `class …Controller ` (39) ↔ 1.6 29 Controller in apps/api/src/**
+Änderung: Je Bestands-Controller die Route-Dekoratoren aus den `tslib_1.__decorate([...])`-
+Blöcken im `MJ` zählen (HTTP-Verb + Pfad) und gegen die 1.6-`*.controller.ts` diffen. Delta-
+Tabelle: Controller · Routen 1.6 · Routen 2.0 · Δ · Auffälligkeit. Bekannte Groß-Drifts als
+Ankerpunkte markieren (MailsController 10→36, Filesharing-Split → PublicFilesharing/Wopi). Fokus:
+welche **nicht** neu-gebauten Controller drifteten (→ Integrationsreibung).
+Verify: `grep -oE "class [A-Za-z0-9_]+Controller " "$MJ" | sort -u | wc -l` = 39;
+Report-Tabelle hat eine Zeile je 1.6-Controller (29) mit belegtem Routen-Δ; jeder Controller mit
+Δ≠0 ist als „gedriftet" markiert. Assertion: MailsController-Zeile zeigt 10→36.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T3 — Service-Drift-Signal (Bestands-Services)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `class …Service ` ↔ 1.6 41 Service-Klassen in apps/api/src/**
+Änderung: **Signal-Ebene** (kein Handler-Byte-Diff): je Bestands-Service die öffentlichen
+Methoden zählen und geänderte/neue Abhängigkeiten (Constructor-Injects) im `MJ` gegen 1.6 grob
+abgleichen. Delta-Tabelle: Service · Methoden 1.6 · Methoden 2.0 · neue Deps · Signal
+(stabil/gedriftet). Splits explizit notieren (z. B. `Mail*`-Aufspaltung Imap/Smtp/Idle/…).
+Verify: Report-Tabelle deckt alle 41 1.6-Service-Klassen ab; jede Zeile hat Methoden-Δ + Signal;
+mind. die durch T2 als gedriftet markierten Controller-Gegenstücke sind konsistent bewertet.
+Assertion: keine 1.6-Service-Klasse fehlt in der Tabelle.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T4 — DTO-Basisklassen- & Mongoose-Schema-Drift  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `SchemaFactory.createForClass` (39) + `class …Dto` (241) ↔ 1.6 (29 Schemas)
+Änderung: Zwei Sub-Tabellen. (a) **Schemas:** je Bestands-Schema die Felder im `MJ` gegen die
+1.6-`*.schema.ts` diffen — neue Felder = potenzieller `schemaVersion`-/Migrations-Bezug (nur
+verweisen, Inventar ist §3.3). (b) **DTO-Basisklassen:** prüfen, ob **gemeinsam vererbte**
+Basis-/abstrakte DTOs (die neue Module extenden) ihre Form änderten. Anker exakt definieren
+(dedup, abstract ein-/ausschließen), sonst rauscht der Diff.
+Verify: `grep -cE "SchemaFactory\.createForClass" "$MJ"` = 39 vs. 1.6 = 29 (belegt im Report);
+Report listet je Bestands-Schema die Feld-Δ und markiert Schemas mit neuen Feldern. Assertion:
+Schema-Zählungen beider Stände im Report + ≥1 identifizierte geänderte Basis-DTO-Klasse ODER
+belegte Aussage „Basisklassen unverändert".
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T5 — libs/ Shared-Struktur- & Endpoint-Konstanten-Drift  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `[A-Z0-9_]+_ENDPOINT = '…'` (41) ↔ 1.6 libs/src `_ENDPOINT` (32) + libs/src-Domänen
+Änderung: (a) Endpoint-Konstanten diffen: welche der 32 1.6-`*_ENDPOINT`-Werte änderten ihren
+**String-Pfad** (bricht FE↔API-Contract), welche 9 kamen hinzu. (b) Geteilte `libs/src`-Domänen
+(v. a. `common`, `auth`, `sse`, `user`) auf geänderte exportierte Typen/Konstanten prüfen, die
+BE **und** FE importieren. Delta-Tabelle je betroffene libs-Domäne.
+Verify: `grep -rhoE "[A-Z0-9_]+_ENDPOINT = '" libs/src apps/api/src --include=*.ts | sort -u | wc -l`
+= 32 vs. `grep -oE "[A-Z0-9_]+_ENDPOINT = '" "$MJ" | sort -u | wc -l` (≈41) im Report belegt;
+Report listet geänderte/neue Endpoint-Pfade + betroffene libs-Domänen. Assertion: jeder Endpoint
+mit Pfad-Änderung ist als Contract-Drift markiert.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T6 — appconfig-Shapes-Drift (Cross-Cutting, jedes Modul betroffen)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js appconfig-Strukturen ↔ 1.6 libs/src/appconfig/constants/*
+Änderung: Die appconfig-Shape-Dateien 1.6↔2.0 diffen: `appConfigOptionKeys` (1.6: url/apiKey/
+proxyConfig), `extendedOptionKeys` + `extendedOptions/*` (15 Dateien), `appConfigSectionsKeys`,
+`appConfigPaths`, `appDisplayLocations`, `appIntegrationVariant`. Diese Shapes sind der Vertrag,
+den **jedes** Modul-`AppConfigDto` erfüllt → Drift hier = Reibung überall. Neue
+extendedOptions-Felder (Mail/Collabora `ACTIVE_DOCUMENT_EDITOR` etc.) als betroffene Module
+markieren.
+Verify: Report enthält je appconfig-Shape-Datei eine Δ-Zeile (Felder hinzu/geändert/weg); die im
+`MJ` gefundenen neuen `extendedOptions`-Keys (z. B. `ACTIVE_DOCUMENT_EDITOR`@2114,
+`MAIL_*`@2078–2116) sind gelistet. Assertion: `appConfigOptionKeys`-Diff explizit belegt
+(unverändert oder Δ benannt).
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T7 — defaultAppConfig-Seed-Diff (Fresh-Install-Fidelity, §3.0/§6.2)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `initializeCollection`@2335, `defaultAppConfig`-Array `main.js:2380–2468` ↔ 1.6
+`libs/src/appconfig/constants/defaultAppConfig.ts`
+Änderung: Das beim Erststart geseedete `defaultAppConfig`-Array (un-minifiziert, direkt diffbar)
+1.6↔2.0 vergleichen: welche Default-App-Einträge kamen hinzu/änderten Reihenfolge/Flags. Weicht
+das Array ab, zeigt ein frischer Fork ein **anderes Standard-Layout** als 2.0.200. Ergebnis als
+**Fresh-Install-Exit-Kriterium** formulieren (Verankerung in §6 des Master-Plans notieren).
+Verify: `sed -n '2380,2468p' "$MJ"` gegen 1.6-`defaultAppConfig.ts` gedifft; Report listet die
+Default-Einträge-Δ + explizite Aussage „Fresh-Install-Layout identisch / weicht ab in <Punkten>".
+Assertion: Δ-Liste vorhanden oder belegte Gleichheit.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T8 — SSE-Contract-Drift (SseController/Service, sseMessageType, Events)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `SseService`@10661 · `SseController`@55022 · `sseMessageType` (68×) ↔ 1.6
+`apps/api/src/sse/*` (3 `@Sse`-Routen) + `libs/src/sse/*` + `eventEmitterEvents.ts`
+Änderung: Den SSE-Contract diffen: (a) `@Sse`-Routen (1.6: root, `${APPS.CONFERENCES}/public`,
+`AUTH_PATHS.AUTH_ENDPOINT`) im `MJ`-`SseController`-`__decorate`-Block gegenprüfen; (b) die
+`sseMessageType`-Werte/Enum 1.6↔2.0 (68 Vorkommen in 2.0, breit über Module gestreut → Chat/
+Notifications-Nutzung); (c) `eventEmitterEvents`-Keys (SSE_USER_CONNECTED/DISCONNECTED etc.) +
+`libs/src/sse/constants/{sseConfig,sseEndpoints}`. Kritisch: Chat/Notifications reiten auf SSE.
+Verify: `grep -cE "sseMessageType" "$MJ"` (≈68) im Report belegt vs. 1.6-Umfang; Report listet
+SSE-Routen-Δ + neue/geänderte messageType-Werte + Event-Namen-Δ. Assertion: die 3
+1.6-`@Sse`-Routen sind im 2.0-`SseController` verifiziert (vorhanden/verändert/entfernt).
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T9 — Guard-/Auth-Contract-Drift (7 → 9 Guards)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js Guards @11219/32604/56393/56551/56883/59854/59956/63161/64484 ↔ 1.6 7 Guards in
+apps/api/src/**
+Änderung: (a) Die **7 Bestands-Guards** (AccessGuard, AdminGuard, AuthGuard, DynamicAppAccessGuard,
+IsPublicAppGuard, LocalhostGuard, WebhookGuard) im `MJ` gegen 1.6 auf **Verhaltens-Signal** diffen
+(canActivate-Logik, `@Public`-Semantik, Signing-Key-Pfad `edulution.pem`@55805) — jede Änderung =
+Auth-Bypass-Risiko beim Nachbau. (b) Die **2 neuen** Guards inventarisieren: `ThrottleGuard`@64484
+(Rate-Limiting), `MailRequestSizeGuard`@32604 (Mail-Upload-Limit) — Zweck + welche Routen sie
+tragen. Delta-Tabelle: Guard · 1.6? · 2.0-Zeile · Signal.
+Verify: `grep -nE "class [A-Za-z0-9_]+Guard " "$MJ"` = 9 Guards (Zeilen belegt) vs.
+`grep -rhoE "class [A-Za-z0-9_]+Guard" apps/api/src --include=*.ts | sort -u | wc -l` = 7;
+Report bewertet jeden der 7 Bestands-Guards (stabil/gedriftet) + dokumentiert die 2 neuen.
+Assertion: `ThrottleGuard` und `MailRequestSizeGuard` als „neu in 2.0" markiert.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T10 — Gateway-/Queue-/Cron-/registerAs-Drift (ops-kritisch)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: main.js `TLDrawSyncGateway`@55581 · `SatellitesGateway`@65115 · `new Queue(` (11×) ↔ 1.6
+1 Gateway + 4 Queues + 4 `@Cron`
+Änderung: Ops-tragende Schichten diffen: (a) Gateways 1→2 (neu `SatellitesGateway`, zurückgestellt
+— aber Existenz belegen); (b) BullMQ-Queues 4→11 (welche 7 neu, welchem Modul zugeordnet); (c)
+`@Cron`-Jobs — **Anker-Kalibrierung nötig**: `@Cron(` liefert im gebundelten `MJ` **0** Treffer,
+also die alternative Form finden (`SchedulerRegistry`/`CronJob`/`Cron(` ohne `@`) und die echte
+Cron-Zahl 2.0 belegen; ebenso `registerAs('` (roh 0 in `MJ` → Form abweichend). Diese
+Anker-Formabweichungen als Anhang für die P1b-Pipeline notieren.
+Verify: `grep -cE "new Queue\(" "$MJ"` = 11 vs. 1.6 = 4 (belegt); `grep -cE "class …Gateway " "$MJ"`
+= 2; Report enthält Queue-Δ-Tabelle + die **kalibrierte** Cron-/registerAs-Ankerform mit
+belegter Trefferzahl. Assertion: für jeden 0-Treffer-Anker ist die funktionierende
+Alternativform dokumentiert.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T11 — FE-App-Shell-/Routing-/Store-Struktur-Drift (Signal, §4.1)  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
+Soll: 1.6 `apps/frontend/src/{routes,components/structure/layout/NativeAppPageManager.tsx,store}`
+↔ 2.0 `scratchpad/ui-img` index-Bundle (minifiziert) + `scratchpad/real/*` Live-Referenz
+Änderung: **Ehrlich signal-basiert** (2.0-FE ist minifiziert, keine Quell-Namen): im 2.0-index-
+Bundle auf **String-Ebene** heben — Route-Pfade, `APPS.*`-Slugs, `appType: NATIVE`-
+Registrierungen, CSS-Variablen (§4.1: neue `--code-*`), `bg-glass`-Nutzung — und gegen die
+1.6-Struktur + Baseline-Screenshots (`scratchpad/real/10-dashboard.png`, `18-settings.png`)
+plausibilisieren. Ziel: grobe Aussage „App-Shell/Routing/Store-Struktur stabil vs. gedriftet",
+**nicht** exakter Diff. Methoden-Vorbehalt im Report explizit vermerken.
+Verify: Report enthält die Signal-Liste (Routen/Slugs/CSS-Var-Δ aus dem index-Bundle) + eine
+begründete Stabil/Drift-Einschätzung + den expliziten Methoden-Vorbehalt „minifiziert, signal-
+level". Assertion: die 4 neuen CSS-Variablen `--code-keyword/--code-number/--code-string/
+--code-title` sind im Bundle-Signal bestätigt oder als nicht-auffindbar vermerkt.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE)
+Abhängt von: T1
+
+### T12 — Synthese: Drift-Bewertung + Aufwands-Fixierung P2–P5  [ ]
+Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md · PLAN-openedulution-fork.md (§3.2/§8 Rückverweis)
+Soll: Aggregat aus T2–T11
+Änderung: Aus allen Schicht-Befunden je Schicht eine **Drift-Ampel** (grün/gelb/rot) setzen und
+daraus je **Modul-Paket** (Chat P2 · ParentChildPairing/Wiki P3 · Mail/Filesharing P4 ·
+Calendar/Linbo P5) einen **konkreten Basis-Drift-Aufschlag** ableiten — den §3.0-Pauschalpuffer
++20–30 % **bestätigen oder verfeinern** (z. B. „Auth/SSE gedriftet → Chat +20 %, Wiki-BE +15 %").
+Ergebnis fixiert die Modul-Aufwände; Rückverweis-Notiz in `PLAN-openedulution-fork.md` §3.2/§8.
+Verify: Report-Schluss-Sektion enthält (a) Ampel-Tabelle je Schicht (Module/Controller/Services/
+DTO-Schema/libs/appconfig/defaultAppConfig/SSE/Guards/Gateway-Queue/FE) und (b)
+Aufschlag-je-Paket-Tabelle mit Begründung pro Zeile. Assertion: jedes Modul-Paket P2–P5 hat einen
+belegten Prozent-Aufschlag; keine Schicht ohne Ampel.
+i18n: keine
+Doku: docs/analysis/base-drift-2.0.200.md (intern, DE) + Rückverweis-Notiz PLAN §3.2/§8
+Abhängt von: T2, T3, T4, T5, T6, T7, T8, T9, T10, T11
+
+## p0-migrations-inventory [P0] — P0 DB-Migrations-Inventar & Upgrade-Pfad 1.6→2.0
+_Ziel:_ Alle 2.0-Migrationen + Delta 1.6→2.0 als Upgrade-Pfad-Grundlage inventarisieren · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 7
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-migrations-inventory.md` · Soll: main.js:2676 (Engine) · main.js:1601/4938/5499/7801/20680/38245/44391/46418/47807/51355/52464 (11 runMigrations) · main.js:57200/57252 (Keycloak-Runner) · apps/api/src/**/migrations/* (1.6-Baseline)
+
+> Hinweis: ANALYSE-Paket. Die meisten Tasks produzieren Referenz-Doku/Skripte, keinen Feature-Code.
+> `Verify` ist pro Task ein konkreter Grep-/Skript-Abgleich gegen den `main.js`-Anker bzw. gegen die
+> laufende 2.0.200-crabbox-Mongo — red/green, kein „sieht gut aus". Die Portierung der Delta-
+> Migrationen ist **nicht** Teil dieses Pakets (Owner-Map T3 verweist auf die Feature-Pakete).
+
+---
+
+### T1 — Migrations-Engine & schemaVersion-Contract dokumentieren  [ ]
+Komponente: docs · Dateien: docs/migrations/2.0-migrations-inventory.md (Kopf-Abschnitt „Engine")
+Soll: main.js:2676 (`runMigrations`) · apps/api/src/migration/migration.service.ts + migration.type.ts (1.6, identisch)
+Änderung: Dokumentiere die Engine (`Migration<T> = {name, version, execute(model)}`, sequentielles `reduce`, Wiring pro Modell in `onModuleInit`) und das Idempotenz-Muster (`find({schemaVersion: prev})` → transform → `set(newSchemaVersion)`, leere Menge = No-Op; `appConfig/000` nutzt `prev=undefined`). Halte fest, dass Engine 1.6↔2.0 **byte-logisch identisch** ist (kein Engine-Port nötig) und Migrationen Objekt-Literale sind.
+Verify: `diff <(sed -n '2677,2684p' main.js) apps/api/src/migration/migration.service.ts` zeigt gleiche reduce-Logik; `grep -c "await migration_service_1.default.runMigrations" main.js` == 11.
+i18n: keine
+Doku: docs/migrations/2.0-migrations-inventory.md (intern, DE)
+
+### T2 — Vollständiges 2.0-Migrations-Inventar (38 Mongoose + 6 Keycloak)  [ ]
+Komponente: docs · Dateien: docs/migrations/2.0-migrations-inventory.md
+Soll: main.js Listen-Anker (appConfig:2728 · webdav:5368 · globalSettings:5943 · users:7796 · notifications:21931 · publicShares:41391 · surveys:44663 · surveyTemplates:46529 · surveyAnswers:48299 · bulletinCategory:51690 · bulletins:53016) + Keycloak:57252
+Änderung: Tabelle mit **jeder** Migration: Modell · Name · `version` · `prev→new schemaVersion` · Zweck (1 Satz) · `main.js`-Zeilenanker. Getrennter Abschnitt für die 6 Keycloak-Realm-Skripte (Runner main.js:57200, **nicht** MigrationService). Stelle die „32"-Korrektur klar heraus: **38 Mongoose über 11 Modelle + 6 Keycloak = 44** Namensliterale; Ursache des Under-Counts = lowercase-only-Grep + `const name=`-Form.
+Verify: `grep -cE "name: ['\"][0-9]{3}-[A-Za-z0-9-]+['\"]|const name = ['\"][0-9]{3}-[A-Za-z0-9-]+['\"]" main.js` == 44; Zeilenanzahl der Mongoose-Tabelle == 38; Keycloak-Tabelle == 6.
+i18n: keine
+Doku: docs/migrations/2.0-migrations-inventory.md (intern, DE)
+Abhängt von: T1
+
+### T3 — 1.6→2.0-Delta & Owner-Map  [ ]
+Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md
+Soll: 1.6-Baseline `apps/api/src/**/migrations/*` + `apps/api/src/scripts/keycloak/*` vs. main.js
+Änderung: Dokumentiere die **11 neuen Mongoose-Migrationen** + **3 neu verdrahteten Modelle** (users/notifications/publicShares — 1.6 hat dort kein `runMigrations`) mit je Vor-Abhängigkeit (`master_key_util`, `SURVEY_PARTICIPATION`, `createReadonlyAclSection`, `mailDefaultPorts`, neue Schema-Felder) und Owner-Feature-Paket (Owner-Map aus Spec). Halte fest: **Keycloak-Delta = 0** (1.6 hat identische 6 Skripte). Notiere die Nicht-Migration `delete ONLY_OFFICE_JWT_SECRET` (main.js:1726 = Read-Projection, keine Migration).
+Verify: Für jede Delta-Migration: `grep -rl "<name>" apps/api/src` == leer (1.6) **und** `grep -c "<name>" main.js` ≥ 1 (2.0). Für users/notifications/publicShares: `grep -rn "runMigrations" apps/api/src/{users,notifications,filesharing}` == leer.
+i18n: keine
+Doku: docs/migrations/upgrade-1.6-to-2.0.md (intern, DE)
+Abhängt von: T2
+
+### T4 — Per-Modell Ziel-schemaVersion-Tabelle & Fresh-Install-Bezug  [ ]
+Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md (Abschnitt „Terminal-schemaVersion")
+Soll: `newSchemaVersion` der jeweils letzten Migration pro Modell (main.js)
+Änderung: Tabelle Terminal-`schemaVersion` je Modell nach vollem Lauf (appConfig=13, globalSettings=8, notifications=2, publicShares=2, surveys=2, surveyTemplates=4, surveyAnswers=4, users=1, webdav=1, bulletinCategory=1, bulletins=1). Diese Werte sind die Assertion-Basis für T5. Kurzer Cross-Verweis auf das separate `defaultAppConfig`-Fresh-Install-Diff-Paket (Fresh-Install muss dieselben Terminalwerte erreichen); **hier keine defaultAppConfig-Detailanalyse** (YAGNI).
+Verify: Für jedes Modell `grep -A3 "newSchemaVersion = <n>" main.js` bestätigt den letzten Bump; Tabellenwerte == diese `<n>`.
+i18n: keine
+Doku: docs/migrations/upgrade-1.6-to-2.0.md (intern, DE)
+Abhängt von: T2
+
+### T5 — Upgrade-Test-Runbook + Assertion-Skript  [ ]
+Komponente: scripts · Dateien: scripts/migrations/assert-schema-versions.ts (oder mongosh-Skript) · docs/migrations/upgrade-1.6-to-2.0.md (Runbook-Abschnitt)
+Soll: Terminal-schemaVersion-Tabelle (T4) + Spot-Checks aus main.js (mail-extendedOptions unified 4119, user.encryptKey WRAPPED_KEY_PREFIX 9238, publicShare.acl 41430)
+Änderung: (a) Runbook: `mongodump` **+ `./data/master.key` gemeinsam** sichern → Fork-Image booten → Migrationen laufen lassen → assert. (b) Standalone-Skript, das gegen eine Mongo pro Modell prüft: `distinct(schemaVersion)`-Max == dokumentierter Terminalwert; plus Spot-Checks (kein `MAIL_IMAP_URL` mehr in appConfig-MAIL-`extendedOptions`, `encryptKey` beginnt mit Wrap-Prefix, publicShares haben `acl`). Neue Datei ⇒ SPDX `AGPL-3.0-or-later`, Copyright Kevin Stenzel.
+Verify: Skript **remote via iter.sh gegen die crabbox-2.0.200-Mongo** ausführen → alle Modelle grün (2.0.200 steht bereits auf Terminalwerten, dient als Selbsttest der Sollwerte); `npm run lint` sauber.
+i18n: keine
+Doku: docs/migrations/upgrade-1.6-to-2.0.md (Runbook, intern, DE)
+Abhängt von: T4
+
+### T6 — Guardrail-Doku (forward-only, master.key-Kopplung, schemaVersion++-Regel)  [ ]
+Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md (Abschnitt „Guardrails")
+Soll: main.js:9238 (`wrapEncryptKey`) · 41449 (publicShare-Passwort-Wrap) · 2676 (kein down())
+Änderung: Halte die Guardrails fest: (1) forward-only, kein `down()`, `schemaVersion++` bricht Downgrade → Rollback = Dump **+ `master.key`** + Vor-Image. (2) `master.key`-Backup-Kopplung: users-000 wrappt jede `encryptKey`, publicShares-000 wrappt `password` → Restore ohne Key = unlesbar. (3) Regel für künftige Fork-Migrationen: neue Migration ⇒ neues Objekt-Literal, `schemaVersion++`, an die Modell-Liste **anhängen** (nie umsortieren), idempotenter `find({schemaVersion: prev})`-Filter. (4) `master_key_util` ist geteilte Vor-Abhängigkeit zweier Migrationen (P1-Paket).
+Verify: `grep -n "wrapEncryptKey" main.js` bestätigt Nutzung in users- **und** publicShares-Migration; `grep -c "down:" main.js` == 0 (kein Rollback-Code); Doku benennt alle 4 Guardrails.
+i18n: keine
+Doku: docs/migrations/upgrade-1.6-to-2.0.md (intern, DE)
+Abhängt von: T3
+
+### T7 — Anker-/Zähl-Korrektur ins Tracking & Plan zurückspielen  [ ]
+Komponente: docs/scripts (Tracking) · Dateien: docs/migrations/2.0-migrations-inventory.md (Korrektur-Notiz) · Hinweis-Notiz für fingerprint.sh-Anker (openedulution-tracking) · Verweis auf PLAN §3.3
+Änderung: Dokumentiere die Zähl-Korrektur (Plan §3.3: „12× runMigrations, 32 Namen" → **11 Mongoose-runMigrations, 38 Mongoose-Migrationen über 11 Modelle + 6 Keycloak = 44 Namensliterale**) und liefere das **korrigierte Grep-Muster** für den Tracking-`fingerprint.sh`-Anker: `['\"][0-9]{3}-[A-Za-z0-9-]+['\"]` **plus** die `const name = '…'`-Form (camelCase-Pitfall). Keine Änderung an PLAN-Datei selbst nötig — nur die Korrektur-Notiz + Muster festhalten, damit das Tracking-Fingerprint künftige Migrationen zuverlässig zählt.
+Verify: Korrigiertes Muster ergibt in main.js `== 44` und im 1.6-Repo `== 33`; die ins Inventar geschriebene Korrektur-Notiz nennt beide Zahlen und den Grund (lowercase-only + `const name=`).
+i18n: keine
+Doku: docs/migrations/2.0-migrations-inventory.md (Korrektur-Notiz, intern, DE)
+Abhängt von: T2, T3
+
+## p0-supply-chain-inventory [P0] ⭐ — Supply-Chain-Inventar (edulution-io-Außenreferenzen)
+_Ziel:_ Alle edulution-io-Außenreferenzen (Datei:Zeile, Policy) + Manifest · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 4
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-supply-chain-inventory.md` · Soll: main.js:25090-25097 · main.js:26371/26891 · main.js:43634-43800 · main.js:54486 · main.js:59762 · Fork-Base libs/src/{mail,common,license,docker} · scratchpad/real/— (keine UI-Änderung)
+
+> Analyse-Paket: Kern-Deliverable ist das versionierte Register + ein Drift-Gate. Die *Umsetzung*
+> einzelner Policies (Lizenzserver, Plugin-Repoint, SOGo-Vendoring, Image-Pinning, Rebrand) ist
+> anderen Paketen zugeordnet und hier NUR als Cross-Reference/Policy geführt (siehe Spec, Offene Fragen).
+
+---
+
+### T1 — Maschinenlesbares Referenz-Manifest  [ ]
+Komponente: scripts (Ops) · Dateien: `scripts/supply-chain/externalReferences.ts`
+Soll: Fork-Base-Fundstellen + main.js-Anker (SOGo 25090-25097, Plugin urls.ts:21, Cookie cookieTestUrl.ts:20, License 43800, Companion-Images 27083-64073, Sentry 54486/59762)
+Änderung: Typisierter const-Export `EXTERNAL_REFERENCES` als Quelle der Wahrheit: je Referenz `{ id, host, category ('A-runtime-fetch'|'B-image'|'C-telemetry'|'D-branding'), files: string[], breakImpact, policy, owningPackage }`. Enthält NUR öffentliche Host-Namen, keine Secrets. Deckt alle in der Spec kategorisierten Referenzen ab.
+Verify: `iter.sh cmd 'npx tsx -e "import(\"./scripts/supply-chain/externalReferences.ts\").then(m=>{const r=m.default;if(r.length<15)process.exit(1);console.log(r.length)})"'` → ≥15 Einträge, exit 0
+i18n: keine
+Doku: keine (intern; Register-Doku folgt in T2)
+
+### T2 — Inventar-Register (Doku)  [ ]
+Komponente: docs · Dateien: `docs/supply-chain/edulution-io-external-references.md`
+Soll: identisch zu T1-Manifest (menschenlesbare Fassung) + Policy-Begründung je Referenz
+Änderung: Deutsches Register mit Tabellen je Kategorie A–D (Host · Datei:Zeile · Consumer · Break-Impact · Policy · Folge-Paket). Kategorie A = SOGo-CSS ×2, Plugin-Compose, Cookie-Test (neu), Lizenzserver. B = ~12 Companion-Images (+ 2 Kern-App-Images, `DOCKER_PROTECTED_CONTAINERS` main.js:26891; Hinweis: Fork-Base `dockerApplicationList.ts` listet nur 6, Rest kommt mit 2.0-Modulen). C = Sentry. D = Branding/Doku-Links (nur inventarisiert). Kopf-Notiz: Umsetzung je Policy = anderes Paket.
+Verify: `iter.sh cmd 'grep -c "edulution" docs/supply-chain/edulution-io-external-references.md'` → >0; Sichtprüfung, dass jede T1-`id` im Doc vorkommt (T3-Gate erzwingt Konsistenz maschinell)
+i18n: keine (Dev-/Ops-Doku, Deutsch)
+Doku: docs/supply-chain/edulution-io-external-references.md (dies IST die Doku)
+Abhängt von: T1
+
+### T3 — Drift-Gate + Fixture-Test  [ ]
+Komponente: scripts (Ops) · Dateien: `scripts/checkExternalReferences.ts`, `scripts/checkExternalReferences.spec.ts`, `package.json`
+Soll: Muster des bestehenden `scripts/checkTranslations.ts`; Allowlist = T1-Manifest
+Änderung: Script scannt `apps/**`+`libs/**` (ts/tsx/html/json/env, ohne node_modules/dist) auf Netz-Host-Muster `https?://[^ "']*edulution\.io`, `raw.githubusercontent.com/edulution-io`, `edulution-io.github.io`, `license.edulution.io`; excludiert `@edulution-io/ui-kit` und `github.com/edulution-io/edulution-ui`; meldet jede Fundstelle, die nicht per Datei+Host im Manifest allowlistet ist, mit exit 1. Zusätzlich: Fehler bei nicht-leerem `SENTRY_*_DSN`-Literal in committeten Dateien. `package.json`: Script `check-external-references` + Einhängen in `check`/`precommit`. Spec: Fixture mit (a) sauberem Snippet → pass, (b) eingeschleuster Fremd-Referenz → fail.
+Verify: `iter.sh cmd 'npm run check-external-references'` → exit 0 auf sauberem Tree; `iter.sh cmd 'npx nx test <projekt> -- checkExternalReferences'` (bzw. `tsx --test`) grün; Negativfall: temporär `const X="https://foo.edulution.io/x"` in eine Datei → Script exit 1 (im Test abgedeckt)
+i18n: keine
+Doku: kurzer Verweis auf `npm run check-external-references` im Register-Doc (T2) und README/Ops-Notiz
+Abhängt von: T1
+
+### T4 — Sentry-Telemetrie-Default explizit härten  [ ]
+Komponente: apps/api (Env-Default) · Dateien: `apps/api/.env.default`
+Soll: `getSentryConfig` main.js:54486, `enableSentryForNest` main.js:59762 (`sendDefaultPii:true`, `tracesSampleRate:1.0`); Env-Block `.env.default:88-91`
+Änderung: `ENABLE_SENTRY=false` explizit setzen (statt leer), `SENTRY_EDU_UI_DSN=`/`SENTRY_EDU_API_DSN=` leer belassen, Kommentar ergänzen: „Default aus; nie Fremd-DSN erben — eigener DSN nur opt-in". Keine Code-/Verhaltensänderung (Egress bleibt aus). Verankert die Policy aus dem Register.
+Verify: `iter.sh cmd 'grep -nE "ENABLE_SENTRY=false|SENTRY_EDU_(UI|API)_DSN=$" apps/api/.env.default'` → 3 Treffer; `iter.sh cmd 'npm run check-external-references'` bestätigt: keine DSN-Literale committet
+i18n: keine
+Doku: keine (Kommentar in .env.default genügt)
+Abhängt von: T3
+
+## p0-realm-diff-baseline [P0] — Keycloak-Realm-Diff-Baseline
+_Ziel:_ Keycloak-Realm der 2.0.200 exportieren, scrubben, als Soll-Baseline · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 8
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-realm-diff-baseline.md` · Soll: main.js:57195–57260 (ScriptsService + keycloakConfigScripts) · main.js:57291/57353/57439/57515 (Einzelskripte) · realm-edulution.json.template (Installer, Clients :670/:776/:880, LDAP :1830/:2195–2295, Rollen :49–72) · webinstaller-api/app/main.py:702–765 · apps/api/src/scripts/keycloak/*.ts · libs/src/ldapKeycloakSync/constants/* · Live-Realm-Export der laufenden 2.0.200-Instanz (T4)
+
+> ANALYSE-Ledger (P0). Deliverables sind Werkzeug + committete Soll-Baseline + Provisioning-Doku,
+> kein Laufzeit-Feature. Neue Code-Dateien (`scripts/keycloak-realm-diff/*.sh|.mjs`) tragen den
+> AGPL-SPDX-Header (Copyright Kevin Stenzel, **nicht** Netzint). i18n: durchweg keine (kein FE).
+> T4 hängt an der offenen Frage 1 (Instanzquelle) — bis dahin sind alle Werkzeug-/Doku-Tasks
+> (T1–T3, T5, T7) unabhängig auf der warmen Box lauffähig.
+
+### T1 — Installer-Realm-Template als On-Box-Referenzkopie vendoren  [ ]
+Komponente: docs · Dateien: docs/keycloak/realm-template.reference.json, docs/keycloak/README.md
+Soll: realm-edulution.json.template (Installer, unverändert; Secrets bereits `**********`)
+Änderung: Das Installer-Template 1:1 nach `docs/keycloak/realm-template.reference.json` kopieren (Template-Seite des Diffs, damit der Diff on-box ohne Installer-Checkout läuft). In `docs/keycloak/README.md` Herkunft, Sync-Pflicht (Single-Source = Installer-Repo) und Maskierungshinweis notieren. Keine Werte ändern.
+Verify: `scripts/crabbox/iter.sh cmd 'node -e "const r=require(\"./docs/keycloak/realm-template.reference.json\"); if(r.realm!==\"edulution\") process.exit(1); if(JSON.stringify(r).match(/\"secret\":\"(?!\\*+\")/)) process.exit(2)"'` (valides JSON, realm==edulution, kein Klartext-Secret)
+i18n: keine
+Doku: docs/keycloak/README.md (DE, intern)
+
+### T2 — Realm-Export-Werkzeug schreiben  [ ]
+Komponente: scripts · Dateien: scripts/keycloak-realm-diff/export-realm.sh
+Soll: webinstaller-api/app/main.py:726–765 (Realm-Struktur) · getKeycloakToken.ts (admin-cli/master-Realm ROPC) · createKeycloakAxiosClient.ts (`/admin/realms/<realm>`)
+Änderung: Bash-Skript (nur `curl`): admin-cli-Token vom `master`-Realm holen (Env `KEYCLOAK_API`, `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`), dann `POST /admin/realms/edulution/partial-export?exportClients=true&exportGroupsAndRoles=true` **und** `GET /admin/realms/edulution/components` (LDAP-Federation + Mapper) nach `scratchpad/` schreiben. `kc.sh export` als Fallback im Skript-Kommentar dokumentieren. SPDX-Header AGPL-3.0-or-later.
+Verify: `scripts/crabbox/iter.sh cmd 'bash -n scripts/keycloak-realm-diff/export-realm.sh'` (Syntax) — Live-Lauf gegen KC erfolgt in T4
+i18n: keine
+Doku: Verfahren in export-realm.sh-Kopf (DE, intern)
+
+### T3 — Normalisierungs-/Scrub-Werkzeug + Test  [ ]
+Komponente: scripts · Dateien: scripts/keycloak-realm-diff/normalize-realm.mjs, scripts/keycloak-realm-diff/normalize-realm.test.mjs, scripts/keycloak-realm-diff/fixtures/realm.sample.json
+Soll: Spec §Secrets/Env (Scrub-Regeln) · main.js:57439–57470 (patchEduUiClient-Felder als Beispiel volatiler Client-Attribute)
+Änderung: Node-ESM `normalize-realm.mjs`: Realm-JSON deterministisch sortieren, volatile Felder entfernen (`id`, `*.creation.time`, `client.secret.creation.time`, `lastSync`, `notBefore`, KC-`keys`/Schlüsselmaterial) und Secrets redigieren (`secret`, `bindCredential`, `bindCredential`-Config-Arrays → `"REDACTED"`). CLI-Modi: `<in> > <out>` und `--assert-scrubbed <file>` (Exit≠0, falls ein Secret nicht `REDACTED`). `node --test`-Spec gegen `fixtures/realm.sample.json` prüft: (a) Secrets→REDACTED, (b) `id`/`lastSync` entfernt, (c) Idempotenz (zweifach == einfach). SPDX-Header auf allen drei Dateien.
+Verify: `scripts/crabbox/iter.sh cmd 'node --test scripts/keycloak-realm-diff/normalize-realm.test.mjs'` (grün)
+i18n: keine
+Doku: keine (intern)
+
+### T4 — Soll-Baseline der 2.0.200-Instanz erfassen, scrubben, committen  [?]
+Komponente: docs · Dateien: docs/keycloak/realm-2.0.200.baseline.json
+Soll: Live-Realm-Export der laufenden 2.0.200-Instanz (partial-export + `/components`)
+Änderung: `export-realm.sh` gegen die 2.0.200-Instanz laufen lassen (Roh-Export nach `scratchpad/`, **nie ins Repo**), Roh-Export durch `normalize-realm.mjs` scrubben und das Ergebnis als `docs/keycloak/realm-2.0.200.baseline.json` committen. Im Commit-Text Herkunft (Image-Tag, Datum, Instanz) festhalten.
+Verify: `scripts/crabbox/iter.sh cmd 'node scripts/keycloak-realm-diff/normalize-realm.mjs --assert-scrubbed docs/keycloak/realm-2.0.200.baseline.json && node -e "const r=require(\"./docs/keycloak/realm-2.0.200.baseline.json\"); const ids=r.clients.map(c=>c.clientId); [\"edu-api\",\"edu-ui\",\"edu-mailcow-sync\"].forEach(x=>{if(!ids.includes(x))process.exit(1)})"'` (scrubbt + enthält die 3 edu-Clients)
+i18n: keine
+Doku: keine (Artefakt) · Herkunft im Commit
+Abhängt von: T2, T3
+Entscheidung: offene Frage 1 (Instanzquelle) — vor Start klären
+
+### T5 — Diff-Werkzeug (normalisiert, feldgenau) + Test  [ ]
+Komponente: scripts · Dateien: scripts/keycloak-realm-diff/diff-realm.mjs, scripts/keycloak-realm-diff/diff-realm.test.mjs
+Soll: Spec §Datenmodell (Diff-Achsen) · realm-template.reference.json vs. Baseline
+Änderung: Node-ESM `diff-realm.mjs <template.json> <baseline.json>`: beide via `normalize-realm.mjs` normalisieren, dann strukturierten Diff (added/removed/changed) ausgeben, gruppiert nach `clients[clientId]`, `components` (LDAP-Federation + Mapper) und `roles`. Exit-Code 0, JSON-Report auf stdout. `node --test`-Spec mit zwei synthetischen Realms (eine bekannte Client-Flag-Änderung) prüft, dass der Diff sie unter `changed` meldet. SPDX-Header.
+Verify: `scripts/crabbox/iter.sh cmd 'node --test scripts/keycloak-realm-diff/diff-realm.test.mjs'` (grün)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T3
+
+### T6 — Diff-Report dokumentieren  [ ]
+Komponente: docs · Dateien: docs/keycloak/realm-diff-2.0.200.md
+Soll: Ausgabe von `diff-realm.mjs realm-template.reference.json realm-2.0.200.baseline.json`
+Änderung: Diff-Tool gegen Referenz-Template + Soll-Baseline laufen lassen und das Delta menschenlesbar dokumentieren, zugeordnet nach Ursache: (a) **Installer-Substitution** (Secrets, edu-ui-URLs, LDAP `connectionUrl`/`bindDn`/`usersDn`/`groups.dn`, `frontendUrl`), (b) **6 Boot-Skripte** (removeRealmRoles → default-roles-edulution ohne query-users/view-users/query-groups; addMailcowSyncRoles → Service-Account-Rollen; patchEduUiClient → publicClient=true/implicitFlow=false/device-grant=false; addLdapGroupMappers/addUserAttributeMappers → Mapper; disableLdapConnectionPoolingAndPagination), (c) **KC-Auto-Gen** (IDs, Schlüsselmaterial, Timestamps, Service-Account-User). Report nennt je Delta die Quell-Zeile.
+Verify: `scripts/crabbox/iter.sh cmd 'grep -qi "removeRealmRoles" docs/keycloak/realm-diff-2.0.200.md && grep -qi "patchEduUiClient" docs/keycloak/realm-diff-2.0.200.md && grep -qi "connectionUrl" docs/keycloak/realm-diff-2.0.200.md'`
+i18n: keine
+Doku: docs/keycloak/realm-diff-2.0.200.md (DE, intern)
+Abhängt von: T4, T5
+
+### T7 — Provisioning-Referenz dokumentieren (Clients · LDAP-Mapper · Rollen)  [ ]
+Komponente: docs · Dateien: docs/keycloak/realm-provisioning.md
+Soll: realm-template.reference.json (Clients/LDAP/Rollen) · main.js:57195–57260 (Boot-Reihenfolge) · webinstaller-api/app/main.py:702–810 (Secrets/Env) · libs/src/ldapKeycloakSync/constants/{requiredUserAttributes,requiredGroupAttributes}.ts · apps/api/.env.default:40–86
+Änderung: Provisioning-Referenz (DE) schreiben mit Abschnitten: **Clients** (`edu-api`/`edu-ui`/`edu-mailcow-sync`: Flags, Scopes inkl. custom `school`/`group-membership`, Service-Accounts, ROPC); **LDAP-User-Federation** (`vendor=ad`, `editMode=READ_ONLY`, `uuidLDAPAttribute=samaccountname` + alle Mapper: `username`/`first name`/`last name`/`email`/`proxyAddresses`/`sophomorix*`/`school`/`global-groups`/`school-groups`, sowie REQUIRED_USER/GROUP_ATTRIBUTES aus den Boot-Skripten); **Rollen** (`default-roles-edulution`-Composites + removeRealmRoles-Invariante, mailcow-Service-Account-Rollen); **Boot-Reihenfolge** (60 s Timeout, 6 idempotente Skripte); **Secret-Inventar + Rotationspfad** (`KEYCLOAK_EDU_*_SECRET` ↔ `edulution.env`); **Findings** (Wildcard-`webOrigins`/`redirectUris`, ROPC, `example.com`-Leftover → Fix ist P1/R11) und **Auth-Anker** (Signing-Key aus Datei, R9). ParentChildPairing-Eltern-Rolle nur als Ist-Zustand/„für P3 zu klären" notieren.
+Verify: `scripts/crabbox/iter.sh cmd 'for k in edu-api edu-ui edu-mailcow-sync school-groups global-groups default-roles-edulution KEYCLOAK_EDU_UI_SECRET; do grep -qi "$k" docs/keycloak/realm-provisioning.md || { echo "fehlt: $k"; exit 1; }; done'`
+i18n: keine
+Doku: docs/keycloak/realm-provisioning.md (DE, intern)
+Abhängt von: T1
+
+### T8 — Wiederverwendbaren Diff-Alias + Release-Hinweis verdrahten  [ ]
+Komponente: scripts · Dateien: package.json (Script `realm:diff`), docs/keycloak/README.md
+Soll: Spec §Nicht-Ziele (kein CI-Gate — P1b) · PLAN §7f/§8 (Realm-Diff als Pipeline-Schritt)
+Änderung: npm-Script `realm:diff` ergänzen, das `diff-realm.mjs docs/keycloak/realm-template.reference.json docs/keycloak/realm-2.0.200.baseline.json` aufruft; in `docs/keycloak/README.md` das Re-Export-/Diff-Verfahren für künftige Releases beschreiben und explizit auf P1b (Tracking-Pipeline/CI-Gate) verweisen. Kein CI-Job hier.
+Verify: `scripts/crabbox/iter.sh cmd 'npm run realm:diff >/dev/null && echo OK'` (Exit 0, Report erzeugt)
+i18n: keine
+Doku: docs/keycloak/README.md (DE, intern)
+Abhängt von: T5, T6
+
+## p0-pii-inventory [P0] — DSGVO/PII-Datenfluss-Inventur
+_Ziel:_ DSGVO/PII-Datenfluss je Collection + master.key-Fluss + Drittempfänger · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 7
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-pii-inventory.md` · Soll: main.js:8960-9040 (User) · 8323-8365 (Krypto) · 9190-9330 (master.key+Migration000) · 69221-69425 (Chat) · 60650-60702 (Pairing) · 44261-44290 (SurveyAnswer) · 21630-21642 (Notification-TTL) · 39930-39938 (PublicShare-TTL) · 43707/43800 (License) · 54486/59762 (Sentry) · upstream/1717-add-pairing-administration-page · upstream/1683-chat-add-basic-chat-ui
+
+> Hinweis: Analyse-/Inventur-Paket. T1–T5 = Inventar-Dokumente (Prosa, DE). T6–T7 = synthetische
+> Test-Fixtures + Gates. Kein Produktcode, keine Migration, keine neue Route/Guard. Neue `.md`/
+> `.ts` tragen SPDX-Header `AGPL-3.0-or-later`, Copyright Kevin Stenzel (NICHT Netzint). i18n =
+> keine (keine UI-Änderung).
+
+---
+
+### T1 — PII-Inventar je Collection dokumentieren  [ ]
+Komponente: docs · Dateien: docs/datenschutz/pii-inventar.md (neu)
+Soll: main.js:8960-9040 · account.schema.ts · 69221-69425 · 60650-60702 · 44261-44290 · 21630-21642 · 39930-39938 · 27364-27401
+Änderung: Tabelle je Datenquelle/Collection (`LDAP/linuxmuster-api7`, `users`, `useraccounts`, `conversations`, `chatmessages`, `parentchildpairings`, `surveyanswers`, `notifications`+`usernotifications`, `publicshares`, `mailproviders`, `license`) mit Spalten: PII-Felder · Betroffene (Minderjährige ja/nein) · Verschlüsselung-at-rest · Speicherort · Aufbewahrung. Kopf mit SPDX + kurzer Index auf die vier Schwester-Dokumente.
+Verify: `iter.sh cmd 'test -f docs/datenschutz/pii-inventar.md && for c in users useraccounts conversations chatmessages parentchildpairings surveyanswers notifications publicshares; do grep -qi "$c" docs/datenschutz/pii-inventar.md || { echo "FEHLT: $c"; exit 1; }; done && grep -qi "SPDX-License-Identifier: AGPL-3.0-or-later" docs/datenschutz/pii-inventar.md'`
+i18n: keine
+Doku: docs/datenschutz/pii-inventar.md (dies ist das Deliverable) · EN deferred (Spec-Offene-Frage 3)
+
+### T2 — Verschlüsselung & master.key-Datenfluss dokumentieren  [ ]
+Komponente: docs · Dateien: docs/datenschutz/verschluesselung-master-key.md (neu)
+Soll: main.js:8323-8365 (AES-GCM-256/WebCrypto) · 9190-9265 (getMasterKey/wrap/unwrap, `MASTER_ENCRYPT_KEY`, `./data/master.key` 0600, `wrapped:`-Prefix) · 9299-9330 (Migration 000) · 8793 (USER_DB_PROJECTION)
+Änderung: Beschreibe die Kette `master.key` → wrapped `user.encryptKey` → AES-GCM-verschlüsselte `user.password` + `useraccounts.accountPassword`; nenne Provisioning (Env vs. Auto-Gen ins Bind-Mount) und spiegle die **Backup-/DR-Kopplung** (Master-Key + `mongodump` immer gemeinsam) mit Verweis auf §2.6/§5.6-DR — nicht neu erfinden.
+Verify: `iter.sh cmd 'grep -qi "AES-GCM" docs/datenschutz/verschluesselung-master-key.md && grep -qi "master.key" docs/datenschutz/verschluesselung-master-key.md && grep -qiE "backup|mongodump|DR" docs/datenschutz/verschluesselung-master-key.md && grep -qi "SPDX-License-Identifier: AGPL-3.0-or-later" docs/datenschutz/verschluesselung-master-key.md'`
+i18n: keine
+Doku: docs/datenschutz/verschluesselung-master-key.md · optionaler Verweis aus DR-Runbook/README-Betriebsteil
+
+### T3 — Drittempfänger-Liste dokumentieren  [ ]
+Komponente: docs · Dateien: docs/datenschutz/drittempfaenger.md (neu)
+Soll: main.js:43707/43800 (License = nur `licenseKey`) · 54486-54490 + 59762-59780 (Sentry, Gate `ENABLE_SENTRY`) · expo-server-sdk/`registeredPushTokens` · §5.3 (3 GitHub-Fetches, PII-frei)
+Änderung: Tabelle je Empfänger (`license.edulution.io`, Sentry BE/FE, Mailcow/SOGo, Expo/FCM/APNs, Relution [inaktiv], 3× GitHub-Fetch) mit Spalten: übermittelte PII · Default An/Aus · Rechts-/Ersetzungsstatus. Explizit festhalten: License-Server erhält **keine** Schüler-PII (nur `licenseKey`).
+Verify: `iter.sh cmd 'for r in license.edulution.io Sentry Mailcow Expo Relution; do grep -qi "$r" docs/datenschutz/drittempfaenger.md || { echo "FEHLT: $r"; exit 1; }; done && grep -qiE "Default|An/Aus|aktiv" docs/datenschutz/drittempfaenger.md && grep -qi "SPDX-License-Identifier: AGPL-3.0-or-later" docs/datenschutz/drittempfaenger.md'`
+i18n: keine
+Doku: docs/datenschutz/drittempfaenger.md
+
+### T4 — Retention-/Löschkonzept dokumentieren  [ ]
+Komponente: docs · Dateien: docs/datenschutz/retention-loeschkonzept.md (neu)
+Soll: main.js:21630-21642 (Notification TTL 30d) · 39930-39938 (PublicShare TTL) · 69221-69425 + 60650-60702 + 44261-44290 (kein TTL → Lücke)
+Änderung: Gegenüberstellung „hat TTL" (`notifications`, `publicshares`) vs. „kein TTL/unbegrenzt" (`conversations`, `chatmessages`, `parentchildpairings`, `surveyanswers`, `users`, `useraccounts`). Benenne den Chat-Retention-Vorschlag und den Offboarding-Löschpfad als **offene Entscheidungen** (verweist auf Spec-Offene-Fragen 1+2) — hier wird NICHT implementiert.
+Verify: `iter.sh cmd 'grep -qi "notifications" docs/datenschutz/retention-loeschkonzept.md && grep -qi "chatmessages" docs/datenschutz/retention-loeschkonzept.md && grep -qiE "kein TTL|unbegrenzt|Lücke" docs/datenschutz/retention-loeschkonzept.md && grep -qi "SPDX-License-Identifier: AGPL-3.0-or-later" docs/datenschutz/retention-loeschkonzept.md'`
+i18n: keine
+Doku: docs/datenschutz/retention-loeschkonzept.md
+
+### T5 — AVV-Bedarf je Companion/Dienst dokumentieren  [ ]
+Komponente: docs · Dateien: docs/datenschutz/avv-bedarf.md (neu)
+Soll: §5.3 Lieferketten-Inventar (Companion-Images) · Drittempfänger aus T3
+Änderung: Tabelle je Companion/externem Dienst mit Spalten: Hosting (self-hosted vs. extern) · verarbeitet PII? · AVV-Bedarf (ja/nein/entfällt) · Anmerkung. Nur **Bedarf** markieren, kein Vertragsentwurf (YAGNI).
+Verify: `iter.sh cmd 'test -f docs/datenschutz/avv-bedarf.md && grep -qiE "AVV|Auftragsverarbeit" docs/datenschutz/avv-bedarf.md && grep -qiE "self-hosted|extern" docs/datenschutz/avv-bedarf.md && grep -qi "SPDX-License-Identifier: AGPL-3.0-or-later" docs/datenschutz/avv-bedarf.md'`
+i18n: keine
+Doku: docs/datenschutz/avv-bedarf.md
+
+### T6 — Synthetischer Persona-Katalog + „keine-Echt-PII"-Gate  [ ]
+Komponente: scripts/crabbox/fixtures · Dateien: scripts/crabbox/fixtures/synthetic-personas.ts (neu) · scripts/crabbox/fixtures/assert-synthetic.ts (neu) · (optional) package.json
+Soll: main.js:8960-9040 (User-Feldform) — Personas nur mit eindeutig synthetischen Werten
+Änderung: `synthetic-personas.ts` exportiert einen typisierten Katalog fiktiver Betroffener (Schüler=minderjährig, Lehrkräfte, Eltern) mit reserviertem Namensraum (Präfix `synth.`, Schule `test-schule`, Domain `@example.invalid`). `assert-synthetic.ts` lädt den Katalog und **failt** (exit 1), wenn eine Kennung/Domain nicht dem Namensraum entspricht → das ist der maschinelle „keine Echt-PII"-Gate. Beide Dateien mit SPDX-Header. Optional npm-Skript `check:pii-fixtures` in package.json.
+Verify: `iter.sh cmd 'npx tsx scripts/crabbox/fixtures/assert-synthetic.ts && echo GATE_OK'` (exit 0 + GATE_OK; Negativ-Selbsttest im Skript: ein injizierter Nicht-`synth.`-Wert muss exit 1 erzwingen)
+i18n: keine
+Doku: keine (intern) — kurzer Kopfkommentar im Katalog genügt
+
+### T7 — Mongo-Seed für API-eigene PII-Collections aus Personas  [ ]
+Komponente: scripts/crabbox/fixtures · Dateien: scripts/crabbox/fixtures/seed-pii-collections.ts (neu)
+Soll: main.js:69221-69425 (conversations/chatmessages) · 60650-60702 (parentchildpairings) · 44261-44290 (surveyanswers)
+Änderung: Skript, das aus `synthetic-personas.ts` deterministische Test-Dokumente für `conversations`, `chatmessages`, `parentchildpairings`, `surveyanswers` erzeugt und in Mongo schreibt. **Sicherheit:** Default **Dry-Run** (nur Ausgabe der geplanten Inserts); Schreiben nur mit `--apply`; harter Gate gegen `MONGODB_DATABASE_NAME` (Refuse, wenn nicht Test-DB, z. B. Muster `*_e2e|*-test`). Alle erzeugten Referenzen stammen ausschließlich aus dem Persona-Katalog (nutzt das Gate aus T6). SPDX-Header.
+Verify: `iter.sh cmd 'npx tsx scripts/crabbox/fixtures/seed-pii-collections.ts --dry-run | grep -qi "conversations" && MONGODB_DATABASE_NAME=produktion npx tsx scripts/crabbox/fixtures/seed-pii-collections.ts --apply; test $? -ne 0 && echo REFUSED_PROD'` (Dry-Run listet Inserts; `--apply` gegen Nicht-Test-DB muss verweigern → `REFUSED_PROD`)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T6
+
+## p1-rebrand [P1] ⭐ — P1
+_Ziel:_ edulution-io-Refs/Marken/Lizenz-Header per Deny/Allowlist auf faircomp · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 16
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-rebrand.md` · Soll: reiner Rebrand/Legal (kein main.js-Anker/Rescue-Branch); Belege: PLAN §2.3/2.4/2.5/4.1/9 · nx.json:3 · scripts/addLicenseHeader.ts:23–39 · libs/src/common/constants/urls.ts:20–22 · .github/workflows/{container-build,build-and-test,api-tag,frontend-tag}.yml · package.json:19–22 · README.md · LICENSE_EXCEPTIONS.md · apps/frontend/index.html
+
+> Platzhalter-Zielwerte bis OF1 entschieden: Org `faircomp`, Images `ghcr.io/faircomp/linuxmuster-ui` / `ghcr.io/faircomp/linuxmuster-api`, Anzeigename „linuxmuster", Repo-URL `https://github.com/faircomp/linuxmuster-ui`. Allowlist (nicht anfassen): `@edulution-io/ui-kit`, `edu-*`, `isEdulutionApp`/`EDULUTION_APP_AGENT_IDENTIFIER`, `EDULUTION_MANAGER_*`, `edulution-manager`, `edu_`-Icon-Pfade, `edulution-binduser-*`-Keys, `/opt/edulution/api`, Issue-URL-Kommentare, sämtliche Netzint-Copyright-Header auf Bestandsdateien.
+
+---
+
+### T1 — NOTICE + Fork-CHANGELOG anlegen  [ ]
+Komponente: Repo-Root · Dateien: `NOTICE`, `CHANGELOG.md`
+Änderung: `NOTICE` mit Attribution anlegen — „Fork von edulution (Community Edition), Netzint GmbH / edulution-io; Fork-Basis v1.6.266 (`36050641d`); Verhaltens-/Design-Referenz Image 2.0.200 (`7356c68`); Lizenz AGPLv3" + **duale-Lizenz-Klarstellung** (Original dual-lizenziert AGPL-3.0-or-later ODER Netzint-Kommerz; dieser Fork ausschließlich AGPL-Arm; neuer Code ohne Kommerz-Arm). `CHANGELOG.md` mit erstem Fork-Eintrag anlegen (Format „Keep a Changelog").
+Verify: `test -f NOTICE && test -f CHANGELOG.md && grep -qi "AGPL" NOTICE && grep -qi "36050641d" NOTICE`
+i18n: keine
+Doku: NOTICE + CHANGELOG.md (dies IST die Doku)
+
+### T2 — LICENSE_EXCEPTIONS.md → eigenes TRADEMARK-Statement  [ ]
+Komponente: Repo-Root · Dateien: `LICENSE_EXCEPTIONS.md` → `TRADEMARK.md` (löschen/ersetzen)
+Änderung: Netzint-Markenklausel entfernen und durch eigenes Trademark-Statement ersetzen, das Netzints Marke „edulution" **anerkennt** und klarstellt, dass der Fork den Namen/das Logo „edulution" **nicht** führt. `LICENSE` (AGPLv3) bleibt unverändert; **keine** Bestandsdatei-Copyright-Header berühren. (`git mv LICENSE_EXCEPTIONS.md TRADEMARK.md`, Inhalt neu schreiben.)
+Verify: `test -f TRADEMARK.md && ! test -f LICENSE_EXCEPTIONS.md && ! grep -qi "must retain the original branding" TRADEMARK.md && grep -qi "edulution" TRADEMARK.md`
+i18n: keine
+Doku: TRADEMARK.md (dies IST die Doku)
+
+### T3 — README.md rebranden (Name, Attribution, duale Lizenz, Repo-/Image-Refs)  [ ]
+Komponente: Repo-Root · Dateien: `README.md`
+Soll: README.md:7,20,21,100,101 (edulution-io-Links + `ghcr.io/edulution-io/edulution-{ui,api}`)
+Änderung: Produktname/Überschrift → „linuxmuster" (OF1); `edulution-io`-Repo-/Badge-/Tech-Stack-Links auf eigenes Repo (`faircomp/linuxmuster-ui`) bzw. entfernen; Attribution-Absatz + duale-Lizenz-Klarstellung (Verweis auf NOTICE); Build-Kommandos `ghcr.io/edulution-io/edulution-{ui,api}` → `ghcr.io/faircomp/linuxmuster-{ui,api}`. Wiring-Nennungen (`@edulution-io/ui-kit`) unangetastet lassen.
+Verify: `! grep -nE "ghcr.io/edulution-io/edulution" README.md` und `grep -qi "fork" README.md`
+i18n: keine
+Doku: README.md (dies IST die Doku)
+
+### T4 — CI-Workflow-Refs repointen (nur Refs, keine CI-Architektur)  [ ]
+Komponente: `.github/workflows` · Dateien: `container-build.yml`, `build-and-test.yml`, `api-tag.yml`, `frontend-tag.yml`
+Soll: container-build.yml:47,57 · build-and-test.yml:48,106 · api-tag.yml:20 · frontend-tag.yml:20
+Änderung: alle `docker_registry_path="ghcr.io/edulution-io/edulution-{ui,api}"` → `ghcr.io/faircomp/linuxmuster-{ui,api}`. **Kein** `permissions:`-Block, **kein** Green-Gate, **kein** Löschen redundanter Workflows (→ CI-Härtungs-Paket, OF6).
+Verify: `! grep -rnE "ghcr.io/edulution-io/edulution" .github/workflows`
+i18n: keine
+Doku: keine (intern)
+
+### T5 — package.json docker-Script-Refs repointen  [ ]
+Komponente: Repo-Root · Dateien: `package.json`
+Soll: package.json:19,20,21,22 (`build:docker:ui/api`, `push:docker:ui/api`)
+Änderung: `ghcr.io/edulution-io/edulution-{ui,api}:preview` → `ghcr.io/faircomp/linuxmuster-{ui,api}:preview`. `@edulution-io/ui-kit`-Dependency/Scope **nicht** ändern (Allowlist).
+Verify: `! grep -nE "ghcr.io/edulution-io/edulution" package.json` und `npm run lint`
+i18n: keine
+Doku: keine (intern)
+
+### T6 — nx.json defaultBase dev → main  [ ]
+Komponente: Repo-Root · Dateien: `nx.json`
+Soll: nx.json:3 `"defaultBase": "dev"`
+Änderung: `"defaultBase": "dev"` → `"defaultBase": "main"` (sonst `nx affected` gegen tote Basis).
+Verify: `grep -q '"defaultBase": "main"' nx.json` und `npx nx show projects --affected --base=main 2>&1 | grep -vi "fatal"` (kein Fehler gegen tote Basis)
+i18n: keine
+Doku: keine (intern)
+
+### T7 — addLicenseHeader.ts licenseText → AGPL-SPDX-Stamp (idempotent)  [ ]
+Komponente: `scripts` · Dateien: `scripts/addLicenseHeader.ts`
+Soll: scripts/addLicenseHeader.ts:23–39 (`licenseText`), :46 (`hasLicenseHeader`)
+Änderung: **nur** die `licenseText`-Konstante ersetzen durch einen Header mit `SPDX-License-Identifier: AGPL-3.0-or-later` + `Copyright (C) 2026 Kevin Stenzel and linuxmuster-ui contributors` + der Phrase „GNU Affero General Public License" (damit `hasLicenseHeader` unverändert matcht, Idempotenz) — **kein** „all rights reserved", **kein** Netzint-Kommerz-Arm, **kein** info@netzint.de. Den **Datei-Kopf** (Bestands-Netzint-Header) von addLicenseHeader.ts selbst **NICHT** ändern.
+Verify: `npx tsx scripts/addLicenseHeader.ts && npx tsx scripts/addLicenseHeader.ts` auf eine frische Test-Datei → genau **ein** Header (`grep -c "SPDX-License-Identifier" <testfile>` == 1); eine bestehende Netzint-Datei bleibt byte-identisch (`git diff --exit-code` auf eine Bestandsdatei). Plus `npm run lint`.
+i18n: keine
+Doku: keine (intern)
+
+### T8 — Brand-/Produkt-Konstanten anlegen (+ §13-Vorbereitung)  [ ]
+Komponente: `libs` · Dateien: `libs/src/common/constants/productInfo.ts` (neu, **SPDX AGPL-3.0-or-later**), ggf. `libs/src/common/constants/index.ts`
+Änderung: neue Konstanten `PRODUCT_NAME='linuxmuster'`, `PRODUCT_SOURCE_URL='https://github.com/faircomp/linuxmuster-ui'`, `PRODUCT_DOCS_URL` (OF2, Default leer/Repo), `MOBILE_APP_ENABLED=false` (OF4). Diese zentralisieren den Rebrand und liefern die Grundlage für das spätere §13-UI-Feature (Repo-URL + Version). SPDX-Header (kein Netzint) selbst setzen, da `addLicenseHeader` bis zum Merge von T7 noch den alten stempeln würde.
+Verify: `npm run build` (Konstanten importierbar, keine Typfehler)
+i18n: keine
+Doku: keine (intern); §13-Handoff-Notiz in docs/adr (T15/ADR) referenziert diese Konstanten
+
+### T9 — In-App-Fremd-URLs repointen (urls.ts + webdavTutorialLinks)  [ ]
+Komponente: `libs` · Dateien: `libs/src/common/constants/urls.ts`, `libs/src/filesharing/constants/webdavTutorialLinks.ts`
+Soll: urls.ts:20 (`EDU_APP_APPSTORE_URL`), urls.ts:22 (`EDU_DOCS_URL`); webdavTutorialLinks.ts:21,25,29 (3× `docs.edulution.io`)
+Änderung: `EDU_DOCS_URL`/`webdavTutorialLinks`-URLs → `PRODUCT_DOCS_URL` (OF2) bzw. bei leerem Docs-Ziel neutralisieren; `EDU_APP_APPSTORE_URL` entfernen/leeren (OF3). **`EDU_PLUGINS_GITHUB_URL` (urls.ts:21) NICHT anfassen** (Supply-Chain-Paket). Netzint-Header der Datei nicht anfassen.
+Verify: `! grep -nE "docs.edulution.io|apps.apple.com/de/app/edulution" libs/src/common/constants/urls.ts libs/src/filesharing/constants/webdavTutorialLinks.ts` und `grep -q "EDU_PLUGINS_GITHUB_URL" libs/src/common/constants/urls.ts` (unverändert vorhanden) und `npm run build`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T8
+
+### T10 — QR-Login auf LoginPage verbergen (MOBILE_APP_ENABLED)  [ ]
+Komponente: `apps/frontend` · Dateien: `apps/frontend/src/pages/LoginPage/LoginPage.tsx`, neuer Test `apps/frontend/src/pages/LoginPage/LoginPage.test.tsx` (**SPDX AGPL-3.0-or-later**)
+Soll: LoginPage.tsx:269/409ff (`handleCancelOrToggleQrCode`, QR-Toggle-Button), §9 Dec 13
+Änderung: QR-Login-Toggle/Button hinter `MOBILE_APP_ENABLED` verbergen (Empfehlung OF4); BE-Endpoint `AUTH_QRCODE` unberührt. Neuer vitest-Test: bei `MOBILE_APP_ENABLED=false` ist der QR-Toggle nicht im DOM.
+Verify: `npm run test:frontend -- LoginPage` (neuer Test grün) und `npm run lint`
+i18n: keine (bestehende QR-Keys bleiben, ungenutzt)
+Doku: keine (intern)
+Abhängt von: T8
+
+### T11 — Mobile-Access-Route + Setup-Box verbergen (MOBILE_APP_ENABLED)  [ ]
+Komponente: `apps/frontend` · Dateien: `apps/frontend/src/router/routes/getPrivateRoutes.tsx`, ggf. Nav-Eintrag, neuer/erweiterter Test (**SPDX AGPL-3.0-or-later** falls neu)
+Soll: getPrivateRoutes.tsx:28,38,95,96 (`MOBILE_ACCESS_PATH`, `UserSettingsMobileAccess`), §9 Dec 13
+Änderung: `MOBILE_ACCESS_PATH`-Route + zugehörigen UserSettings-Nav-Eintrag nur bei `MOBILE_APP_ENABLED` rendern (Empfehlung OF4). Test: Route/Nav-Eintrag bei Flag=false nicht registriert/sichtbar.
+Verify: `npm run test:frontend -- getPrivateRoutes` (bzw. Routing-Test grün) und `npm run lint`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T8
+
+### T12 — index.html Produktname/OG/Description  [ ]
+Komponente: `apps/frontend` · Dateien: `apps/frontend/index.html`
+Soll: index.html:26 (`<title>edulution.io</title>`), :29 (description), :41 (og:title)
+Änderung: Title/Description/OG-Title auf Produktnamen „linuxmuster" (OF1) umstellen. Favicon-Ref/Loader-Logo hier nicht — s. T13.
+Verify: `! grep -nE "edulution\.io" apps/frontend/index.html` und `grep -qi "linuxmuster" apps/frontend/index.html`
+i18n: keine
+Doku: keine (intern)
+
+### T13 — Favicon + Loader-Logo neutralisieren (Platzhalter)  [ ]
+Komponente: `apps/frontend` · Dateien: `apps/frontend/public/favicon.svg`, `apps/frontend/index.html` (Base64-Loader-SVG :51ff)
+Soll: markenrechtlich geschütztes edulution-Blatt-Logo muss vor Image-Publish raus (PLAN §2.5/§4.1)
+Änderung: das edulution-Blatt-Logo (favicon.svg + der inline Base64-Loader-SVG in index.html) durch einen **neutralen Platzhalter** (schlichtes geometrisches/Monogramm-SVG) ersetzen. Finales Logo-Design = OF5 (separater Schritt).
+Verify: `! grep -o "8fc046\|1084c0" apps/frontend/index.html` (edulution-Gradient-Farben weg) und `npm run build`
+i18n: keine
+Doku: keine (intern)
+
+### T14 — i18n Produktnamen-Sweep (user-sichtbare Displaystrings, DE+EN)  [ ]
+Komponente: `apps/frontend` · Dateien: `apps/frontend/src/locales/de/translation.json`, `apps/frontend/src/locales/en/translation.json` (FR optional)
+Soll: user-sichtbare „edulution"-Werte, u. a. `appstore.edulutionIcons`, `mobileAccessSetup.scanAccessInfo`, `auth.errors.EdulutionConnectionFailed`
+Änderung: **nur die Werte** user-sichtbarer Strings, die „edulution"/„edulution.io" als Produkt/Firma nennen, auf „linuxmuster" neutralisieren. **Keys nicht umbenennen** (Wiring), `edulution-binduser-*`-Feld-Keys/Werte in Ruhe lassen (Allowlist). DE+EN paritätisch.
+Verify: `npm run check-translations` (Key-Parität grün) und Stichprobe `grep -c "edulution" apps/frontend/src/locales/en/translation.json` deutlich reduziert (nur Wiring/allowlist übrig)
+i18n: keine neuen Keys — nur Werte DE+EN
+Doku: keine (intern)
+
+### T15 — AGENTS.md/CLAUDE.md Rebrand-Prüfung + ADRs  [ ]
+Komponente: Repo-Root · Dateien: `AGENTS.md`, `CLAUDE.md` (Prüfung), `docs/adr/0001-naming-registry.md`, `docs/adr/0002-mobile-access-hidden.md` (neu)
+Änderung: Guard-Prüfung, dass `AGENTS.md`/`CLAUDE.md` **keine** „edulution"/„netzint"-Produkt-Nennungen tragen (aktuell verifiziert sauber → i. d. R. keine Änderung; falls Treffer → neutralisieren, **kein** Copyright-Header). Zwei knappe ADRs für OF1 (Naming/Registry) und OF4 (Mobile-Access verborgen) anlegen, inkl. §13-Handoff-Notiz (verweist auf T8-Konstanten).
+Verify: `! grep -riE "edulution|netzint" AGENTS.md CLAUDE.md` und `test -f docs/adr/0001-naming-registry.md`
+i18n: keine
+Doku: docs/adr/* (DE, intern)
+
+### T16 — Rebrand-Schlussaudit (Denylist-Grep als Regressions-Guard)  [ ]
+Komponente: Repo-weit · Dateien: keine Code-Änderung (nur Assertion; optional kurzer Eintrag in CHANGELOG.md)
+Änderung: Schluss-Assertion, dass **keine** verbotenen Refs mehr existieren, während Allowlist unberührt bleibt. Denylist: `ghcr.io/edulution-io/edulution`, `docs.edulution.io`, `apps.apple.com/de/app/edulution`, `<title>edulution.io`. Allowlist-Gegenprobe: `@edulution-io/ui-kit`, `isEdulutionApp`, `EDULUTION_MANAGER`, `edulution-binduser`, `EDU_PLUGINS_GITHUB_URL`, `/opt/edulution/api` **müssen** noch vorhanden sein.
+Verify: `! grep -rnE "ghcr.io/edulution-io/edulution|docs\.edulution\.io|apps\.apple\.com/de/app/edulution" apps libs .github package.json README.md` und Gegenprobe `grep -rq "EDU_PLUGINS_GITHUB_URL" libs && grep -rq "isEdulutionApp" apps/frontend/src && grep -rq "@edulution-io/ui-kit" package.json`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1–T14
+
+## x-i18n-fr [P1] — FR-Locale erstwertig aktivieren (DE+EN → DE+EN+FR)
+_Ziel:_ FR als gepflegte Locale aktivieren (supportedLngs, fr.json-Backfill, check-translations DE+EN+FR) · _Abhängt-von:_ p1-rebrand · _Status:_ geplant · _Tasks:_ 7
+Branch: `feat/2.0-backlog` · Spec: `docs/features/x-i18n-fr.md` · Soll: forkeigen (kein main.js-Anker) · Audit: i18n.ts:44 (fr schon in supportedLngs), scripts/checkTranslations.ts:50/52/62 (FR nicht erzwungen), scripts/checkErrorMessages.ts:26-28/89-100 (kein FR)
+
+> Kalibrierung: einmalige Konsolidierung, kein 2.0-Delta. Wiring (i18n, UserLanguage, LanguageSelector,
+> App.tsx) ist bereits vorhanden — dieses Ledger füllt nur die Locale-Lücke und flippt die Guards.
+> Zahlen zum Ist-Stand: DE 1930 · EN 1930 · FR 1765 Leaf-Keys → 187 fehlen in FR, 22 sind in FR überzählig.
+
+---
+
+### T1 — Audit-Snapshot + Diff-Listen erzeugen (nur Analyse, kein Commit)  [ ]
+Komponente: scripts (Wegwerf) · Dateien: keine (Ausgabe in Scratchpad)
+Soll: Ist-Stand exakt festhalten, bevor gefüllt wird.
+Änderung: Ein-Zeiler/Node-Snippet, das (a) die **187** DE-Keys listet, die FR fehlen, und (b) die **22**
+FR-Keys, die es in DE nicht gibt. Beide Listen in den Scratchpad schreiben (Arbeitsgrundlage für T2/T3).
+Referenz-Flatten-Logik wie in `scripts/checkTranslations.ts:29-42`.
+Verify: Zahlen matchen die Audit-Angabe (187 / 22); Listen nicht leer.
+i18n: keine · Doku: keine (intern)
+
+### T2 — FR-Backfill: 187 fehlende DE-Keys nach FR übersetzen und einsortieren  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/locales/fr/translation.json
+Soll: FR bekommt für **jeden** in T1 gelisteten fehlenden Key einen französischen Wert; Platzierung an
+derselben verschachtelten Stelle wie in DE/EN.
+Änderung: Werte aus DE (bevorzugt) bzw. EN übersetzen. **Interpolations-Platzhalter** (`{{...}}`),
+HTML/Trans-Tags und führende/trailende Leerzeichen **1:1 aus dem DE-Wert übernehmen**. JSON-Struktur
+(Verschachtelung) exakt spiegeln; 2-Space-Prettier-Format halten. Keine der bestehenden FR-Strings ändern.
+Verify: Node-Snippet zeigt „DE-Keys missing in FR: 0"; `npm run build` grün; Stichprobe: 10 Keys mit
+Platzhaltern haben identische `{{...}}`-Menge wie DE.
+i18n: FR-Backfill (dieses Paket ist das i18n) · Doku: keine
+
+### T3 — 22 überzählige FR-Keys entfernen (nach grep-Absicherung)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/locales/fr/translation.json
+Soll: FR = exakte DE-Key-Menge (Voraussetzung für symmetrische Erzwingung in T4).
+Änderung: Die 22 aus T1 gelisteten FR-only-Keys löschen. Vorher je Key `grep -rn "'<key>'\|\"<key>\""`
+über `apps/frontend/src` + `libs/src` — falls (unerwartet) ein Key im Code referenziert wird, statt löschen
+in T2 zu DE/EN nachziehen (dann ist es kein stale Key) und im Ledger vermerken.
+Verify: Node-Snippet zeigt „FR-only keys not in DE: 0"; `npm run build` grün.
+i18n: FR-Aufräumen · Doku: keine
+Abhängt von: T1
+
+### T4 — checkTranslations.ts: FR gleichrangig zu DE/EN erzwingen  [ ]
+Komponente: scripts · Dateien: scripts/checkTranslations.ts
+Soll: heutiges Verhalten (checkTranslations.ts:48-65) — Exit nur bei EN/DE-Lücken; FR nur `console.info`.
+Änderung: (a) `extraNestedInFR = frNestedKeys.filter(k => !deNestedKeys.includes(k))` ergänzen (überzählige
+FR-Keys, symmetrisch zu den bestehenden EN-Prüfungen). (b) `missingNestedInFR` und `extraNestedInFR` von
+`console.info` auf `console.error` heben. (c) Beide in die `if (... ) { ... process.exit(1) }`-Bedingung
+aufnehmen. Referenz-Semantik bleibt DE (wie bei EN). Keine Struktur-/Format-Kür darüber hinaus.
+Verify: `npm run check-translations` grün (nach T2/T3); **Gegenprobe**: temporär einen FR-Key löschen ⇒
+Skript exit 1 mit „Missing nested keys in FR"; temporär einen FR-only-Key hinzufügen ⇒ exit 1. Danach zurück.
+i18n: keine · Doku: keine
+Abhängt von: T2, T3
+
+### T5 — checkErrorMessages.ts: FR-Locale gegen errorMessage.ts-Enums prüfen  [ ]
+Komponente: scripts · Dateien: scripts/checkErrorMessages.ts
+Soll: heute (checkErrorMessages.ts:26-28, 89-100) nur DE + EN.
+Änderung: `frTranslationFilePath` ergänzen, `frJson`/`frKeySet` bauen, `checkFilePaths(enumImportPaths,
+frKeySet)` mit grüner Meldung „✔ FR is awesome!" analog DE/EN aufrufen.
+Verify: `npm run check-error-message-translations` grün und gibt eine FR-Zeile aus; Gegenprobe: einen
+`lmnApi.errors.*`-Key aus FR entfernen ⇒ „Missing key in JSON" + exit 1.
+i18n: keine · Doku: keine
+Abhängt von: T2
+
+### T6 — Konvention: AGENTS.md auf „DE+EN+FR" nachziehen  [ ]
+Komponente: docs · Dateien: AGENTS.md
+Soll: AGENTS.md nennt bisher nur „Pre-commit runs checks (... translations ...)" ohne Sprachpflicht.
+Änderung: Unter „Coding Style" bzw. „Security & Configuration Tips" eine explizite Zeile: Übersetzungen
+sind **dreisprachig (de, en, fr)** unter `apps/frontend/src/locales/<lng>/translation.json` zu pflegen;
+`npm run check-translations` erzwingt Key-Parität über **alle drei** (Pre-Commit-blockierend). Kurz halten.
+Verify: `npm run check-translations` unberührt grün; Review bestätigt, dass die Konvention eindeutig ist.
+i18n: keine · Doku: AGENTS.md
+Abhängt von: T4
+
+### T7 — Abschluss-Verify + Smoke  [ ]
+Komponente: — · Dateien: keine
+Soll: Gesamtpaket grün und FR real umschaltbar.
+Änderung: keine (nur Verifikation).
+Verify: `npm run check-translations` + `npm run check-error-message-translations` + `npm run build` +
+`npm run lint` grün. Optional `npm run dev`: Settings → Sprache → Français → Kernseiten (Dashboard,
+Settings, Filesharing) zeigen FR-Text, keine rohen Keys.
+i18n: keine · Doku: keine
+Abhängt von: T4, T5, T6
+
+## p1-own-ci-registry [P1] ⭐ — Eigene CI-Pipeline & Container-Registry (Härtung)
+_Ziel:_ Eigene CI+Registry: Images grün-gegated+gehärtet nach ghcr/faircomp · _Abhängt-von:_ p1-rebrand · _Status:_ geplant · _Tasks:_ 11
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-own-ci-registry.md` · Soll: main.js:59718–59722 (Health-Env-Contract) · container-build.yml:100/104/109–111/159–161 · bump-{patch,minor}-version-tag.yml · publish-ui-kit.yml:14–16 (permissions-Referenz) · kein Rescue-Branch/Screenshot (CI-Infra)
+
+> Kontext-Notiz: Abhängt von `p1-rebrand` (Image-Name-Strings `edulution-io`→`faircomp`,
+> `defaultBase→main`, `addLicenseHeader→AGPL-SPDX` sind DORT erledigt und hier vorausgesetzt).
+> CI-YAML-Verhalten ist auf der crabbox nicht end-to-end prüfbar (kein Actions-Runner) — die
+> Per-Task-Verifies prüfen Struktur/Parse/Pins/Unit-Test remote; die echte E2E-Prüfung ist der
+> Erst-Push-Smoke gegen die faircomp-Org (T11, manuell/ops).
+> `actionlint`-Verify: primär `npx --yes actionlint <datei>`; falls auf der Box nicht verfügbar,
+> Fallback `python3 -c "import yaml;yaml.safe_load(open('<datei>'))"` + die genannten grep-Assertions.
+
+---
+
+### T1 — permissions-Block auf container-build.yml  [ ]
+Komponente: CI · Dateien: .github/workflows/container-build.yml
+Soll: container-build.yml:100/104 (Push via GITHUB_TOKEN ohne permissions) · Referenz publish-ui-kit.yml:14–16
+Änderung: Top-Level `permissions: { contents: read, packages: write }` in `container-build.yml` ergänzen, damit der GHCR-Push auf frischer Org nicht 403t. Kein weiterer inhaltlicher Umbau.
+Verify: `iter.sh cmd 'grep -Pzoq "(?s)^permissions:\s*\n\s*contents:\s*read\s*\n\s*packages:\s*write" .github/workflows/container-build.yml && echo OK'` → OK; `npx --yes actionlint .github/workflows/container-build.yml` (Fallback yaml-parse) fehlerfrei.
+i18n: keine
+Doku: keine (intern)
+
+### T2 — Green-Gate: lint+test vor dem Image-Build  [ ]
+Komponente: CI · Dateien: .github/workflows/container-build.yml
+Soll: build-and-test.yml:179–186 (Gate-Schritte) · Master-Plan §5.1/§6 (Release-Green-Gate)
+Änderung: Neuen Job `checks` in `container-build.yml` (Checkout + Node 22 + `npm ci` + `npm run lint && npm run test && npx nx test frontend && npm run check-translations`); `build-frontend` und `build-api` bekommen `needs: [prepare, checks]`, sodass ein Bumper-Tag ohne grünen Stand keine Images verschifft. `workflow_dispatch` bleibt als Notausgang.
+Verify: `iter.sh cmd 'grep -A3 "^  build-api:" .github/workflows/container-build.yml | grep -q "needs:.*checks" && grep -A3 "^  build-frontend:" .github/workflows/container-build.yml | grep -q "needs:.*checks" && echo OK'` → OK; actionlint fehlerfrei.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — Dockerfiles: ARG/ENV/LABEL (Build-Metadaten + OCI)  [ ]
+Komponente: apps/api, apps/frontend · Dateien: apps/api/Dockerfile, apps/frontend/Dockerfile
+Soll: main.js:59718–59722 (Env-Namen) · Master-Plan §2.4/§5.5 (image.source-Label, tote buildId/version-Args)
+Änderung: In **beide** Dockerfiles `ARG COMMIT_SHA` `ARG BUILD_DATE` `ARG BUILD_NUMBER` `ARG APP_VERSION` → korrespondierende `ENV` (für die Runtime-Health-Config) + statische OCI-`LABEL` (`org.opencontainers.image.title/description/source/licenses=AGPL-3.0-or-later`) und dynamische `LABEL org.opencontainers.image.revision=$COMMIT_SHA` / `.created=$BUILD_DATE` / `.version=$APP_VERSION`. Die toten `buildId/version`-Args ersetzt T4 CI-seitig.
+Verify: `iter.sh cmd 'docker build -f apps/api/Dockerfile --build-arg COMMIT_SHA=deadbeef --build-arg BUILD_DATE=2026-07-14 --build-arg BUILD_NUMBER=1 --build-arg APP_VERSION=2.0.0-test -t md-test-api . && docker inspect md-test-api --format "{{index .Config.Labels \"org.opencontainers.image.revision\"}} {{index .Config.Env}}" | grep -q deadbeef && echo OK'` → OK (Label + ENV gesetzt).
+i18n: keine
+Doku: keine (intern)
+
+### T4 — container-build.yml: metadata-action + echte Build-Args  [ ]
+Komponente: CI · Dateien: .github/workflows/container-build.yml
+Soll: container-build.yml:109–111/159–161 (tote buildId/version-Args) · Master-Plan §5.5 (metadata-action)
+Änderung: `docker/metadata-action` (Image-Ref aus dem rebrand-Ist-Wert / zentraler `env`) je Image ergänzen; dessen `labels`-Output an `build-push-action` (`labels:`) durchreichen; die `build-args` von `buildId/version` auf `COMMIT_SHA=${{ github.sha }}` / `BUILD_DATE=${{ steps.meta.outputs.… bzw. date }}` / `BUILD_NUMBER=${{ github.run_number }}` / `APP_VERSION=<tag>` umstellen (Namen exakt wie T3/SOLL).
+Verify: `iter.sh cmd 'grep -q "docker/metadata-action@" .github/workflows/container-build.yml && grep -q "COMMIT_SHA=" .github/workflows/container-build.yml && grep -q "BUILD_NUMBER=" .github/workflows/container-build.yml && ! grep -q "buildId=" .github/workflows/container-build.yml && echo OK'` → OK; actionlint fehlerfrei.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T5 — configuration.ts auf 2.0-Metadaten-Contract erweitern  [ ]
+Komponente: apps/api · Dateien: apps/api/src/config/configuration.ts, apps/api/src/config/configuration.spec.ts (neu)
+Soll: main.js:59718–59722 (`version/commitSha/buildDate/buildNumber`, jeweils `process.env.* || 'unknown'`)
+Änderung: Die Config-Factory (1.6: nur `{ version }`) auf den SOLL erweitern: `version: process.env.APP_VERSION || rootPackage.version`, `commitSha/buildDate/buildNumber` aus den Env-Vars mit `|| 'unknown'`. Damit sind die T3/T4-Metadaten in der Runtime sichtbar (Health nicht mehr „unknown"). Neuer Jest-Spec deckt env-gesetzt + Fallback ab. `'unknown'` als benannte Konstante (keine Magic-Strings).
+Verify: `iter.sh test:api` grün inkl. `configuration.spec.ts` (Assertion: gesetzte Env → Wert; fehlende Env → `'unknown'`; `APP_VERSION` fehlend → `rootPackage.version`).
+i18n: keine
+Doku: keine (intern) — Env-Vertrag wird in T11 dokumentiert
+SPDX: neue `configuration.spec.ts` bekommt AGPL-3.0-or-later-Header (rebrand-Stempel).
+
+### T6 — Redundante Tag-Build-Workflows löschen  [ ]
+Komponente: CI · Dateien: .github/workflows/api-tag.yml, .github/workflows/frontend-tag.yml
+Soll: Master-Plan §2.5 (drei Workflows auf v*.*.* = Race auf :latest; container-build deckt beide Images ab)
+Änderung: `api-tag.yml` und `frontend-tag.yml` löschen — die konsolidierte `container-build.yml` (build-frontend + build-api) deckt beide Images ab; drei Tag-Trigger auf `v*.*.*` racen sonst auf `:latest`.
+Verify: `iter.sh cmd '! test -e .github/workflows/api-tag.yml && ! test -e .github/workflows/frontend-tag.yml && echo OK'` → OK; `iter.sh cmd 'ls .github/workflows/*.yml | xargs -I{} npx --yes actionlint {}'` fehlerfrei.
+i18n: keine
+Doku: keine (intern)
+
+### T7 — auto-merge-master-back-in-dev.yml löschen  [ ]
+Komponente: CI · Dateien: .github/workflows/auto-merge-master-back-in-dev.yml
+Soll: Master-Plan §2.3 (dev/master-Dual aufgeben → Single-main)
+Änderung: Workflow löschen — er merged `master`→`dev` und nutzt die tote Netzint-App; unter Single-`main` (Fork-Default) obsolet.
+Verify: `iter.sh cmd '! test -e .github/workflows/auto-merge-master-back-in-dev.yml && echo OK'` → OK.
+i18n: keine
+Doku: keine (intern)
+
+### T8 — Version-Bumper auf eigenen contents:write-Token  [ ]
+Komponente: CI · Dateien: .github/workflows/bump-patch-version-tag.yml, .github/workflows/bump-minor-version-tag.yml
+Soll: bump-patch:19–20 / bump-minor:16–17 (tote VERSION_BUMPER_APPID/_SECRET) · bump-minor:38–39 (Push via GITHUB_TOKEN) · Master-Plan §2.2/§2.3/§9.4/R6
+Änderung: `create-github-app-token`-Schritt + `vars.VERSION_BUMPER_APPID`/`secrets.VERSION_BUMPER_SECRET` durch `token: ${{ secrets.RELEASE_BUMP_TOKEN }}` (fine-grained PAT, contents:write) in Checkout **und** Push ersetzen — **nie** `GITHUB_TOKEN` (sonst kein container-build-Trigger). `concurrency: { group: version-bump, cancel-in-progress: false }` ergänzen; `git push --follow-tags` (genau 1 Tag/Push) beibehalten; Patch-Trigger `on: push: branches: [dev]` → `[main]`. (App-Variante = offene Frage in der Spec.)
+Verify: `iter.sh cmd 'grep -q "secrets.RELEASE_BUMP_TOKEN" .github/workflows/bump-patch-version-tag.yml && ! grep -q "VERSION_BUMPER_SECRET" .github/workflows/bump-patch-version-tag.yml && grep -q "concurrency:" .github/workflows/bump-patch-version-tag.yml && grep -q "branches:" .github/workflows/bump-patch-version-tag.yml && ! grep -q "dev" .github/workflows/bump-patch-version-tag.yml && echo OK'` → OK; actionlint fehlerfrei; analog bump-minor (Push-Token statt GITHUB_TOKEN).
+i18n: keine
+Doku: keine (intern) — Secret-Provisioning in T11
+
+### T9 — publish-ui-kit.yml einfrieren  [?]
+Komponente: CI · Dateien: .github/workflows/publish-ui-kit.yml
+Soll: Master-Plan §4/§196 (ui-kit bleibt Source-Alias, keine npm-Dependency) · §2.5 (publish-ui-kit deaktivieren/umbiegen)
+Änderung: Trigger auf **nur** `workflow_dispatch` reduzieren (Tag-Trigger `ui-kit-v*` entfernen), damit nicht versehentlich nach dem nicht-eigenen `@edulution-io`-Namespace publiziert wird. Ownership klären: Namespace-Repoint gehört zu `p1-rebrand` (siehe offene Frage 3).
+Verify: `iter.sh cmd 'grep -A5 "^on:" .github/workflows/publish-ui-kit.yml | grep -q workflow_dispatch && ! grep -q "ui-kit-v" .github/workflows/publish-ui-kit.yml && echo OK'` → OK.
+i18n: keine
+Doku: keine (intern)
+
+### T10 — Alle Actions SHA-pinnen  [ ]
+Komponente: CI · Dateien: .github/workflows/*.yml (alle verbleibenden)
+Soll: Master-Plan §5.1/R10/Finding 13 (tag-gepinnte Actions = mutable Refs)
+Änderung: Jede `uses: <owner>/<action>@<tag>`-Zeile in allen verbleibenden Workflows auf den vollen 40-stelligen Commit-SHA der jeweiligen Release umstellen, mit Versions-Kommentar (`@<sha> # v4.2.2`). Betrifft `actions/checkout`, `actions/setup-node`, `actions/cache`, `docker/login-action`, `docker/build-push-action`, `docker/setup-buildx-action`, `docker/metadata-action`, `actions/create-github-app-token`.
+Verify: `iter.sh cmd '! grep -rEn "uses: [^ ]+@v[0-9]" .github/workflows/ && grep -rEq "uses: [^ ]+@[0-9a-f]{40}" .github/workflows/ && echo OK'` → OK (keine beweglichen `@vN`-Refs mehr, mindestens ein 40-hex-Pin vorhanden); actionlint über alle Dateien fehlerfrei.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4, T8
+
+### T11 — Erst-Push-Smoke-Test + CI-/Release-Runbook  [?]
+Komponente: Doku/Ops · Dateien: docs/ci-release.md (neu)
+Soll: Master-Plan §2.1 (permissions/Org-Setting/Smoke) · §5.5 (Build-Metadaten sichtbar)
+Änderung: Kurzes deutsches Runbook: (a) Repo-Secret `RELEASE_BUMP_TOKEN` provisionieren (Scope contents:write; App-Alternative nennen); (b) Org-/Repo-Setting „Actions → Workflow permissions" prüfen; (c) Erst-Push-Smoke: ein `v*.*.*`-Tag pushen → Green-Gate läuft → beide Images erscheinen unter `ghcr.io/faircomp/…` → `docker inspect` zeigt `org.opencontainers.image.revision` + `/actuator/health` (bzw. Health-Endpoint) liefert `commitSha` ≠ `unknown`; (d) die vier Build-Metadaten-Env-Vars dokumentieren. **Diese E2E-Prüfung läuft NICHT auf der crabbox** (echter Actions-Runner/Org nötig) → manuell/ops, daher `[?]`.
+Verify: manuell/ops (kein crabbox-Verify): realer Tag-Push erzeugt beide Images + Labels + Health ≠ „unknown". Auf der crabbox nur Doku-Existenz: `iter.sh cmd 'test -e docs/ci-release.md && echo OK'`.
+i18n: keine
+Doku: docs/ci-release.md (DE) — externer Operator-Contract (Secrets, Org-Setting, Image-Refs, Env-Vars)
+SPDX: docs/*.md ohne Header (Markdown, nicht im addLicenseHeader-Scope)
+Abhängt von: T1, T2, T4, T8
+
+## p1-installer-repoint [P1] ⭐ — Installer-Repoint / ui-kit-Inline / Lizenzserver-Stub / §13-Feature / Plugins-Mirror
+_Ziel:_ Installer auf eigene Registry/Tag; ui-kit inlinen, Lizenzserver stubben, §13, Plugins-Mirror · _Abhängt-von:_ p1-own-ci-registry, p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 11
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-installer-repoint.md` · Soll: main.js:43800 (LICENSE_SERVER_URL) · main.js:43629–43746 (LicenseService) · main.js:56954–56956 / :59719 (Health-Version) · libs/src/common/constants/urls.ts:21 (EDU_PLUGINS_GITHUB_URL) · Installer-Repo faircomp/linuxmuster-ui-installer (Compose/Realm/Traefik-Templates, .npmrc, package.json) · Baseline: docs/features/p1-rebrand.md (delegiert Installer+EDU_PLUGINS+§13, liefert PRODUCT_SOURCE_URL/PRODUCT_NAME via T8) · docs/features/p0-supply-chain-inventory.md §39/42/174
+
+> Zwei-Repo-Paket: T1–T5 im Installer-Repo (`/home/kevin/Dev/faircomp/openedulution/edulution-installer`, Remote `faircomp/linuxmuster-ui-installer`); T6–T11 im `edulution-ui`-Monorepo (dieses Repo). Platzhalter bis Freigabe: `<REG>`=`ghcr.io/faircomp` (OF1), `<PINNED_TAG>`=erster eigener Release-Tag `2.0.x` (OF2), `<MIRROR>`=`https://raw.githubusercontent.com/faircomp/linuxmuster-plugins/main/apps` (OF4).
+
+---
+
+### T1 — Installer-Compose-Template: edu-ui/edu-api → eigene Registry + gepinnter Tag  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: apps/public-page/public/download/docker-compose.yml.template
+Soll: docker-compose.yml.template:4 (`image: ghcr.io/edulution-io/edulution-ui`), :18 (`…/edulution-api`) — ohne Tag
+Änderung: Beide first-party Image-Refs auf `<REG>/linuxmuster-ui:<PINNED_TAG>` bzw. `<REG>/linuxmuster-api:<PINNED_TAG>` setzen (Tag zwingend gepinnt, kein `latest`). Companion-Images (mongo:7/redis:8.2/traefik:v3.1/keycloak:26.4/postgres:16) unangetastet lassen (bereits gepinnt, nicht first-party). Realm-/Traefik-Template mit-auditieren (Verify unten) — beide enthalten keine first-party Registry-Ref, daher kein Change.
+Verify (crabbox): `python3 -c "import yaml,sys; d=yaml.safe_load(open('apps/public-page/public/download/docker-compose.yml.template')); [print(s['image']) for s in d['services'].values() if 'image' in s]"` zeigt `<REG>/linuxmuster-{ui,api}:<PINNED_TAG>`; `! grep -nE 'edulution-io/edulution' apps/public-page/public/download/docker-compose.yml.template`; `grep -LE 'edulution-io|ghcr.io' apps/public-page/public/download/{traefik.yml,realm-edulution.json}.template` (Audit: keine Treffer).
+i18n: keine
+Doku: Installer-README kurzer Registry-/Tag-Hinweis (DE/EN nach Repo-Stand)
+
+### T2 — Installer-Self-Pull + Bootstrap → eigenes Image/Repo  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: apps/public-page/public/installer, edulution-lmninstaller/bootstrap.sh
+Soll: installer:213/216 (`docker pull … ghcr.io/edulution-io/edulution-installer:${EDULUTION_INSTALLER_TAG}`) · bootstrap.sh:14 (`GITHUB_REPO="edulution-io/edulution-installer"`), :16 (`GITHUB_RAW`)
+Änderung: Installer-Image-Ref → `<REG>/linuxmuster-ui-installer:${EDULUTION_INSTALLER_TAG}` (Tag-Var bleibt, Default-Wert auf gepinnten eigenen Tag). `GITHUB_REPO`/`GITHUB_RAW` → `faircomp/linuxmuster-ui-installer`. Keine Branding-URLs (`get.edulution.io`/Logos) anfassen — die gehören zum Rebrand-Pass des Installer-Repos.
+Verify (crabbox): `! grep -rnE 'edulution-io/edulution-installer' apps/public-page/public/installer edulution-lmninstaller/bootstrap.sh`; `grep -q 'faircomp/linuxmuster-ui-installer' edulution-lmninstaller/bootstrap.sh`; `bash -n apps/public-page/public/installer && bash -n edulution-lmninstaller/bootstrap.sh` (Syntax-Check).
+i18n: keine
+Doku: keine (intern)
+
+### T3 — webinstaller-api BOOTSTRAP_URL → eigenes Repo-Raw  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: apps/webinstaller-api/app/main.py
+Soll: main.py:462 (`BOOTSTRAP_URL = f"https://raw.githubusercontent.com/edulution-io/edulution-installer/{BOOTSTRAP_BRANCH}/edulution-lmninstaller/bootstrap.sh"`)
+Änderung: Repo-Segment `edulution-io/edulution-installer` → `faircomp/linuxmuster-ui-installer`. Branch-Var unverändert.
+Verify (crabbox): `! grep -n 'edulution-io/edulution-installer' apps/webinstaller-api/app/main.py`; `python3 -m py_compile apps/webinstaller-api/app/main.py`.
+i18n: keine
+Doku: keine (intern)
+
+### T4 — @edulution-io/ui-kit in den Installer vendorn (lokale Lib + tsconfig-Path)  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: libs/ui-kit/src/** (neu), tsconfig.base.json
+Soll: Import-Specifier `@edulution-io/ui-kit` (Button, cn, tailwind.config) — Vorlage: edulution-ui `libs/ui-kit/src/{components/Button,utils/cn,index.ts}` + `libs/ui-kit/tailwind.config.ts`
+Änderung: Nur die tatsächlich genutzten Exporte (`Button`/`buttonVariants` + `cn` + `tailwind.config`) als lokale Installer-Lib `libs/ui-kit/src` vendorn; Import-Specifier `@edulution-io/ui-kit` **behalten**, in `tsconfig.base.json` per Path-Mapping auf die lokale Lib zeigen (analog UI-Monorepo `tsconfig.base.json:14`). Neue Dateien mit SPDX-Header `AGPL-3.0-or-later`, Copyright Kevin Stenzel (nicht Netzint).
+Verify (crabbox): `nx build public-page && nx build webinstaller` bauen **ohne** gesetzten `GITHUB_TOKEN`/privates Registry; `nx run-many --target=lint` grün.
+i18n: keine
+Doku: keine (intern)
+
+### T5 — Privaten ui-kit-npm-Bezug + Token-.npmrc entfernen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: package.json, package-lock.json, .npmrc
+Soll: package.json:15 (`"@edulution-io/ui-kit": "^0.0.1"`) · .npmrc:1–2 (`@edulution-io:registry=…npm.pkg.github.com` + `_authToken=${GITHUB_TOKEN}`) · package-lock.json:1954 (privater Download)
+Änderung: ui-kit-Dependency aus `package.json` entfernen; privates-Registry-Scope + `_authToken`-Zeile aus `.npmrc` löschen (Datei ggf. leeren/entfernen); Lockfile neu erzeugen. Danach ist der Installer ohne Netzint-/Fremd-Token installierbar.
+Verify (crabbox): frischer `npm ci` **ohne** `GITHUB_TOKEN` in der Env läuft durch; `! grep -q 'npm.pkg.github.com' .npmrc package-lock.json`; `! grep -q '@edulution-io/ui-kit' package.json`; danach `nx build public-page` weiterhin grün (nutzt T4-Lib).
+i18n: keine
+Doku: Installer-README: Hinweis „kein privates npm-Token mehr nötig"
+Abhängt von: T4
+
+### T6 — BE: Lizenzserver env-gaten + Community-Modus-Stub (+ isCommunity im DTO)  [ ]
+Komponente: apps/api (+ libs) · Dateien: apps/api/src/license/license.service.ts, libs/src/license/constants/licenseServerUrl.ts, libs/src/license/types/license-info.dto.ts
+Soll: main.js:43800 / licenseServerUrl.ts:20 (`https://license.edulution.io/api/v1`) · license.service.ts:51–53 (axios baseURL), :84–96 (checkLicenseValidity), :123–182 (signLicense), :184–213 (verifyToken)
+Änderung: `LICENSE_SERVER_URL` aus `process.env.LICENSE_SERVER_URL` (Default **leer**) beziehen. Ist keine URL konfiguriert → Community-Modus: `signLicense`/`verifyToken`/`checkLicenseValidity` machen **keinen** Outbound-Call (kein axios-Client bauen), `getLicenseDetails` ergänzt berechnetes `isCommunity: true` im `LicenseInfoDto`; POST-Handler bleibt unter `AdminGuard`, antwortet im Community-Modus deterministisch (No-op/HTTP 409 mit klarer Meldung, kein Netzint-Call). Jest-Test: im Community-Modus wird `axios.create`/`.post` **nie** aufgerufen und `GET`-Response trägt `isCommunity=true`.
+Verify (crabbox): `npm run test:api -- license` grün; Assertion: kein Outbound-Request bei leerem `LICENSE_SERVER_URL`.
+i18n: keine
+Doku: docs/ (DE+EN) Kurz-Absatz „AGPL-Community-Lizenzmodus"; `.env.default` Eintrag `LICENSE_SERVER_URL=` (leer)
+
+### T7 — FE: kommerzielle Lizenz-Register-UI im Community-Modus ausblenden  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/components/{LicenseOverview,RegisterLicenseDialog}.tsx (+ locales)
+Soll: GET /license liefert `isCommunity` (T6). LicenseOverview.tsx (Register-Button/Felder), RegisterLicenseDialog.tsx (Key-Eingabe → Netzint)
+Änderung: Wenn `isCommunity` → Register-Button/Dialog + kommerzielle Felder (customerId/licenseId/Key) ausblenden und stattdessen kurzen `settings.license.communityNotice`-Hinweis zeigen (Verweis aufs §13-Angebot). Read-only-Overview bleibt.
+Verify (crabbox): `npm run test:frontend -- LicenseOverview` — neuer vitest: bei `isCommunity=true` kein Register-Control gerendert, Community-Notice sichtbar.
+i18n: neu `settings.license.communityNotice` (DE+EN+fr)
+Doku: keine (intern)
+Abhängt von: T6
+
+### T8 — FE: §13-Quellcode-Angebot in Settings/Info (Repo-Link + laufende Version)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/Info/SourceOffer.tsx (neu), apps/frontend/src/pages/Settings/Info/InfoPage.tsx (+ locales)
+Soll: main.js:56954–56956/:59719 (Health `commitSha/buildDate/buildNumber`) · Repo-URL = `PRODUCT_SOURCE_URL` aus p1-rebrand T8 (`libs/src/common/constants/...`)
+Änderung: Neue `SourceOffer`-Komponente (SPDX AGPL-3.0-or-later): prominenter Link auf `PRODUCT_SOURCE_URL` mit AGPL-§13-Text + best-effort laufende Version aus dem bestehenden Health-/Version-Pfad (degradiert zu „unknown", wenn Build-Metadaten fehlen). In `InfoPage.tsx` als eigenes `SectionAccordionItem` einhängen. `PRODUCT_SOURCE_URL` **wiederverwenden**, nicht neu anlegen (Contract mit p1-rebrand).
+Verify (crabbox): `npm run test:frontend -- SourceOffer` — vitest: Link-`href` = `PRODUCT_SOURCE_URL`, §13-Text + Versionsfeld gerendert.
+i18n: neu `settings.sourceOffer.{title,description,repositoryLink,version}` (DE+EN+fr)
+Doku: docs/ (DE+EN) 1–2 Sätze „Quellcode-Angebot im UI (Settings › Info)"
+Abhängt von: p1-rebrand T8 (Konstante PRODUCT_SOURCE_URL/PRODUCT_NAME)
+
+### T9 — FE: prominenter §13-Link im Login-Footer (statisch, pre-auth)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/LoginPage/LoginPage.tsx (+ locales)
+Soll: AGPL §13 (Plan §2.4/Z81 — Netzwerk-Nutzer sehen den Login vor Auth) · Repo-URL = `PRODUCT_SOURCE_URL`
+Änderung: Dezenter, aber prominenter Footer-Link auf `PRODUCT_SOURCE_URL` mit `settings.sourceOffer.repositoryLink`-Label. **Kein** API-Call, **keine** Version (unauthentifiziert) → kein neuer Endpoint/Guard.
+Verify (crabbox): `npm run test:frontend -- LoginPage` — vitest: Footer-Anchor mit `href=PRODUCT_SOURCE_URL` vorhanden.
+i18n: Reuse `settings.sourceOffer.repositoryLink` (keine neuen Keys)
+Doku: keine (intern)
+Abhängt von: p1-rebrand T8, T8
+
+### T10 — FE: EDU_PLUGINS_GITHUB_URL → eigener Mirror (env-konfigurierbar)  [ ]
+Komponente: libs · Dateien: libs/src/common/constants/urls.ts (nur Z21), apps/frontend/.env.default (Eintrag)
+Soll: urls.ts:21 (`EDU_PLUGINS_GITHUB_URL='https://raw.githubusercontent.com/edulution-io/edulution-plugins/main/apps'`)
+Änderung: `EDU_PLUGINS_GITHUB_URL` aus `import.meta.env.VITE_PLUGINS_BASE_URL` mit Fork-Default `<MIRROR>` beziehen (layout-gleicher eigener Plugins-Fork). **Nur** Z21 anfassen — Z20/22 (`EDU_APP_APPSTORE_URL`/`EDU_DOCS_URL`) gehören p1-rebrand T9 (Datei-Koordination, siehe OF6).
+Verify (crabbox): `! grep -n 'edulution-io/edulution-plugins' libs/src/common/constants/urls.ts`; `grep -q 'VITE_PLUGINS_BASE_URL' libs/src/common/constants/urls.ts`; `npm run lint` grün.
+i18n: keine
+Doku: `.env.default` (Frontend) Eintrag `VITE_PLUGINS_BASE_URL=<MIRROR>`
+Abhängt von: p0-supply-chain-inventory (Mirror-Host/OF4)
+
+### T11 — FE: Store-Fetch-Contract gegen Mirror-Layout absichern (vitest)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/useDockerApplicationStore.spec.ts (neu)
+Soll: useDockerApplicationStore.ts:153 (`${EDU_PLUGINS_GITHUB_URL}/${app}/${container}/docker-compose.yml?ts=…`), :183 (`…/${app}.yml` Traefik)
+Änderung: Neuer vitest (SPDX AGPL-3.0-or-later) mit gemocktem `axios`: `getDockerContainerConfig`/`getTraefikConfig` bauen den URL korrekt aus `EDU_PLUGINS_GITHUB_URL` (= Mirror) + `<app>/<container>/docker-compose.yml` bzw. `<app>.yml`, parsen ein Beispiel-Compose in `services`. Sichert, dass der Mirror layout-gleich bleibt (bricht rot, falls Store oder Layout driftet).
+Verify (crabbox): `npm run test:frontend -- useDockerApplicationStore` grün.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T10
+
+## p1-installer-ci [P1] ⭐ — Installer-Image: eigene CI, Tags, Package-Sichtbarkeit
+_Ziel:_ Das Installer-Image reproduzierbar unter faircomp bauen/publishen und **anonym pullbar** machen · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 7
+Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** (Working-Copy `../edulution-installer`) · Soll: `.github/workflows/build-docker.yml` · `Dockerfile` · `apps/public-page/public/installer:213/216`
+
+> **Befund (verifiziert):** Die Installer-CI **existiert** und hat bereits `permissions: {contents: read, packages: write}` — anders als die UI-Repo-CI. `images: ghcr.io/${{ github.repository }}` **repointet automatisch** auf `ghcr.io/faircomp/linuxmuster-ui-installer`, sobald das Repo unter faircomp liegt. Offen ist daher nicht „bauen an sich", sondern: privater `@edulution-io/ui-kit`-npm-Bezug (blockiert `npm ci` in CI bis `p1-installer-repoint` T4/T5 vendorn), Tag-Strategie (heute = Branch-Name), Green-Gate, Action-Pinning und die **Package-Sichtbarkeit**.
+> **Load-bearing:** Ohne öffentliches GHCR-Package kann ein Schul-Admin das Image nicht ziehen → der eigene Installer wäre unbenutzbar. Package-Sichtbarkeit ist **unabhängig** von der Repo-Sichtbarkeit (Repos dürfen privat bleiben).
+
+### T1 — Erst-Build unter faircomp auslösen + belegen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml` (keine Änderung)
+Soll: build-docker.yml (`images: ghcr.io/${{ github.repository }}`, `permissions` vorhanden)
+Änderung: Workflow einmal auslösen (`workflow_dispatch`) und belegen, dass `ghcr.io/faircomp/linuxmuster-ui-installer:<branch>` entsteht. Image-Ref + Digest im Ledger notieren. Scheitert `npm ci` am privaten ui-kit → `[?]` und auf `p1-installer-repoint` T4/T5 warten (echte Abhängigkeit, nicht umgehen).
+Verify: `gh run list --repo faircomp/linuxmuster-ui-installer --limit 1` grün · `skopeo inspect docker://ghcr.io/faircomp/linuxmuster-ui-installer:main` liefert Digest
+i18n: keine
+Doku: keine (intern)
+
+### T2 — npm-ci-Schritt vom privaten Token entkoppeln  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
+Soll: build-docker.yml (`- name: Install dependencies` mit `env: GITHUB_TOKEN`), `.npmrc` (von p1-installer-repoint T5 entfernt)
+Änderung: Nach dem ui-kit-Vendoring den `GITHUB_TOKEN`-`env` am `npm ci`-Schritt entfernen (kein privater Registry-Bezug mehr). Abhängt von p1-installer-repoint T4/T5.
+Verify (crabbox): `! grep -A3 'Install dependencies' .github/workflows/build-docker.yml | grep -q GITHUB_TOKEN` · CI-Run grün ohne Token
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — Green-Gate: lint/build vor dem Image-Push  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
+Soll: Analog zum UI-Repo-Green-Gate (`p1-own-ci-registry` T2)
+Änderung: Vor `build-push-action` einen Job/Step `npm run lint` (bzw. vorhandene Checks des Installer-Repos) einziehen; Push nur bei grün. Kein Image aus rotem Stand.
+Verify: CI-Run mit absichtlich rotem Lint pusht **kein** Image (Run rot); danach grün → Image da
+i18n: keine
+Doku: keine (intern)
+
+### T4 — Tag-/Release-Strategie: gepinnte `2.0.x`-Tags statt nur Branch-Namen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
+Soll: build-docker.yml (`on.push.branches: ["**"]`, `metadata-action` ohne Tag-Config) · Bootstrap `installer:11` (`EDULUTION_INSTALLER_TAG="main"`)
+Änderung: `metadata-action` um `tags:` erweitern (semver aus git-Tag + `main`), damit ein **gepinnter Release-Tag** existiert, auf den der Bootstrap-Default zeigen kann (Branch-Tags für `--branch` bleiben erhalten). Versionsschema `2.0.x` (§9.2).
+Verify: git-Tag `v2.0.x` pushen → Image `ghcr.io/faircomp/linuxmuster-ui-installer:2.0.x` existiert (`skopeo inspect`)
+i18n: keine
+Doku: Installer-README: Tag-/Release-Hinweis
+
+### T5 — OCI-Labels + Build-Metadaten am Installer-Image  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`, `Dockerfile`
+Soll: Analog UI-Repo (`p1-own-ci-registry` T3/T4): `org.opencontainers.image.source/revision/version`
+Änderung: `metadata-action`-Labels durchreichen + `ARG`/`LABEL` im Dockerfile, damit Herkunft/Version am Image ablesbar sind (§13-Quellcode-Link-Bezug).
+Verify: `skopeo inspect docker://ghcr.io/faircomp/linuxmuster-ui-installer:2.0.x` zeigt `org.opencontainers.image.source` = eigenes Repo
+i18n: keine
+Doku: keine (intern)
+
+### T6 — Alle Actions SHA-pinnen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
+Soll: `actions/checkout@v6`, `setup-node@v6`, `setup-buildx-action@v3`, `login-action@v3`, `metadata-action@v5`, `build-push-action@v6` (alle tag-gepinnt)
+Änderung: Auf Commit-SHA pinnen (Supply-Chain, analog `p1-own-ci-registry` T10).
+Verify (crabbox): `! grep -E 'uses: .*@v[0-9]+$' .github/workflows/build-docker.yml`
+i18n: keine
+Doku: keine (intern)
+
+### T7 — Sichtbarkeit: GHCR-Packages **public** (+ Repo-Freigabe nach Rebrand, §13)  [ ]
+Komponente: linuxmuster-ui-installer (+ GHCR-/Repo-Settings) · Dateien: Doku (`docs/`), keine Code-Datei
+Soll: Anforderung „Schul-Admin installiert ohne GitHub-Account" · Bootstrap `installer:213` (`docker pull …`) · §13-Pflicht (Quellcode-Angebot)
+Änderung: (a) Package-Sichtbarkeit von `linuxmuster-ui-installer` **und** `linuxmuster-ui`/`-api` auf **public** setzen (Paket-Sichtbarkeit ist unabhängig von der Repo-Sichtbarkeit). **Ohne das ist der eigene Installer für Dritte unbenutzbar.** (b) **Repo-Freigabe (public) erst NACH dem Rebrand** — `p1-rebrand` (UI) und `p1-installer-rebrand-dist` (Installer) müssen gelandet sein, sonst wird ein Repo mit „edulution"-Branding + Netzint-„all rights reserved"-Headern veröffentlicht. Ein öffentliches Repo erfüllt zugleich das **§13-Quellcode-Angebot** am elegantesten → `PRODUCT_SOURCE_URL` (`p1-rebrand` T8) darauf zeigen lassen. Entscheidung + Reihenfolge dokumentieren.
+Verify: `docker logout ghcr.io && docker pull ghcr.io/faircomp/linuxmuster-ui-installer:2.0.x` gelingt **anonym** (auf der crabbox) · `gh repo view faircomp/linuxmuster-ui-installer --json visibility` == public **erst** wenn Rebrand-Gate (`p1-installer-rebrand-dist` T7) grün
+i18n: keine
+Doku: `docs/` DE+EN+FR: „Welche Packages/Repos sind public, warum, und in welcher Reihenfolge"
+Abhängt von: T4
+
+---
+
+## p1-installer-rebrand-dist [P1] ⭐ — Installer-Rebrand + eigene Template-Auslieferung (kein `get.edulution.io`)
+_Ziel:_ Der Installer zieht Templates aus **unserer** Quelle statt von `get.edulution.io` und trägt eigenes Branding · _Abhängt-von:_ p1-installer-repoint, p1-installer-ci · _Status:_ geplant · _Tasks:_ 7
+Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** · Soll: `apps/public-page/public/installer:190` (Template-curl-Loop) · `Dockerfile` · `apps/webinstaller-api/app/main.py` · `apps/public-page/*`
+
+> **Der Show-Stopper (verifiziert):** `installer:190` lädt zur **Installationszeit** alle 5 Templates
+> (`docker-compose.yml`, `realm-edulution.json`, `traefik.yml`, `edulution-default{,-le}.yml`) von
+> `https://get.edulution.io/download/<file>.template`. `p1-installer-repoint` T1 editiert zwar unsere
+> Template-Dateien **im Repo** — zur Laufzeit würden aber **edulutions** Templates gezogen (die auf
+> **deren** Images zeigen) → der ganze Repoint wäre wirkungslos. `p1-installer-repoint` T2 verschiebt
+> `get.edulution.io` bewusst hierher.
+> **Gewählter Weg:** Templates **ins Installer-Image backen** und beim Container-Start ins gemountete
+> `/edulution-ui/` legen → **kein Laufzeit-Fetch mehr**, funktioniert auch mit privatem Repo (kein
+> raw.githubusercontent-Token-Problem). Der Bootstrap-curl-Loop entfällt ersatzlos.
+
+### T1 — Templates ins Installer-Image aufnehmen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `Dockerfile`
+Soll: `Dockerfile` (COPY-Blöcke: `apps/webinstaller-api/app /app`, `dist/apps/webinstaller /app/static`) · Templates unter `apps/public-page/public/download/*.template`
+Änderung: `COPY apps/public-page/public/download/ /app/templates/` ergänzen, damit alle 5 `.template`-Dateien im Image liegen.
+Verify (crabbox): Image bauen, `docker run --rm --entrypoint ls <img> /app/templates` listet alle 5 `*.template`
+i18n: keine
+Doku: keine (intern)
+
+### T2 — Container legt Templates beim Start ins gemountete Verzeichnis  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `apps/webinstaller-api/startup.sh` (bzw. `app/main.py`)
+Soll: `startup.sh` (erzeugt heute nur Cert + startet uvicorn) · Mount `-v ${DIRECTORY}:/edulution-ui/` (`installer:215`) · main.py liest `/edulution-ui/realm-edulution.json` (:726)
+Änderung: Beim Start jede `/app/templates/<f>.template` nach `/edulution-ui/<f>` kopieren, **nur wenn dort noch nicht vorhanden** (idempotent, überschreibt keine bestehende Installation). `edulution-default.yml` weiterhin nach `data/traefik/config` (bisher machte das der Bootstrap).
+Verify (crabbox): Container mit leerem Mount starten → alle 5 Dateien liegen in `/edulution-ui/`; erneut starten mit veränderter Datei → wird **nicht** überschrieben
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — Bootstrap: `get.edulution.io`-curl-Loop entfernen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `apps/public-page/public/installer`
+Soll: `installer:188–199` (for-Loop + `curl … get.edulution.io/download/…` + Fehlerprüfung), `installer:~205` (`mv edulution-default.yml data/traefik/config`)
+Änderung: curl-Loop ersatzlos entfernen (Templates kommen aus dem Image, T2). Reihenfolge anpassen: Verzeichnisse anlegen → Installer-Container starten (legt Templates) → auf Templates warten statt sie zu laden. `mv edulution-default.yml` entfällt bzw. wandert in T2.
+Verify (crabbox): `! grep -q 'get.edulution.io' apps/public-page/public/installer` · `bash -n apps/public-page/public/installer`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2
+
+### T4 — Restliche `get.edulution.io`-/Fremd-URLs im Installer-Repo repointen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `apps/public-page/**`, `apps/webinstaller/**`, `README.md`
+Soll: grep `get.edulution.io|edulution.io|edulution-io` über das Installer-Repo (Deny/Allowlist wie `p1-rebrand`)
+Änderung: Verbleibende Fremd-URLs/Download-Links auf eigene Quelle bzw. Repo-Links umstellen. **Historische Attribution/Copyright-Vermerke NICHT anfassen** (AGPL-Provenienz).
+Verify (crabbox): `! grep -rn 'get\.edulution\.io' --include='*' apps/ README.md`
+i18n: keine
+Doku: keine (intern)
+
+### T5 — Installer-Rebrand: Wizard-Texte, Branding, Public-Page  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `apps/webinstaller/**` (UI-Texte/Logos), `apps/public-page/**`
+Soll: `p1-rebrand` T8 (`PRODUCT_NAME`/`PRODUCT_SOURCE_URL` im UI-Repo) als Namensquelle
+Änderung: Produktname/Logos/Titel im Wizard + Public-Page auf `linuxmuster-ui` umstellen; keine Marke „edulution" im sichtbaren Text. Deny/Allowlist statt naivem sed.
+Verify (crabbox): Wizard-Build grün (`npx nx build webinstaller`) · `! grep -rni 'edulution' dist/apps/webinstaller | grep -vi 'attribution\|copyright'`
+i18n: Wizard-Texte DE+EN+FR, falls der Wizard i18n hat (sonst: keine)
+Doku: Installer-README rebranden
+
+### T6 — NOTICE/Attribution + §13-Hinweis im Installer-Repo  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `NOTICE` (neu, **SPDX AGPL-3.0-or-later**), `README.md`
+Soll: `p1-rebrand` T1/T2 (Analog im UI-Repo)
+Änderung: Fork-Attribution (Ursprung edulution-io/edulution-installer, AGPLv3), Trademark-Statement, Link auf den Quellcode (§13-Bezug) ergänzen.
+Verify (crabbox): `test -f NOTICE && grep -q 'AGPL-3.0-or-later' NOTICE`
+i18n: keine
+Doku: README-Abschnitt Attribution/Lizenz
+
+### T7 — Gate: keine `edulution-io`-Laufzeit-Referenz mehr im Installer  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: — (Prüf-Task)
+Soll: Summe aus `p1-installer-repoint` T1–T3 + diesem Paket
+Änderung: Repo-weiter grep-Gate als Abschluss: keine `edulution-io/`-Image-/Repo-Refs und kein `get.edulution.io` mehr in ausführbaren Pfaden (Bootstrap, Templates, Wizard, CI). Ausnahmen nur in Attribution/History.
+Verify (crabbox): `! grep -rnE 'ghcr\.io/edulution-io|get\.edulution\.io|edulution-io/edulution-installer' apps/ edulution-lmninstaller/ .github/ Dockerfile`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3, T4
+
+---
+
+## p2-install-e2e [P2] ⭐ — Erstinstallation end-to-end über den EIGENEN Installer (der Beweis)
+_Ziel:_ Leere Ubuntu-Box → unser Bootstrap → Wizard → laufende Instanz am echten LMN + Login · _Abhängt-von:_ p1-installer-ci, p1-installer-rebrand-dist · _Status:_ geplant · _Tasks:_ 7
+Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** (Test-Harness ggf. im UI-Repo unter `scripts/crabbox/`) · Soll: `apps/public-page/public/installer` (Bootstrap) · `apps/webinstaller-api/app/main.py:206 /api/configure`, `:435 /api/finish` · `/test`-Skill (crabbox-Rezept)
+
+> **Warum dieses Paket existiert:** Kein anderes Paket beweist, dass die **Installation** funktioniert.
+> Die „Fresh-Install"-Stellen im Backlog betreffen nur DB-Startwerte (`defaultAppConfig`/
+> `schemaVersion`), nicht das Installieren. Dies hier ist das Abnahme-Kriterium für „am Ende über
+> einen eigenen Installer installieren".
+> **Abgrenzung zu `/test`:** Der `/test`-Skill deployt den Stack per `deploy.sh` (Entwickler-Weg).
+> Dieses Paket geht bewusst den **Endnutzer-Weg**: nur `curl … | bash`, sonst nichts.
+
+### T1 — Frische Box + Vorbedingungen (bewusst OHNE Vor-Provisionierung)  [ ]
+Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh` (neu, **SPDX AGPL-3.0-or-later**)
+Soll: `/test`-Skill (CPU=host-Pflicht!) · Bootstrap installiert Docker **selbst** (`installer:120–150`)
+Änderung: Skript least eine **frische** Box (eigener Slug, CPU=host, 4C/8G) und provisioniert **nichts** außer dem Nötigsten — kein Docker, kein Node (der Bootstrap muss das selbst können). Ubuntu 22.04/24.04 (Bootstrap prüft das).
+Verify: `bash scripts/crabbox/install-e2e.sh --lease-only` → Box ready, `command -v docker` ist **leer**
+i18n: keine
+Doku: keine (intern)
+
+### T2 — Unseren Bootstrap fahren (Endnutzer-Weg)  [ ]
+Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
+Soll: `installer:213/216` (pull+run eigenes Image), Templates aus dem Image (`p1-installer-rebrand-dist` T2)
+Änderung: Auf der frischen Box unser Bootstrap-Script ausführen (`curl -sSL <eigene Quelle>/installer | bash` bzw. lokal kopiert + `bash`), Default-Tag = gepinnter `2.0.x`. Erwartung: Docker wird installiert, Installer-Image **anonym** gezogen, Wizard auf :443 erreichbar.
+Verify (auf der Box): `curl -sk -o /dev/null -w '%{http_code}' https://localhost:443` = 200 · `docker ps` zeigt `*-installer`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — Wizard headless durchsteuern (LMN-Parameter)  [ ]
+Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
+Soll: `apps/webinstaller-api/app/main.py:206` (`POST /api/configure`: organizationType, deploymentTarget, lmnExternalDomain, lmnBinduserDn/Pw, lmnLdapSchema/Port, edulutionExternalDomain), `:435` (`POST /api/finish`), LDAP-Checks `:270/:287`
+Änderung: Wizard per REST durchsteuern statt klicken: `/api/configure` mit den echten LMN-Werten (Host/Binduser aus `.claude/settings.local.json`, **nie hardcoden**), LDAP-Checks abfragen, `/api/finish`. Danach läuft die Installer-Kette weiter (Prepare-Keycloak → `edulution.env` → Compose-Up).
+Verify (auf der Box): `/api/check-ldap-access-status` liefert `{"status": true}` · nach `/finish` existiert `/srv/docker/edulution-ui/edulution.env`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2
+
+### T4 — Stack-Hochlauf abwarten + Health prüfen  [ ]
+Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
+Soll: Compose-Template (7 Services) · bekannte Stolpersteine aus `/test` (Mongo-First-Init langsam → `up -d` ggf. erneut)
+Änderung: Auf `healthy` warten (Timeout + Log-Dump bei Fehler). Assertion: **alle 7** Services `healthy`.
+Verify (auf der Box): `docker compose --project-directory /srv/docker/edulution-ui/ ps` → 7× healthy
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T5 — Login-Smoke gegen den echten LMN  [ ]
+Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`, wiederverwendet `scripts/crabbox/shots.py`
+Soll: `/test`-Skill (edulutions **eigenes** Login-Formular `input[name=username]`; Erfolg = `→ /dashboard`, `/edu-api/lmn-api/auth` = 200; nach Login **kein** `networkidle` erwarten — SSE)
+Änderung: Playwright-Login als LMN-Admin gegen die frisch installierte Instanz; Screenshot als Beleg.
+Verify: URL nach Login endet auf `/dashboard` (nicht `/login`) · `/edu-api/lmn-api/auth` → 200
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4
+
+### T6 — Herkunfts-Assertion: alles aus der eigenen Registry  [ ]
+Komponente: crabbox-Harness · Dateien: `scripts/crabbox/install-e2e.sh`
+Soll: Ziel des ganzen Repoints (`p1-installer-repoint` + `p1-installer-rebrand-dist`)
+Änderung: Nach der Installation belegen, dass **zur Laufzeit** nichts mehr von edulution kommt: alle App-Container-Images aus `ghcr.io/faircomp/*`, keine `get.edulution.io`-/`edulution-io`-Referenz in den erzeugten Dateien.
+Verify (auf der Box): `docker ps --format '{{.Image}}' | grep -E 'edulution-io' ` ist **leer** · `! grep -rn 'get\.edulution\.io\|ghcr.io/edulution-io' /srv/docker/edulution-ui/*.yml /srv/docker/edulution-ui/edulution.env`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4
+
+### T7 — Install-Runbook dokumentieren + Box reapen  [ ]
+Komponente: linuxmuster-ui-installer · Dateien: `docs/install.md` (DE+EN+FR)
+Soll: Der real gelaufene Ablauf aus T1–T6
+Änderung: Die verifizierte Installationsanleitung schreiben (Voraussetzungen, ein `curl`-Befehl, Wizard-Felder, LMN-Voraussetzung `linuxmuster-api7`, Troubleshooting). Am Ende `crabbox stop` + `crabbox list` (keine geleakte Lease).
+Verify: Anleitung deckt exakt die in T1–T6 ausgeführten Schritte · `crabbox list` zeigt keine E2E-Box mehr
+i18n: keine (Doku-Sprachen s. Doku-Feld)
+Doku: `docs/install.md` DE+EN+FR
+Abhängt von: T5, T6
+
+## p1-migration-upgrade-test [P1] — Migrations-Upgrade-Test (echte 1.6-DB → eigenes Image)
+_Ziel:_ 1.6-DB→eigenes Image Upgrade-Pfad real testen · _Abhängt-von:_ p1-installer-repoint, p0-migrations-inventory · _Status:_ geplant · _Tasks:_ 8
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-migration-upgrade-test.md` · Soll: main.js:2676 (Engine) · main.js:2678/2681 (Log-Strings) · main.js:9214 (getMasterKey) · main.js:7950 (unwrapEncryptKey) · docs/migrations/2.0-migrations-inventory.md (p0) · scratchpad/real/dashboard.png
+
+> Voraussetzungen (Abhängt-von, paketweit): `p0-migrations-inventory` (Inventar + gedraftetes
+> `scripts/migrations/assert-schema-versions.*` + `docs/migrations/upgrade-1.6-to-2.0.md`),
+> `p1-installer-repoint` (Compose-Template zeigt auf eigene Images/gepinnten Tag). Die
+> `/test`-Harness (`scripts/crabbox/deploy.sh`, `generate_env.py`, `shots.py`, `lmn_install.sh`)
+> muss auf der Box verfügbar sein.
+
+---
+
+### T1 — Reproduzierbares 1.6.266-DB-Fixture (Dump + master.key) erzeugen  [ ]
+Komponente: scripts/crabbox · Dateien: scripts/crabbox/seed-1.6-db.sh (neu, SPDX AGPL), .gitignore
+Soll: main.js:9214 (getMasterKey — Auto-Gen des `./data/master.key`) · p0-migrations-inventory §Inventar-Kern (welche Collections `schemaVersion` tragen)
+Änderung: Skript zieht **einmalig/throwaway** ein echtes 1.6.266-Image (OF1) fresh auf der Box hoch, legt via API/Login minimal repräsentative Bestandsdaten in **jede migrierte Collection** an (appConfig-Set, ≥1 user, ≥1 bulletin+category, ≥1 survey+template+answer, ≥1 webdavShare, globalSettings; je Collection zusätzlich möglichst 1 Doc ohne `schemaVersion`, OF4), fährt `mongodump --archive` aus und kopiert `./data/master.key` daneben → Fixture-Paar `scratchpad/upgrade-fixtures/1.6.266/{dump.archive,master.key}`. `.gitignore` schließt `scratchpad/upgrade-fixtures/` **und** `master.key` aus.
+Verify: `iter.sh cmd 'bash scripts/crabbox/seed-1.6-db.sh && test -s scratchpad/upgrade-fixtures/1.6.266/dump.archive && test -s scratchpad/upgrade-fixtures/1.6.266/master.key && mongorestore --archive=scratchpad/upgrade-fixtures/1.6.266/dump.archive --dryRun 2>&1 | grep -Eq "appconfigs|bulletins"'`
+i18n: keine
+Doku: docs/migrations/upgrade-1.6-to-2.0.md — Fixture-Herkunft (DE, intern) — vollständiger Runbook-Abschnitt in T8
+
+### T2 — deploy.sh: Seed-Restore-Modus (Restore vor api-Boot)  [ ]
+Komponente: scripts/crabbox · Dateien: scripts/crabbox/deploy.sh (erweitern; falls noch nicht im Repo, mit-committen — Fresh-Verhalten unverändert)
+Soll: main.js:2676 (Migrationen laufen in onModuleInit → Restore MUSS davor) · /test-Skill Ablauf 5 (phased bring-up)
+Änderung: Neue Env `SEED_DUMP`/`SEED_MASTERKEY`. Wenn gesetzt: **phased bring-up** — erst `docker compose up -d` für infra (mongo/redis/keycloak/traefik), auf `mongo healthy` warten, dann `mongorestore --archive=$SEED_DUMP` in die Ziel-DB, dann `$SEED_MASTERKEY` nach `./data/master.key` ins api-Bind-Mount kopieren, **erst danach** `docker compose up -d edu-api edu-ui`. Ohne die Envs: unverändertes Fresh-Install.
+Verify: `iter.sh cmd 'SEED_DUMP=scratchpad/upgrade-fixtures/1.6.266/dump.archive SEED_MASTERKEY=scratchpad/upgrade-fixtures/1.6.266/master.key bash scripts/crabbox/deploy.sh && docker compose exec -T mongo mongosh --quiet --eval "db.getSiblingDB(\"edulution\").appconfigs.countDocuments()" | grep -qE "[1-9]"'` (restored rows vorhanden, api-Container läuft)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — upgrade-test.sh: Orchestrator + Boot-Log-Assertion  [ ]
+Komponente: scripts/crabbox · Dateien: scripts/crabbox/upgrade-test.sh (neu, SPDX AGPL)
+Soll: main.js:2678 (`Executing <model>: N migrations`) · main.js:2681 (`Migration "<name>" completed`)
+Änderung: Skript ruft `deploy.sh` im Seed-Modus (Fixture-Pfade), sammelt `docker compose logs edu-api`, prüft: (a) für **jedes aktuell verdrahtete Modell** erscheint `Executing <model>: N migrations`, (b) **kein** `Error`/`Exception`/`UnhandledPromiseRejection` im Migrations-Boot-Fenster, (c) api-Log enthält `Nest application successfully started`. Exit ≠0 bei Verstoß; klare Fehlermeldung + relevanter Log-Tail.
+Verify: `iter.sh cmd 'bash scripts/crabbox/upgrade-test.sh'` → exit 0; stdout listet die gefundenen `Executing …: N migrations`-Zeilen.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2
+
+### T4 — Terminal-schemaVersion-Assertion (Uniform-Modus) einbinden  [ ]
+Komponente: scripts/crabbox + scripts/migrations · Dateien: scripts/crabbox/upgrade-test.sh, scripts/migrations/assert-schema-versions.* (aus p0; ggf. `--uniform`-Flag ergänzen)
+Soll: p0 `scripts/migrations/assert-schema-versions` + docs/migrations/2.0-migrations-inventory.md (Terminal-Tabelle)
+Änderung: `upgrade-test.sh` ruft die p0-Assertion gegen die restored+migrated Mongo im **Uniform-Modus** (OF3): pro migrierter Collection müssen **alle** Dokumente dieselbe (maximale) `schemaVersion` tragen — **keine Straggler**. Sekundär (best-effort, nicht-fatal am P1-Stand): Exaktzahl-Abgleich gegen die 2.0-final-Tabelle, nur für Modelle mit vollständig gelandetem Delta (am P1: appConfig=10, globalSettings=8, surveyTemplates/surveyAnswers=4, übrige 1.6-Terminal).
+Verify: `iter.sh upgrade` (nach T7) bzw. `iter.sh cmd 'bash scripts/crabbox/upgrade-test.sh'` → Assertion grün; ein künstlich auf niedrigem `schemaVersion` belassenes Straggler-Doc lässt sie **rot** werden (Negativ-Nachweis im Verify-Kommentar dokumentiert).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T5 — Idempotenz-Re-Boot-Check  [ ]
+Komponente: scripts/crabbox · Dateien: scripts/crabbox/upgrade-test.sh
+Soll: p0-migrations-inventory §Idempotenz-Muster (`model.find({schemaVersion: previousSchemaVersion})` → leere Menge = No-Op)
+Änderung: Nach dem ersten Migrationslauf startet `upgrade-test.sh` die api ein zweites Mal (`docker compose up -d --force-recreate edu-api`), wartet auf Boot, und prüft: Uniform-Terminal-Assertion (T4) **unverändert** grün, und die zweiten Boot-Logs zeigen **keine** `documents to update`/`modifiedCount > 0`-Zeile (No-Op). Exit ≠0 bei Abweichung.
+Verify: `iter.sh cmd 'bash scripts/crabbox/upgrade-test.sh'` → zweiter Boot-Abschnitt meldet „idempotent: 0 documents updated"; Assertion grün.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4
+
+### T6 — master.key-Kopplungs-Check  [ ]
+Komponente: scripts/crabbox · Dateien: scripts/crabbox/upgrade-test.sh
+Soll: main.js:9214 (getMasterKey — Log „No master key found. Generated new master key…") · main.js:7950 (unwrapEncryptKey)
+Änderung: `upgrade-test.sh` prüft, dass die api mit dem Fixture-`master.key` bootet **ohne** die Zeile `No master key found. Generated new master key` (Positiv: Key reiste korrekt mit dem Dump). Negativer Kontroll-Modus (optional, `--no-key`): ohne `master.key` erscheint die Auto-Gen-Zeile — Beleg, dass ein Restore ohne Key den Master-Key regeneriert (nach künftiger `users`-wrap-Portierung = unlesbare gewrappte Keys). Am P1-Stand (wrap noch nicht verdrahtet) ist nur der Positiv-Check fatal.
+Verify: `iter.sh cmd 'bash scripts/crabbox/upgrade-test.sh'` → api-Boot-Log enthält **nicht** „Generated new master key" (Fixture-Key vorhanden); Kontroll-Lauf `upgrade-test.sh --no-key` zeigt die Zeile.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T7 — iter.sh-Ziel `upgrade` verdrahten  [ ]
+Komponente: scripts/crabbox · Dateien: scripts/crabbox/iter.sh
+Soll: — (Wiring; scripts/crabbox/iter.sh:13–25 case-Block)
+Änderung: Neues Ziel `upgrade) CMD='bash scripts/crabbox/upgrade-test.sh';;` im case-Block; Usage-Kommentar-Zeile (`iter.sh upgrade  # Migrations-Upgrade-Test 1.6-DB → eigenes Image`) ergänzen. Macht den Upgrade-Test zum Ein-Befehl-Phase-Gate.
+Verify: `iter.sh upgrade` → exit 0 auf der warmen Box (voller Durchlauf T2–T6).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T8 — Ausführungs-Runbook + P1-Exit-Checkliste  [ ]
+Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md (aus p0, ergänzen)
+Soll: PLAN-openedulution-fork.md §6 Z308 (Exit-Kriterium je Phase) · §3.3 Z166 (forward-only, Rollback = Dump + master.key + Image-Tag)
+Änderung: Abschnitt „Ausführung (P1)" ergänzen: (1) Fixture erzeugen (`seed-1.6-db.sh`), (2) `iter.sh upgrade`, (3) Assertionen (Uniformität/Idempotenz/master.key). **P1-Exit-Checkliste** eintragen. Guardrails festhalten: `mongodump` **+ `./data/master.key` gemeinsam** sichern (nie einzeln); Harness ist **wiederkehrendes Phase-Gate** (jede spätere Delta-Migration re-verifiziert die volle 1.6→aktuell-Kette); Rollback = Dump + master.key + vorheriger Image-Tag. DE (intern).
+Verify: `iter.sh cmd 'grep -q "P1-Exit" docs/migrations/upgrade-1.6-to-2.0.md && grep -q "master.key" docs/migrations/upgrade-1.6-to-2.0.md'`; `npm run lint` unberührt (nur Markdown).
+i18n: keine
+Doku: docs/migrations/upgrade-1.6-to-2.0.md (DE, intern) — diese Task IST die Doku
+Abhängt von: T7
+
+## p1-port-api-specs-ci [P1] — API-Specs als CI-Green-Gate + Smoke/Contract-Tests
+_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ geplant · _Tasks:_ 11
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-port-api-specs-ci.md` · Soll: PLAN §6/Zeile 317 · §5.1/Zeile 252 · §3.2/Zeile 156 · §6.8/Zeile 314 · §8-P1/Zeile 362 · app.module.ts:150–158 (globaler AuthGuard+AccessGuard) · Bestands-Specs sse.controller.spec.ts / users.controller.spec.ts · scripts/checkFilenames.ts (Check-Muster) · Guard-Anker main.js:11219/56551/56883/59956/63161
+
+> Kontext: 28 Bestands-Specs (nativ aus 1.6.266). 29 Controller, davon 14 ohne Spec:
+> auth, bulletin-category, docker, filesharing, health, license, mails, metrics, mobileApp,
+> notifications, user-preferences, webdav-shares, webhook-clients, webhook.
+> Globale Guards: AuthGuard + AccessGuard (app.module.ts:150–158) schützen jede Route;
+> `@Public()` (PUBLIC_ROUTE_KEY) opt-tet aus. Neue Dateien tragen AGPL-3.0-or-later-SPDX
+> (setzt p1-rebrand/`addLicenseHeader→AGPL` voraus; bis dahin Header manuell setzen — NICHT den
+> Netzint-Dual-Header der Bestands-Specs anfassen).
+
+---
+
+### T1 — Baseline: alle 28 Bestands-Specs remote grün + deterministischer `test:api:ci`-Script  [ ]
+Komponente: apps/api (Test-Infra) · Dateien: `package.json`
+Soll: PLAN §6/Zeile 317 („die 28 vorhandenen Specs sofort übernehmen") · §8-P1/Zeile 362
+Änderung: `package.json`-Script `"test:api:ci": "nx run api:test --skip-nx-cache --detectOpenHandles -- --ci --runInBand"` ergänzen (deterministischer, cache-freier Gate-Lauf). Keine Spec-Datei ändern.
+Verify: `bash scripts/crabbox/iter.sh cmd 'npm run test:api:ci'` → alle 28 Suites/Specs PASS, Exit 0. (Ist ein Bestands-Spec rot → als Blocker melden, nicht überschreiben.)
+i18n: keine
+Doku: keine (intern)
+
+### T2 — API-Unit-Tests als benannter Green-Gate-Step in build-and-test.yml  [ ]
+Komponente: CI · Dateien: `.github/workflows/build-and-test.yml`
+Soll: PLAN §5.1/Zeile 252 · §6/Zeile 315 (Green-Gate; Merge-Gate)
+Änderung: Im Job `test` (Zeile 154–187) den API-Unit-Test aus dem Sammel-Step „Run Checks and Tests" herauslösen in einen eigenen, benannten Step „Run API unit tests" mit `run: npm run test:api:ci`; der Sammel-Step behält nur die Checks (`check-circular-deps`, `check-translations`, `check-error-message-translations`, `pretty-quick`, `lint`). So ist der Test-Gate einzeln benennbar/erzwingbar. Branch-Protection-Konfiguration ist NICHT Teil dieser Task (→ p1-own-ci-registry).
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx yaml lint .github/workflows/build-and-test.yml || python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" .github/workflows/build-and-test.yml'` → parst; und `grep -q "Run API unit tests" .github/workflows/build-and-test.yml && grep -q "test:api:ci" .github/workflows/build-and-test.yml`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1 · p1-own-ci-registry (liefert die Fork-eigene build-and-test.yml)
+
+### T3 — Reflection-Helper für Auth-Contract-Assertions  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/common/controllerContractReflection.ts` (neu, SPDX AGPL)
+Soll: app.module.ts:150–158 · public.decorator.ts (`PUBLIC_ROUTE_KEY`) · PLAN §3.2/Zeile 156
+Änderung: Purer (jest-freier) Helper mit Default-Export `controllerContractReflection` = `{ getClassGuards(controller), getRouteGuards(controller, methodName), isRoutePublic(controller, methodName) }`. Guards via `Reflect.getMetadata(GUARDS_METADATA, ...)` (`GUARDS_METADATA` aus `@nestjs/common/constants`) auf Klasse bzw. `controller.prototype[method]`; Public via `Reflect.getMetadata(PUBLIC_ROUTE_KEY, controller.prototype[method])`. Keine Magic-Strings, kein `expect` im Helper.
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPattern="health.controller.spec"'` (Helper wird in T4 zuerst genutzt; hier reicht `npm run lint` sauber + Import auflösbar). Eigenständig: `bash scripts/crabbox/iter.sh cmd 'npx tsc --noEmit -p apps/api/tsconfig.spec.json'`.
+i18n: keine
+Doku: keine (intern; Nutzung in docs/testing/spec-policy.md T11)
+
+### T4 — Smoke/Contract-Specs: health, metrics, license  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/health/health.controller.spec.ts`, `apps/api/src/metrics/metrics.controller.spec.ts`, `apps/api/src/license/license.controller.spec.ts` (neu, SPDX AGPL)
+Soll: health.controller.ts:37–38 (`@Public`+`LocalhostGuard`) · metrics.controller.ts:28 (`AdminGuard`) · license.controller.ts:43 (`AdminGuard`)
+Änderung: Je Controller `Test.createTestingModule({ controllers:[X], providers:[{provide:XService,useValue:mock}] })` (Muster sse.controller.spec.ts). Assertions: `expect(controller).toBeDefined()` (Smoke) + Contract via T3-Helper (`getClassGuards`/`getRouteGuards`/`isRoutePublic`: metrics/license → AdminGuard; health-Check-Route → public + LocalhostGuard).
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPattern="(health|metrics|license).controller.spec"'` → 3 Suites PASS.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T5 — Smoke/Contract-Specs: user-preferences, notifications, bulletin-category  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/user-preferences/user-preferences.controller.spec.ts`, `apps/api/src/notifications/notifications.controller.spec.ts`, `apps/api/src/bulletin-category/bulletin-category.controller.spec.ts` (neu, SPDX AGPL)
+Soll: bulletin-category.controller.ts:44–68 (AdminGuard auf allen Mutations-Routen)
+Änderung: Wie T4. Service-Mock je Controller; ggf. `getModelToken`/`CACHE_MANAGER`-Mocks nach Bedarf (Muster users.controller.spec.ts, `../common/cache-manager.mock`). Contract: bulletin-category-Mutationen → AdminGuard; user-preferences/notifications → nicht public, kein AdminGuard (nur globaler AuthGuard).
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPattern="(user-preferences|notifications|bulletin-category).controller.spec"'` → 3 Suites PASS.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T6 — Smoke/Contract-Specs: auth, webhook, mobileApp  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.spec.ts`, `apps/api/src/webhook/webhook.controller.spec.ts`, `apps/api/src/mobileAppModule/mobileApp.controller.spec.ts` (neu, SPDX AGPL)
+Soll: auth.controller.ts:64/72/88/110 (`@Public`-Routen: authconfig/authenticate/getTotpInfo/loginViaApp) · webhook.controller.ts:32–33 (`@Public`+`WebhookGuard`)
+Änderung: Wie T4. Contract-Fokus auf die `@Public()`-Opt-outs (Auth-Bypass-Schutz): assertieren, dass genau die erwarteten Auth-Routen public sind und die geschützten (getQrCode/setupTotp/disableTotp) NICHT public; webhook-Route → public + WebhookGuard. AuthService/WebhookService/MobileAppService mocken.
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPattern="(auth|webhook|mobileApp).controller.spec"'` → 3 Suites PASS.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T7 — Smoke/Contract-Specs: docker, webhook-clients, webdav-shares  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/docker/docker.controller.spec.ts`, `apps/api/src/webhook-clients/webhook-clients.controller.spec.ts`, `apps/api/src/webdav/shares/webdav-shares.controller.spec.ts` (neu, SPDX AGPL)
+Soll: docker.controller.ts:34 (Class-`AdminGuard`) + :63 (eine `@Public`-Route) · webhook-clients.controller.ts:28 (Class-`AdminGuard`) · webdav-shares.controller.ts:51–63 (AdminGuard auf Mutationen)
+Änderung: Wie T4. Contract: docker/webhook-clients Class-Level-AdminGuard (`getClassGuards`); docker-`@Public`-Route bewusst gelistet und geprüft; webdav-shares-Mutationen AdminGuard. Services mocken.
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPattern="(docker|webhook-clients|webdav-shares).controller.spec"'` → 3 Suites PASS.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T8 — Smoke/Contract-Specs: mails, filesharing (mehrfache DI)  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/mails/mails.controller.spec.ts`, `apps/api/src/filesharing/filesharing.controller.spec.ts` (neu, SPDX AGPL)
+Soll: mails.controller.ts:39–43 (UsersService+MailsService+MailIdleService), :69ff (AdminGuard auf Mailcow-Admin) · filesharing.controller.ts:68–72 (FilesharingService+WebdavService+ThumbnailService), :62 `@RequireAppAccess(APPS.FILE_SHARING)`, :265/274 (`@Public`-Routen)
+Änderung: Wie T4, aber alle injizierten Services mocken. Contract: mails-Mailcow-Admin-Routen → AdminGuard; filesharing → `@RequireAppAccess`-Metadata gesetzt + die zwei `@Public`-Download-Routen bewusst gelistet/geprüft, alle übrigen NICHT public.
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPattern="(mails|filesharing).controller.spec"'` → 2 Suites PASS.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T9 — Spec-Coverage-Guard-Script + npm-Script  [ ]
+Komponente: scripts · Dateien: `scripts/checkSpecCoverage.ts` (neu, SPDX AGPL), `package.json`
+Soll: PLAN §6/Zeile 317 („pro rekonstruiertem Modul Specs verlangen") · Muster scripts/checkFilenames.ts
+Änderung: `tsx`-Script, das `apps/api/src` rekursiv nach `*.controller.ts` scannt und für jede eine kolokierte `*.controller.spec.ts` verlangt; fehlt eine → Liste ausgeben + `process.exit(1)`. Konstante `SPEC_NOT_REQUIRED: string[]` (default leer) als Ausnahme-Allowlist. `package.json`-Script `"check-spec-coverage": "tsx ./scripts/checkSpecCoverage.ts"`.
+Verify: `bash scripts/crabbox/iter.sh cmd 'npm run check-spec-coverage'` → Exit 0 (alle 29 Controller haben jetzt Specs). Negativ-Probe: `bash scripts/crabbox/iter.sh cmd 'mv apps/api/src/health/health.controller.spec.ts /tmp/h && npm run check-spec-coverage; rc=$?; mv /tmp/h apps/api/src/health/health.controller.spec.ts; test $rc -ne 0'` → Guard failt bei fehlendem Spec.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4, T5, T6, T7, T8
+
+### T10 — Spec-Coverage-Guard in CI + Pre-Commit verdrahten  [ ]
+Komponente: CI + Git-Hooks · Dateien: `.github/workflows/build-and-test.yml`, `.husky/pre-commit`
+Soll: PLAN §6/Zeile 317 (Contract-/Smoke-Test je Controller „in build-and-test.yml verdrahten")
+Änderung: In build-and-test.yml (Job `test`, Checks-Step) `npm run check-spec-coverage` zu den Checks hinzufügen (vor `npm run lint`). In `.husky/pre-commit` `npm run check-spec-coverage` ergänzen (nach `check-filenames`), damit ein neuer Controller ohne Spec lokal blockiert.
+Verify: `grep -q "check-spec-coverage" .github/workflows/build-and-test.yml && grep -q "check-spec-coverage" .husky/pre-commit`; und `bash scripts/crabbox/iter.sh cmd 'npm run check-spec-coverage'` → Exit 0.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T9
+
+### T11 — Test-/Spec-Policy-Doku  [ ]
+Komponente: Doku · Dateien: `docs/testing/spec-policy.md` (neu, SPDX AGPL falls Header-Konvention für .md gilt — sonst ohne)
+Soll: PLAN §6/Zeile 314/317 (Auth-Spec je Modul) · Spec „Doku-Impact"
+Änderung: Kurze DE-Dev-Doku: (1) jeder Controller braucht `*.controller.spec.ts` (Smoke + Contract), erzwungen durch `check-spec-coverage`; (2) Contract-Assertions via `controllerContractReflection` (T3) — Beispiel; (3) going-forward: jedes NEUE/rekonstruierte Modul zusätzlich ein verhaltensbasierter Auth-Spec (401/403) ab P2-Chat-Pilot (OF1); (4) wie man `npm run test:api:ci` und `npm run check-spec-coverage` lokal/remote laufen lässt.
+Verify: `test -f docs/testing/spec-policy.md && grep -qi "check-spec-coverage" docs/testing/spec-policy.md && grep -qi "controllerContractReflection" docs/testing/spec-policy.md`.
+i18n: keine (Dev-Doku, keine App-Strings)
+Doku: docs/testing/spec-policy.md (dies IST die Doku)
+Abhängt von: T3, T9
+
+## p1-security-cve-track [P1] — Eigener Security-/CVE-Track (Dependabot + Trivy-Gate + Cron-Andock)
+_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ geplant · _Tasks:_ 8
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-security-cve-track.md` · Soll: Greenfield-Ops-Track (kein main.js-Runtime-Anker · kein Rescue-Branch · kein Baseline-Shot). Belege: PLAN §5.1(:258/:256) · §5.2-P7(:270) · §7d/§7h(:337/:345) · §7i(:347) · §8-P1b(:363) · R10(:388) · §9-P5(:440) · apps/{api,frontend}/Dockerfile · .github/workflows/{build-and-test,container-build}.yml · package.json:19–22 · docker-compose.yml:4,22
+
+> Abhängt von Paket `p1-own-ci-registry`: Registry-Org + finale Image-Namen (Scan-Ziele) kommen von dort;
+> bis dahin Platzhalter `ghcr.io/faircomp/linuxmuster-{ui,api}` (konsistent zu tasks/p1-rebrand.md).
+> Cross-Refs (bewusst NICHT hier): SBOM/provenance/cosign = CI-Härtungs-Paket (PLAN §5.1 Z.256);
+> gitleaks-Secret-Scan = separates Härtungs-Paket; docker-compose-Infra-Pins = Installer-Paket/OF5.
+
+---
+
+### T1 — Dependabot-Konfiguration (npm + github-actions + docker)  [ ]
+Komponente: `.github` (CI) · Dateien: `.github/dependabot.yml` (neu, **SPDX AGPL-3.0-or-later** als YAML-`#`-Kommentar)
+Soll: PLAN §5.1(:258) — „`dependabot.yml`/Renovate (npm + Docker-Base-Digests + GitHub-Actions)"; Grep-0-Befund (keine bestehende Config)
+Änderung: `version: 2` mit drei `updates`-Einträgen — `npm` (directory `/`, `schedule.interval: weekly`, `groups` für minor+patch gebündelt, `open-pull-requests-limit`), `github-actions` (`/`, weekly), `docker` (Verzeichnisse der beiden Dockerfiles `apps/api` + `apps/frontend`, weekly). `target-branch: main`, `commit-message.prefix`, `labels: [security, dependencies]`. Nur öffentliche Config, keine Secrets.
+Verify: `iter.sh cmd 'python3 -c "import yaml; d=yaml.safe_load(open(\".github/dependabot.yml\")); assert d[\"version\"]==2; e=set(u[\"package-ecosystem\"] for u in d[\"updates\"]); assert {\"npm\",\"github-actions\",\"docker\"}.issubset(e), e; print(sorted(e))"'` (exit 0, druckt die 3 Ökosysteme) und `iter.sh cmd 'grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" .github/dependabot.yml'`
+i18n: keine
+Doku: keine (die YAML ist selbstdokumentierend; Track-Doku in T8)
+
+### T2 — Dockerfile-FROM auf `tag@digest`-Form (Digest-Bumps ermöglichen)  [ ]
+Komponente: `apps/api` + `apps/frontend` (Infra) · Dateien: `apps/api/Dockerfile`, `apps/frontend/Dockerfile`
+Soll: apps/api/Dockerfile:1–2 (`### manifest digest for node:22.21.1-alpine3.22` + `FROM node@sha256:…`); apps/frontend/Dockerfile:1–2 (`nginx:1.29.2-alpine3.22` + `FROM nginx@sha256:…`)
+Änderung: `FROM node@sha256:<d>` → `FROM node:22.21.1-alpine3.22@sha256:<d>` und `FROM nginx@sha256:<d>` → `FROM nginx:1.29.2-alpine3.22@sha256:<d>` — **denselben** Digest beibehalten (byte-identisches Image), nur das Tag voranstellen, damit der Dependabot-`docker`-Updater (T1) das Ziel kennt und den Digest bumpen kann. Kommentar-Zeile kann entfallen (Tag jetzt inline).
+Verify: `iter.sh cmd 'grep -qE "^FROM node:22\.21\.1-alpine3\.22@sha256:ef30b897" apps/api/Dockerfile && grep -qE "^FROM nginx:1\.29\.2-alpine3\.22@sha256:b03ccb74" apps/frontend/Dockerfile'` (Tag vorangestellt, Original-Digest erhalten)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — npm-audit-Gate (Skript + typisierte Allowlist + Test + Verdrahtung)  [ ]
+Komponente: `scripts` (Ops) + Repo-Root · Dateien: `scripts/security/checkNpmAudit.ts` (neu, SPDX), `scripts/security/npmAuditAllowlist.ts` (neu, SPDX), `scripts/security/checkNpmAudit.spec.ts` (neu, SPDX), `package.json` (Script)
+Soll: PLAN §5.1(:258) — `npm audit`-Signal; Muster `scripts/checkTranslations.ts`/`scripts/supply-chain/checkExternalReferences.ts` (in-Repo-Gate, keine neue Runtime-Dep)
+Änderung: `checkNpmAudit.ts` führt `npm audit --json --omit=dev` aus, parst die Advisories, filtert auf Schwere `high`/`critical`, ignoriert die in `npmAuditAllowlist.ts` (typisierter const-Export `{ id, package, reason, reviewBy }`) gelisteten und exitet 1 bei verbleibenden Findings. **Aktuelle Findings als Baseline** mit `reviewBy`-Datum in die Allowlist aufnehmen, damit das Gate grün startet und nur **neue** CVEs blockt. `package.json`: Script `"check-npm-audit": "tsx scripts/security/checkNpmAudit.ts"` + in `check`-Kette einhängen. Spec: Fixture-JSON (a) nur allowlistete Advisory → pass, (b) nicht-allowlistete high/critical → fail.
+Verify: `iter.sh cmd 'npx tsx --test scripts/security/checkNpmAudit.spec.ts'` (Fixture-Test grün) und `iter.sh cmd 'npm run check-npm-audit'` (exit 0 nach Baseline) und `iter.sh lint`
+i18n: keine
+Doku: Begründung je Allowlist-Eintrag → gehört in `docs/security/accepted-cves.md` (T4)
+Abhängt von: T4
+
+### T4 — Trivy-Allowlist + Accepted-CVE-Register  [ ]
+Komponente: Repo-Root + `docs` · Dateien: `.trivyignore` (neu, SPDX als `#`-Kommentar), `docs/security/accepted-cves.md` (neu, SPDX)
+Soll: PLAN §5.1(:258) — Trivy als CI-Gate mit gepflegter Allowlist; §7i(:347) — Backlog-Sektion „Security"
+Änderung: `.trivyignore` mit den bewusst akzeptierten (unfixbaren/Base-Image-)CVE-IDs; jede Zeile mit Kommentar `# <CVE> — <Grund> — review-by <Datum>`. `docs/security/accepted-cves.md` als menschenlesbares Register: je Eintrag Paket/Image, CVE, Schwere, Grund, Review-Datum, Verantwortlich. Prozess-Notiz: „neue akzeptierte CVE ⇒ Eintrag hier + `.trivyignore` gemeinsam; abgelaufene `review-by` erzwingen Re-Evaluation".
+Verify: `iter.sh cmd 'test -f .trivyignore && grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" .trivyignore && test -f docs/security/accepted-cves.md && grep -qi "review-by" docs/security/accepted-cves.md'`
+i18n: keine
+Doku: docs/security/accepted-cves.md (dies IST die Doku)
+
+### T5 — Wiederverwendbarer Trivy-Scanner (`scanImages.sh`) mit Report-Modus  [ ]
+Komponente: `scripts` (Ops) · Dateien: `scripts/security/scanImages.sh` (neu, SPDX als `#`-Kommentar)
+Soll: PLAN §7h(:345) — „Trivy/Grype über die gebauten Images … an denselben Wochen-Cron andocken"; §7i(:347) — Report-Sektion
+Änderung: Shell-Skript, das (a) Trivy nachinstalliert, falls nicht vorhanden (offizieller Installer, lokales `bin/`), (b) für jede übergebene Image-Ref `trivy image --severity HIGH,CRITICAL --ignorefile .trivyignore --exit-code 1` läuft, (c) `--report <FILE>` eine Markdown-„Security"-Sektion schreibt (für den Cron/`reports/`), (d) `--self-test` die beiden Base-Digests aus den Dockerfiles ableitet und scannt (Selbst-Testbarkeit ohne App-Image-Build), (e) optional `--advisory-grype` Grype rein informativ ergänzt (OF4). Exit-Code = Gate-Ergebnis. Als **gemeinsamer Kern** für T6/T7 und den Tracking-Cron (T8).
+Verify: `iter.sh cmd 'bash scripts/security/scanImages.sh --self-test --report /tmp/sec.md; rc=$?; test -s /tmp/sec.md && grep -qi "Security" /tmp/sec.md && echo "rc=$rc"'` (Skript läuft end-to-end, schreibt Report; rc 0/1 je nach Base-Image-Posture, beides gültig) und `iter.sh cmd 'shellcheck scripts/security/scanImages.sh || true'`
+i18n: keine
+Doku: keine (Nutzung dokumentiert in T8/`docs/security/cve-track.md`)
+Abhängt von: T4
+
+### T6 — Trivy-Gate im PR-Build (`build-and-test.yml`)  [ ]
+Komponente: `.github` (CI) · Dateien: `.github/workflows/build-and-test.yml`
+Soll: build-and-test.yml:86–96 (`build-frontend` docker build) + :141–152 (`build-api` docker build) — Images werden gebaut, aber **nicht** gescannt
+Änderung: In `build-frontend` und `build-api` das gebaute Image lokal verfügbar machen (`load: true` bzw. `outputs: type=docker`) und im Anschluss einen `aquasecurity/trivy-action`-Step (per **Full-SHA** gepinnt, Versions-Kommentar → von Dependabot-github-actions bumpbar) mit `severity: HIGH,CRITICAL`, `exit-code: 1`, `trivyignores: .trivyignore` ergänzen. Gate blockt neue HIGH/CRITICAL im PR. Keine sonstige CI-Architektur-Änderung (Green-Gate-Verdrahtung = CI-Härtungs-Paket).
+Verify: `iter.sh cmd 'python3 -c "import yaml; yaml.safe_load(open(\".github/workflows/build-and-test.yml\"))" && grep -qi "aquasecurity/trivy-action@" .github/workflows/build-and-test.yml && grep -q "trivyignores" .github/workflows/build-and-test.yml'` (YAML valide + SHA-gepinnte Trivy-Action + Ignorefile referenziert; Gate-Verhalten selbst verifiziert der PR-CI-Lauf)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5
+
+### T7 — Trivy-Gate vor Release-Push (`container-build.yml`)  [ ]
+Komponente: `.github` (CI) · Dateien: `.github/workflows/container-build.yml`
+Soll: container-build.yml:106–115 (`build-frontend` push) + :156–165 (`build-api` push) — Push **ohne** vorgeschalteten Scan
+Änderung: Vor dem pushenden `build-push-action` (bzw. mit `load` und separatem Push-Step) einen Trivy-Scan-Step (Full-SHA-gepinnt, `severity: HIGH,CRITICAL`, `exit-code: 1`, `trivyignores: .trivyignore`) einziehen, sodass der Release **fail-closed** ist — kein Image mit neuem HIGH/CRITICAL wird veröffentlicht. Komponiert mit dem `needs: [lint, test]`-Green-Gate aus dem CI-Härtungs-Paket (nur Cross-Ref, hier nicht mitverdrahtet).
+Verify: `iter.sh cmd 'python3 -c "import yaml; yaml.safe_load(open(\".github/workflows/container-build.yml\"))" && grep -qi "aquasecurity/trivy-action@" .github/workflows/container-build.yml && grep -q "trivyignores" .github/workflows/container-build.yml'`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5
+
+### T8 — CVE-Track-Doku + Wochen-Cron-Handoff-Kontrakt  [ ]
+Komponente: `docs` (Ops) · Dateien: `docs/security/cve-track.md` (neu, SPDX)
+Soll: PLAN §7h(:345)/§7i(:347) — CVE-Scan am `openedulution-tracking`-Wochen-Cron, Findings in `reports/` (Sektion „Security"); §8-P1b(:363)
+Änderung: Deutsche Ops-Doku, die den gesamten Track beschreibt: (1) Dependabot-Ökosysteme + Rhythmus (T1), (2) die zwei Trivy-Gates (T6/T7) + Allowlist-Prozess (Verweis T4), (3) npm-audit-Gate (T3), (4) **Cron-Handoff-Kontrakt**: wie der `openedulution-tracking`-Wochen-Cron `scripts/security/scanImages.sh --report <reports/…>` (T5) gegen die **veröffentlichten** `ghcr.io/<org>/linuxmuster-{ui,api}`-Digests aufruft und die Ausgabe als „Security"-Sektion in die `reports/<from>..<to>.md`-Pipeline einhängt. Registry-Org als Platzhalter mit Verweis auf `p1-own-ci-registry`.
+Verify: `iter.sh cmd 'test -f docs/security/cve-track.md && grep -qi "openedulution-tracking" docs/security/cve-track.md && grep -q "scanImages.sh" docs/security/cve-track.md && grep -qi "dependabot" docs/security/cve-track.md'`
+i18n: keine
+Doku: docs/security/cve-track.md (dies IST die Doku)
+Abhängt von: T5, T6, T7
+
+## p1-master-key-provisioning [P1] — Master-Key-Provisioning & Backup-Kopplung
+_Ziel:_ Installer erzeugt MASTER_ENCRYPT_KEY + koppelt ihn ans Backup-Set · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 4
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-master-key-provisioning.md` · Soll: main.js:9214-9235 (getMasterKey) · main.js:8340-8345 (generateEncryptKey/64-hex) · main.js:9190-9194 (Konstanten) · edulution-installer/apps/webinstaller-api/app/main.py:699-834 (createEdulutionEnvFile) · scratchpad/real/— (keine UI-Änderung)
+
+> Abhängt-von: `p1-installer-repoint`. **Cross-Repo:** T1/T2 committen ins Installer-Repo
+> (`edulution-installer`, Branch `feat/2.0-backlog`), T3 ins Produkt-Repo
+> (`edulution-ui`). T4 ist reine Voll-Stack-Verifikation (kein Code).
+> **Scope:** nur Provisioning + DR-Kopplung. Der API-seitige Port von `master_key_util` +
+> Migration `000-wrap-encrypt-keys-with-master-key` + Wrap-Verdrahtung ist ein **separates** Paket
+> (Migrations-/Verschlüsselungs-Track, s. Spec Offene Frage 6); bis dahin ist dieses Provisioning ein
+> forward-kompatibler No-op.
+
+---
+
+### T1 — Installer: `MASTER_ENCRYPT_KEY` (64-Hex) deterministisch in `edulution.env`  [ ]
+Komponente: edulution-installer (webinstaller-api) · Dateien: `apps/webinstaller-api/app/main.py`
+Soll: main.js:9214-9235 (getMasterKey Env-Zweig) + main.js:8340-8345 (generateEncryptKey → 64-Hex/AES-GCM-256) · Ziel: installer main.py:702-712 (Secret-Block) + :767-786 (`# edulution-api`-Block)
+Änderung: In `createEdulutionEnvFile` `master_encrypt_key = secrets.token_hex(32)` erzeugen (64 Hex-Zeichen = 256-bit, format-kompatibel zu `getMasterKey`/`encryptWithKey`; **nicht** `generateSecret()` — base62 ergäbe einen degenerierten 16-Byte-Schlüssel) und die Zeile `MASTER_ENCRYPT_KEY={master_encrypt_key}` in den `# edulution-api`-Block der erzeugten `edulution.env` schreiben.
+Verify: Installer-Assertion (in der crabbox-Shell/Installer-Repo ausführbar, kein nx): `python3 -c` das `createEdulutionEnvFile` mit Fixture-`Data` aufruft und asserted, dass die erzeugte `edulution.env` genau eine Zeile `MASTER_ENCRYPT_KEY=` mit Wert `^[0-9a-f]{64}$` enthält (exit 0 grün).
+i18n: keine
+Doku: keine (intern) — Env-Inventar-Eintrag als Cross-Ref (Spec Offene Frage 5)
+
+### T2 — Installer: bestehenden `MASTER_ENCRYPT_KEY` beim Re-Run erhalten  [?]
+Komponente: edulution-installer (webinstaller-api) · Dateien: `apps/webinstaller-api/app/main.py`
+Soll: main.js:9214-9235 (Rotation = irreversibler Verlust; wrap/unwrap main.js:7814/8119) · Plan §2.6(a)
+Änderung: Vor dem Erzeugen prüfen, ob `/edulution-ui/edulution.env` existiert und bereits `MASTER_ENCRYPT_KEY=<hex>` enthält; falls ja, **diesen Wert wiederverwenden** statt neu zu generieren (Rotation macht alle gewrappten Passwörter unlesbar). Nur wenn keiner existiert, `token_hex(32)` aus T1 nutzen.
+Verify: `createEdulutionEnvFile` zweimal mit derselben Fixture aufrufen (2. Lauf mit der aus Lauf 1 geschriebenen `edulution.env`); asserten, dass `MASTER_ENCRYPT_KEY` zwischen beiden Läufen **identisch** bleibt (übrige Secrets dürfen rotieren — dokumentierte Grenze).
+i18n: keine
+Doku: Erhalt-Garantie im DR-Runbook (T3) referenzieren
+Abhängt von: T1
+[?] Entscheidung (Spec Offene Frage 3): Installer-Re-Run-Policy — sicherer idempotenter Re-Run vs. „einmalig + Master-Key-Erhalt als einzige Ausnahme".
+
+### T3 — DR-/Backup-Kopplung: Master-Key-Runbook-Abschnitt  [ ]
+Komponente: edulution-ui (docs, Ops) · Dateien: `docs/ops/dr-master-key.md` (neu, SPDX AGPL)
+Soll: Plan §2.6(c/d), §3.3, §5.6-DR, §6.2, R4 · main.js:9190-9235 · Cross-Ref `docs/datenschutz/verschluesselung-master-key.md`, `docs/features/p0-migrations-inventory.md`
+Änderung: Neues Ops-Dokument (DE), das verbindlich festhält: (1) `./data/master.key` bzw. `MASTER_ENCRYPT_KEY` (aus `edulution.env`) und `mongodump` gehören **zwingend gemeinsam** ins Backup-/Rollback-Set, **nie einzeln**; (2) Restore-Reihenfolge (Key/Env vor bzw. mit dem DB-Dump); (3) Warnung „Neustart ohne persistentes `./data`+Env = Totalverlust aller gespeicherten Passwörter"; (4) Verweis auf das §5.6-Voll-DR-Skript (`mongodump`+`pg_dump`+`./data`-Tar) als Owner der Skript-Umsetzung, mit der Kopplung als harter Anforderung; (5) Escrow-Hinweis (Plan §10.1, Bus-Factor).
+Verify: `test -f edulution-ui/docs/ops/dr-master-key.md && head -1 edulution-ui/docs/ops/dr-master-key.md | grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" && grep -qi "master.key" edulution-ui/docs/ops/dr-master-key.md && grep -qi "mongodump" edulution-ui/docs/ops/dr-master-key.md && grep -qi "Totalverlust" edulution-ui/docs/ops/dr-master-key.md` (exit 0 grün). Reiner Doku-Task.
+i18n: keine (internes Ops-Dokument, DE maßgeblich; EN zurückgestellt — Spec Offene Frage 1)
+Doku: dies IST das Doku-Deliverable
+
+### T4 — Voll-Stack-Contract: Key erreicht den `edulution-api`-Container  [ ]
+Komponente: Voll-Stack (crabbox gegen echten LMN, /test) · Dateien: — (Verifikation/Checklisten-Eintrag)
+Soll: Contract `edulution.env` (`MASTER_ENCRYPT_KEY`) → Prod-Compose `env_file` → getMasterKey (main.js:9218)
+Änderung: Keine Code-Änderung. Verifikationsschritt + Checklisten-Eintrag: nach Installer-Lauf muss der `edulution-api`-Container den provisionierten Key sehen; der Prod-Compose des `edulution-api`-Service muss `edulution.env` via `env_file` durchreichen (sonst Folge-Contract-Task in `p1-installer-repoint`). Solange die Wrapping-Portierung fehlt, wird der Key noch nicht konsumiert — geprüft wird die **Durchreichung**, nicht die Nutzung.
+Verify: (Voll-Stack /test, gegen echten LMN) `docker exec edulution-api printenv MASTER_ENCRYPT_KEY | grep -Eq '^[0-9a-f]{64}$'`; zusätzlich (sobald Wrapping aktiv) API-Logs prüfen: **keine** Auto-Gen-Warnung „No master key found" (main.js:9233) und **kein** neu erzeugtes `./data/master.key`.
+i18n: keine
+Doku: Checklisten-Eintrag im DR-Runbook (T3)
+Abhängt von: T1
+
+## p1-dr-runbook [P1] — Betriebs-/DR-Runbook + Backup-/Restore-Skript
+_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ geplant · _Tasks:_ 6
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-dr-runbook.md` · Soll: main.js:9207-9235 (getMasterKey/master.key) · main.js:55805 (edulution.pem) · main.js:8854-8856 (Redis flüchtig/BullMQ) · docker-compose.yml.template:60-68/147-162/88-89 · PLAN §5.6/§2.6/§6.2/R4
+
+> Hinweis: Ops-Paket. Deliverables = 1 Runbook-Doc + Shell-Skripte unter `scripts/ops/`. Kein
+> Produktcode, keine Migration, keine neue API-Route/Guard, i18n = keine. Neue `.sh`/`.md`/
+> `.example` tragen SPDX `AGPL-3.0-or-later`, Copyright Kevin Stenzel (NICHT Netzint). Skript-
+> Verify läuft über `iter.sh cmd '<befehl>'`; Syntax-Gate ist `bash -n`, Verhaltens-Gate sind
+> Unit-Checks mit einem **`docker`-Stub auf `PATH`** (deterministisch, ohne echten Stack). Die
+> **Voll-Stack-Assertion** ist der Drill (T5) gegen den deployten Stack. Abhängt-von-Paket:
+> `p1-master-key-provisioning` (liefert deterministisches `MASTER_ENCRYPT_KEY` in `edulution.env`).
+
+---
+
+### T1 — DR-Runbook-Dokument schreiben  [ ]
+Komponente: docs · Dateien: docs/ops/dr-runbook.md (neu)
+Soll: PLAN §5.6/§2.6/§6.2/R4 · main.js:9207-9235 · docker-compose.yml.template:60-68/147-162/88-89
+Änderung: Runbook (DE) mit Abschnitten: **Topologie** (Container `edu-db`/`edu-keycloak-db`/`edu-keycloak`/`edu-api`/`edu-redis`/`edu-traefik`, `./data`-Layout, `edulution.env`-Sibling) · **Backup-Reihenfolge + Begründung** (mongodump → pg_dump → `./data`-Tar; warum DB-Dump VOR Tar: `master.key` muss die gedumpten `encryptKey` wrappen) · **`master.key`-Kopplung + Totalverlust-Warnung** (Neustart ohne persistentes `./data`+Env = Totalverlust) · **Verschlüsselung/Offsite/Escrow** · **RPO/RTO** · **Restore-Schritte** · **Restore-Drill-Kadenz** · **Redis flüchtig / kein Queue-Backup** · **Contract-Sync-Punkt** (Installer-Service-/Var-Namen). Kopf mit SPDX.
+Verify: `iter.sh cmd 'test -f docs/ops/dr-runbook.md && for s in Topologie mongodump pg_dump master.key Totalverlust Restore-Drill RPO RTO edulution.env Reihenfolge; do grep -qi "$s" docs/ops/dr-runbook.md || { echo "FEHLT: $s"; exit 1; }; done && grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" docs/ops/dr-runbook.md'`
+i18n: keine
+Doku: docs/ops/dr-runbook.md (dies ist das Deliverable) · EN deferred (Spec-Offene-Frage 3)
+
+### T2 — Geteilte Ops-Bibliothek `dr-lib.sh`  [ ]
+Komponente: scripts/ops · Dateien: scripts/ops/dr-lib.sh (neu)
+Soll: docker-compose.yml.template (Service-Namen `edu-db`/`edu-keycloak-db`) · Spec „Contract-Drift"
+Änderung: POSIX-/bash-Helfer: `dr_log`/`dr_die` (Fail-Fast, `set -euo pipefail`-tauglich); `dr_container <service>` löst Container über Compose auf (`docker compose -f "$DR_COMPOSE" ps -q <service>`, Fallback container_name); `dr_mongo_env`/`dr_pg_env` ziehen DB-Creds via `docker exec … printenv` aus dem Container (kein Hardcode); `dr_require <bin>`; `DR_STACK_DIR`/`DR_COMPOSE`/`DR_OUT_DIR`-Defaults. SPDX-Header. Wird von T3–T5 gesourct.
+Verify: `iter.sh cmd 'bash -n scripts/ops/dr-lib.sh && d=$(mktemp -d); printf "#!/bin/sh\necho stubc\n" > "$d/docker"; chmod +x "$d/docker"; PATH="$d:$PATH" bash -c ". scripts/ops/dr-lib.sh; type dr_container >/dev/null && type dr_die >/dev/null && echo LIB_OK"'`
+i18n: keine
+Doku: keine (intern)
+
+### T3 — Backup-Skript `dr-backup.sh` (Dump→Tar, verschlüsselt)  [ ]
+Komponente: scripts/ops · Dateien: scripts/ops/dr-backup.sh (neu)
+Soll: PLAN §5.6 (Reihenfolge, Offsite) · main.js:9207-9235 (`./data/master.key`) · docker-compose.yml.template:64/155 (DB-Mounts exkludieren)
+Änderung: Reihenfolge **(1)** Preflight (Container erreichbar; `./data`, `./data/master.key`, `edulution.env` vorhanden — sonst `dr_die` „Totalverlust-Risiko"); **(2)** `mongodump --archive --gzip` (ganze Instanz, Creds aus Container-Env) via `docker exec`; **(3)** `pg_dump`/`pg_dumpall` Keycloak-DB (`-U keycloak keycloak`) via `docker exec`; **(4) danach** `tar` von `./data` **inkl.** `master.key`/`apps`/`traefik/ssl`/`letsencrypt`/`edulution.pem`, **exkl.** `db/` + `keycloak/db/`, **plus** `edulution.env`; **(5)** Bundle → `age`/`gpg`-verschlüsseln + `sha256sum`-Manifest, `0600`; **(6)** optional `DR_OFFSITE_CMD`. Optionaler `--quiesce` stoppt/startet `edu-api` um die Dumps. `mktemp -d`+`trap` Cleanup.
+Verify: `iter.sh cmd 'bash -n scripts/ops/dr-backup.sh && d=$(mktemp -d); cat > "$d/docker" <<EOF
+#!/bin/sh
+echo "docker \$*" >> "$d/calls.log"
+case "\$*" in *"ps -q"*) echo cid;; *printenv*) echo X=1;; *mongodump*) echo dump;; *pg_dump*) echo pg;; esac
+EOF
+chmod +x "$d/docker"; mkdir -p "$d/stack/data" "$d/stack/data/db"; : > "$d/stack/data/master.key"; : > "$d/stack/edulution.env"; PATH="$d:$PATH" DR_STACK_DIR="$d/stack" DR_OUT_DIR="$d/out" bash scripts/ops/dr-backup.sh >/dev/null 2>&1 || true; grep -n mongodump "$d/calls.log" && grep -n pg_dump "$d/calls.log" && awk "/mongodump/{m=NR} /tar/{t=NR} END{exit !(m && t && m<t)}" "$d/calls.log" && echo ORDER_OK'`
+i18n: keine
+Doku: keine (im Runbook aus T1 beschrieben)
+Abhängt von: T2
+
+### T4 — Restore-Skript `dr-restore.sh` (entschlüsseln→data→DB→up)  [ ]
+Komponente: scripts/ops · Dateien: scripts/ops/dr-restore.sh (neu)
+Soll: PLAN §5.6/§6.2 (Restore = Dump + master.key) · main.js:9214-9235 (master.key Pflicht)
+Änderung: `--confirm` erforderlich (sonst Abbruch); Bundle entschlüsseln (age/gpg) + `sha256`-Prüfung; **`master.key` im Bundle prüfen → sonst `dr_die`** (unlesbare Passwörter); Stack herunterfahren (ohne `--force`), `./data` zurückspielen (`master.key` mit `0600`), `mongorestore --archive --gzip --drop`, Keycloak-DB `psql`/`pg_restore --clean`, Stack hochfahren, Healthcheck-Warten. Reverse zu T3.
+Verify: `iter.sh cmd 'bash -n scripts/ops/dr-restore.sh && bash scripts/ops/dr-restore.sh 2>&1 | grep -qi "confirm" && echo NEEDS_CONFIRM_OK'`  (zusätzlich: Abbruch bei fehlendem master.key im entschlüsselten Bundle — Assertion im Skript-Selbsttest)
+i18n: keine
+Doku: keine (im Runbook aus T1 beschrieben)
+Abhängt von: T2
+
+### T5 — Wiederkehrender crabbox-Restore-Drill `dr-drill.sh`  [ ]
+Komponente: scripts/ops · Dateien: scripts/ops/dr-drill.sh (neu)
+Soll: PLAN §5.6 (wiederkehrender Restore-Drill) · main.js:9207-9235 (master.key Round-Trip) · main.js:55805 (edulution.pem/Login)
+Änderung: End-to-End-Drill auf crabbox: Stack seed (deploy) → `dr-backup.sh` → `./data`+DB-Volumes wipen → `dr-restore.sh --confirm` → **Assertions**: (a) Mongo-Doc-Count einer Kern-Collection vor/nach identisch; (b) `GET /auth/realms/edulution/.well-known/openid-configuration` == 200 (Postgres-Restore ok); (c) **master.key-Round-Trip** — `edu-api`-Log enthält **nicht** „Generated new master key" **und** ein authentifizierter Call, der ein gewrappt-gespeichertes Secret dereferenziert, liefert 200; (d) Login 200. Exit-Code + RTO-Zeit ausgeben. Dies ist der **Test** des DR-Sets (neuer Flow ⇒ Test).
+Verify: `iter.sh deploy` (Stack hochziehen), dann `iter.sh cmd 'bash scripts/ops/dr-drill.sh'` → Exit 0 mit „DRILL PASS" + RTO-Ausgabe; Assertions a–d grün.
+i18n: keine
+Doku: keine (Kadenz im Runbook aus T1)
+Abhängt von: T3, T4
+
+### T6 — Verdrahtung: npm-Aliasse + Timer-Vorlage + .gitignore  [ ]
+Komponente: root · Dateien: package.json · scripts/ops/dr-drill.timer.example (neu) · scripts/ops/dr-drill.service.example (neu) · .gitignore
+Änderung: `package.json`-Scripts `dr:backup`/`dr:restore`/`dr:drill` (delegieren an `scripts/ops/*`); systemd-Timer-/Service-Vorlage (bzw. Cron-Kommentar) für die wiederkehrende Ausführung, SPDX; `.gitignore`-Härtung gegen versehentliches Committen von Bundles/Klartext-Secrets (`scripts/ops/**/*.tar*`, `*.age`, `*.gpg`, `scripts/ops/out/`, `dr-out/`).
+Verify: `iter.sh cmd 'node -e "const s=require(\"./package.json\").scripts; if(!(s[\"dr:backup\"]&&s[\"dr:restore\"]&&s[\"dr:drill\"])) process.exit(1)" && grep -q "\.age" .gitignore && grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" scripts/ops/dr-drill.timer.example && echo WIRE_OK'`
+i18n: keine
+Doku: kurzer Verweis im README-Betriebsteil auf `docs/ops/dr-runbook.md` + Totalverlust-Warnung (ein Satz)
+Abhängt von: T1, T5
+
+## p1-observability [P1] — Observability, Health-/Build-Metadaten & Sentry
+_Ziel:_ Health liefert Build-Metadaten; Observability + Sentry-Entscheidung · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 5
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-observability.md` · Soll: main.js:56941-56961 (HealthService.buildInfo/onModuleInit/Spread), 56932/57023-57029 (Disk-Threshold), 56789-56851 (HealthController-Guards), 59716-59723 (configuration-Contract — Fremd-Paket, nur Referenz), 59762-59795 & 54486-54495 (Sentry), 948 (LoggingInterceptor) · upstream/1166-logging-add-kibana-prometheus (Prometheus/Kibana — bewusst NICHT übernommen, Umriss) · scratchpad/real/— (kein Baseline-Shot; BE/Env/Ops)
+
+> Kontext-Notiz: Dieses Paket ist **disjunkt** zu `p1-own-ci-registry`. Dort liegt das gesamte
+> Build-Metadaten-Plumbing (configuration.ts=T5, Dockerfile ARG/ENV/LABEL=T3,
+> container-build.yml metadata-action=T4, CI-Runbook=T11). Hier wird **nur der Health-Endpoint
+> verdrahtet** (T1), plus Sentry-Defaults/Doku und Logging-Basics. `configuration.ts`,
+> beide `Dockerfile`, `container-build.yml` werden hier **NICHT** angefasst.
+> SPDX neuer Dateien: `SPDX-License-Identifier: AGPL-3.0-or-later` + `SPDX-FileCopyrightText:
+> 2026 Kevin Stenzel` (nicht der Netzint-Dual-Header). Markdown-Doku ohne Header.
+
+---
+
+### T1 — HealthService spreadet Build-Metadaten in alle Health-Antworten  [ ]
+Komponente: apps/api · Dateien: apps/api/src/health/health.service.ts, apps/api/src/health/health.service.spec.ts (neu)
+Soll: main.js:56941-56961 (`buildInfo`, `onModuleInit`, `{ ...result, ...this.buildInfo }`), 57023-57029 (`getThresholdPercent`)
+Änderung: In `health.service.ts` `ConfigService` (7. Konstruktor-Param, `@nestjs/config`) injizieren, Feld `buildInfo` + `onModuleInit()` ergänzen, das `version/commitSha/buildDate/buildNumber` aus `this.configService.get(...)` liest, und in `checkEduApiResponding`/`checkEduApiHealth`/`getEduApiStats` das Ergebnis via `{ ...result, ...this.buildInfo }` anreichern. `health.controller.ts`/`health.module.ts` bleiben unverändert (`ConfigModule` global, `app.module.ts:78`). Neuer Jest-Spec: (a) `onModuleInit` + gemockter `ConfigService` → Antworten enthalten die vier Metadaten-Felder; (b) `getThresholdPercent` (gültig / <0 / >1 / NaN → 0.95).
+Verify: `iter.sh test:api` grün inkl. `health.service.spec.ts`; Assertion: `checkEduApiResponding()` mit gemocktem `health.check`→`{status:'ok'}` und `ConfigService.get` → `commitSha:'deadbeef'` liefert ein Objekt, das `commitSha:'deadbeef'` **und** `buildNumber` enthält; `getThresholdPercent`-Grenzfälle. Zusätzlich `iter.sh cmd 'npm run build:api'` grün.
+i18n: keine
+Doku: keine (intern) — Monitoring-Contract wird in T5 dokumentiert
+Abhängt von: p1-own-ci-registry:T5 (paket-übergreifend; nur für reale Werte im Voll-Stack — der Unit-Test mockt ConfigService und ist unabhängig)
+
+### T2 — .env.default: Sentry-/Logging-/Disk-Defaults härten  [ ]
+Komponente: apps/api · Dateien: apps/api/.env.default
+Soll: main.js:59762-59795 (Sentry opt-in), 948/getLogLevels (Log-Level), 56932/57023-57029 (Disk-Threshold) · Master-Plan §2.6/§5.5/§9-Entscheidung 12 (Default-Config-Härtung)
+Änderung: Im `# Sentry logging config`-Block `ENABLE_SENTRY=false` explizit setzen und beide DSN-Zeilen mit Kommentar „leer lassen — nie eine Fremd-DSN (edulution.io) erben; eigenen DSN nur mit ENABLE_SENTRY=true" versehen; beim `EDUI_LOG_LEVEL`-Kommentar den Prod-Default (`leer → error,warn,log bei NODE_ENV=production`) ergänzen; beim `EDUI_DISK_SPACE_THRESHOLD`-Kommentar den Default `0.95` nennen. Keine Secrets, keine neuen Vars, keine Build-Metadaten-Vars (Image-provided).
+Verify: `iter.sh cmd 'grep -q "^ENABLE_SENTRY=false" apps/api/.env.default && grep -q "SENTRY_EDU_API_DSN=$" apps/api/.env.default && echo OK'` → OK; keine DSN-Werte eingecheckt (`grep -E "SENTRY_.*_DSN=.+" apps/api/.env.default` leer).
+i18n: keine
+Doku: keine (intern) — Env-Inventar in T5
+
+### T3 — getLogLevels: Prod-Default-Regressions-Spec  [ ]
+Komponente: apps/api · Dateien: apps/api/src/logging/getLogLevels.spec.ts (neu)
+Soll: main.js:948 (LoggingInterceptor liest `EDUI_LOG_LEVEL`) · getLogLevels (Prod-Fallback `[error,warn,log]`)
+Änderung: Jest-Spec, der den bestehenden Log-Level-Contract festnagelt (Observability-Basics, Regressions-Guard): leerer Env + `NODE_ENV=production` → `['error','warn','log']`; leerer Env + non-prod → alle Level; `'off'` → `undefined`; unbekannter Wert → Fallback `[error,warn,log]`; `'debug'` → `['error','warn','log','debug']` (Slice-Grenze). Reiner Test, kein Produktivcode-Diff.
+Verify: `iter.sh test:api` grün inkl. `getLogLevels.spec.ts` (5 Assertions oben).
+i18n: keine
+Doku: keine (intern)
+
+### T4 — Sentry-Telemetrie-Härtung (PII/Sampling)  [?]
+Komponente: apps/api, apps/frontend · Dateien: apps/api/src/sentry/enableSentryForNest.ts, apps/frontend/src/store/useSentryStore.ts
+Soll: main.js:59762-59795 (BE `sendDefaultPii:true`, `tracesSampleRate:1.0`, `profilesSampleRate:1.0`) · useSentryStore.ts:50-56 (FE identisch)
+Änderung (nur bei Freigabe von Offener Frage 2): `sendDefaultPii` in BE **und** FE auf `false`, `tracesSampleRate`/`profilesSampleRate` auf einen konservativen Wert (z. B. `0.1`) senken — DSGVO-Härtung für Schul-/Minderjährigen-PII (R12). Bewusste Abweichung vom 2.0-SOLL; greift nur bei aktivem Sentry. Andernfalls Task als `[~]` (SOLL-treu belassen) schließen.
+Verify: `iter.sh test:api` + `iter.sh cmd 'npx nx test frontend'` grün; `iter.sh cmd 'grep -q "sendDefaultPii: false" apps/api/src/sentry/enableSentryForNest.ts && grep -q "sendDefaultPii: false" apps/frontend/src/store/useSentryStore.ts && echo OK'` → OK.
+i18n: keine
+Doku: docs/observability.md (Entscheidung nachziehen) — im selben Commit
+Abhängt von: T5 (Entscheidung dort dokumentiert) · braucht Entscheidung (Offene Frage 2)
+
+### T5 — docs/observability.md: Monitoring-Contract, Env-Inventar, Sentry-Entscheidung (DE+EN)  [ ]
+Komponente: Doku · Dateien: docs/observability.md (neu)
+Soll: main.js:56789-56851 (Health-Routen/Guards), 56941-56961 (Response-Shape inkl. Build-Metadaten) · Master-Plan §5.5 (Health als Monitoring-Contract, Sentry-Default) · §2.7/R12 (Dritt-Empfänger)
+Änderung: Neues bilinguales Betriebsdokument (DE-Abschnitt + EN-Abschnitt): (1) Health-Endpoints als Monitoring-Contract — `GET /edu-api/health` (Auth), `/edu-api/health/check` (@Public+LocalhostGuard, Readiness), `/edu-api/health/stats` (Auth) mit Response-Feldern inkl. `version/commitSha/buildDate/buildNumber`; (2) Observability-Env-Inventar (`EDUI_LOG_LEVEL` + Prod-Default, `EDUI_DISK_SPACE_THRESHOLD`=0.95, `ENABLE_SENTRY`, `SENTRY_EDU_*_DSN`); (3) Sentry-Telemetrie-Entscheidung: Default aus, nie Fremd-DSN, Dritt-Empfänger-Hinweis; (4) Cross-Link auf `docs/ci-release.md` (Build-Metadaten-Plumbing, p1-own-ci-registry) statt Duplikat.
+Verify: `iter.sh cmd 'test -e docs/observability.md && grep -q "/edu-api/health/check" docs/observability.md && grep -qi "ENABLE_SENTRY" docs/observability.md && echo OK'` → OK.
+i18n: keine (UI) · Doku bilingual DE+EN im Dokument
+Doku: docs/observability.md (DE+EN)
+
+## p1b-tracking-pipeline [P1b] — Tracking-/Image-Diff-Pipeline (linuxmuster-tracking)
+_Ziel:_ Repo linuxmuster-tracking: skopeo-Release-Erkennung + Image-Diff-Pipeline · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 16
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1b-tracking-pipeline.md` · Soll: PLAN §7a–i(:325–:349) · §8-P1b(:363) · §9.7(:424) · Anker gemessen an main.js (2.0.200): Module=38 · Controller=39 · SchemaFactory.createForClass=39 · Dto roh 242/unique 241 · _ENDPOINT=41 · Migrations-Namen `'[0-9]{3}-…'`=32 · runMigrations(=12 · Guard=9 · Gateway=2 · `schedule_1.Cron)(`=4 · `new bullmq_1.Queue(`=4 · Baseline: scratchpad/api-img/opt/edulution/api/main.js + scratchpad/ui-img/.../assets/index-*.{js,css} + scratchpad/real/*.png
+
+> **Verifikations-Hinweis (wichtig, weicht vom Standard ab):** Das Deliverable ist ein **eigenes Repo
+> `linuxmuster-tracking`**, kein Diff im `edulution-ui`-Tree. Der crabbox-Host ist die Compute-/Netz-
+> Umgebung: die Verify-Kommandos laufen dort per `iter.sh cmd '<befehl>'`, indem das Tracking-Repo auf
+> die Box geklont wird (`git clone … /tmp/tracking && cd /tmp/tracking && …`) bzw. später als
+> `self-test.yml` in der CI des Tracking-Repos. `npm run lint`/`nx test` aus dem DoD-Header betreffen
+> `edulution-ui` und sind hier **N/A** (Shell-Tooling) → statt dessen `shellcheck` + der Baseline-
+> Selbsttest. `i18n DE+EN` ist durchgängig **N/A (Ops-Tooling)**. Werkzeuge auf der Box:
+> `skopeo`/`crane`/`jq`/`js-beautify`(npm)/`shellcheck`/`trivy` einmalig via `iter.sh cmd` installieren.
+> Cross-Refs: CVE-Scan-Betrieb = Paket `p1-security-cve-track` (hier nur Andockung §7h); Realm-Baseline =
+> `p0-realm-diff-baseline`; Supply-Chain-Inventar/Pinning = `p0-supply-chain-inventory`.
+
+---
+
+### T1 — Repo-Skeleton + `lib/common.sh` (anon-ghcr, skopeo-Helfer, un-minified-Guard)  [ ]
+Komponente: linuxmuster-tracking (neu) · Dateien: `lib/common.sh`, `state.json` (leer/Schema-Stub), `.gitignore`, `README.md` (Stub)
+Soll: PLAN §7 Kopf(:323) Layout `bin/`+`versions/<ver>/`+`reports/`+`state.json`; §7a(:325) anon-ghcr-Token
+Änderung: Repo-Grundgerüst anlegen; `lib/common.sh` mit Funktionen `ghcr_anon_token <image>`, `skopeo_inspect <ref>`, `assert_unminified <main.js>` (bricht ab, wenn Zeilen < 50000 ODER `class *Module`-Count außerhalb 20–60 → R-a-Guard), `json_get`/`state_read`/`state_write` (jq). Alle neuen Dateien mit SPDX-`#`-Header.
+Verify: `iter.sh cmd 'git clone <tracking-repo> /tmp/trk && cd /tmp/trk && shellcheck lib/common.sh && bash -c ". lib/common.sh; assert_unminified /home/…/versions/2.0.200/api/main.js && echo GUARD_OK"'` → Exit 0 + `GUARD_OK`; negativ: Guard bricht bei einer 1-Zeilen-Datei ab (Exit ≠ 0).
+i18n: keine (Ops-Tooling)
+Doku: README-Stub (Zweck + Layout, Deutsch)
+
+### T2 — `bin/poll.sh` (§7a: skopeo-inspect beider Images → state.json-Diff)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/poll.sh`, `state.json`
+Soll: PLAN §7a(:325) — `skopeo inspect docker://ghcr.io/edulution-io/edulution-{api,ui}:latest` → `{version,revision,digest}` gegen `state.json`, **Digest mittracken** (stille Re-Builds), **beide** Images
+Änderung: `poll.sh` inspiziert beide `:latest`-Refs (anon-Token via T1), extrahiert `version`(Label `org.opencontainers.image.version`), `revision`, `Digest`; vergleicht mit `state.json`; gibt bei Änderung `CHANGED api 2.0.200→2.0.201 sha256:…` aus (Exit 10 = Änderung, 0 = keine) und aktualisiert `state.json`. Nur Lesezugriff.
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/poll.sh --dry-run | jq -e ".api.digest and .ui.digest and (.api.digest|startswith(\"sha256:\"))"'` (live gegen ghcr, Exit 0, druckt beide Digests); Idempotenz: zweiter Lauf ohne `--dry-run` meldet „keine Änderung" (Exit 0).
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Poll" (Deutsch)
+Abhängt von: T1
+
+### T3 — `bin/extract.sh` (§7b: skopeo copy → main.js/package.json + index-*.{js,css})  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/extract.sh`
+Soll: PLAN §7b(:327) — `skopeo copy`/`crane export` → nur `main.js`+`package.json` (API) und `assets/*` (UI); kein Runtime
+Änderung: `extract.sh <ver>` zieht per `skopeo copy docker://…@<digest> oci:…` beide Images ohne Daemon, extrahiert **nur** `opt/edulution/api/main.js` + `opt/edulution/api/package.json` (API) und `usr/share/nginx/html/assets/index-*.js` + `index-*.css` + `index.html` (UI) nach `versions/<ver>/{api,ui}/`; ruft `assert_unminified` (T1) auf das gezogene `main.js`. `.gitignore` hält die Roh-Bundles optional draußen (Spec-Trade-off 5).
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/extract.sh 2.0.200 && wc -l versions/2.0.200/api/main.js'` → `main.js` existiert, > 50000 Zeilen; `test -f versions/2.0.200/ui/index.html && ls versions/2.0.200/ui/index-*.js`.
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Extraktion"
+Abhängt von: T1
+
+### T4 — `lib/anchors.sh` + `bin/fingerprint-be.sh` Kern (Module/Controller/Schema/Dto/Endpoint)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh`, `bin/fingerprint-be.sh`
+Soll: PLAN §7c(:329–:333); gemessen: `class [A-Za-z]+Module`=38 · `class [A-Za-z]+Controller`=39 · `SchemaFactory\.createForClass`=39 (NICHT `class *Schema`) · Dto dedup=241 · `[A-Z0-9_]+_ENDPOINT = '`=41
+Änderung: Anker als benannte Konstanten in `lib/anchors.sh` (auslagern → 1-Zeilen-Kalibrierung, Spec-Trade-off 3). `fingerprint-be.sh <main.js>` normalisiert mit `js-beautify` (nur für Report-Zeilen-Anker), zählt **occurrence-basiert** (`grep -oE … | wc -l`), Dto **dedupliziert** (`… | awk '{print $2}' | sort -u | wc -l`), schreibt sortiertes `fingerprint-be.json` (`{modules,controllers,schemas,dtos_unique,dtos_raw,endpoints, names:{modules:[…],dtos:[…],endpoints:[…]}}`).
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/fingerprint-be.sh versions/2.0.200/api/main.js | jq -e ".modules==38 and .controllers==39 and .schemas==39 and .dtos_unique==241 and .dtos_raw==242 and .endpoints==41"'` → Exit 0.
+i18n: keine (Ops-Tooling)
+Doku: README-Anker-Tabelle (Deutsch)
+Abhängt von: T3
+
+### T5 — Fingerprint-BE erweitern: Migrationen + Guards + Gateways + Crons + Queues (webpack-Formen)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh`, `bin/fingerprint-be.sh`
+Soll: PLAN §7c(:331–:333); **korrigierte, an 2.0.200 belegte Formen**: Migrations-Namen `'[0-9]{3}-[a-z0-9-]+'`=32 · `runMigrations\(`=12 · `class [A-Za-z]+Guard`=9 · `class [A-Za-z0-9]+Gateway`=2 · Cron `schedule_1\.Cron\)\(`=4 (NICHT `@Cron(`) · Queue `new bullmq_1\.Queue\(`=4 (NICHT `new Queue(`)
+Änderung: die 6 Anker in `anchors.sh` ergänzen (mit Kommentar, warum die naive Plan-Form 0 liefert); `fingerprint-be.sh` um Felder `migration_names[]`/`migration_runners`/`guards`/`gateways`/`crons`/`queues` erweitern. `registerAs`/`@Public` **nicht** hart schalten → als `TODO_CALIBRATE`-Feld mit Wert `null` ausweisen (Spec Offene Frage 1/2), damit der self-test sie nicht fälschlich auf 0 nagelt.
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/fingerprint-be.sh versions/2.0.200/api/main.js | jq -e ".migration_names|length==32 and .migration_runners==12 and .guards==9 and .gateways==2 and .crons==4 and .queues==4"'` → Exit 0.
+i18n: keine (Ops-Tooling)
+Doku: README — Notiz zu den webpack-Form-Korrekturen
+Abhängt von: T4
+
+### T6 — `bin/dep-diff.sh` (§7d: webpack-Import-Graph + Root-Dep-Liste)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/dep-diff.sh`
+Soll: PLAN §7d(:335) — NICHT die geprunte `package.json` allein diffen (übersieht gebundelte Pure-JS-Deps wie `slugify`), sondern `__webpack_require__`-Import-Graph in `main.js` scannen **und** Root-Dep-Liste vergleichen
+Änderung: `dep-diff.sh <ver>` extrahiert (a) die Root-Deps aus `versions/<ver>/api/package.json` und (b) die im Bundle referenzierten Modul-IDs/Namen aus dem `__webpack_require__`/Modul-Map-Muster in `main.js`; schreibt vereinigte, sortierte Liste `deps.json` (`{root:[…], bundled:[…]}`). Kein CVE hier (das ist T13).
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/dep-diff.sh 2.0.200 && jq -e ".root|index(\"bullmq\")" versions/2.0.200/deps.json && jq -e ".bundled|length>0" versions/2.0.200/deps.json'` → Exit 0 (bullmq in root, bundled nicht leer).
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Dependency-Diff"
+Abhängt von: T3
+
+### T7 — `bin/fingerprint-fe.sh` (§7e: Routen/i18n-Keys/APPS-Slugs/appType/CSS-Vars aus index-*)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/fingerprint-fe.sh`, `lib/anchors.sh` (FE-Sektion)
+Soll: PLAN §7e(:337); FE-Anker gegen `versions/<ver>/ui/index-*.js`+`index-*.css`: Route-Pfade `/<slug>`, i18n-Keys (eingebettetes en-JSON), `APPS.*`-Slugs (`libs/src/appconfig/constants/apps.ts`: `dashboard`,`chat`,`mail`,… 40+), `appType`-`native` (`appIntegrationVariant.ts:23`), CSS-Vars (u. a. `--code-keyword/--code-number/--code-string/--code-title`)
+Änderung: `fingerprint-fe.sh <ver>` hebt die 5 String-Achsen aus dem `index-*`-Bundle (sortierte, deduplizierte Sets) → `fingerprint-fe.json` (`{routes[], i18nKeys[], appSlugs[], nativeApps[], cssVars[]}`). CSS-Vars aus `index-*.css`.
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/fingerprint-fe.sh 2.0.200 && jq -e ".appSlugs|index(\"chat\")" versions/2.0.200/fingerprint-fe.json && jq -e ".cssVars|index(\"--code-keyword\")" versions/2.0.200/fingerprint-fe.json'` → Exit 0.
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Frontend-Signal" inkl. Grenzen
+Abhängt von: T3
+
+### T8 — TLDraw-False-Positive-Filter + FE-Screenshot-Abgleich-Hinweis  [ ]
+Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh` (Allowlist), `bin/fingerprint-fe.sh`
+Soll: PLAN §7e(:337) — `TLDrawWithSync` ist **kein** 2.0-Neusignal (tldraw+@tldraw/sync bereits 1.6.266 `package.json:88-89,170`) → False-Positive; „immer gegen crabbox-Screenshot-Diff gegenprüfen"; sauberes Positiv-Beispiel = `WikiPage`
+Änderung: Allowlist bekannter False-Positives (`tldraw`,`@tldraw/sync`,`TLDrawWithSync`) in `anchors.sh`; `fingerprint-fe.sh` markiert Treffer als `knownFalsePositive:true` statt sie zu droppen (Nachvollziehbarkeit); Report (T14) blendet sie aus der „neue Seite"-Sektion aus und verweist auf `scratchpad/real/*.png`.
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/fingerprint-fe.sh 2.0.200 | jq -e ".falsePositives|index(\"TLDrawWithSync\")"'` → Exit 0 (TLDraw als FP geführt, nicht als Neusignal).
+i18n: keine (Ops-Tooling)
+Doku: README — Notiz „FE-Signal ist grob, Screenshot-Pflicht"
+Abhängt von: T7
+
+### T9 — Baseline 2.0.200 einfrieren + `.github/workflows/self-test.yml`  [ ]
+Komponente: linuxmuster-tracking · Dateien: `versions/2.0.200/*.json`, `.github/workflows/self-test.yml`
+Soll: PLAN §9.7(:424) — 2.0.200 als Baseline `versions/2.0.200/`, Fingerprint mit korrigierten Ankern **als Selbsttest**
+Änderung: die von T4/T5/T6/T7 erzeugten `fingerprint-be.json`/`fingerprint-fe.json`/`deps.json` als eingefrorene Baseline committen; `self-test.yml` (PR-Gate) läuft `fingerprint-be/-fe/dep-diff` erneut über `versions/2.0.200/` und `diff`t gegen die committeten JSONs → rot bei jeder Abweichung (fängt Anker-/Tool-Drift, Spec R-b). SPDX-Header in der YAML.
+Verify: `iter.sh cmd 'cd /tmp/trk && for f in fingerprint-be fingerprint-fe; do diff <(./bin/$f.sh 2.0.200) versions/2.0.200/$f.json; done && echo BASELINE_STABLE'` → Exit 0 + `BASELINE_STABLE`; `shellcheck`/`actionlint self-test.yml` sauber.
+i18n: keine (Ops-Tooling)
+Doku: README — „Baseline & Selbsttest"
+Abhängt von: T5, T6, T8
+
+### T10 — `bin/diff.sh` (N-1→N-Delta je Achse → delta-*.json)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/diff.sh`
+Soll: PLAN §7i(:347) Basis — strukturierte Deltas als Report-Input; §3.0-Methode (Anker-Diff N-1↔N)
+Änderung: `diff.sh <from> <to>` vergleicht die `*.json` zweier Versionen und schreibt `delta-be.json`/`delta-fe.json`/`delta-deps.json` mit `{added:[…], removed:[…], counts:{from,to}}` je Achse (z. B. neue `module`/`dto`/`endpoint`/`migration`-Namen, neue `route`/`appSlug`/`cssVar`, neue/entfernte Deps). Rein set-basiert, deterministisch.
+Verify: `iter.sh cmd 'cd /tmp/trk && cp -r versions/2.0.200 versions/2.0.201-test && jq ".modules=39 | .names.modules += [\"FooModule\"]" versions/2.0.200/fingerprint-be.json > versions/2.0.201-test/fingerprint-be.json && ./bin/diff.sh 2.0.200 2.0.201-test | jq -e ".be.added|index(\"FooModule\")"'` → Exit 0 (Delta erkennt injizierte Änderung).
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Diff/Delta"
+Abhängt von: T9
+
+### T11 — `bin/realm-diff.sh` (§7f: Realm-Export der crabbox-Instanz vs. Baseline)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/realm-diff.sh`
+Soll: PLAN §7f(:339) — Keycloak-Realm-Export aus der **laufenden crabbox-Instanz** (nicht `main.js`) als eigener Schritt; Baseline aus Paket `p0-realm-diff-baseline`
+Änderung: `realm-diff.sh` exportiert Realm `edulution` der laufenden Instanz (via `kcadm.sh`/Admin-API), **redigiert** Secrets/Passwörter/Keys (Spec R-d), diffT die Struktur (Clients, Scopes, Mapper, Rollen) gegen die P0-Baseline → `delta-realm.json`. Admin-Credentials aus der crabbox-Env, **nie** committen.
+Verify: **Voll-Stack** — `iter.sh deploy` (Stack + echter LMN hochziehen), dann `iter.sh cmd 'cd /tmp/trk && ./bin/realm-diff.sh && jq -e ".clients and (.exportedSecretsRedacted==true)" delta-realm.json'` → Exit 0, Export vorhanden **und** keine Klartext-Secrets im Diff (grep auf `secret`/`password`-Werte = 0).
+i18n: keine (Ops-Tooling)
+Doku: README — „Realm-Diff (braucht laufende Instanz)"
+Abhängt von: T1
+
+### T12 — `bin/infra-diff.sh` (§7g: Compose-Template/.env.default/Companion-Digests/Installer-Repo)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/infra-diff.sh`
+Soll: PLAN §7g(:341) — §7b ist blind für Dockerfiles/`docker-compose.yml.template`/Entrypoints/`nginx.conf`/`.env.default`/Companion-**Digests**/Installer-Repo; leichter Diff als eigener Schritt
+Änderung: `infra-diff.sh` holt (read-only) `docker-compose.yml.template` + `.env.default` aus dem Installer-Repo (`git`/GitHub-API), extrahiert die referenzierten Companion-Image-Refs und löst je Ref den aktuellen `skopeo inspect`-Digest auf; diffT Compose-Topologie + Env-Keys + Companion-Digests gegen Baseline → `delta-infra.json`. Keine Secrets.
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/infra-diff.sh --baseline && jq -e ".envKeys|length>0 and (.companions|length>0) and (.companions[0].digest|startswith(\"sha256:\"))" delta-infra.json'` → Exit 0.
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Infra-Diff" + Grenzen (Infra-Blindheit)
+Abhängt von: T1
+
+### T13 — `bin/cve-scan.sh` (§7h: Trivy/Grype + npm-audit-Signal, an Cron angedockt)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/cve-scan.sh`
+Soll: PLAN §7h(:345) — Trivy/Grype über die gezogenen Images + `npm audit`-Signal an denselben Wochen-Cron; Findings in dieselbe `reports/`-Pipeline (Sektion „Security"). Betrieb/Policy = Paket `p1-security-cve-track` (hier nur Andockung)
+Änderung: `cve-scan.sh` läuft `trivy image --format json` (oder `grype`) gegen beide gezogenen ghcr-Images (`@<digest>` aus `state.json`) und `npm audit --json` gegen die extrahierte `package.json`; aggregiert nach Severity → `cve.json` (`{critical,high,medium,low, findings:[…]}`). Nur Signal, kein Fix.
+Verify: `iter.sh cmd 'command -v trivy || (curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin); cd /tmp/trk && ./bin/cve-scan.sh 2.0.200 | jq -e "has(\"critical\") and has(\"findings\")"'` → Exit 0.
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „CVE-Signal" (Cross-Ref p1-security-cve-track)
+Abhängt von: T2
+
+### T14 — `bin/report.sh` (§7i: reports/<from>..<to>.md in festen Sektionen)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `bin/report.sh`, `reports/` (Ausgabe-Ordner)
+Soll: PLAN §7i(:347) — `report.sh` → `reports/<from>..<to>.md` in Sektionen (Backend voll-nachbaubar / Migrationen / Auth-Contract / Full-Stack-Korrelation / Frontend-only-Signal / Realm-Diff / Infra-Diff / Security); jeder Task mit **Quell-Beleg** (Datei:Zeile/Anker) → `tasks/`-Ledger-Stub
+Änderung: `report.sh <from> <to>` komponiert die `delta-*.json` + `cve.json` zu einem Markdown mit **genau diesen 8 Sektionen**; je Delta-Item ein Bullet mit Anker-Beleg (z. B. „neues `ChatModule` → korreliert `upstream/1683-chat-add-basic-chat-ui`"), Guard-/`@Public`-Änderungen in „Auth-Contract", TLDraw-FPs ausgeblendet (T8). Schreibt nur bei nicht-leerem Delta (Spec R-e).
+Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/report.sh 2.0.200 2.0.201-test && f=reports/2.0.200..2.0.201-test.md; grep -q "## Migrationen" $f && grep -q "## Security" $f && grep -q "FooModule" $f'` → Exit 0 (alle Sektionen + injiziertes Item vorhanden).
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Report lesen" (Sektions-Legende, Deutsch)
+Abhängt von: T10, T13
+
+### T15 — `.github/workflows/weekly-poll.yml` (§8-P1b: Wochen-Cron orchestriert Kette + Draft-PR)  [ ]
+Komponente: linuxmuster-tracking · Dateien: `.github/workflows/weekly-poll.yml`
+Soll: PLAN §8-P1b(:363) — Wochen-Cron; §7a–i-Kette; §7i Draft-PR; §0/§9-Empfehlung: fine-grained-PAT/App statt weitem `GITHUB_TOKEN`
+Änderung: `schedule: cron` (wöchentlich) + `workflow_dispatch`; Job installiert Tools, läuft `poll.sh` → bei Exit 10 (Digest-Änderung): `extract → fingerprint-be/-fe → dep-diff → infra-diff → cve-scan → diff → report`; öffnet Draft-PR mit dem Report via `gh` unter `TRACKING_PR_TOKEN` (Repo-Secret, kein weiter Default-Scope). `permissions:`-Block minimal. Realm-Diff (T11, braucht laufende Instanz) als **getrennter, manueller** `workflow_dispatch`-Job (Spec Offene Frage 5). SPDX in YAML.
+Verify: `iter.sh cmd 'cd /tmp/trk && actionlint .github/workflows/weekly-poll.yml && python3 -c "import yaml,sys; d=yaml.safe_load(open(\".github/workflows/weekly-poll.yml\")); assert \"schedule\" in d[True] or \"schedule\" in d.get(\"on\",{}); assert d[\"permissions\"]; print(\"WF_OK\")"'` → Exit 0 + `WF_OK`; Trockenlauf per `act` optional.
+i18n: keine (Ops-Tooling)
+Doku: README-Abschnitt „Betrieb/Cron"
+Abhängt von: T14
+
+### T16 — README-Runbook finalisieren + SPDX-/Lizenz-Sweep + Sanity-Guard-Doku  [ ]
+Komponente: linuxmuster-tracking · Dateien: `README.md`, `LICENSE`, alle `bin/`+`lib/`-Header
+Soll: PLAN §7-Grenzen(:349) — pro Release Sanity-Check „`main.js` un-minifiziert" (Zeilenzahl/Klassennamen); Guardrail „neue Dateien AGPL-SPDX (nicht Netzint)"
+Änderung: `README.md` als vollständiges Runbook (Poll/Extract/Fingerprint/Diff/Realm/Infra/CVE/Report, Anker-Kalibrierungs-Prozedur inkl. der offenen `registerAs`/`@Public`-Punkte, Grenzen: FE teil-diffbar + Infra-Blindheit + Anker-Fäulnis); `LICENSE` = AGPL-3.0-or-later; Sweep: jede neue Datei trägt `SPDX-License-Identifier: AGPL-3.0-or-later`, keine `Netzint`-Header.
+Verify: `iter.sh cmd 'cd /tmp/trk && test -f LICENSE && ! grep -rl "Netzint" bin lib .github && for f in $(git ls-files bin lib .github/workflows | grep -E "\.(sh|yml)$"); do grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" "$f" || { echo "MISSING SPDX: $f"; exit 1; }; done && echo SPDX_CLEAN'` → Exit 0 + `SPDX_CLEAN`.
+i18n: keine (Ops-Tooling)
+Doku: README (dieses Task IST die Doku)
+Abhängt von: T15
+
+## p2-chat [P2] ⭐ — Chat (nativer Gruppen-Chat)
+_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 19
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · scratchpad/real/11-chat.png
+
+> Hinweis Rekonstruktion: `1851` ist diverged (datiert vor 1.6→2.0-Merge) und kennt **kein**
+> `chatReadStatus`, nutzt `sophomorixType` statt `conversationType`. Wo `1851` und `main.js`
+> abweichen, gilt `main.js` (geshippter 2.0.200-Stand). Neue Dateien tragen AGPL-SPDX
+> (Kevin Stenzel), **nicht** den Netzint-Dual-License-Header aus den Rescue-Branch-Dateien.
+> Guard-Regel: Chat-Routen sind **nicht `@Public`** (globaler JWT-Guard); fachliche Autorisierung
+> via `verifyGroupAccess` im Service.
+
+---
+
+### T1 — libs/src/chat Contract (Konstanten + Typen + Utils)  [ ]
+Komponente: libs · Dateien: `libs/src/chat/{constants,types,utils}/*` (Scaffold, ~28 Deklarationsdateien — bewusst eine Task, siehe Spec-Trade-off 3)
+Soll: upstream/1851:`libs/src/chat/*` (PRIMÄR) · abgeglichen gegen main.js:69127/69344 (Fehlerschlüssel, `ALLOWED_CONVERSATION_TYPES`)
+Änderung: Shared-Contract anlegen: `CHAT_TYPES`, `CHAT_ROLES`, `CHAT_PATH`/`CHAT_*_LOCATION`, `CHAT_*_ENDPOINT`, `CHAT_MESSAGE_MAX_LENGTH`, `CHAT_MESSAGES_DEFAULT_LIMIT`, `ALLOWED_CONVERSATION_TYPES`, `genericChatGroupType`, `ALLOWED_CHAT_SOPHOMORIX_TYPES`, `groupTypeToLocation`; Typen `ChatMessage`, `CreateMessageDto`, `ChatGroup`, `UserChatGroups`, `ConversationType`, `ChatType`, `ChatRole`, `ChatMessageSsePayload`, `ChatUnreadCount`, `ChatReadReceipt`, `GroupTypeLocation`, `CHAT_ERROR_MESSAGES`; Utils `isAllowedChatSophomorixType`, `toChatRoute`. **Nomenklatur `conversationType` führen** (nicht `sophomorixType`). Const-Objekte statt enums.
+Verify: `npm run lint` (libs) sauber · `npx tsc --noEmit`-Teilbuild der libs ohne Fehler · `CHAT_ERROR_MESSAGES`-Werte == main.js:69127 (`chat.errors.*`)
+i18n: keine
+Doku: keine (intern)
+
+### T2 — SSE-Message-Typen für Chat  [ ]
+Komponente: libs · Dateien: `libs/src/common/constants/sseMessageType.ts`, `libs/src/common/types/sseMessageType.ts`
+Soll: main.js (`sseMessageType_1.default.CHAT_NEW_MESSAGE` @68919, `CHAT_READ_STATUS_UPDATED` @68904)
+Änderung: Keys `CHAT_NEW_MESSAGE: 'chat_new_message'` und `CHAT_READ_STATUS_UPDATED: 'chat_read_status_updated'` additiv zum `SSE_MESSAGE_TYPE`-Const-Objekt ergänzen (Typ leitet sich ab).
+Verify: `npm run lint` sauber · Import `SSE_MESSAGE_TYPE.CHAT_NEW_MESSAGE` typecheckt · `npm run test:api` grün
+i18n: keine
+Doku: keine (intern)
+
+### T3 — Notification-Konstanten für Chat  [ ]
+Komponente: libs · Dateien: `libs/src/notification/constants/pushNotificationChannelId.ts` (+ ggf. `notificationSourceType.ts`)
+Soll: main.js (`pushNotificationChannelId_1.default.CHAT` @68924, `notificationSourceType_1.default.CHAT`)
+Änderung: `CHAT: 'chat'` in `PUSH_NOTIFICATION_CHANNEL_ID` ergänzen, falls fehlend. Verifizieren, dass `NOTIFICATION_SOURCE_TYPE.CHAT` und `sourceTypeToApp[CHAT]=APPS.CHAT` bereits existieren (tun sie) — sonst ergänzen.
+Verify: `npm run lint` sauber · Import `PUSH_NOTIFICATION_CHANNEL_ID.CHAT` typecheckt
+i18n: keine
+Doku: keine (intern)
+
+### T4 — Conversation- + ChatMessage-Schema  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/chat/schemas/conversation.schema.ts`, `apps/api/src/chat/schemas/chatMessage.schema.ts`
+Soll: main.js:69227–69261 (Conversation) · main.js:69382–69430 (ChatMessage) · upstream/1851:`apps/api/src/chat/schemas/*` (ergänzend, ohne `conversationType`-Enum)
+Änderung: Zwei Mongoose-Schemas anlegen. Conversation: `type`(String,index), `groupName`(String), `conversationType`(enum `ALLOWED_CONVERSATION_TYPES`), `lastMessageAt`(Date,index), `schemaVersion`(default 1); `timestamps`, `strict`, `toJSON.virtuals`, unique-Index `{groupName,conversationType}`. ChatMessage: `conversationId`(ObjectId ref Conversation,index), `content`, `role`, `createdBy`, `createdByUserFirstName`, `createdByUserLastName`, `schemaVersion`; Indizes `{conversationId,createdAt:-1}` und `{conversationId,createdBy,createdAt:-1}`.
+Verify: `npm run build:api` kompiliert · `npm run test:api` grün · Feld-/Index-Parität zu main.js
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T5 — ChatReadStatus-Schema  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/chat/schemas/chatReadStatus.schema.ts`
+Soll: main.js:69487–69512 (nur main.js — in `1851` nicht vorhanden)
+Änderung: Schema `ChatReadStatus`: `conversationId`(ObjectId ref Conversation), `username`(String,index), `readAt`(Date), `schemaVersion`(default 1); collection `chatreadstatuses`; unique-Index `{conversationId,username}`; `timestamps`, `strict`, `toJSON.virtuals`.
+Verify: `npm run build:api` kompiliert · `npm run test:api` grün
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4
+
+### T6 — GroupsService.getUserGroupsAndProjects  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/groups/groups.service.ts`, `apps/api/src/groups/groups.service.spec.ts`
+Soll: main.js:68446 (Controller-Delegation) + main.js:68938 (`getUnreadCounts` konsumiert `{classes, projects, groups}`)
+Änderung: Additive Methode `getUserGroupsAndProjects(username)` → `{ classes: ChatGroup[], projects: ChatGroup[], groups: ChatGroup[] }`, gespeist aus der bestehenden Gruppen-/LMN-Infrastruktur (Klassen `adminclass`, Projekte `project`; `groups` vorerst leer/`generic`). Bestehende Methoden **nicht** umbauen. Spec mit gemocktem Datenpfad.
+Verify: `npm run test:api` (`groups.service.spec`) grün — Rückgabeform `{classes,projects,groups}` mit `name`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T7 — NotificationsService.markNotificationReadBySource  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/notifications/notifications.service.ts`, `apps/api/src/notifications/notifications.service.spec.ts`
+Soll: main.js:69024 (`this.notificationsService.markNotificationReadBySource(CHAT, sourceId, username)`)
+Änderung: Additive Methode `markNotificationReadBySource(sourceType, sourceId, username)` — markiert Notifications einer Quelle für einen User als gelesen (analog zu vorhandenem `upsertNotificationForSource`, notifications.service.ts:220). Spec dazu.
+Verify: `npm run test:api` (`notifications.service.spec`) grün
+i18n: keine
+Doku: keine (intern)
+
+### T8 — validateConversationType-Pipe  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/chat/pipes/validateConversationType.pipe.ts` (+ Spec)
+Soll: main.js:68465 (`validateConversationType_pipe_1.default` an `:conversationType`)
+Änderung: `PipeTransform`, das den `:conversationType`-Param gegen `ALLOWED_CONVERSATION_TYPES` prüft und sonst `BadRequestException`/`CustomHttpException(INVALID_GROUP_TYPE, 400)` wirft.
+Verify: `npm run test:api` (Pipe-Spec: gültiger Typ passthrough, ungültiger → 400)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T9 — ChatService: Kern (Gruppen-Auth, Konversation, Nachrichten)  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/chat/chat.service.ts`, `apps/api/src/chat/chat.service.spec.ts`
+Soll: main.js:68779–68937 (`verifyGroupAccess`, `getVerifiedGroup`, `getOrCreateAuthorizedConversation` 68862, `getAuthorizedMessages` 68797, `sendMessage` 68871, `notifyGroupMembers` 68913) · upstream/1851:`chat.service.ts` (PRIMÄR für `verifyGroupAccess`/Cache-Zugriff `GROUP_WITH_MEMBERS_CACHE_KEY`)
+Änderung: `ChatService` mit Konstruktor `(conversationModel, chatMessageModel, chatReadStatusModel, cacheManager, sseService, notificationsService, groupsService)`. Methoden: `verifyGroupAccess`/`getVerifiedGroup` (Cache-Mitgliedschaftsprüfung → 400/403/404 via `CHAT_ERROR_MESSAGES`), `getOrCreateAuthorizedConversation` (upsert `{type,groupName,conversationType}`), `getAuthorizedMessages` (Aggregation mit `before`/`limit`/`offset`/`sort`, 1:1 aus main.js), `sendMessage` (create Message, `lastMessageAt` update, SSE `CHAT_NEW_MESSAGE`, `notifyGroupMembers`). Read-Status-Methoden kommen in T10. Spec: Auth-Pfade (Nicht-Mitglied → 403, ungültiger Typ → 400) + sendMessage-Happy-Path mit gemockten Modellen/SSE/Notifications.
+Verify: `npm run test:api` (`chat.service.spec`) grün — insb. 403 für Nicht-Mitglied, SSE-Call bei sendMessage
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4, T5, T6, T7
+
+### T10 — ChatService: Read-Status (Unread-Counts, Read-Receipts, Mark-Read)  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/chat/chat.service.ts`, `apps/api/src/chat/chat.service.spec.ts`
+Soll: main.js:68938 (`getUnreadCounts`), main.js:~68990 (`getReadReceipts`), main.js:~69018 (`markChatAsRead`) — nur main.js
+Änderung: `getUnreadCounts(username)` (Aggregation `conversation`⋈`chatreadstatuses`⋈ungelesene `chatMessage`, `count>0`), `getReadReceipts(conversationType,groupName,username)` (pro Member `{username,firstName,lastName,readAt}`), `markChatAsRead(...)` (upsert `ChatReadStatus.readAt=now`, `markNotificationReadBySource(CHAT,sourceId,username)`, SSE `CHAT_READ_STATUS_UPDATED` an übrige Member). Spec dazu.
+Verify: `npm run test:api` (`chat.service.spec`) grün — Unread-Count>0-Fall + Mark-Read setzt `readAt` + SSE-Broadcast
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T9
+
+### T11 — ChatController + ChatModule + AppModule-Wiring  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/chat/chat.controller.ts`, `apps/api/src/chat/chat.module.ts`, `apps/api/src/app/app.module.ts`, `apps/api/src/chat/chat.controller.spec.ts`
+Soll: main.js:68378 (Module) · main.js:68438–68475 (Controller, 6 Routen) · upstream/1851:`chat.controller.ts`/`chat.module.ts`
+Änderung: `ChatController` mit 6 Routen (`GET groups`, `GET unread-counts`, `GET conversations/:conversationType/:groupName/read-status`, `POST .../read`, `GET .../messages`, `POST .../messages`), `:conversationType` durch `validateConversationType.pipe`, `currentUser` via `@GetCurrentUser`, `toChatMessageResponse`-Mapper (main.js:68467). **Kein `@Public`** (globaler JWT-Guard greift). `ChatModule` registriert die 3 Schemas + Service + Controller; in `AppModule` einhängen. Controller-Spec: Delegation an Service, Response-Shape, kein `@Public`.
+Verify: `npm run test:api` (`chat.controller.spec`) grün · `npm run build:api` · supertest/curl remote: `GET /edu-api/chat/groups` unauth → 401, auth → 200
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T8, T9, T10
+
+### T12 — appconfig-Seed: Chat als Default-App  [ ]
+Komponente: libs · Dateien: `libs/src/appconfig/constants/defaultAppConfig.ts`
+Soll: main.js:2380–2468 (`defaultAppConfig`) — Chat-Eintrag abgleichen (Fresh-Install-Fidelity, Plan §127)
+Änderung: CHAT-Eintrag in `defaultAppConfig` ergänzen (App-Typ NATIVE, Slug `APPS.CHAT`, Icon/Reihenfolge gemäß main.js). Nur Fresh-Install-Seed; keine Upgrade-Migration (siehe Spec Offene Frage 3/6).
+Verify: `npm run lint` · `npm run test:api` grün · nach frischem crabbox-Deploy erscheint Chat in der Sidebar
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T13 — i18n: Chat-Locale-Keys DE+EN  [ ]
+Komponente: apps/frontend · Dateien: `apps/frontend/src/locales/de/translation.json`, `apps/frontend/src/locales/en/translation.json`
+Soll: scratchpad/real/11-chat.png (sichtbare Strings) · main.js:69127 (`CHAT_ERROR_MESSAGES`-Schlüssel)
+Änderung: Bestehenden `chat`-Block erweitern: `selectConversation`, `selectConversationDescription`, `refreshGroups`, `schoolClasses`, `projects`, `inputPlaceholder`, `send`, `noMessages`, `loadingMessages`, `errors.conversationNotFound`, `errors.invalidGroupType`, `errors.unauthorizedAccess` (Fehler-Keys müssen zu `CHAT_ERROR_MESSAGES` passen). DE **und** EN identische Schlüssel.
+Verify: `npm run check-translations` grün (DE/EN-Parität) · `npm run lint`
+i18n: neue Keys (Liste oben) DE+EN
+Doku: keine (intern)
+
+### T14 — useChatStore (Zustand, eduApi)  [ ]
+Komponente: apps/frontend · Dateien: `apps/frontend/src/store/useChatStore.ts`, `apps/frontend/src/store/useChatStore.spec.ts`
+Soll: upstream/1851:`apps/frontend/src/store/useChatStore.ts` (PRIMÄR) — Nomenklatur auf API-`conversationType` abgleichen
+Änderung: Zustand-Store `fetchUserGroups` (`GET chat/groups`), `fetchMessages`, `sendMessage`, `addMessage`, `setCurrentConversation` über `eduApi` (kein `fetch`) + `handleApiError`. Contract: FE-Route-Alias `classes|projects` → API-`conversationType` (`adminclass|project`) via `groupTypeToLocation`/`ALLOWED_CHAT_SOPHOMORIX_TYPES`. Vitest-Spec (Repo hat 0 FE-Tests → Test dazu; `eduApi` mocken).
+Verify: `npm run test:frontend` (`useChatStore.spec`) grün — `fetchUserGroups` setzt `userGroups`, `sendMessage` appended Message
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T15 — ChatPage-Shell + Empty-State + Sidebar-Sektionen + Mount  [ ]
+Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Chat/ChatPage.tsx`, `.../components/ChatEmptyState.tsx`, `.../components/ChatView.tsx`, `.../useRegisterChatSections.ts`, `.../useChatMenu.ts`, `.../ChatMenuBarFooter.tsx`, `apps/frontend/src/components/structure/layout/NativeAppPageManager.tsx`
+Soll: upstream/1851:`pages/Chat/ChatPage.tsx`/`useRegisterChatSections.ts` (PRIMÄR) · Baseline scratchpad/real/11-chat.png
+Änderung: `ChatPage` liest `:groupType/:groupName` via `useParams`; registriert Sidebar-Sektionen „School Classes"/„Projects" über `useRegisterChatSections` (`useSubMenuStore.setSections`) aus `useChatStore.userGroups`; zeigt bei leerer Auswahl `ChatEmptyState` (Icon + „Select conversation" + „Refresh groups"→`fetchUserGroups`). Mount: `[APPS.CHAT]: <ChatPage />` in `nativeAppPages` (NativeAppPageManager). `cn()` für classNames, `@fortawesome/free-solid-svg-icons`.
+Verify: crabbox-Deploy + Playwright: `/chat` rendert Titel „Chat", Sektionen School Classes/Projects, Empty-State „Select conversation" + „Refresh groups" → Visual-Diff gegen 11-chat.png
+i18n: nutzt T13-Keys
+Doku: keine (intern)
+Abhängt von: T13, T14
+
+### T16 — Chat-Nachrichten-UI (Liste + Bubble + Composer)  [ ]
+Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Chat/components/{ChatContent,ChatMessages,ChatBubble,ChatInput}.tsx`, `apps/frontend/src/pages/Chat/hooks/useGroupChat.ts` (+ vitest-Spec für useGroupChat/ChatInput)
+Soll: upstream/1851:`pages/Chat/components/*`, `hooks/useGroupChat.ts` (PRIMÄR)
+Änderung: Auswahl einer Gruppe → `useGroupChat`/`setCurrentConversation` + `fetchMessages`; `ChatMessages` rendert `ChatBubble` (eigene vs. fremde Nachricht, Name/Zeit); `ChatInput` sendet über `useChatStore.sendMessage` (`MaxLength`=`CHAT_MESSAGE_MAX_LENGTH`, Enter-to-send). Spec für Sende-/Renderlogik.
+Verify: `npm run test:frontend` grün · crabbox: Nachricht senden erscheint in Liste; Reload zeigt persistierte Nachricht (GET messages)
+i18n: nutzt T13-Keys
+Doku: keine (intern)
+Abhängt von: T15
+
+### T17 — SSE-Realtime-Abo (neue Nachricht + Read-Status)  [ ]
+Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Chat/hooks/useGroupChat.ts` (bzw. bestehender SSE-Consumer), ggf. `useChatStore.ts`
+Soll: main.js:68919 (`CHAT_NEW_MESSAGE`), 68904 (`CHAT_READ_STATUS_UPDATED`) · upstream/1851 (SSE-Konsum vorhanden)
+Änderung: Auf `SSE_MESSAGE_TYPE.CHAT_NEW_MESSAGE` hören → `useChatStore.addMessage` (Dedupe via `id`); auf `CHAT_READ_STATUS_UPDATED` → Read-Receipt-State aktualisieren. An bestehende FE-SSE-Infrastruktur andocken (kein neues WS).
+Verify: crabbox mit zwei Sessions: Nachricht von User A erscheint bei User B **ohne** Reload
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T16
+
+### T18 — FE Read-Status (Unread-Badges + Mark-Read + Receipts)  [ ] [?]
+Komponente: apps/frontend · Dateien: `apps/frontend/src/store/useChatStore.ts`, `apps/frontend/src/pages/Chat/*` (Badges/Receipt-Anzeige)
+Soll: main.js:68440/68452 (`unread-counts`, `read-status`, `read`) — Parität; siehe Spec Offene Frage 1
+Änderung: `GET chat/unread-counts` → Badge-Zähler an Sidebar-Sektionen; beim Öffnen einer Gruppe `POST .../read`; optional Read-Receipt-Anzeige aus `GET .../read-status`. Nur bauen, wenn Offene Frage 1 = „ja".
+Verify: crabbox: ungelesene Nachricht erzeugt Badge; Öffnen der Gruppe setzt Badge zurück (`POST read`)
+i18n: ggf. `chat.unread`-Label DE+EN
+Doku: keine (intern)
+Abhängt von: T11, T16
+
+### T19 — Pilot-Abschluss: crabbox-Deploy + Visual-Diff + Voll-Stack-Verify  [ ]
+Komponente: (Deploy/Verify) · Dateien: keine Produktivänderung (nutzt scripts/crabbox + /test)
+Soll: scratchpad/real/11-chat.png (Baseline) · Master-Plan §364 (Pilot-Exit-Kriterium)
+Änderung: Vollen Stack auf crabbox gegen echten LMN deployen; Playwright-Login → Chat-Screenshot; Visual-Diff gegen `11-chat.png`; Message-Flow (senden/empfangen/SSE) end-to-end prüfen; Guard-Check (unauth `GET /edu-api/chat/groups` → 401). Ergebnis dokumentiert das validierte „neue native App"-Rezept.
+Verify: `/test` (Voll-Stack) grün · Visual-Diff Chat-Empty-State ≈ 11-chat.png · Message-Roundtrip + SSE bestätigt · 401 ohne Auth
+i18n: keine
+Doku: docs/ „Chat" (DE+EN, kurz) · CHANGELOG-Eintrag
+Abhängt von: T11, T12, T17
+
+## p3-parent-child-pairing [P3] — ParentChildPairing
+_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 15
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-parent-child-pairing.md` · Soll: main.js:60108/60169/60806 (Modul/Service/Controller) · main.js:12624 (LMN) · main.js:60489/60525/60557/60589/60619/64074 (Konstanten/Helper/QR) · upstream/1717-add-pairing-administration-page · kein Baseline-Screenshot (Modul in 1.6 nicht vorhanden)
+
+> Kalibrierung (P3): geerdetes Rekonstruktions-Ledger. Zeilenanker/Signaturen gegen echtes 2.0 (`main.js`) verifiziert.
+> Task-Schnitt (v. a. FE) schärft sich nach P0-Drift-Analyse + P2-Chat-Pilot (Abhängt-von: p2-chat) — gleiches Store-/Route-/i18n-Muster.
+> Rescue-Branch ist Struktur-Vorlage; wo `main.js` abweicht (DI, `relationships`-Endpoint, `logs`, LMN, FE-Imports), gilt **`main.js`**.
+
+---
+
+### T1 — libs: Konstanten + getIsParent + QR-Type  [ ]
+Komponente: libs/src/parent-child-pairing/constants + libs/src/groups/utils · Dateien: `libs/src/parent-child-pairing/constants/{parentChildPairingApiEndpoints,parentChildPairingCacheConfig,parentChildPairingErrorMessages,parentChildPairingStatus,parentChildPairingLogAction,parentChildPairingGroupSuffix,parentChildPairingQueryParams,parentChildPairingStatusFilterAll,parentChildPairingQrConfig}.ts`, `libs/src/groups/utils/getIsParent.ts`, QR-Type-Konstante (`EDULUTION_QR_TYPE.PARENT_CHILD_PAIRING`)
+Soll: main.js:60489 (errorMessages), :60525 (logAction), :60557 (cacheConfig: `CODE_LENGTH:8`, `CODE_TTL_MS:300000`, Key-Prefixes), :60589 (`GROUP_SUFFIX:'-parents'`), :60619 (`getIsParent` = PARENT||TEACHER||STAFF), :60944/:64074 (endpoints inkl. `RELATIONSHIPS`, QR-Type) · upstream/1717-add-pairing-administration-page:libs/src/parent-child-pairing/constants/*
+Änderung: Rescue-Konstanten portieren, `ApiEndpoints` um `RELATIONSHIPS:'relationships'` ergänzen, die 2.0-only-Konstanten (`LogAction`, `GroupSuffix`) + `getIsParent`-Util + QR-Type neu anlegen. `as const`-Objekte statt enums, SPDX-AGPL-Header.
+Verify: `npx nx run libs:typecheck` (remote via iter.sh) grün; `grep -r "RELATIONSHIPS" libs/src/parent-child-pairing/constants` findet den Key.
+i18n: keine
+Doku: keine (intern)
+
+### T2 — libs: Types + DTOs (inkl. logs + enriched)  [ ]
+Komponente: libs/src/parent-child-pairing/types · Dateien: `parentChildPairingDto.ts`, `parentChildPairingCodeResponseDto.ts`, `parentChildPairingStatusType.ts`, `parentChildPairingErrorMessagesType.ts`, `submitParentChildPairingCodeDto.ts`, `updateParentChildPairingStatusDto.ts`, `parentChildPairingQrPayload.ts`, `enrichedRelationshipResponseDto.ts`
+Soll: main.js:60169-60378 (DTO-Shape mit `logs`), :60239-60309 (enriched: `studentFirstName/LastName`, `parentFirstName/LastName`, `isGroupActive`) · upstream/1717-…:libs/src/parent-child-pairing/types/*
+Änderung: Rescue-Types portieren, `ParentChildPairingDto` um `logs: {action;performedBy;timestamp;details}[]` erweitern, `enrichedRelationshipResponseDto` (Namen + `isGroupActive`) neu. SPDX-AGPL-Header.
+Verify: `npx nx run libs:typecheck` grün; `grep -n "logs" libs/src/parent-child-pairing/types/parentChildPairingDto.ts` trifft.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — BE: LMN-API `addParentToStudent` / `deleteParentFromStudent`  [ ]
+Komponente: apps/api/src/lmnApi + libs/src/lmnApi · Dateien: `apps/api/src/lmnApi/lmnApi.service.ts`, `libs/src/lmnApi/types/lmnApiErrorMessage.ts`, `apps/api/src/lmnApi/lmnApi.service.spec.ts`
+Soll: main.js:12624 (`POST users/{student}/parents {users:[parent]}`, Header `x-api-key`), :12634 (`DELETE …/parents`); Fehler `AddParentToStudentFailed`/`DeleteParentFromStudentFailed` → `CustomHttpException(BAD_GATEWAY)`
+Änderung: zwei Methoden ergänzen (Muster `this.request(...)` mit `USERS_LMN_API_ENDPOINT`), zwei Fehlermeldungs-Keys in `lmnApiErrorMessage.ts`. Spec deckt Erfolg + BAD_GATEWAY-Pfad (gemockter `request`) ab.
+Verify: `npx nx test api --testFile=lmnApi.service.spec.ts` (remote) grün; Assertions auf URL `users/<student>/parents`, Body `{users:[<parent>]}`, `x-api-key`-Header.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T4 — BE: Schema `ParentChildPairing` + LogEntry-Subdoc  [ ]
+Komponente: apps/api/src/parent-child-pairing · Dateien: `parent-child-pairing.schema.ts`
+Soll: main.js:60700-60705 (Index/toJSON), :60735-60760 (`ParentChildPairingLogEntry`: `action` enum, `performedBy`, `timestamp` default now, `details`) · upstream/1717-…:apps/api/src/parent-child-pairing/parent-child-pairing.schema.ts (Basis, ohne logs)
+Änderung: Rescue-Schema portieren, `logs: ParentChildPairingLogEntry[]`-Feld + Subdoc-Klasse ergänzen, `schemaVersion:number default 1`, Unique-Index `{parent:1,student:1}`, `timestamps:true`, `toJSON:{virtuals:true}`. SPDX-AGPL-Header.
+Verify: `npx nx test api --testFile=parent-child-pairing.service.spec.ts` (nach T5) compiliert; isoliert: `npx nx run api:typecheck` grün + `grep -n "unique: true" parent-child-pairing.schema.ts`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T2
+
+### T5 — BE: Service — Code/Create/GetAll/UpdateStatus (Kern + LMN + logs)  [ ]
+Komponente: apps/api/src/parent-child-pairing · Dateien: `parent-child-pairing.service.ts`, `parent-child-pairing.service.spec.ts`
+Soll: main.js:60169 (DI `model,cache,lmnApiService,usersService`), :60181-60237 (getOrCreateCode/refreshCode/createParentChildPairing + Rollenvalidierung `getIsParent`/STUDENT + `PAIRING_REQUESTED`-Log + Unique-Check), :60347-60378 (getAll + updateParentChildPairingStatus: ACCEPTED→`addParentToStudent`, REJECTED-von-ACCEPTED→`deleteParentFromStudent`, `STATUS_CHANGED`-Log), :60413-60438 (generateAndStoreCode/resolveCode/deleteExistingCode)
+Änderung: Service 1:1 zur 2.0-Semantik. `toParentChildPairingDto` inkl. `logs`. `updateParentChildPairingStatus(id,status,performedBy,lmnApiToken)`. Spec: Self-Pair-/Rollen-/Duplicate-Fehler, Code-Expiry (GONE), Accept→LMN-Call gemockt, Reject→delete-Call, Log-Push.
+Verify: `npx nx test api --testFile=parent-child-pairing.service.spec.ts` (remote) grün; Assertion: bei `ACCEPTED` wird `lmnApiService.addParentToStudent` mit `(token,student,parent)` gerufen und `logs` wächst.
+i18n: keine (Fehlerkeys sind i18n-Referenzen, in T14 übersetzt)
+Doku: keine (intern)
+Abhängt von: T2, T3, T4
+
+### T6 — BE: Service — `getEnrichedRelationships` (Gruppencache-Anreicherung)  [ ]
+Komponente: apps/api/src/parent-child-pairing · Dateien: `parent-child-pairing.service.ts` (Erweiterung), `parent-child-pairing.service.spec.ts`
+Soll: main.js:60239-60346 (`getEnrichedRelationships`, `getActiveRelationshipsForStudent/Parent`, `getNonActivePairingsFromDb`, `extractStudentUsernamesFromGroups`; Gruppen-Cache-Key `${GROUP_WITH_MEMBERS_CACHE_KEY}-/<student>-parents`)
+Änderung: Anreicherungslogik ergänzen — aktive Beziehungen aus LDAP-Gruppencache (`isGroupActive:true`, `ldap-<parent>-<student>`-IDs) + nicht-aktive `PENDING/REJECTED` aus DB, mit `usersService.findAllCachedUsers(school)` verknüpft. Spec mit gemocktem `cacheManager`/`usersService`.
+Verify: `npx nx test api --testFile=parent-child-pairing.service.spec.ts` grün; Assertion: Student mit Gruppenmitglied liefert `isGroupActive:true` + gefüllte `parentFirstName`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5
+
+### T7 — BE: Controller + Modul + app.module-Registrierung (Guards)  [ ]
+Komponente: apps/api/src/parent-child-pairing + apps/api/src/app · Dateien: `parent-child-pairing.controller.ts`, `parent-child-pairing.module.ts`, `apps/api/src/app/app.module.ts`
+Soll: main.js:60806-60916 (Routen `code`GET/PUT, `` POST, `relationships`GET, `all`GET, `:id/status`PATCH; `@UseGuards(DynamicAppAccessGuard)` auf `all`+`:id/status`; `x-api-key`→lmnApiToken, `@GetCurrentUsername()`→performedBy) · main.js:60108 (Modul) · upstream/1717-…:apps/api/src/parent-child-pairing/parent-child-pairing.controller.ts (Struktur, Endpoint-Drift beachten: `relationships`)
+Änderung: Controller mit `@ApiBearerAuth()` (Fork-Konvention, nicht `ApiAuth()`), Guards mit-portieren, `Headers(HTTP_HEADERS.XApiKey)` für LMN-Token. Modul registriert Schema+Service+Controller, exportiert Service. Modul in `app.module.ts` `imports` eintragen (~Zeile 140, alphabetisch bei den anderen Modulen).
+Verify: `npx nx test api` (remote) grün; Voll-Stack (T15) prüft echte Routen. Assertion optional per e2e: `GET parent-child-pairing/code` liefert 200 mit `{code,expiresAt}`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T6
+
+### T8 — libs/FE-Contract: Pfade + Endpoints + errorMessage-Union  [ ]
+Komponente: libs/src (Pfad-/Endpoint-Konstanten + Error-Union) · Dateien: `libs/src/…/constants/userManagementPaths.ts`, `libs/src/…/constants/user-settings-endpoints.ts`, `libs/src/error/errorMessage.ts`
+Soll: upstream/1717-add-pairing-administration-page (Diff): `PARENT_ASSIGNMENT_LOCATION='parent-assignment'`, `PARENT_ASSIGNMENT_PATH=${LINUXMUSTER_PATH}/…`, `PARENT_CHILD_PAIRING_PATH='parent-child-pairing'`, `USER_SETTINGS_PARENT_CHILD_PAIRING_PATH`; `errorMessage.ts`-Union `| ParentChildPairingErrorMessagesType`
+Änderung: Pfad-/Endpoint-Konstanten + Error-Union genau wie im Rescue-Diff ergänzen (Pfade an Fork-Konstanten-Datei angleichen).
+Verify: `npx nx run libs:typecheck` grün; `grep -rn "PARENT_ASSIGNMENT_LOCATION" libs/src` trifft.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T2
+
+### T9 — FE: Store UserSettings (`useParentChildPairingStore`)  [ ]
+Komponente: apps/frontend/src/pages/UserSettings/ParentChildPairing · Dateien: `useParentChildPairingStore.ts`
+Soll: upstream/1717-…:apps/frontend/src/pages/UserSettings/ParentChildPairing/useParentChildPairingStore.ts — **Drift-Fix:** `fetchRelationships` muss `${BASE}/${RELATIONSHIPS}` rufen (Rescue ruft `BASE`; geshipptes BE hat den Enriched-Endpoint unter `relationships`, main.js:60821)
+Änderung: Zustand-Store portieren (`eduApi` in Store, `handleApiError`, `toast`, `i18n`), `fetchRelationships` auf `RELATIONSHIPS`-Endpoint umstellen. `HttpStatusCode.Gone`→`codeExpired`-Toast beibehalten. SPDX-AGPL-Header.
+Verify: `npx nx test frontend --testFile=useParentChildPairingStore` (Vitest, remote) grün — Store ruft `GET parent-child-pairing/relationships` (gemocktes `eduApi`).
+i18n: nutzt Keys aus T14
+Doku: keine (intern)
+Abhängt von: T1, T2
+
+### T10 — FE: UserSettings-Seite + FloatingButtons + Badge  [ ]
+Komponente: apps/frontend/src/pages/UserSettings/ParentChildPairing + components/shared · Dateien: `ParentChildPairingPage.tsx`, `ParentChildPairingFloatingButtons.tsx`, `apps/frontend/src/components/shared/ParentChildPairingStatusBadge.tsx`
+Soll: upstream/1717-…:{ParentChildPairingPage.tsx, ParentChildPairingFloatingButtons.tsx, components/shared/ParentChildPairingStatusBadge.tsx} — **Import-Drift-Fix:** `cn`/`Button` **nicht** aus `@edulution-io/ui-kit`, sondern Fork: `cn()` aus `@/lib/utils`, `BadgeSH` aus `@/components/ui/BadgeSH`, Button aus `@/components/shared/Button`
+Änderung: Seite (Code/QR via `QRCodeDisplay` + `parentChildPairingQrPayload`, eigene Beziehungen), FloatingButtons (`ReloadButton`→`refreshPairingCode`), StatusBadge (BadgeSH + `cn`) portieren, alle Imports auf Fork-Pfade. SPDX-AGPL-Header.
+Verify: `npx nx test frontend --testFile=ParentChildPairingStatusBadge` grün (rendert PENDING/ACCEPTED/REJECTED-Label); Voll-Stack-Shot (T15) für die Seite.
+i18n: nutzt `usersettings.parentChildPairing.*` (T14)
+Doku: keine (intern)
+Abhängt von: T9
+
+### T11 — FE: Admin-Store (`useParentAssignmentStore`)  [ ]
+Komponente: apps/frontend/src/pages/LinuxmusterPage/ParentAssignment · Dateien: `useParentAssignmentStore.ts`
+Soll: upstream/1717-…:apps/frontend/src/pages/LinuxmusterPage/ParentAssignment/useParentAssignmentStore.ts (`fetchPairings` → `${BASE}/${ALL}` mit `status`/`school`-Params; `updateStatus` → `PATCH ${BASE}/:id/${STATUS}`)
+Änderung: Zustand-Admin-Store portieren, `statusFilter`/`selectedSchool`, `PARENT_CHILD_PAIRING_STATUS_FILTER_ALL`. `eduApi` in Store. SPDX-AGPL-Header.
+Verify: `npx nx test frontend --testFile=useParentAssignmentStore` grün — `updateStatus` ruft `PATCH parent-child-pairing/<id>/status` (gemocktes `eduApi`), danach `fetchPairings`.
+i18n: nutzt `parentChildPairing.*` (T14)
+Doku: keine (intern)
+Abhängt von: T1, T2
+
+### T12 — FE: Admin-Seite + Spalten (`ParentAssignmentPage`)  [ ]
+Komponente: apps/frontend/src/pages/LinuxmusterPage/ParentAssignment · Dateien: `ParentAssignmentPage.tsx`, `getParentAssignmentColumns.tsx`
+Soll: upstream/1717-…:{ParentAssignmentPage.tsx, getParentAssignmentColumns.tsx} (Tabelle über `enrichedRelationshipResponseDto`: Eltern/Kind-Namen, Status-Badge, Accept/Reject-Aktionen, Status-/Schul-Filter) — Import-Drift wie T10 beachten
+Änderung: Admin-Seite + Spaltendefinition portieren, StatusBadge (T10) einbinden, Filter-Controls. SPDX-AGPL-Header.
+Verify: `npx nx test frontend` grün (Build/Typecheck der Seite); Accept/Reject-Wirkung im Voll-Stack (T15).
+i18n: nutzt `parentChildPairing.*` (T14)
+Doku: keine (intern)
+Abhängt von: T11
+
+### T13 — FE: Route-Registrierung (Private + Linuxmuster)  [ ]
+Komponente: apps/frontend/src/router/routes · Dateien: `getPrivateRoutes.tsx`, `getLinuxmusterRoutes.tsx`
+Soll: upstream/1717-… (Diff): `getPrivateRoutes` Route `PARENT_CHILD_PAIRING_PATH`→`ParentChildPairingPage`; `getLinuxmusterRoutes` Route `PARENT_ASSIGNMENT_LOCATION`→`ParentAssignmentPage`
+Änderung: beide Routen wie im Rescue-Diff registrieren (Imports + `<Route>`), Menü-/Navigations-Einträge nur falls im Rescue-Diff vorhanden.
+Verify: `npx nx test frontend` grün; Voll-Stack (T15): `/user-settings/parent-child-pairing` und Linuxmuster→`/parent-assignment` rendern ohne Router-Fehler.
+i18n: ggf. Menü-Label (T14)
+Doku: keine (intern)
+Abhängt von: T10, T12, T8
+
+### T14 — i18n: DE+EN Keys `parentChildPairing.*` + `usersettings.parentChildPairing.*`  [ ]
+Komponente: apps/frontend/src/locales · Dateien: `locales/de/translation.json`, `locales/en/translation.json` (+ `fr` best-effort)
+Soll: main.js:60489 (Fehler-Keys) + Rescue-FE-`t(...)`-Aufrufe (`statusPending/Accepted/Rejected`, `statusUpdated`, `myParents`, `myChildren`, `description`, `codeRefreshed`, `pairingSuccess`, `codeExpired`)
+Änderung: alle referenzierten Keys DE+EN ergänzen; `fr` mit englischem Fallback nur wenn nötig.
+Verify: `npx nx test frontend` grün; `node -e` / `jq` prüft, dass jeder in T5/T9-T12 referenzierte Key in de+en existiert (kein Missing-Key-Warning im Vitest-Run).
+i18n: **das ist** die i18n-Task (DE+EN Pflicht)
+Doku: keine (intern)
+Abhängt von: T10, T12
+
+### T15 — Voll-Stack-Verify gegen echten LMN (Accept→Gruppe, Reject→Entfernung)  [ ]
+Komponente: scripts/crabbox (Voll-Stack) · Dateien: — (nur Verifikation, ggf. Playwright-Shot)
+Soll: main.js:12624/12634 (LMN `users/<student>/parents`), :60358-60378 (Statuswechsel-Wirkung)
+Änderung: keine Code-Änderung. Auf warmer crabbox mit **synthetischen** Eltern-/Schüler-Fixtures: Code erzeugen (Schüler), einlösen (Eltern) → `PENDING`; Admin akzeptiert → Eltern in LMN-Gruppe `<student>-parents`; ablehnen → Entfernung. Prüfen, dass Eltern das `/role-parent`-Claim tragen (offene Frage 2 der Spec).
+Verify: `/test` (Voll-Stack) — nach Accept liefert `linuxmuster-api7` `GET users/<student>` das Elternteil in `parents`; nach Reject nicht mehr. Playwright-Shot der UserSettings- und ParentAssignment-Seite ohne Konsolenfehler. **Keine echten Schüler-PII.**
+i18n: keine
+Doku: kurzer Modul-Abschnitt „ParentChildPairing" (DE+EN) im selben Commit
+Abhängt von: T7, T13, T14
+
+## p3-wiki [P3] — Wiki
+_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 25
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · scratchpad/ui-img/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
+
+> Kalibrierungs-Notiz (P3): BE-Tasks sind aus main.js hart verankert und ausführbar. Die FE-Tasks
+> (T14–T24) erben ihr Muster vom Chat-Piloten (p2-chat: Zustand-Store mit eduApi, Native-Route,
+> i18n-Sweep) und schärfen sich nach P0-Basis-Drift + einem frischen Baseline-Screenshot der
+> Live-Instanz. Editor-Scope hart auf StarterKit+KaTeX halten (kein 1,35-MB-Nachbau).
+> Abhängt-von-Paket: p2-chat.
+
+---
+
+### T1 — libs: Wiki-Konstanten & Enums  [ ]
+Komponente: libs · Dateien: libs/src/wiki/constants/{wikiEndpoints,wikiConstants,wikiNodeType,wikiSearchStatus,unavailableShareReason,wikiSearchScope,wikiSearchThrottleConfig}.ts
+Soll: main.js:71807 (WIKI_ENDPOINTS) · 69943 (WIKI_CONSTANTS) · 69976 (WIKI_NODE_TYPE) · 70490 (WIKI_SEARCH_STATUS/UNAVAILABLE_SHARE_REASON) · 71843 (Throttle) · 72170 (wikiSearchScope)
+Änderung: Const-Objekte + derived Types (kein enum) 1:1 spiegeln: Endpoints BASE/SHARES/TREE/PAGE/FOLDER/SEARCH, WIKI_FOLDER_NAME='.wiki'/INDEX_PAGE_SLUG/MARKDOWN_EXTENSION='.md'/MAX_WIKI_PAGE_SIZE_BYTES=5*1024*1024, Node-Typ FOLDER/PAGE, Such-Status/Reason, Throttle 60/60000.
+Verify: iter.sh → `npm run test:frontend -- libs/src/wiki` (Snapshot-Assertion der Konstanten) + `npm run lint`
+i18n: keine
+Doku: keine (intern)
+
+### T2 — libs: Wiki-DTOs & Fehlermeldungen  [ ]
+Komponente: libs · Dateien: libs/src/wiki/types/{wikiPageDto,wikiTreeChildDto,createWikiPageDto,updateWikiPageDto,createWikiFolderDto,wikiFolderCreatedDto,wikiSuccessDto,wikiSearchRequestDto,wikiSearchResponseDto}.ts · libs/src/wiki/constants/wikiErrorMessages.ts
+Soll: main.js:71876/71932/71979/72025/72095/72170/72241/72432/72470 (DTOs) · 1205 (WIKI_ERROR_MESSAGES)
+Änderung: DTO-Klassen mit class-validator/swagger-Dekoratoren nachbauen (WikiPageDto: path/title/content/etag/mtime/isIndex; TreeChild: type/name/path/hasChildren/mtime/hasIndex; Search: query≤1024/scope/shareId/page/size; Response: hits/total/status/unavailableShares/truncated + Hit + UnavailableShare). Error-Message-Map als const object.
+Verify: iter.sh → `npm run test:frontend -- libs/src/wiki` (Instanziierung + Validierungs-Erwartungen) + `npm run lint`
+i18n: keine (Werte sind i18n-Key-Strings)
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — libs+BE: WebdavShareDto & WebdavShares-Schema um Wiki-Felder erweitern  [ ]
+Komponente: libs + apps/api · Dateien: libs/src/filesharing/types/webdavShareDto.ts · apps/api/src/webdav/shares/webdav-shares.schema.ts
+Soll: main.js:58251/58297/58301 (DTO) · main.js:5219–5224 (Schema-Props)
+Änderung: `wikiAccessGroups: MultipleSelectorGroup[] = []` (`@Prop({type:Array, default:[]})`) und `wikiDisabled: boolean = false` (`@Prop({type:Boolean, default:false})`) additiv ergänzen; DTO spiegelt beide (default `[]`/`false`). `schemaVersion` bleibt Feld — Bump erfolgt in T4.
+Verify: iter.sh → `npm run test:api -- webdav/shares` (Schema-Instanz enthält Felder mit Defaults) + `npm run lint`
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2
+
+### T4 — BE: Migration WebdavShares schemaVersion 1→2 (Wiki-Felder)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/webdav/shares/migrations/migration001.ts · apps/api/src/webdav/shares/migrations/webdavSharesMigrationList.ts
+Soll: Muster main.js/1.6 migration000.ts (forward-only, per-Dokument schemaVersion-Filter)
+Änderung: `migration001` (name '001-add-wiki-visibility-to-webdav-shares', version 2) setzt auf Dokumenten mit schemaVersion<2 `wikiAccessGroups: []`, `wikiDisabled: false`, `schemaVersion: 2` (bulk, idempotent). In `webdavSharesMigrationList` anhängen.
+Verify: iter.sh → `npm run test:api -- webdav/shares/migrations` (Migration idempotent: zweiter Lauf No-Op; Bestandsdoc ohne Felder erhält Defaults). Voll-Stack: gegen echte 1.6-DB im Upgrade-Harness (p1-migration-upgrade-test).
+i18n: keine
+Doku: docs/features/p3-wiki.md + p0-migrations-inventory Eintrag (migration001) — intern, knapp
+Abhängt von: T3
+
+### T5 — BE: findAllWikiShares im WebdavSharesService  [ ]
+Komponente: apps/api · Dateien: apps/api/src/webdav/shares/webdav-shares.service.ts
+Soll: main.js:4992 (findAllWikiShares)
+Änderung: Methode nachbauen: Filter `wikiDisabled != true` + `$or[wikiAccessGroups fehlt | leer | path in userGroups]`; Nicht-Admins zusätzlich auf `accessGroups.path in userGroups`; Admin-Bypass via `getAdminGroupsFromCache`. Über `aggregateShares` (bestehend).
+Verify: iter.sh → `npm run test:api -- webdav/shares` (User in Gruppe sieht freigegebenes Share; wikiDisabled ausgeblendet; Admin sieht alle)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T3
+
+### T6 — BE: Wiki-Pfad-Helper & Fehlertypen  [ ]
+Komponente: apps/api · Dateien: apps/api/src/wiki/{resolveWikiPath,wikiDiskPaths,wrapWikiPathOp,extractTitleFromMarkdown,WikiPathError,assertShareAccessible,wikiEtagConflict.http-exception}.ts (+ *.spec.ts)
+Soll: main.js:70007 (resolveWikiPath/joinWikiPath) · 70129 (wikiDiskPaths) · 70271 (wrapWikiPathOp) · 70190 (extractTitleFromMarkdown) · 70096 (WikiPathError) · 70228 (assertShareAccessible) · 71628 (EtagConflict-Exception)
+Änderung: Reine Utils nachbauen: Pfad-Segment-Safety (`..`/Slash-Guards → WikiPathError), Frontend↔Disk-Mapping (`.wiki/<slug>.md`, `index.md`), Markdown-H1→Title-Extraktion, wrapWikiPathOp→CustomHttpException(INVALID_PATH), assertShareAccessible (nutzt findAllWikiShares), WikiEtagConflictHttpException(409, {currentEtag, serverContent}).
+Verify: iter.sh → `npm run test:api -- wiki` (Unit-Tests: unsichere Pfade werfen; Disk-Mapping korrekt; Title-Extraktion)
+i18n: keine (Fehler nutzen bestehende wiki.errors.*-Keys)
+Doku: keine (intern)
+Abhängt von: T1, T5
+
+### T7 — BE: WebdavService um probeFolder + getFileContentWithRange (ETag) erweitern  [ ]
+Komponente: apps/api · Dateien: apps/api/src/webdav/webdav.service.ts · apps/api/src/webdav/errors/WebdavEtagConflictError.ts
+Soll: 1.6-WebdavService (createFolder vorhanden) + Verwendung in main.js:69873 (probeFolder) / 70625 (getFileContentWithRange rangeBytes+etag+truncated+totalBytes) / 71627 (WebdavEtagConflictError)
+Änderung: **Drift-Task (Vorbedingung für T8–T11).** `probeFolder(username, path, share)` (PROPFIND → Einträge|null), `getFileContentWithRange(username, path, share, {rangeBytes})` (Range-GET → {content, etag, mtime, truncated, totalBytes}), Schreiben mit If-Match → bei 412 `WebdavEtagConflictError(currentEtag, serverContent)`. Gegen die in 1.6 genutzte WebDAV-Client-Lib; OF-2 vorab klären.
+Verify: iter.sh → `npm run test:api -- webdav` (probeFolder liefert null bei 404; Range-Read gibt etag/truncated; If-Match-Mismatch wirft WebdavEtagConflictError). Voll-Stack gegen echten LMN-WebDAV empfohlen.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T6
+
+### T8 — BE: WikiTreeService  [ ]
+Komponente: apps/api · Dateien: apps/api/src/wiki/wiki-tree.service.ts (+ *.spec.ts)
+Soll: main.js:69691 (WikiTreeService: listChildren, readWikiFolder, index-probe, title-cache)
+Änderung: `listChildren(username, userGroups, path)` — resolveWikiPath → Share-Zugriff prüfen → WebDAV-Ordner listen, `.wiki` ausblenden, Ordner (FOLDER, hasIndex via index-Probe) + Markdown-Seiten (PAGE, Title aus Cache/Extraktion) zu `WikiTreeChildDto[]` mischen, Ordner-vor-Seiten sortiert. Title-Cache best-effort über wikiFileproxyClient.listByPrefix (Fehler → weich).
+Verify: iter.sh → `npm run test:api -- wiki-tree` (gemischter Ordner: FOLDER-Einträge mit hasIndex, PAGE-Einträge mit Title; `.wiki` fehlt; Sortierung Ordner→Seiten)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T7
+
+### T9 — BE: WikiPageService (get/create/update/delete)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/wiki/wiki-page.service.ts (+ *.spec.ts) · package.json (slugify)
+Soll: main.js:70610 (WikiPageService) · slugify webpack 1083
+Änderung: `getPage` (Range-Read ≤5 MB, ETag, Title, isIndex; >5 MB → 413), `createPage` (slugify(Title), asIndex→index.md, 409 bei Existenz, ensureWikiFolderExists), `updatePage` (If-Match/etag Pflicht → 428 falls fehlt; WebDAV-Write; ETag-Konflikt hochreichen), `deletePage`. `slugify` in **Root-package.json** aufnehmen.
+Verify: iter.sh → `npm run test:api -- wiki-page` (create→get roundtrip; update ohne etag→428; update mit falschem etag→409; >5 MB→413; asIndex zweifach→409)
+i18n: keine (nutzt wiki.errors.*)
+Doku: keine (intern)
+Abhängt von: T8
+
+### T10 — BE: WikiFolderService  [ ]
+Komponente: apps/api · Dateien: apps/api/src/wiki/wiki-folder.service.ts (+ *.spec.ts)
+Soll: main.js:70884 (WikiFolderService: createFolder, deleteFolder)
+Änderung: `createFolder(username, userGroups, parentPath, name)` — Name-Validierung, 409 bei Existenz (probeFolder), WebDAV-MKCOL; `deleteFolder(username, userGroups, path)` — rekursiv, INVALID_NAME wenn Leaf `.wiki`, 404/403-Mapping.
+Verify: iter.sh → `npm run test:api -- wiki-folder` (createFolder→WikiFolderCreatedDto; doppelt→409; delete non-existent→404; deleteFolder entfernt rekursiv)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T7
+
+### T11 — BE: WikiFileproxyClient + WikiSearchService  [ ]
+Komponente: apps/api · Dateien: apps/api/src/wiki/wiki-fileproxy.client.ts · apps/api/src/wiki/wiki-search.service.ts (+ *.spec.ts)
+Soll: main.js:70322 (Client: /wiki/search 70367, /wiki/list 70427, X-Edulution-Groups, Timeout 8000) · 71024 (SearchService: findAllWikiShares→resolveAccessibleShares→searchInShare/searchAll)
+Änderung: HTTP-Client zum externen fileproxy (pro Share `share.url`→fileproxyBase), Status ok/unavailable/degraded + reason (timeout/connection/http_5xx/http_4xx); SearchService aggregiert über zugängliche Shares, mappt Hits auf Frontend-Pfade, sammelt `unavailableShares`. Fehlender fileproxy → degradierte Antwort, kein Throw.
+Verify: iter.sh → `npm run test:api -- wiki-search` (Mock-fileproxy: Treffer aggregiert; Timeout→unavailableShares[reason=timeout]; kein Share→leeres OK). OF-1 (läuft fileproxy im Stack?) klären.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T8
+
+### T12 — BE: Throttle-Infra für Such-Route  [ ]
+Komponente: apps/api · Dateien: apps/api/src/common/throttle/{throttle.decorator,throttle.guard}.ts (o. @nestjs/throttler-Setup) · package.json
+Soll: main.js:71761 (Throttle-Decorator + Guard) · 71843 (Limit 60 / TTL 60000)
+Änderung: **Drift-Task.** Throttle-Infra einführen — bevorzugt `@nestjs/throttler` (OF-3), sonst minimaler Eigen-Decorator+Guard, der 60 Anfragen/60 s pro User erzwingt. Nur die Wiki-Such-Route nutzt ihn (in T13 verdrahtet).
+Verify: iter.sh → `npm run test:api -- throttle` (61. Anfrage in 60 s → 429)
+i18n: keine
+Doku: keine (intern)
+
+### T13 — BE: WikiController + WikiModule + Registrierung + Guards  [ ]
+Komponente: apps/api · Dateien: apps/api/src/wiki/wiki.controller.ts · apps/api/src/wiki/wiki.module.ts · apps/api/src/app.module.ts (Registrierung) (+ controller *.spec.ts)
+Soll: main.js:71593 (Controller, 9 Routen) · 69628 (Module) · 846 (Registrierung) · Guards 71775/71776/71761
+Änderung: Controller mit 9 Routen exakt wie Tabelle (Spec), Base `wiki`. **Guards mit-portieren:** `@ApiAuth()` + `@RequireAppAccess(APPS.WIKI)` auf Controller, `@Throttle(...)`+ThrottleGuard nur auf `search`. getPage setzt ETag-Header; updatePage fängt WebdavEtagConflictError→WikiEtagConflictHttpException. WikiModule bündelt die vier Services + Client; im App-Modul registrieren.
+Verify: iter.sh → `npm run test:api -- wiki.controller` (Route-e2e mit Mock-Services; ohne Auth→401; ohne App-Access→403; PUT-Konflikt→409). Swagger-Contract-Sync: `swagger-spec.json` enthält 9 Wiki-Routen.
+i18n: keine
+Doku: docs/features/p3-wiki.md (Routen-Tabelle referenzieren) — intern
+Abhängt von: T2, T9, T10, T11, T12
+
+### T14 — BE: WIKI in apps.ts + defaultAppConfig-Seed + Icon  [ ]
+Komponente: libs + apps/api · Dateien: libs/src/appconfig/constants/apps.ts · apps/api/src/…/defaultAppConfig · apps/api/src/assets/edu_Wiki.svg
+Soll: main.js:218 (WIKI:'wiki') · 2456 (defaultAppConfig-Eintrag) · 2585 (SVG)
+Änderung: `WIKI: 'wiki'` in apps.ts ergänzen; WIKI-Eintrag im defaultAppConfig-Seed (`appType: NATIVE`, `isPinned: true`, `position: 7`, `displayLocations: ALL`, `options/extendedOptions/accessGroups` leer/[]); `edu_Wiki.svg` als Icon-Asset.
+Verify: iter.sh → `npm run test:api -- appconfig` (Fresh-Install-Seed enthält WIKI an position 7). Contract: apps.ts-Slug == BE `RequireAppAccess`.
+i18n: keine (App-Titel via bestehende App-Name-Mechanik)
+Doku: keine (intern)
+Abhängt von: T13
+
+### T15 — libs+FE: WIKI_SHARE_VISIBILITY_TABLE ExtendedOption verdrahten  [ ]
+Komponente: libs + apps/frontend · Dateien: libs/src/appconfig/constants/extendedOptionKeys.ts · libs/src/appconfig/constants/extendedOptions/wikiShareVisibilityExtendedOptions.ts · apps/frontend/src/pages/Settings/AppConfig/appConfigOptions.ts
+Soll: main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · Muster webdavShareTableExtendedOptions.ts (1.6)
+Änderung: `WIKI_SHARE_VISIBILITY_TABLE` in extendedOptionKeys ergänzen; ExtendedOption-Definition (type table) anlegen; in appConfigOptions der passenden Section zuordnen (OF-5: FileSharing- oder eigene WIKI-Section). Persistenz läuft über die bestehende webdav-shares-Update-Route (Felder aus T3).
+Verify: iter.sh → `npm run test:frontend -- AppConfig` (Section rendert Tabelle; Toggle wikiDisabled/Set wikiAccessGroups landet im PUT-Payload)
+i18n: neue Keys `settings.appconfig.sections.wikiShareVisibility.*` + Tabellen-Spalten — DE+EN
+Doku: Admin-Doku Share-Visibility — DE+EN, knapp
+Abhängt von: T3, T14
+
+### T16 — FE: Native-Route + WikiPage-Gerüst  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/WikiPage.tsx · apps/frontend/src/components/structure/layout/NativeAppPageManager.tsx
+Soll: FE-Referenz WikiPage-CCeoG8Ux.js · getNativeAppRoutes-Muster (1.6) · Chat-Piloten-Muster (p2-chat)
+Änderung: WIKI→WikiPage im NativeAppPageManager-Mapping; leeres WikiPage-Gerüst (zweispaltig: Sidebar-Platzhalter + leerer Content-Bereich mit `wiki.empty.selectPageHint`). Route läuft bereits generisch über getNativeAppRoutes (appType NATIVE).
+Verify: iter.sh → Frontend-Build grün + `npm run test:frontend -- Wiki` (Route `/wiki` mountet WikiPage). crabbox-Screenshot: leere Wiki-Seite lädt.
+i18n: `wiki.description`, `wiki.empty.selectPageHint`, `wiki.sidebar` — DE+EN
+Doku: keine (intern)
+Abhängt von: T14
+
+### T17 — FE: useWikiStore (Zustand, eduApi) — Shares/Tree/Page/Folder  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/store/useWikiStore.ts (+ *.spec.ts)
+Soll: BE-Routen (T13) · eduApi-Store-Muster (Chat-Pilot)
+Änderung: Zustand-Store mit `eduApi`: `fetchShares`, `fetchTree(path)`, `fetchPage(path)` (ETag mitführen), `createPage`, `updatePage` (If-Match), `deletePage`, `createFolder`, `deleteFolder`. `handleApiError`; Endpoint-Konstanten aus libs/wiki. Keine fetch-Aufrufe in Komponenten.
+Verify: iter.sh → `npm run test:frontend -- useWikiStore` (Mock-eduApi: CRUD-Aktionen rufen korrekte Pfade/Methoden; ETag wird als If-Match gesendet)
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2, T16
+
+### T18 — FE: Sidebar-Baum (Shares + Tree-Navigation)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/WikiSidebar.tsx (+ Tree-Knoten) (+ *.spec.tsx)
+Soll: FE-Referenz WikiPage-Chunk · WikiTreeChildDto (T2)
+Änderung: Sidebar listet Shares (fetchShares) und lädt Kinder lazy pro Ordner (fetchTree); Ordner/Seiten-Icons, Auswahl setzt aktive Seite; Kontextmenü-Einträge `wiki.menu.newPage|newFolder` (Dialoge in T20).
+Verify: iter.sh → `npm run test:frontend -- WikiSidebar` (Share-Liste rendert; Ordner-Expand lädt Kinder; Seiten-Klick löst fetchPage aus). crabbox-Screenshot gegen frische Baseline.
+i18n: `wiki.menu.newPage`, `wiki.menu.newFolder` — DE+EN
+Doku: keine (intern)
+Abhängt von: T17
+
+### T19 — FE: Seitenansicht (Read-only Markdown + KaTeX)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/WikiPageView.tsx (+ *.spec.tsx)
+Soll: FE-Referenz · WikiPageDto (T2)
+Änderung: Gerenderte Read-only-Ansicht der aktiven Seite (Markdown via remark-gfm + rehype-highlight, Formeln via KaTeX), Titel/`wiki.metadata.updatedAt`, „Bearbeiten"-Einstieg. `katex` neu in Root-package.json.
+Verify: iter.sh → `npm run test:frontend -- WikiPageView` (Markdown+Codeblock+KaTeX-Formel rendern). crabbox-Screenshot.
+i18n: `wiki.metadata.updatedAt`, `wiki.actions.finishEditing` — DE+EN
+Doku: keine (intern)
+Abhängt von: T17
+
+### T20 — FE: Dialoge createPage / createFolder / delete  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/dialogs/{CreatePageDialog,CreateFolderDialog,DeleteDialog}.tsx (+ *.spec.tsx)
+Soll: FE-Referenz (i18n-Keys wiki.dialog.*) · CreateWikiPageDto/CreateWikiFolderDto (T2)
+Änderung: Drei Dialoge (shadcn-„SH"-Wrapper): Seite anlegen (Titel/Filename/Location/asIndex, indexSlugReserved-Fehler), Ordner anlegen (Name/Location), Löschen (Seite/Ordner-Bestätigung); rufen die Store-Aktionen (T17), Erfolg → Baum refresh + `wiki.notifications.pageSaved`.
+Verify: iter.sh → `npm run test:frontend -- WikiDialogs` (createPage ruft Store mit parentPath/title/asIndex; delete bestätigt; noLocationSelected blockt)
+i18n: `wiki.dialog.createPage.*`, `wiki.dialog.createFolder.*`, `wiki.dialog.delete.*`, `wiki.dialog.noLocationSelected`, `wiki.notifications.pageSaved` — DE+EN
+Doku: keine (intern)
+Abhängt von: T18
+
+### T21 — FE: TipTap-Editor (StarterKit + KaTeX + Toolbar)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/editor/WikiEditor.tsx · .../WikiEditorToolbar.tsx · package.json (@tiptap/*, prosemirror-*, katex) (+ *.spec.tsx)
+Soll: FE-Referenz wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Master-Plan §4.3 Zeile 224 (StarterKit „gut genug")
+Änderung: TipTap-Editor mit StarterKit (Überschriften/Listen/Fett/Kursiv/Code/Zitat), Tabellen-Extension, Codeblock-Highlight, KaTeX-Extension; Toolbar; Markdown-Serialisierung ↔ WikiPageDto.content. **Scope hart halten** (kein 1,35-MB-Nachbau, OF-4 via Baseline entscheiden).
+Verify: iter.sh → `npm run test:frontend -- WikiEditor` (StarterKit-Marks/Nodes verfügbar; KaTeX-Node rendert; Serialisierung roundtrip). crabbox-Screenshot Editor.
+i18n: `wiki.titlePlaceholder` + Toolbar-Labels — DE+EN
+Doku: Nutzer-Doku Editor — DE+EN, knapp
+Abhängt von: T19
+
+### T22 — FE: Speichern mit ETag + Konflikt-/Merge-UI + Draft-Recovery + Save-Status  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/{WikiConflictPanel,WikiDraftRecoveryBanner,WikiSaveStatus}.tsx (+ *.spec.tsx)
+Soll: FE-Referenz (i18n wiki.conflict.*/draftRecovery.*/saveStatus.*) · BE 409/428-Contract (T9/T13)
+Änderung: Speichern via updatePage (If-Match); bei 409 Konflikt-Panel mit `{ currentEtag, serverContent }` → keepMine/keepTheirs/manualMerge (Seed-Hint); bei 428 etag nachladen; lokaler Draft in localStorage → Recovery-Banner (restore/discard); Save-Status (saving/savedAt/error/conflict) + retrySave.
+Verify: iter.sh → `npm run test:frontend -- WikiConflict` (409→Konflikt-Panel mit drei Optionen; keepTheirs übernimmt serverContent; Draft überlebt Reload). crabbox: paralleler Edit provoziert 409.
+i18n: `wiki.conflict.*`, `wiki.draftRecovery.*`, `wiki.saveStatus.*`, `wiki.actions.retrySave` — DE+EN
+Doku: keine (intern)
+Abhängt von: T21
+
+### T23 — FE: Suche (Panel + Store-Aktion + degradierte UX)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/WikiSearch.tsx · Store-Aktion in useWikiStore (+ *.spec.tsx)
+Soll: BE search-Route (T11/T13) · WikiSearchResponseDto (T2) · FE-Referenz (i18n wiki.search.*)
+Änderung: Such-Panel (Query, Scope all/current), Store-Aktion `search()` (POST /wiki/search); Ergebnisliste mit Snippets/Score; Leer-/Degraded-/Unavailable-Zustände (unavailableShares + reason-Keys). Rate-Limit-Fehler (429) sauber melden.
+Verify: iter.sh → `npm run test:frontend -- WikiSearch` (Treffer rendern; unavailableShares zeigt Reason; leeres Ergebnis zeigt empty-State). OF-1: bei fehlendem fileproxy degraded-State verifizieren.
+i18n: `wiki.search.*` (inkl. scope.*, empty.*, degraded.*, unavailable.* + reasons.*) — DE+EN
+Doku: keine (intern)
+Abhängt von: T17, T21
+
+### T24 — FE: Bild-Upload im Editor nach WebDAV  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/editor/imageUpload.ts · WikiEditor-Integration (+ *.spec.tsx)
+Soll: FE-Referenz (wiki.attachmentPreview.title) · bestehende FileSharing-Upload-Wege
+Änderung: Bild-Einfügen im Editor lädt die Datei über die bestehende WebDAV/FileSharing-Upload-Kette in den `.wiki`-Ordner der Seite hoch und fügt die Markdown-Bildreferenz ein; Vorschau `wiki.attachmentPreview.title`.
+Verify: iter.sh → `npm run test:frontend -- imageUpload` (Upload ruft WebDAV-Pfad; Markdown erhält Bild-Referenz). crabbox: Bild erscheint in gerenderter Seite.
+i18n: `wiki.attachmentPreview.title` — DE+EN
+Doku: keine (intern)
+Abhängt von: T21
+
+### T25 — Voll-Stack-Smoke gegen echten LMN (Wiki e2e)  [ ]
+Komponente: scripts/crabbox · Dateien: — (Verifikationslauf, kein Feature-Code)
+Soll: /test-Skill (crabbox gegen echten LMN, Playwright-Screenshots + Visual-Diff)
+Änderung: Voll-Stack-Verifikation: Login → Wiki öffnen → Seite anlegen/bearbeiten/speichern → Ordner anlegen → Suche (oder degradierter State) → Share-Visibility-Toggle greift. Screenshots gegen frisch aufgenommene Baseline (fehlt in scratchpad/real). Migration001 im Upgrade-Harness bestätigen.
+Verify: /test — LMN-Login + Wiki-Modul-Flow grün; Visual-Diff im Toleranzrahmen; keine Guard-/Auth-Regression.
+i18n: keine
+Doku: docs/features/p3-wiki.md „Verifiziert"-Notiz — intern
+Abhängt von: T13, T15, T22, T23, T24
+
+## p4-mail-rework [P4] — Mail-Rework (BEIDES: nativer Client + SOGo-Iframe, EINE App, `ACTIVE_MAIL_CLIENT`-Selektor)
+_Ziel:_ Mail BEIDES: ACTIVE_MAIL_CLIENT-Selector (nativ⟷SOGo), phasiert + Mailcow-Admin · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 25
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-mail-rework.md` · Soll: Selektor-Präzedenz `ACTIVE_DOCUMENT_EDITOR` main.js:2114 (Key) · 26541-26542 (Lesung `?? ONLY_OFFICE`) · 27148-27152 (FILESHARING_DOCKER_CONTAINERS) · 27180-27184 (Const) · main.js:23140-24941 (MailsController, 36 Routen) · 23896 (MAIL_ENDPOINT_PATHS) · 25203/27545/28650/28907 (Services) · 32604 (MailRequestSizeGuard) · 4119 (Migration 012) · 2078-2117 (ExtendedOptionKeys) · 2158 (MAIL_DEFAULT_PORTS) · FE-Ist MailPage.tsx:24 / NativeFrameManager.tsx:64 / NativeAppPageManager.tsx:30-38 / NativeFrame.tsx:136-140 · upstream/997-mail-rework-imap-flow-and-add-additional-logging (nur Struktur-Referenz, 1.6-Zweig) · KEIN Baseline-Screenshot (scratchpad/real/ ohne Mail-Shot)
+
+> Kalibrierung (P4): geerdetes Rekonstruktions-Ledger, **phasiert**. Der Selektor (Phase 1) ist 1:1 aus
+> `ACTIVE_DOCUMENT_EDITOR` abgeleitet — dieselbe `extendedOption`-Plumbing, **aber ohne** Container-
+> Umschaltung (Kern-Asymmetrie: der Mail-Flag schaltet nur die FE-Oberfläche auf **einem** Mailcow-Stack).
+> BE (Routen/Guards/Migration/appconfig) ist gegen echtes 2.0 (`main.js`) mit Zeilenankern verifiziert.
+> Der native FE-Schnitt (Phase 3) erbt das Muster vom Chat-Piloten (Zustand-Store mit `eduApi`,
+> Native-Route statt `<NativeFrame>`, i18n-Sweep) und schärft sich nach P0-Drift. Abhängt-von-Paket:
+> p2-chat. Neue Dateien tragen AGPL-SPDX.
+
+> **GATE §9.10 — ENTSCHIEDEN:** Mail kann **BEIDES** (nativer Client + SOGo-Iframe) als **EINE App**, per
+> `ACTIVE_MAIL_CLIENT`-Selektor (`native` ⟷ `sogo`, Default `sogo`), **phasiert**. Die frühere Offene
+> Frage „nativ vs. Iframe vs. Split" **entfällt** — kein Task ist mehr `[?]`-gegated auf diese Frage.
+> **Zwei orthogonale Achsen:** (a) End-User-Webmail-Oberfläche = `native` ⟷ `sogo` (Selektor);
+> (b) Mailcow-Admin-Panel = **immer nativ, immer da**, nicht Teil des Selektors.
+> **Verbleibendes menschliches Go:** nur **vor Phase 3** (der teure/riskante native IMAP/SMTP-Client,
+> ~25–40 PT, keine FE-Source/Baseline). Phase 1/2/4-Mechanik ist entschieden.
+> **Phase 2 (Mailcow-Admin) liefert eigenständigen Wert, auch wenn Phase 3 nie kommt.**
+> Ehrlich: Der Selektor spart **keinen** PT am nativen Client — er macht ihn nur inkrementell mergebar,
+> pilotierbar und ein-Klick-rückrollbar (`ACTIVE_MAIL_CLIENT = sogo` = Kill-Switch/Rollback-Anker).
+
+---
+
+## Phase 1 — Selektor-Harness (SOGo bleibt Default, Dropdown noch versteckt)
+
+Mechanik steht, Verhalten **unverändert** (reiner SOGo-Iframe wie 1.6). Der Key wird **früh** eingeführt,
+die **UI-Wahl erst Phase 4** freigeschaltet (damit kein Admin auf eine leere native Shell flippt). Dieser
+Block ist das Merge-Sicherheitsnetz für Phase 2/3. Keine Migration, kein neuer Endpunkt.
+
+### T1 — libs: `ACTIVE_MAIL_CLIENT`-Const + Key + `getActiveMailClient`-Util  [ ]
+Komponente: libs/src/mail + libs/src/appconfig · Dateien: `libs/src/mail/constants/activeMailClient.ts` (neu), `libs/src/mail/utils/getActiveMailClient.ts` (neu), `libs/src/appconfig/constants/extendedOptionKeys.ts`
+Soll: main.js:27180-27184 (`ACTIVE_DOCUMENT_EDITOR = {ONLY_OFFICE,COLLABORA} as const` → Fork-Analog `ACTIVE_MAIL_CLIENT = {SOGO:'sogo',NATIVE:'native'}`) · main.js:2114 (Key im ExtendedOptionKeys-Objekt) · main.js:26541-26542 (Lesung mit Caller-Default `?? ONLY_OFFICE` → hier `?? SOGO`) · Fork-Util `libs/src/appconfig/utils/getExtendedOptionsValue.ts` (liefert `undefined`, kein Default)
+Änderung: (a) `activeMailClient.ts` = Const-Objekt + derived Type, **SOGO zuerst** (Default). (b) `ACTIVE_MAIL_CLIENT: 'ACTIVE_MAIL_CLIENT'` in `extendedOptionKeys.ts` neben die `MAIL_*`-Keys (Z.23-28) ergänzen — fließt automatisch in `ExtendedOptionKeysType`, **kein** DTO/Endpunkt. (c) `getActiveMailClient(appConfigs)` = Thin-Wrapper `getExtendedOptionsValue(appConfigs, APPS.MAIL, ExtendedOptionKeys.ACTIVE_MAIL_CLIENT) ?? ACTIVE_MAIL_CLIENT.SOGO` — **einziger** Lesepunkt (Drift-Schutz). SPDX-AGPL für neue Dateien. Const-Objekt statt enum (AGENTS.md).
+Verify: `npx nx run libs:typecheck` (remote via iter.sh) grün; `grep ACTIVE_MAIL_CLIENT libs/src/appconfig/constants/extendedOptionKeys.ts` findet den Key; `npm run test:frontend -- getActiveMailClient` grün (kein Key → `sogo`; Key `native` → `native`; Key `sogo` → `sogo`).
+i18n: keine
+Doku: keine (intern)
+
+### T2 — FE: A2-Schaltpunkte (NativeFrameManager + NativeAppPageManager + MailPage-Platzhalter)  [ ]
+Komponente: apps/frontend Native-Framing + Mail · Dateien: `apps/frontend/src/components/structure/framing/Native/NativeFrameManager.tsx`, `apps/frontend/src/components/structure/layout/NativeAppPageManager.tsx`, `apps/frontend/src/pages/Mail/MailPage.tsx`
+Soll: FE-Ist NativeFrameManager.tsx:64 (`case APPS.MAIL: return <MailPage/>`), NativeAppPageManager.tsx:30-38 (`nativeAppPages`-Map ohne MAIL), MailPage.tsx:24 (`<NativeFrame appName={APPS.MAIL}/>`). Beide Schaltpunkte lesen `getActiveMailClient` (T1) — dürfen **nicht** driften.
+Änderung: (a) `NativeFrameManager`: MAIL-Case gaten — SOGo-`<NativeFrame appName={APPS.MAIL}/>` **nur** wenn `getActiveMailClient(appConfigs) === SOGO`, sonst `null` (SOGo-Overlay-Persistenz via `loadedEmbeddedFrames` bleibt). (b) `NativeAppPageManager`: `[APPS.MAIL]` in `nativeAppPages` aufnehmen → native `MailPage`-Shell **nur** wenn `=== NATIVE`, sonst leere Route (SOGo-Overlay greift durch). (c) `MailPage.tsx`: von blankem `<NativeFrame>` → selektor-bewusste native Shell — **in Phase 1 nur Platzhalter** (`mail.emptyState.nativePlaceholder`), Layout-Slots (Sidebar | Liste | Detail) als Gerüst. **Rollback-Anker:** Ein-Zeilen-Revert auf `<NativeFrame appName={APPS.MAIL}/>`. SPDX bleibt.
+Verify: `npm run test:frontend -- NativeFrameManager NativeAppPageManager MailPage` grün (Selektor `sogo` → NativeFrameManager rendert SOGo-Frame, native Route null; `native` → native Shell, kein SOGo-Frame); crabbox-Deploy (iter.sh) → `/mail` zeigt weiterhin SOGo-Iframe (Default `sogo`, unverändert).
+i18n: `mail.emptyState.nativePlaceholder` DE+EN+FR
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — i18n: Selektor-Gerüst DE+EN+FR  [ ]
+Komponente: apps/frontend/src/locales · Dateien: `apps/frontend/src/locales/{de,en,fr}/translation.json`
+Soll: Feature-Gefälle native↔SOGo (Warnhinweis), Tab-/Deep-Link-Labels (Phase 4 vorbereitet). FR-Locale existiert bereits (`i18n.ts:35`).
+Änderung: Key-Gerüst anlegen: `appExtendedOptions.activeMailClientTitle`/`…Description`, `appExtendedOptions.activeMailClient.native`/`…sogo`, `appExtendedOptions.activeMailClientWarning` („SOGo-Filter/Abwesenheit sind im nativen Client nicht enthalten"), `mail.tabs.native`/`mail.tabs.sogo`, `mail.openInSogo.label`/`…tooltip`. **DE+EN+FR** gleichzeitig, konsistente Key-Menge in allen drei Dateien (pre-commit-Translation-Check).
+Verify: iter.sh → `npm run test:frontend`-Translation-Konsistenzcheck grün (gleiche Keys in de/en/fr); `grep -c activeMailClient` in jeder der drei Dateien identisch.
+i18n: die Keys selbst (DE+EN+FR)
+Doku: keine (intern)
+Abhängt von: T1
+
+### T4 — Doku: ADR `ACTIVE_MAIL_CLIENT` (Fork-Divergenz + Kill-Switch)  [ ]
+Komponente: docs/adr · Dateien: `docs/adr/0001-active-mail-client-selector.md` (neu; Verzeichnis neu)
+Soll: Spec §9.10 (Entscheidung „BEIDES, selektor-gegated"). Präzedenz `ACTIVE_DOCUMENT_EDITOR` (main.js:2114/26541/27148-27152/27180).
+Änderung: ADR festhalten: (a) `ACTIVE_MAIL_CLIENT` = **bewusste Fork-Divergenz** (2.0 hat SOGo gelöscht, ging voll-nativ; Fork erhält beides). (b) Selektor schaltet **nur die FE-Oberfläche**, **keine** Container (Asymmetrie zu `ACTIVE_DOCUMENT_EDITOR`) → **kein** 403-Route-Guard (YAGNI). (c) `ACTIVE_MAIL_CLIENT = sogo` = dokumentierter Kill-Switch/Rollback-Anker (Ops-Runbook). (d) Ungeschönte Kosten von „BEIDES": SOGo-Theme-Supply-Chain (main.js:25091-25092) bleibt, zweiter Iframe im Speicher, State-Drift native↔SOGo, Token-Rotations-Kante, permanente Wartungslast „jede 2.0-Mail-Änderung gegen SOGo-Pfad prüfen". (e) Per-User-Selektor = Zukunfts-Hook (`apps/api/src/user-preferences/`), nicht im Kern. Markdown, kein SPDX-Header nötig (Doku).
+Verify: `ls docs/adr/0001-active-mail-client-selector.md`; enthält Abschnitte Entscheidung/Kontext/Konsequenzen/Kill-Switch; Review-Gegencheck gegen Spec §9.10.
+i18n: keine
+Doku: ist die Doku
+Abhängt von: —
+
+---
+
+## Phase 2 — Mailcow-Admin nativ (flag-unabhängig)
+
+Erster **realer** Zusatznutzen von „BEIDES": SOGo-Webmail (Default) **plus** natives Mailcow-Admin — genau
+das, was SOGo **nicht** kann. Komplett unabhängig vom Selektor und von Phase 3; jederzeit lieferbar. Alle
+Admin-Routen hinter `AdminGuard`. Keine Migration.
+
+### T5 — libs: MAIL_ENDPOINT_PATHS + MAIL_DEFAULT_PORTS + sync-jobs-Drift  [ ]
+Komponente: libs/src/mail/constants · Dateien: `libs/src/mail/constants/mailEndpointPaths.ts` (neu), `libs/src/mail/constants/mailDefaultPorts.ts` (neu), `libs/src/mail/constants/mail-endpoint.ts`
+Soll: main.js:23896 (`MAIL_ENDPOINT_PATHS`: MAILBOXES/MESSAGES/OUTBOX/DRAFTS/STATUS/DESTINATION/ATTACHMENTS/SYNC_JOBS/PROVIDER_CONFIG/PUBLIC/MAILCOW_MAILBOXES/ACL/DELEGATES/FOLDERS/DOMAINS/RECIPIENTS/SEARCH) · main.js:2158 (`MAIL_DEFAULT_PORTS`: IMAP_SSL 993, SMTP_SUBMISSION 587, SMTPS_IMPLICIT_TLS 465)
+Änderung: Beide `as const`-Objekte neu anlegen (SPDX-AGPL). `SYNC_JOBS: 'sync-jobs'` (Plural) — Contract-Drift zum Fork-`sync-job`; Fork-Endpunkt in T14/T18 angleichen.
+Verify: `npx nx run libs:typecheck` (remote) grün; `grep -c "'" libs/src/mail/constants/mailEndpointPaths.ts` == 17 Werte; `grep SYNC_JOBS libs/src/mail/constants/mailEndpointPaths.ts` findet `'sync-jobs'`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: —
+
+### T6 — libs: Mailcow-Admin-DTOs  [ ]
+Komponente: libs/src/mail/types · Dateien: `mailcowDomain.dto.ts`, `createMailbox.dto.ts`, `updateMailbox.dto.ts`, `deleteMailboxes.dto.ts`, `mailboxAcl.dto.ts`, `mailboxDelegates.dto.ts` (neu)
+Soll: main.js:23665-23842 (getMailcowDomains/getMailcowMailboxes/createMailcowMailbox/updateMailcowMailbox/deleteMailcowMailboxes/updateMailboxAcl/listMailboxFolders/getSharedMailboxes/getMailboxDelegates/setMailboxDelegates/deleteSharedMailbox)
+Änderung: Mailcow-Admin-DTOs aus den Route-Signaturen rekonstruieren (class-validator), SPDX-AGPL.
+Verify: `npx nx run libs:typecheck` grün; `ls libs/src/mail/types | grep -iE "mailcowDomain|createMailbox|mailboxAcl|Delegates"` == 4 Treffer.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5
+
+### T7 — BE: Mailcow-Admin-Service + Routen (AdminGuard)  [ ]
+Komponente: apps/api/src/mails · Dateien: `apps/api/src/mails/mailcow-admin.service.ts` (neu), `mails.controller.ts`, `mails.module.ts`
+Soll: main.js:23665-23842 (Routen 25-30, 32-36, **alle `AdminGuard`**) — Mailcow-Admin-API (Domains/Mailboxen CRUD/ACL/Delegates/Folders). Admin-Logik liegt in `main.js` in `MailsService`; hier für Kohäsion als eigener Service (Contract unverändert). Guard `apps/api/src/common/guards/admin.guard.ts`.
+Änderung: `mailcow-admin.service.ts` + 12 Admin-Routen auf `MailsController`, **jede** mit `AdminGuard`. Mailcow-API-Key aus Env (kein neues Secret). DI in `mails.module.ts`. SPDX-AGPL für neue Datei.
+Verify: `npx nx test api --testPathPattern=mailcow` grün; supertest: `GET /mails/mailcow-mailboxes/domains` als Nicht-Admin → 403, als Admin → 200; `POST /mails/mailcow-mailboxes` legt Mailbox an (gemockte Mailcow-API); `GET` ohne Token → 401.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T6
+
+### T8 — FE: Mailcow-Admin-Panel (Domains/Mailboxen/ACL/Delegates)  [ ]
+Komponente: apps/frontend/src/pages/Mail/admin (Settings/Admin) · Dateien: `apps/frontend/src/pages/Mail/admin/MailcowAdminPanel.tsx` (neu), Store `apps/frontend/src/pages/Mail/useMailsStore.ts`
+Soll: main.js:23665-23842 (Admin-Routen 25-36, `AdminGuard`). Live-2.0-Referenz (Admin-Panel). **Selektor-unabhängig** — in beiden Modi (`native`/`sogo`) sichtbar.
+Änderung: Admin-Panel (Domains-Liste, Mailbox-CRUD-Tabelle, ACL-Editor, Delegates-Verwaltung) — nur für Admin sichtbar (Rollen-Gate FE), Store-Actions über `eduApi` gegen `mailcow-mailboxes/*` (`MAIL_ENDPOINT_PATHS`, T5). `cn()`, SH-Wrapper (AGENTS.md). SPDX-AGPL. **Additiver Wert neben SOGo — der Kern von Phase 2.**
+Verify: crabbox als Admin → Domains/Mailboxen laden (`GET /mails/mailcow-mailboxes[/domains]`), Mailbox-Anlegen `POST`; als Nicht-Admin nicht sichtbar/403; `npx nx test frontend --testPathPattern=MailcowAdmin` grün.
+i18n: `mailcowAdmin.*` (domains/mailboxes/acl/delegates/create/update/delete) DE+EN+FR
+Doku: kurzer Mailcow-Admin-Abschnitt (docs/, DE+EN+FR)
+Abhängt von: T5, T7
+Abhängt von: p2-chat (FE-Store-/Panel-Muster)
+
+---
+
+## Phase 3 — Nativer IMAP/SMTP-Webmail-Client hinter dem Flag (Default bleibt `sogo`)
+
+> **GATE — menschliches Go erforderlich, bevor Phase 3 startet.** Teurer/riskanter Block (~25–40 PT),
+> keine FE-Source/kein Baseline. Jede FE-Komponente landet **default-off** (Selektor bleibt `sogo`),
+> pilotierbar per Seed/DB (`ACTIVE_MAIL_CLIENT: 'native'` auf einer Instanz). Mail ist zu keinem Zeitpunkt
+> kaputt. **Die einzige Migration des gesamten Rework liegt hier (T16).**
+
+### T9 — Deps: nodemailer + mailparser  [ ]
+Komponente: root package.json · Dateien: `package.json`
+Soll: Master-Plan §7 (nodemailer 8.0.5, mailparser 3.9.8); main.js-Service-Imports (MailSmtpService/MailImapService). `imapflow`, `@types/imapflow`, `@types/mailparser` sind bereits vorhanden.
+Änderung: `nodemailer@^8.0.5` + `mailparser@^3.9.8` als Runtime-Deps ergänzen (Typen bereits da). `npm install` remote, Lockfile aktualisieren.
+Verify: `grep -E "nodemailer|mailparser" package.json` findet beide; `npx nx build api` (remote) resolved die Imports.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: —
+
+### T10 — libs: IMAP-Client-DTOs  [ ]
+Komponente: libs/src/mail/types · Dateien: `mail-detail.dto.ts`, `mailbox.dto.ts`, `folderAction.dto.ts`, `deleteMails.dto.ts`, `moveMails.dto.ts`, `updateMailStatus.dto.ts`, `sendMail.dto.ts`, `saveDraft.dto.ts`, `recipient.dto.ts`, `mailProviderPublicConfigResponse.dto.ts` (neu; `mail.dto.ts` erweitern)
+Soll: main.js:23140-24941 (Handler-Signaturen: getMailDetail/listMailboxes/getMailsByFolder(folder,page,limit,query,unreadOnly)/deleteMails/moveMails(destination)/updateStatus(status)/createFolder/renameFolder/downloadAttachment/sendMail/saveDraft/replaceDraft/searchRecipients(q)/getPublicMailProviderConfigs)
+Änderung: DTOs mit `class-validator`-Decorators aus den Route-Signaturen rekonstruieren, SPDX-AGPL. `mailProviderPublicConfigResponse` = nur `id`/`name`/`label` (main.js:23543 ApiResponse).
+Verify: `npx nx run libs:typecheck` grün; `ls libs/src/mail/types | grep -E "sendMail|moveMails|mail-detail"` == 3 Treffer.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5
+
+### T11 — BE: MailRequestSizeGuard  [ ]
+Komponente: apps/api/src/mails/guards · Dateien: `apps/api/src/mails/guards/mail-request-size.guard.ts` (neu)
+Soll: main.js:32604 (`MailRequestSizeGuard`) — Body-/Anhang-Größen-Limit auf outbox/drafts.
+Änderung: Guard rekonstruieren (Größen-Schwelle/Env wie im Original), SPDX-AGPL. Wird in T14 auf `outbox`/`drafts` verdrahtet.
+Verify: `npx nx test api --testPathPattern=mail-request-size` grün — Unit-Test: Body über Limit → `PayloadTooLargeException`, unter Limit → pass.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: —
+
+### T12 — BE: MailImapService (IMAP-Client via imapflow)  [ ]
+Komponente: apps/api/src/mails · Dateien: `apps/api/src/mails/mail-imap.service.ts` (neu), `mails.module.ts`
+Soll: main.js:27545 (`MailImapService`) — listMailboxes/getMailsByFolder/getMailDetail/createFolder/deleteFolder/renameFolder/moveMails/updateStatus/deleteMails/downloadAttachment/searchRecipients. imapflow-Connection-Pooling + Timeout (`EDUI_MAIL_IMAP_TIMEOUT`), MIME via `mailparser`.
+Änderung: Service rekonstruieren, DI in `mails.module.ts` (`providers`), Wiederverwendung der bestehenden `MailIdleService`-Connection-Logik wo sinnvoll. SPDX-AGPL.
+Verify: `npx nx test api --testPathPattern=mail-imap` grün (gemockte imapflow-Connection: listMailboxes liefert Ordnerbaum, getMailsByFolder paginiert, updateStatus setzt Flags).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T9, T10
+
+### T13 — BE: MailSmtpService (SMTP via nodemailer)  [ ]
+Komponente: apps/api/src/mails · Dateien: `apps/api/src/mails/mail-smtp.service.ts` (neu), `mails.module.ts`
+Soll: main.js:28650 (`MailSmtpService`) — sendMail/saveDraft/replaceDraft, MIME-Aufbau inkl. Anhänge, Signatur (`MAIL_SIGNATURE`).
+Änderung: Service rekonstruieren, DI registrieren. Host/Port/TLS aus appconfig (nach T16-Migration). SPDX-AGPL.
+Verify: `npx nx test api --testPathPattern=mail-smtp` grün (gemockter nodemailer-Transport: sendMail baut korrekten Envelope inkl. cc/bcc/attachments; saveDraft legt Draft an).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T9, T10
+
+### T14 — BE: IMAP-Client-Routen auf MailsController  [ ]
+Komponente: apps/api/src/mails · Dateien: `apps/api/src/mails/mails.controller.ts`
+Soll: main.js:23307-23842 (Routen 2-14, 31 + Public-Provider 15; sync-job→sync-jobs Angleichung Route 19-21). Guards: globale JWT + `MailRequestSizeGuard` auf outbox(12)/drafts(13,14).
+Änderung: 14 IMAP-Client-/Recipients-/Public-Provider-Routen ergänzen, an `MailImapService`/`MailSmtpService` delegieren, `MailRequestSizeGuard` auf outbox/drafts. Fork-`sync-job`-Route auf `sync-jobs` umbenennen. **Kein** selektor-abhängiger Guard (Routen laufen unabhängig vom Flag). SPDX bleibt (Datei existiert).
+Verify: `npx nx test api --testPathPattern=mails.controller` grün; e2e/supertest: `GET /mails/mailboxes` ohne Token → 401; `POST /mails/outbox` mit Übergroß-Body → 413.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T11, T12, T13
+
+### T15 — libs+BE: appconfig-Mail-Key-Set (URL→HOST-Split)  [ ]
+Komponente: libs/src/appconfig + apps/api · Dateien: `libs/src/appconfig/constants/extendedOptionKeys.ts`, `libs/src/appconfig/constants/extendedOptions/mailGeneralExtendedOptions.ts`, `libs/src/appconfig/constants/defaultAppConfig.ts`, `apps/api/src/appconfig/initializeCollection.ts`
+Soll: main.js:2078-2117 (`MAIL_IMAP_HOST/PORT`, `MAIL_SMTP_HOST/PORT`, `MAIL_TLS_REJECT_UNAUTHORIZED`, `MAIL_MAILBOX_TABLE`, `MAIL_SIGNATURE`, `MAIL_PROVIDER_CONFIG_TABLE`; Entfall `MAIL_IMAP_URL/…_SECURE`)
+Änderung: Key-Set angleichen (Fork hat `MAIL_IMAP_URL/PORT/SECURE/TLS_REJECT`), Form-Felder in `mailGeneralExtendedOptions` (IMAP/SMTP Host+Port, TLS-Toggle, Signatur, Mailbox-Table/Provider-Config-Table). Fresh-Install-`defaultAppConfig` nachziehen. SOGo-Theme-Keys **und** `ACTIVE_MAIL_CLIENT` (T1) bleiben. Optional: `ACTIVE_MAIL_CLIENT: 'sogo'` im `defaultAppConfig` seeden.
+Verify: `npx nx run libs:typecheck` grün; `grep -E "MAIL_SMTP_HOST|MAIL_MAILBOX_TABLE|MAIL_SIGNATURE" libs/src/appconfig/constants/extendedOptionKeys.ts` == 3 Treffer; `! grep MAIL_IMAP_SECURE` (entfernt).
+i18n: neue Keys `appExtendedOptions.mailImapHost*/mailSmtpHost*/mailTlsReject*/mailSignature*` DE+EN+FR
+Doku: Ops-Runbook-Zeile (Mail-appconfig-Keys) DE+EN+FR
+Abhängt von: T5
+
+### T16 — BE: forward-only appConfig-Migration (unify-mail-server-config) + schemaVersion++  [ ]
+Komponente: apps/api/src/appconfig/migrations · Dateien: `apps/api/src/appconfig/migrations/migration012.ts` (neu), `appConfigMigrationsList.ts`
+Soll: main.js:4119 (`012-unify-mail-server-config`) — ABER angepasst: Fork-Baseline (`MAIL_IMAP_URL/PORT/SECURE/TLS_REJECT`, **kein** SMTP) → 2.0-Key-Set **getrennt** (`MAIL_IMAP_HOST/PORT` + `MAIL_SMTP_HOST/PORT` + `MAIL_TLS_REJECT_UNAUTHORIZED`), `MAIL_IMAP_SECURE` entfernen, Ports aus URL/`MAIL_DEFAULT_PORTS` ableiten. Fork-appConfig-Migrationsstand = `009`.
+Änderung: Migration forward-only über alle appConfig-Docs, **`schemaVersion++`** (AGENTS.md-Pflicht), in `appConfigMigrationsList.ts` registrieren. **NICHT** upstream-`012` blind portieren (erzeugt falsches `MAIL_HOST`). Nummer per p0-migrations-inventory (010/011 vorher?). SPDX-AGPL.
+Verify: `npx nx test api --testPathPattern=migration012` grün — Fixture mit `MAIL_IMAP_URL=imaps://mail:993` → nach Migration `MAIL_IMAP_HOST=mail`, `MAIL_IMAP_PORT=993`, kein `MAIL_IMAP_SECURE`, `schemaVersion` inkrementiert.
+i18n: keine
+Doku: keine (intern; Migrations-Hinweis in p1-migration-upgrade-test)
+Abhängt von: T15
+
+### T17 — FE: Baseline-Screenshot 2.0-Mail aufnehmen  [ ]
+Komponente: scratchpad/real · Dateien: `scratchpad/real/19-mail.png` (neu)
+Soll: Live-2.0-crabbox (kein vorhandener Baseline-Shot). Referenz für Visual-Diff der nativen FE.
+Änderung: Playwright-Login → Mail-Modul auf laufender 2.0-Referenz-Instanz, Screenshot ablegen (siehe /test). Kein Code.
+Verify: `ls scratchpad/real/19-mail.png` existiert; Shot zeigt nativen 2.0-Client (Ordnerbaum/Liste), nicht SOGo-Iframe.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: —
+
+### T18 — FE: MailsStore + eduApi-Actions  [ ]
+Komponente: libs/src/mail/types + apps/frontend/src/pages/Mail · Dateien: `libs/src/mail/types/mailsStore.ts`, `apps/frontend/src/pages/Mail/useMailsStore.ts`
+Soll: main.js:23140-24941 (Client-Routen) — Store-Actions: listMailboxes/getMailsByFolder/getMailDetail/moveMails/updateStatus/deleteMails/createFolder/deleteFolder/renameFolder/sendMail/saveDraft/replaceDraft/searchRecipients. Muster wie p2-chat-Store (`eduApi` im Zustand-Store, AGENTS.md).
+Änderung: `MailsStore`-Interface + Store-Actions über `eduApi` gegen `MAIL_ENDPOINT_PATHS` erweitern, `sync-job`→`sync-jobs` angleichen. `ResponseType.BLOB` für Anhang-Download, `handleApiError`. SPDX bleibt.
+Verify: `npx nx test frontend --testPathPattern=useMailsStore` grün (gemockter eduApi: getMailsByFolder befüllt State, sendMail postet an `outbox`).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5, T10, T14
+Abhängt von: p2-chat (FE-Store-Muster)
+
+### T19 — FE: MailPage native Shell (ersetzt Phase-1-Platzhalter)  [ ]
+Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/MailPage.tsx`
+Soll: Live-2.0 (native Route) + Baseline-Shot (T17). Phase 1 (T2) hat MailPage bereits selektor-verdrahtet mit Platzhalter — hier die echte Shell.
+Änderung: Platzhalter durch native Shell ersetzen (Layout: Ordnerbaum-Slot | Listen-Slot | Detail-Slot, Compose-Trigger). Selektor-Gating (nur `=== NATIVE`) bleibt aus T2. **Rollback-Anker** (Ein-Zeilen-Revert auf `<NativeFrame>`) bleibt gültig. SPDX bleibt.
+Verify: crabbox-Deploy mit `ACTIVE_MAIL_CLIENT=native` (Seed) → `/mail` rendert native Shell (kein SOGo-Iframe); mit Default `sogo` → weiterhin SOGo; Playwright-Diff gegen `scratchpad/real/19-mail.png` (Grobstruktur).
+i18n: `mail.emptyState.*` DE+EN+FR
+Doku: keine (intern)
+Abhängt von: T2, T17, T18
+
+### T20 — FE: Ordnerbaum / Mailbox-Sidebar  [ ]
+Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/components/MailFolderTree.tsx` (neu)
+Soll: main.js:listMailboxes/createFolder/deleteFolder/renameFolder. Live-2.0-Referenz.
+Änderung: Ordnerbaum-Komponente (Inbox/Sent/Drafts/Trash/Junk/Archive + Custom-Folder), Kontext-Aktionen (anlegen/umbenennen/löschen) via Store. `cn()`, SH-Wrapper (AGENTS.md). SPDX-AGPL.
+Verify: crabbox → Ordnerbaum listet Mailboxen, Ordner-Anlegen legt Ordner an (Netzwerk-Tab: `POST /mails/mailboxes`); `npx nx test frontend --testPathPattern=MailFolderTree` grün.
+i18n: `mail.folders.*` (inbox/sent/drafts/trash/junk/archive), `mail.folderActions.*` DE+EN+FR
+Doku: keine (intern)
+Abhängt von: T19
+
+### T21 — FE: Mailliste (paginiert, unread-Filter, Suche, Bulk-Aktionen)  [ ]
+Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/components/MailList.tsx` (neu)
+Soll: main.js:getMailsByFolder(folder,page,limit,query,unreadOnly)/moveMails/updateStatus/deleteMails.
+Änderung: virtualisierte/paginierte Liste mit Zeilenauswahl, Bulk move/delete/mark-read/flag, Suchfeld, Unread-Toggle. Store-Actions. SPDX-AGPL.
+Verify: crabbox → Liste paginiert, „als gelesen" setzt Flag (`PATCH /mails/messages/status`), Verschieben ruft `PATCH /mails/messages/destination`; `npx nx test frontend --testPathPattern=MailList` grün.
+i18n: `mail.list.*`, `mail.actions.*` DE+EN+FR
+Doku: keine (intern)
+Abhängt von: T20
+
+### T22 — FE: Detailansicht + Anhang-Download  [ ]
+Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/components/MailDetail.tsx` (neu)
+Soll: main.js:getMailDetail(uid,folder)/downloadAttachment(uid,partId,folder).
+Änderung: Detailansicht (Header/From/To/Datum, HTML-/Text-Body sanitisiert, Anhang-Liste mit Download), Reply/Forward-Trigger (öffnet Compose T23). SPDX-AGPL.
+Verify: crabbox → Mail öffnen zeigt Body; Anhang-Klick lädt `GET /mails/messages/:uid/attachments/:partId`; `npx nx test frontend --testPathPattern=MailDetail` grün.
+i18n: `mail.detail.*`, `mail.attachments.*` DE+EN+FR
+Doku: keine (intern)
+Abhängt von: T21
+
+### T23 — FE: Compose-Dialog + Entwürfe + Empfänger-Suche  [ ]
+Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/components/MailCompose.tsx` (neu)
+Soll: main.js:sendMail/saveDraft/replaceDraft/searchRecipients(q). Anhänge über `MailRequestSizeGuard`-Limit.
+Änderung: Compose-Dialog (to/cc/bcc mit Empfänger-Autocomplete, subject, Body-Editor, Anhänge, Signatur), Senden/Entwurf-speichern/Entwurf-ersetzen. Reply/Forward-Prefill aus T22. SPDX-AGPL.
+Verify: crabbox → Senden ruft `POST /mails/outbox` (Mail kommt an), Entwurf `POST /mails/drafts`, Empfänger-Autocomplete `GET /mails/recipients/search`; `npx nx test frontend --testPathPattern=MailCompose` grün.
+i18n: `mail.compose.*` (to/cc/bcc/subject/body/attach/send/saveDraft) DE+EN+FR
+Doku: kurze Webmail-Nutzer-Doku (docs/, DE+EN+FR) — Hinweis „nativer Client neben SOGo"
+Abhängt von: T22
+
+---
+
+## Phase 4 — Endbild + Default-Flip (SOGo als „Erweitert"-Tab)
+
+„BEIDES" wird für den **Nutzer** real: nativer Client als Landing + SOGo als eingebetteter Escape-Hatch.
+Dropdown wird sichtbar geschaltet, Default flippt auf `native`. SOGo bleibt permanent wählbarer Wert
+(Kill-Switch). Keine Migration.
+
+### T24 — libs+FE: Selektor-Dropdown sichtbar + Default → `native`  [ ]
+Komponente: libs/src/appconfig + libs/src/mail · Dateien: `libs/src/appconfig/constants/extendedOptions/mailGeneralExtendedOptions.ts`, `libs/src/mail/constants/activeMailClient.ts` (Default-Kommentar), `libs/src/appconfig/constants/defaultAppConfig.ts`
+Soll: Muster `MAIL_SOGO_THEME`-Dropdown (`mailGeneralExtendedOptions.ts:28-41`). Spec §9.10 Phase 4.
+Änderung: Dropdown-Eintrag `ACTIVE_MAIL_CLIENT` einhängen: `type: ExtendedOptionField.dropdown`, `value: ACTIVE_MAIL_CLIENT.NATIVE`, `options: [{id:native, name:'appExtendedOptions.activeMailClient.native'}, {id:sogo, name:'appExtendedOptions.activeMailClient.sogo'}]`, Warnhinweis `appExtendedOptions.activeMailClientWarning`. **Ohne** `requiredContainers` (native Option nicht am SOGo-Container). Fresh-Install-`defaultAppConfig` auf `native`. `getActiveMailClient`-Fallback bleibt `?? SOGO` (Bestandsinstanzen ohne gesetzten Key behalten SOGo — bewusst konservativ).
+Verify: `npx nx run libs:typecheck` grün; crabbox-Fresh-Install → Mail-Settings zeigt Dropdown mit Optionen native/sogo, Default native; Bestandsinstanz ohne Key → weiterhin `sogo`.
+i18n: Dropdown-Labels bereits aus T3 (DE+EN+FR) — nur ggf. Warnhinweis-Feinschliff
+Doku: Ops-Runbook: Default-Flip + Kill-Switch-Zeile DE+EN+FR
+Abhängt von: T1, T3, T19
+
+### T25 — FE: SOGo als „Erweitert"-Tab + „In SOGo öffnen"-Deep-Links + Token-Rotations-Watcher  [ ]
+Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/MailPage.tsx`, `apps/frontend/src/pages/Mail/components/MailSogoTab.tsx` (neu)
+Soll: Auth-Handoff `NativeFrame.tsx:136-140` (`eduApiToken` in Proxy-URL), Single-Logout `scriptOnStop`, Deep-Link `useFrameDeepLinkSync`/`FRAME_URL_SYNC_*` (`apps/frontend/src/hooks/useFrameDeepLinkSync.ts`). Spec §9.10 „Erweitert"-Modell.
+Änderung: Im nativen Shell (Modus `native`) SOGo als lazy-gemounteten „Erweitert"-Tab einbetten (bleibt danach `display:none`-gemountet → kein Re-Auth). Empfohlen: echte Subroute `/mail` (nativ) / `/mail/erweitert` (SOGo) für Back-Button/teilbare Links. „In SOGo öffnen"-Deep-Links aus Detail/Aktionen (Filter/Abwesenheit). **Token-Rotations-Watcher:** Iframe-Reload bei JWT-Rotation (sonst veraltet die SOGo-Session — Token re-injiziert nicht automatisch). SPDX-AGPL für neue Datei.
+Verify: crabbox `ACTIVE_MAIL_CLIENT=native` → „Erweitert"-Tab lädt SOGo mit gültigem Token, Hin/Her ohne Re-Login; „In SOGo öffnen" öffnet SOGo (grob im Zielmodul); nach simulierter Token-Rotation lädt der Iframe neu; `npx nx test frontend --testPathPattern=MailSogoTab` grün.
+i18n: `mail.tabs.native`/`mail.tabs.sogo`, `mail.openInSogo.*` (aus T3, DE+EN+FR)
+Doku: Webmail-Nutzer-Doku: „SOGo als Erweitert-Tab / In SOGo öffnen" DE+EN+FR
+Abhängt von: T19, T24
+
+## p4-filesharing-wopi [P4] — Filesharing / WOPI / Collabora-Editing + ACTIVE_DOCUMENT_EDITOR
+_Ziel:_ Filesharing/WOPI/Collabora + ACTIVE_DOCUMENT_EDITOR-Selektor · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 14
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-filesharing-wopi.md` · Soll: main.js:2114/27180 · main.js:26538/27148 · main.js:40352/43199 · main.js:37560/37726 · main.js:42259/42468 · main.js:1726 (== appconfig.service.ts:258) · 1.6-Source apps/api/src/filesharing/onlyoffice.service.ts, apps/frontend/.../FilePreview/OnlyOffice · scratchpad/real/*
+
+> Kalibrierung (P4): geerdetes Rekonstruktions-Ledger. Granularität schärft sich nach P0-Basis-Drift
+> (echtes 1.6→2.0-Delta im `filesharing`-Ordner) + Chat-Pilot (p2). Kein dedizierter Rescue-Branch für
+> Collabora/WOPI → Rekonstruktion aus main.js (API) + 1.6-OnlyOffice-Analogie. FE-Preview hat keinen
+> main.js-Anker (main.js = API-Bundle).
+
+---
+
+### T1 — libs: neue ExtendedOptionKeys COLLABORA_URL / COLLABORA_WOPI_SECRET / ACTIVE_DOCUMENT_EDITOR  [ ]
+Komponente: libs · Dateien: libs/src/appconfig/constants/extendedOptionKeys.ts
+Soll: main.js:2112–2114
+Änderung: Die drei Keys ans `ExtendedOptionKeys`-const-Objekt anhängen (String == Name, wie im Original). Kein neuer Typ nötig (`ExtendedOptionKeysType` leitet ab).
+Verify: `npm run build` (tsc über libs) grün; grep zeigt alle 3 Keys; `npm run lint` sauber.
+i18n: keine
+Doku: keine (intern)
+
+### T2 — libs: ACTIVE_DOCUMENT_EDITOR-const + FILESHARING_DOCKER_CONTAINERS-Map  [ ]
+Komponente: libs · Dateien: libs/src/filesharing/constants/activeDocumentEditor.ts (neu), libs/src/docker/constants/filesharingDockerContainers.ts (neu)
+Soll: main.js:27180–27184 (`ACTIVE_DOCUMENT_EDITOR = { ONLY_OFFICE:'onlyoffice', COLLABORA:'collabora' }`), main.js:27148–27151 (Map → `edulution-onlyoffice`/`edulution-collabora`)
+Änderung: const-Objekt `ACTIVE_DOCUMENT_EDITOR` (kein enum) + Map `FILESHARING_DOCKER_CONTAINERS` keyed über die Editor-Werte. Beide Dateien mit AGPL-SPDX-Header (Kevin Stenzel).
+Verify: `npm run build` grün; Map-Keys == `ACTIVE_DOCUMENT_EDITOR`-Werte (tsc-Typcheck).
+i18n: keine
+Doku: keine (intern)
+
+### T3 — libs: WOPI-Konstanten + COLLABORA_TOKEN-Endpoint + FILE_PREVIEW_TYPE.COLLABORA  [ ]
+Komponente: libs · Dateien: libs/src/filesharing/constants/wopi.ts (neu), libs/src/filesharing/constants/fileSharingApiEndpoints.ts, libs/src/filesharing/types/filePreviewType.ts
+Soll: main.js:40457–40462 (`WOPI_TOKEN_EXPIRY='24h'`, `WOPI_TOKEN_TTL_MS=86400000`, `WOPI_BASE_PATH='wopi/files'`), main.js:37726 (`COLLABORA_TOKEN='collabora-token'`), main.js:27180 (`COLLABORA:'collabora'`)
+Änderung: `wopi.ts` neu (AGPL-SPDX); `COLLABORA_TOKEN`-Eintrag ins Endpoint-Enum; `COLLABORA:'collabora'` in `FILE_PREVIEW_TYPE`.
+Verify: `npm run build` grün; grep bestätigt die 3 neuen Werte.
+i18n: keine
+Doku: keine (intern)
+
+### T4 — libs: Collabora-/WOPI-DTOs & Typen  [ ]
+Komponente: libs · Dateien: libs/src/filesharing/types/collaboraTokenBodyDto.ts (neu), collaboraTokenResponseDto.ts (neu), wopiTokenPayload.ts (neu), wopiFileInfo.ts (neu)
+Soll: main.js:42259–42271 (Response: accessToken, accessTokenTTL), main.js:42468–42475 (Body: filePath, share, canWrite?), main.js:43208–43223 (WopiFileInfo-Felder), main.js:40376–40385 (Payload: username, filePath, share, canWrite, origin, jti)
+Änderung: 4 Typ-/DTO-Dateien mit AGPL-SPDX. Body-DTO mit class-validator (`@IsString` filePath/share) analog bestehender Filesharing-DTOs.
+Verify: `npm run build` grün; `npm run lint` sauber.
+i18n: keine
+Doku: keine (intern)
+
+### T5 — BE: CollaboraService (WOPI-Token, FileStat, Validierung)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/filesharing/collabora.service.ts (neu), apps/api/src/filesharing/collabora.service.spec.ts (neu)
+Soll: main.js:40352–40447
+Änderung: `CollaboraService` (Injectable) mit `getWopiSecret` (aus `extendedOptions[COLLABORA_WOPI_SECRET]`, sonst `AppNotProperlyConfigured`), `generateWopiToken` (JWT sign mit Secret, `expiresIn=WOPI_TOKEN_EXPIRY`, Payload inkl. `origin` aus `EDULUTION_BASE_DOMAIN`, `jti=randomUUID`, Path-Traversal-Guard `filePath.includes('..')`), `getFileStat` (PROPFIND via WebDavService), `validateWopiToken` (JWT verify → 401 `WopiTokenInvalid`). AGPL-SPDX. Deps: AppConfigService, JwtService, WebDavService, WebdavSharesService (wie main.js-Konstruktor).
+Verify: `npm run test:api -- collabora.service` — Token-Roundtrip (sign→verify) grün; `..`-Pfad → BadRequest; fehlender Secret → CustomHttpException 500.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T3, T4
+
+### T6 — BE: WopiController (@Public, Token-Auth) + Modul-Registrierung  [ ]
+Komponente: apps/api · Dateien: apps/api/src/filesharing/wopi.controller.ts (neu), apps/api/src/filesharing/wopi.controller.spec.ts (neu), apps/api/src/filesharing/filesharing.module.ts
+Soll: main.js:43199–43328 (`@Controller('wopi/files')`; `checkFileInfo` `GET :fileId`, `getFile` `GET :fileId/contents`, `putFile` `POST :fileId/contents`; alle `@Public`), main.js:37232 (Controller-Liste)
+Änderung: Controller mit **allen drei Methoden `@Public()`** (Guard-Bypass beabsichtigt, Auth ausschließlich über `access_token`→`validateWopiToken`); `putFile` prüft `tokenData.canWrite` (403) und streamt `req` an `WebDavService.uploadFile`; `getFile` streamt WebDAV→`res` (octet-stream). `WopiController` in `filesharing.module.ts` als Controller registrieren. AGPL-SPDX.
+Verify: `npm run test:api -- wopi.controller` — fehlendes/ungültiges Token → 401; read-only-Token auf `putFile` → 403; gültiges Token → CheckFileInfo-JSON. Assert: `@Public`-Metadata an allen 3 Handlern gesetzt.
+i18n: neue Keys `WopiTokenInvalid` (falls in T5 noch nicht) DE+EN — siehe T13
+Doku: keine (intern)
+Abhängt von: T5
+
+### T7 — BE: filesharing.service.getCollaboraToken + collabora-token-Route  [ ]
+Komponente: apps/api · Dateien: apps/api/src/filesharing/filesharing.service.ts, apps/api/src/filesharing/filesharing.controller.ts, apps/api/src/filesharing/filesharing.module.ts
+Soll: main.js:38597–38598 (`getCollaboraToken(username, filePath, share)` → `collaboraService.generateWopiToken`), main.js:37560–37572 (`POST collabora-token`, Body + `@GetCurrentUsername`), main.js:37236 (Provider-Liste)
+Änderung: `CollaboraService` als Provider in `filesharing.module.ts`; `getCollaboraToken` in `filesharing.service.ts` (delegiert an CollaboraService); `POST collabora-token`-Route (kein `@Public`, normale eingeloggte Route) in `filesharing.controller.ts` mit `CollaboraTokenBodyDto`.
+Verify: `npm run test:api -- filesharing` grün; eingeloggter POST `collabora-token` liefert `{accessToken, accessTokenTTL}`; ohne Session 401 (Guard greift).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5
+
+### T8 — BE: DockerService.resolveContainerName — Editor-Container-Auflösung  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.ts, libs/src/docker/constants/dockerApplicationList.ts
+Soll: main.js:26538–26545 (FILE_SHARING → `FILESHARING_DOCKER_CONTAINERS[activeEditor]`, Default `ONLY_OFFICE`; sonst `dockerApplicationList[app] ?? app`)
+Änderung: `resolveContainerName(applicationName)`: bei `APPS.FILE_SHARING` `activeEditor` aus Filesharing-appconfig `extendedOptions[ACTIVE_DOCUMENT_EDITOR]` (Default `ONLY_OFFICE`) → `FILESHARING_DOCKER_CONTAINERS[activeEditor]`; sonst bisherige Auflösung. Aufrufer im DockerService auf `resolveContainerName` umstellen. `dockerApplicationList.filesharing`-Eintrag als Fallback belassen (siehe Spec-Offene-Frage 6).
+Verify: `npm run test:api -- docker.service` — FILE_SHARING + `collabora` → `edulution-collabora`; ohne Key → `edulution-onlyoffice`; Nicht-Filesharing-App → unveränderte Auflösung.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2
+
+### T9 — BE: Non-Admin-Maskierung auf COLLABORA_WOPI_SECRET ausweiten (Fork-Härtung)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/appconfig/appconfig.service.ts, apps/api/src/appconfig/appconfig.service.spec.ts
+Soll: main.js:1726 (== bestehende Zeile appconfig.service.ts:258 `delete extendedOptions.ONLY_OFFICE_JWT_SECRET`) — Fork-Erweiterung, nicht im Original
+Änderung: In `getAppConfigs` Non-Admin-Zweig zusätzlich `delete extendedOptions.COLLABORA_WOPI_SECRET`. (Keine Migration — rein Response-Maskierung.) Siehe Spec-Offene-Frage 1: am Gate freigegeben.
+Verify: `npm run test:api -- appconfig.service` — Non-Admin-`getAppConfigs` enthält weder `ONLY_OFFICE_JWT_SECRET` noch `COLLABORA_WOPI_SECRET`; Admin-Zweig enthält beide.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T10 — libs: COLLABORA_EXTENDED_OPTIONS + Editor-Selektor + Sektions-Key  [ ]
+Komponente: libs · Dateien: libs/src/appconfig/constants/extendedOptions/collabora.ts (neu), libs/src/appconfig/constants/appConfigSectionsKeys.ts
+Soll: Analogie libs/src/appconfig/constants/extendedOptions/onlyOffice.ts; Keys main.js:2112–2114
+Änderung: `COLLABORA_EXTENDED_OPTIONS: AppConfigExtendedOption[]` mit `COLLABORA_URL` (input) + `COLLABORA_WOPI_SECRET` (password) + `ACTIVE_DOCUMENT_EDITOR` (`ExtendedOptionField.dropdown`, Optionen onlyoffice/collabora, Default onlyoffice), i18n-Title/Description-Keys. Sektions-Key `collabora` (bzw. `documentEditor`, siehe Spec-Offene-Frage 2) in `appConfigSectionsKeys.ts`. AGPL-SPDX für die neue Datei.
+Verify: `npm run build` grün; `npm run lint` sauber.
+i18n: siehe T13 (Titel/Beschreibungen)
+Doku: keine (intern)
+Abhängt von: T1
+
+### T11 — FE Settings: Collabora-Optionen + Editor-Selektor an FILE_SHARING registrieren  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/appConfigOptions.ts
+Soll: bestehende `APPS.FILE_SHARING`-Registrierung (appConfigOptions.ts:106–112, Sektionen fileSharing + onlyOffice)
+Änderung: unter `APPS.FILE_SHARING` die neue Sektion `[AppConfigSectionsKeys.collabora]: COLLABORA_EXTENDED_OPTIONS` ergänzen (Import + Eintrag). Kein Umbau der bestehenden onlyOffice-Sektion.
+Verify: `npm run test:frontend -- appConfigOptions` (neuer Test: FILE_SHARING enthält collabora-Sektion) grün; `npm run build` grün.
+i18n: siehe T13
+Doku: keine (intern)
+Abhängt von: T10
+
+### T12 — FE: useCollabora-Hook + Collabora-Preview-Komponente  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/FileSharing/hooks/useCollabora.ts (neu), apps/frontend/src/pages/FileSharing/FilePreview/Collabora/Collabora.tsx (neu), zugehöriger Store (neu)
+Soll: WOPI-Contract (T3/T4) + Collabora-Online-SDK (`cool.html?WOPISrc=<edu-api>/wopi/files/<fileId>` + `access_token`-Form-POST) + Analogie apps/frontend/src/pages/FileSharing/hooks/useOnlyOffice.ts / FilePreview/OnlyOffice/OnlyOffice.tsx — **kein main.js-Anker** (API-Bundle)
+Änderung: Hook holt Token via `POST filesharing/collabora-token` (eduApi im Store, gemäß AGENTS.md), baut Collabora-URL aus `COLLABORA_URL` + WOPISrc; Komponente rendert den WOPI-Iframe und postet `access_token`. AGPL-SPDX für neue Dateien. eduApi-Aufrufe im Zustand-Store, nicht in der Komponente.
+Verify: `npm run test:frontend -- useCollabora` (neuer Test: baut korrekte WOPISrc/URL aus Config, ruft collabora-token) grün.
+i18n: siehe T13
+Doku: keine (intern)
+Abhängt von: T3, T7, T11
+
+### T13 — FE: FileRenderer-Editor-Auswahl (OnlyOffice ↔ Collabora) + i18n  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/FileSharing/FilePreview/FileRenderer.tsx, apps/frontend/src/locales/de/translation.json, apps/frontend/src/locales/en/translation.json
+Soll: bestehende Auswahl FileRenderer.tsx:126–127 (`isOnlyOfficeDocument && isOnlyOfficeConfigured → FILE_PREVIEW_TYPE.ONLY_OFFICE`); Selektor-Wert aus appconfig `extendedOptions[ACTIVE_DOCUMENT_EDITOR]`
+Änderung: Bei Office-Dokument den aktiven Editor aus der Filesharing-appconfig lesen: `collabora` (+ konfiguriert) → `FILE_PREVIEW_TYPE.COLLABORA` (rendert `Collabora`), sonst bisher `ONLY_OFFICE`. Alle neuen i18n-Keys DE+EN pflegen: `appExtendedOptions.collaboraUrl(Title)`, `collaboraWopiSecret(Title|Description)`, `activeDocumentEditor(Title|Description)`, Editor-Option-Labels, Sektionstitel `collabora`, Filesharing-`WopiTokenInvalid`.
+Verify: `npm run test:frontend -- FileRenderer` (Office-Doc + activeEditor=collabora → Collabora, sonst OnlyOffice) grün; `npm run check-translations` (DE/EN-Parität) grün.
+i18n: alle o. g. Keys, DE+EN (Pflicht)
+Doku: keine (intern)
+Abhängt von: T3, T12
+
+### T14 — Doku: Dokumenteneditor wählen (OnlyOffice/Collabora)  [ ]
+Komponente: docs · Dateien: docs/ (DE+EN, passender Admin-Abschnitt)
+Soll: Spec „Doku-Impact"
+Änderung: Kurzer Admin-Abschnitt: Editor-Umschalter, `COLLABORA_URL`/`COLLABORA_WOPI_SECRET` setzen, Contract zum Collabora-Container-Secret (App-Store-Rollout). Kein neuer Env-Default.
+Verify: `npm run check-translations` unberührt; Doku-Links auflösbar; Review bestätigt Vollständigkeit.
+i18n: Doku DE+EN
+Doku: docs/ DE+EN
+Abhängt von: T13
+
+## p4-app-store-verify [P4] — App-Store-/DockerService-Engine (Verify + 2.0-Drift)
+_Ziel:_ DockerService-App-Store auf 2.0-Parität + Store-Fetch-Contract · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 17
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-app-store-verify.md` · Soll: main.js:26371–26787 (DockerService) · main.js:32732–32853 (DockerController) · main.js:27112–27336 (Listen/Helper) · main.js:33073–33101 (DTO) · kein dedizierter upstream/-Rescue-Branch (Bestandscode seit 1.6) · scratchpad/real/18-settings.png
+
+> Kalibrierung P4: T1–T11 = 2.0-Drift-Close (Rekonstruktion aus main.js), **provisorisch hier
+> verortet** — Zuschnitt/Zuordnung (P0-Engine-Paket vs. P4) schärft sich nach der
+> P0-Basis-Drift-Analyse. T12–T17 = committer P4-Verify-Kern (End-to-End-Rollout auf crabbox).
+> Abhängt-von (Paket): p1-installer-repoint (EDU_PLUGINS-Repoint) · Schwester-Paket
+> Filesharing/Collabora-Toggle (ACTIVE_DOCUMENT_EDITOR-Key).
+
+---
+
+### T1 — libs: Docker-Konstanten für Editor-Split + Moodle  [ ]
+Komponente: libs · Dateien: libs/src/docker/constants/{filesharingDockerContainers.ts (neu), activeDocumentEditor.ts (neu), dockerApplicationList.ts}
+Soll: main.js:27147 (FILESHARING_DOCKER_CONTAINERS) · main.js:27180 (ACTIVE_DOCUMENT_EDITOR) · main.js:27118 (learningmanagement:'edulution-moodle')
+Änderung: `ACTIVE_DOCUMENT_EDITOR` als const-Objekt (`{ONLY_OFFICE:'onlyoffice', COLLABORA:'collabora'}`) + abgeleiteter Typ; `FILESHARING_DOCKER_CONTAINERS` mappt Editor→Containername (`edulution-onlyoffice`/`edulution-collabora`); `learningmanagement:'edulution-moodle'` in DOCKER_APPLICATION_LIST ergänzen.
+Verify: `scripts/crabbox/iter.sh cmd 'npx nx test frontend -- docker'` grün + `iter.sh lint`; Assertion: Import von `FILESHARING_DOCKER_CONTAINERS[ACTIVE_DOCUMENT_EDITOR.COLLABORA] === 'edulution-collabora'`.
+i18n: keine
+Doku: keine (intern)
+
+### T2 — libs: Env-Var-Pattern + Moodle-Secret-Liste  [ ]
+Komponente: libs · Dateien: libs/src/docker/constants/{dockerComposeEnvVarPattern.ts (neu), moodleGenerateSecrets.ts (neu)}
+Soll: main.js:27243 (`/\${([^}]+)}/g`) · main.js:27212 (MOODLE_GENERATE_SECRETS)
+Änderung: `DOCKER_COMPOSE_ENV_VAR_PATTERN = /\${([^}]+)}/g` als Default-Export; `MOODLE_GENERATE_SECRETS = ['MOODLE_DB_PASSWORD','MOODLE_DB_ROOT_PASSWORD','KEYCLOAK_MOODLE_CLIENT_SECRET']` als const-Array.
+Verify: `iter.sh lint` + Import in einem bestehenden Spec smoke-getestet; Assertion: Pattern matcht `${FOO:-bar}` → Gruppe `FOO:-bar`.
+i18n: keine
+Doku: keine (intern)
+
+### T3 — BE: ensureKeycloakClient-Util (Moodle-Provisionierung)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/utils/ensureKeycloakClient.ts (neu)
+Soll: main.js:27299–27336 (ensureKeycloakClient) · main.js:27214 (KEYCLOAK_MOODLE_CLIENT_SECRET)
+Änderung: Util, das den Keycloak-Client `edulution-moodle` idempotent anlegt (oder bestehenden nutzt) und das Client-Secret zurückgibt; bestehende KC-Admin-Helfer/Env (`KEYCLOAK_*`) wiederverwenden (vor Neuanlage im Code nach vorhandenem KC-Admin-Client suchen). Realm-Management-/Account-Rollen zuweisen wie Soll.
+Verify: `iter.sh test:api -- ensureKeycloakClient` (Unit mit gemocktem KC-Client) grün; Assertion: bei existierendem Client kein Create, Secret wird durchgereicht.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: —
+
+### T4 — Contract: containerName in CreateContainerDto  [ ]
+Komponente: libs · Dateien: libs/src/docker/types/create-container.dto.ts
+Soll: main.js:33073–33101 (CreateContainerRequestDto mit containerName) · main.js:26617 (Service-Destructuring)
+Änderung: Feld `@IsString() containerName: string;` zur DTO ergänzen (zwischen applicationName und containers). Contract-Drift schließen (BE↔libs↔FE).
+Verify: `iter.sh cmd 'npx nx build api'` grün; `iter.sh test:api -- docker.controller` (POST mit fehlendem containerName → 400).
+i18n: keine
+Doku: docs/features/p4-app-store-verify.md-Verweis (Contract) — knapp im selben Commit.
+Abhängt von: —
+
+### T5 — BE: resolveContainerName + migrateDockerComposeFiles (async onModuleInit)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.ts (+ ggf. libs/src/appconfig/constants/extendedOptionKeys.ts)
+Soll: main.js:26522 (migrateDockerComposeFiles) · main.js:26538 (resolveContainerName) · main.js:26382 (async onModuleInit) · main.js:2114 (extendedOptionKeys.ACTIVE_DOCUMENT_EDITOR)
+Änderung: `resolveContainerName(app)` — FILE_SHARING → `FILESHARING_DOCKER_CONTAINERS[activeEditor]` aus `appConfig.extendedOptions[ACTIVE_DOCUMENT_EDITOR]` (Default `ONLY_OFFICE`), sonst `DOCKER_APPLICATION_LIST[app] ?? app`; `migrateDockerComposeFiles()` verschiebt `apps/<app>/docker-compose.yml`→`apps/<app>/<container>/docker-compose.yml` (idempotent, `moveSync`/`ensureDirSync`/`existsSync`); `onModuleInit` async + `await this.migrateDockerComposeFiles()` vor `listenToDockerEvents()`.
+Verify: `iter.sh test:api -- docker.service` grün; Assertion: resolveContainerName('filesharing') respektiert gesetzten Editor, sonst ONLY_OFFICE; Migration verschiebt nur wenn Ziel fehlt.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+Hinweis: `ACTIVE_DOCUMENT_EDITOR`-extendedOptionKey liefert idealerweise das Schwester-Paket; fehlt er, bare Key-Konstante hier ergänzen (Offene Frage 2 der Spec).
+
+### T6 — BE: readSavedEnvValues + saveDockerCompose(containerName) + createContainer(containerName)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.ts
+Soll: main.js:26485 (readSavedEnvValues) · main.js:26601 (saveDockerCompose mit containerName/Subdir) · main.js:26617 (createContainer sequenzielles reduce)
+Änderung: `readSavedEnvValues(app, container, keys)` liest Envs aus persistierter `apps/<app>/<container>/docker-compose.yml`; `saveDockerCompose` nimmt `containerName` und schreibt in Subdir; `createContainer` destrukturiert `containerName`, reicht ihn an replaceEnvVariables/saveDockerCompose durch und erzeugt Container **sequenziell** (`reduce`, nicht `Promise.all`) für stabile Reihenfolge.
+Verify: `iter.sh test:api -- docker.service` grün; Assertion: Compose landet unter `<app>/<container>/docker-compose.yml`; readSavedEnvValues liefert persistierte Keys zurück.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4, T5
+
+### T7 — BE: replaceEnvVariables-Ausbau (Moodle + :- -Defaults + deep resolve)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.ts
+Soll: main.js:26547–26600 (replaceEnvVariables) · main.js:26550 (Moodle-Case) · main.js:26576 (resolveVar/:- + resolveVarsInValue)
+Änderung: `replaceEnvVariables(dto, app, container)`: LEARNING_MANAGEMENT-Case (Moodle-Secrets aus `readSavedEnvValues` ∪ `generateSecureToken`, `KEYCLOAK_MOODLE_CLIENT_ID/SECRET` via `ensureKeycloakClient`); WireGuard-Case behalten; Env-Auflösung auf `DOCKER_COMPOSE_ENV_VAR_PATTERN` + `:-`-Default-Syntax umstellen; `resolveVarsInValue` rekursiv über Strings/Arrays/Objekte (nicht nur `Env`).
+Verify: `iter.sh test:api -- docker.service` grün; Assertion: `${FOO:-def}` ohne Env → `def`; Moodle-Case ruft ensureKeycloakClient und persistiert stabile Secrets über zwei Aufrufe.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2, T3, T6
+
+### T8 — BE: DockerController Contract-Parität (@ApiAuth + Swagger-Response-DTOs)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/docker.controller.ts (+ ggf. libs/src/docker/types/*response.dto.ts neu)
+Soll: main.js:32846 (@ApiAuth + @UseGuards(AdminGuard)) · main.js:32835 (@Public auf Agent-Route) · main.js:32757ff (ApiResponse-DTOs)
+Änderung: `@ApiAuth()` auf Klassenebene ergänzen (AdminGuard + Public bleiben unverändert!); Swagger `@ApiResponse`/`@ApiBody`-DTOs (ContainerResponse/CreateContainerRequest/UpdateContainerResponse) mitführen. **Guards nicht anfassen außer Ergänzung** — Auth-Bypass-Risiko.
+Verify: `iter.sh cmd 'npm run check-swagger'` grün (falls verfügbar) + `iter.sh test:api -- docker.controller`; Assertion: Agent-Route bleibt `@Public` + IP-Check, restliche Routen AdminGuard.
+i18n: keine
+Doku: Swagger-Notiz (containerName) — knapp.
+Abhängt von: T4
+
+### T9 — FE: containerName im createAndRunContainer-Payload  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/useDockerApplicationStore.ts
+Soll: main.js:26617 (Service erwartet containerName) · 1.6-Store useDockerApplicationStore.ts:105–118
+Änderung: `createAndRunContainer` nimmt/sendet `containerName` im Body; für `filesharing` den Containernamen über `FILESHARING_DOCKER_CONTAINERS[activeEditor]` auflösen (Default ONLY_OFFICE), sonst `DOCKER_APPLICATION_LIST[app]`. Store-Typ (`DockerContainerTableStore`) entsprechend erweitern.
+Verify: `iter.sh test:frontend -- useDockerApplicationStore` grün; Assertion: POST-Body enthält `containerName` passend zum aufgelösten Editor.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4, T1
+
+### T10 — FE: CreateDockerContainerDialog reicht containerName durch  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/CreateDockerContainerDialog.tsx
+Soll: 1.6 CreateDockerContainerDialog.tsx:119–128 (containerName lokal berechnet, aber nicht gesendet)
+Änderung: den bereits berechneten `containerName` an `createAndRunContainer` übergeben; für `filesharing` den Editor-Resolver aus T9 nutzen statt hart `DOCKER_APPLICATION_LIST[settingLocation]`.
+Verify: `iter.sh test:frontend -- CreateDockerContainerDialog` grün; Assertion: Dialog-Submit ruft Store mit korrektem containerName.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T9
+
+### T11 — Store-Fetch-Contract gegen eigenen Endpoint + CSP-Entscheidung  [?]
+Komponente: apps/frontend (+ ggf. apps/api bei Proxy) · Dateien: useDockerApplicationStore.ts · (bei Proxy: neuer BE-Route + DTO)
+Soll: urls.ts:21 (EDU_PLUGINS_GITHUB_URL) · Consumer useDockerApplicationStore.ts:153/183 · Spec Trade-off 1
+Änderung: den in p1-installer-repoint umgebogenen `EDU_PLUGINS_GITHUB_URL` konsumieren; FE-nginx-`connect-src` gegen den Mirror-Host prüfen. **Falls CSP/CORS blockt → BE-Proxy** (`GET docker/app-store/:app/compose`) als getrenntes BE→FE-Paar (dann eigene Tasks abspalten).
+Verify: `iter.sh deploy` + `iter.sh shots`, Browser-Netzwerk: Compose-Fetch liefert 200 vom eigenen Endpoint (kein `raw.githubusercontent.com/edulution-io`); DevTools/CSP-Log ohne `connect-src`-Violation.
+i18n: keine
+Doku: docs/features/p4-app-store-verify.md Offene Frage 1 auflösen (Entscheidung dokumentieren).
+Abhängt von: p1-installer-repoint (Paket)
+
+### T12 — BE-Unit-Tests DockerService (Kernpfade)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.spec.ts (neu/erweitert)
+Soll: main.js:26485/26538/26547 (readSavedEnvValues/resolveContainerName/replaceEnvVariables)
+Änderung: Jest-Specs mit gemocktem dockerode/SSE/AppConfig/Keycloak: resolveContainerName (Editor-Split + Default), readSavedEnvValues (persistierte Keys), replaceEnvVariables (`:-`-Default, Moodle-Secret-Persistenz, WireGuard-Key), checkProtectedContainer (403).
+Verify: `iter.sh test:api -- docker.service` grün; Coverage der neuen Methoden > 0, alle Assertions oben abgedeckt.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T5, T6, T7
+
+### T13 — Voll-Stack: OnlyOffice über die UI ausrollen  [ ]
+Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
+Soll: DOCKER_APPLICATION_LIST/filesharing + FILESHARING_DOCKER_CONTAINERS.ONLY_OFFICE (main.js:27149)
+Änderung: keine Code-Änderung — End-to-End-Rollout: als Global-Admin `filesharing` mit Editor=ONLY_OFFICE über App-Store/DockerIntegration ausrollen.
+Verify: `iter.sh deploy` (Stack hoch) → Rollout auslösen → `iter.sh cmd 'docker ps --filter name=edulution-onlyoffice --format "{{.Names}} {{.Status}}"'` zeigt laufenden Container; `iter.sh cmd 'ls data/apps/filesharing/edulution-onlyoffice/docker-compose.yml'` existiert; `iter.sh shots` Screenshot Settings/App-Store.
+i18n: keine
+Doku: keine (Verify-Log)
+Abhängt von: T7, T9, T11
+
+### T14 — Voll-Stack: Collabora über die UI ausrollen (Editor-Umschaltung)  [ ]
+Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
+Soll: FILESHARING_DOCKER_CONTAINERS.COLLABORA='edulution-collabora' (main.js:27150) · resolveContainerName (main.js:26538)
+Änderung: keine Code-Änderung — `filesharing`-AppConfig `extendedOptions.ACTIVE_DOCUMENT_EDITOR=collabora` setzen, ausrollen; prüft den Editor-Split-Resolver end-to-end.
+Verify: `iter.sh cmd 'docker ps --filter name=edulution-collabora --format "{{.Names}} {{.Status}}"'` läuft; Compose unter `data/apps/filesharing/edulution-collabora/`; kein `edulution-onlyoffice` doppelt gestartet.
+i18n: keine
+Doku: keine (Verify-Log)
+Abhängt von: T13
+
+### T15 — Voll-Stack: Moodle (learningmanagement) über die UI ausrollen  [?]
+Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
+Soll: learningmanagement→edulution-moodle (main.js:27118) · Moodle-Case replaceEnvVariables (main.js:26550) · ensureKeycloakClient (main.js:27299)
+Änderung: keine Code-Änderung — `learningmanagement` ausrollen; validiert Moodle-Secret-Generierung + Keycloak-Client-Provisionierung + Secret-Persistenz.
+Verify: `iter.sh cmd 'docker ps --filter name=edulution-moodle --format "{{.Names}} {{.Status}}"'` läuft; Keycloak-Client `edulution-moodle` existiert (KC-Admin-API oder Realm-Export); zweiter Rollout würfelt Secrets nicht neu (readSavedEnvValues); `iter.sh shots`.
+i18n: neue Keys nur falls Moodle-Provisioning-Feedback ergänzt (dann DE+EN)
+Doku: Betriebsnotiz „Moodle braucht KC-Admin + persistierte Secrets" (DE+EN, knapp)
+Abhängt von: T7, T15-Blocker: KC-Admin-Creds auf crabbox (Spec Offene Frage 3)
+
+### T16 — Voll-Stack: Guacamole (desktopdeployment) über die UI ausrollen  [ ]
+Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
+Soll: desktopdeployment→edulution-guacamole (main.js:27115) · EDULUTION_GUACAMOLE_ADMIN_* (Plan §2.6/main.js:36013)
+Änderung: keine Code-Änderung — `desktopdeployment` ausrollen; validiert generischen Rollout ohne Sonderpfad + Guacamole-Admin-Env-Auflösung.
+Verify: `iter.sh cmd 'docker ps --filter name=edulution-guacamole --format "{{.Names}} {{.Status}}"'` läuft; Compose persistiert; keine ungelösten `${…}`-Platzhalter in `data/apps/desktopdeployment/edulution-guacamole/docker-compose.yml`.
+i18n: keine
+Doku: keine (Verify-Log)
+Abhängt von: T7, T9, T11
+
+### T17 — Voll-Stack: Container-Lifecycle + Protected-Guard + SSE-Update  [ ]
+Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
+Soll: executeContainerCommand/checkProtectedContainer (main.js:26647) · SSE CONTAINER_UPDATE (main.js:26411) · deleteContainer (main.js:26690)
+Änderung: keine Code-Änderung — an einem ausgerollten Container start/stop/restart/kill/delete über die UI; geschützten Container (z. B. edulution-manager) zu killen/löschen versuchen → 403; SSE-Update-Event beobachten.
+Verify: `iter.sh cmd '<curl gegen docker/container/:id/stop … via Admin-Token>'` bzw. UI-Aktion → `docker ps` reflektiert Zustand; Protected-Container liefert 403; Container-Tabelle aktualisiert sich live (SSE CONTAINER_UPDATE im Netzwerk-Log).
+i18n: keine (Sektion docker.status/events bereits DE+EN vorhanden)
+Doku: keine (Verify-Log)
+Abhängt von: T13
+
+## p5-calendar [P5] — Calendar
+_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 18
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main.js:33176-33381 (Module/Controller) · 33439-34752 (Enums/Schemas/Service/IcalMapper) · 35267-35925 (DTOs) · 2085-2087 (appconfig-Keys) · kein Rescue-Branch · kein scratchpad/real/*calendar* (FE = laufende 2.0-crabbox als Live-Referenz)
+
+> P5-Kalibrierungs-Notiz: Geerdetes Rekonstruktions-Ledger. BE-Anker sind aus main.js
+> verifiziert; die **FE-Task-Granularität (T13–T18) schärft sich nach der P0-Basis-Drift-Analyse
+> + dem Chat-Piloten (p2-chat)**. Gesamt-Paket **Abhängt von: p2-chat** (Pilot validiert das
+> End-to-End-Rezept: Migration/Auth/Store/Verify), bevor dieses teure Modul startet.
+
+---
+
+### T1 — libs/calendar: Konstanten & Enums  [ ]
+Komponente: libs · Dateien: libs/src/calendar/constants/{calendar-endpoint,calendar-error-messages,recurrenceEditScope,calendarEventClassification,calendarEventTransparency,calendarTag,calendarSharePermission,calendarShareSubjectType,calDavAuthMode}.ts
+Soll: main.js:33409-33412 (Endpoint) · 34086-34096 (Errors) · 33439-33443, 35661, 35693, 34154, 34779, 34813, 34055 (Enums)
+Änderung: Shared Endpoint-/Error-Message-Konstanten + sieben const-Objekte (keine enums, AGENTS.md) 1:1 aus main.js anlegen; Werte exakt (z. B. CalendarTag.TIMETABLE='timetable', RecurrenceEditScope THIS/THIS_AND_FOLLOWING/ALL). Neue Dateien ⇒ SPDX AGPL-3.0-or-later, Copyright Kevin Stenzel.
+Verify: `npm run lint` sauber; Node-Assert `require`/`import` liefert CALENDAR_ENDPOINT==='calendar' und Object.values(RecurrenceEditScope).length===3 (Mini-Vitest oder `tsx`-Snippet remote).
+i18n: keine
+Doku: keine (intern)
+
+### T2 — libs/calendar: Shared Types  [ ]
+Komponente: libs · Dateien: libs/src/calendar/types/*.ts (calendar, calendarEvent, calendarShare, calendarEventAttendee, recurrenceEdit) + index.ts
+Soll: main.js:35267-35925 (DTO-Felder als Interface-Vorlage) · 34666-34752 (Metadata/ShareEntry-Felder)
+Änderung: TypeScript-Interfaces für Calendar/Event/Share/Attendee/RecurrenceEdit anlegen, die DTO (BE) und Store (FE) gemeinsam nutzen; Feldnamen exakt zu den DTOs (uid/calendarId/summary/start/end/allDay/rrule/… bzw. subjectId/subjectType/label/permission). Neue Dateien ⇒ SPDX.
+Verify: `npm run lint`; `npx tsc --noEmit` (bzw. nx typecheck) grün remote.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T3 — libs/appconfig: CALENDAR registrieren  [ ]
+Komponente: libs · Dateien: libs/src/appconfig/constants/apps.ts, extendedOptionKeys.ts, appConfigSectionsKeys.ts
+Soll: main.js:2085-2087 (CALENDAR_CALDAV_*) · apps.ts-Pattern (bestehende Einträge) · 33531 (getAppConfigByName(APPS.CALENDAR))
+Änderung: `APPS.CALENDAR='calendar'`; `ExtendedOptionKeys.CALENDAR_CALDAV_BASE_URL/_AUTH_MODE/_REJECT_UNAUTHORIZED`; `AppConfigSectionsKeys.calendar='calendar'`. Nur bestehende const-Objekte erweitern (kein neues File).
+Verify: `npm run lint`; Assert APPS.CALENDAR==='calendar'.
+i18n: keine
+Doku: keine (intern)
+
+### T4 — Root-Dependencies: tsdav, ical.js, undici, rrule  [ ]
+Komponente: root · Dateien: package.json (ggf. package-lock.json)
+Soll: main.js:59729 (2.0-Root-pkg: tsdav ^2.1.0, ical.js ^2.1.0, undici ^6.21.0, rrule ^2.8.1) — alle in 1.6 MISSING
+Änderung: `tsdav`, `ical.js`, `undici` (BE) + `rrule` (FE) in dependencies aufnehmen, Versionen an 2.0 angelehnt; `npm install` remote. Supply-Chain/Contract-Task (Security-Track: neue Dep-Fläche, s. Plan §5.1).
+Verify: `npm install` remote erfolgreich; `npm run build:api` (importierbar) grün.
+i18n: keine
+Doku: keine (intern)
+
+### T5 — api/calendar: DTOs (Kalender)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/dto/{calendar-response.dto,create-calendar-body.dto,calendar-share-body.dto,calendar-tags-body.dto}.ts
+Soll: main.js:35267 (CalendarResponseDto), 35835 (CreateCalendarBodyDto), 35364 (CalendarShareBodyDto), 35911 (CalendarTagsBodyDto)
+Änderung: Vier DTOs mit exakten class-validator-Dekoratoren (IsString/IsNotEmpty/IsOptional/IsHexColor/IsArray/ValidateNested/IsIn gegen SHARE_PERMISSIONS/SHARE_SUBJECT_TYPES/CALENDAR_TAG_VALUES) und ApiProperty aus main.js. Shared Types aus T2 verwenden. Neue Dateien ⇒ SPDX.
+Verify: `npm run test:api` (DTO-Validierungs-Spec: gültige/ungültige Payloads); `npm run lint`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T2
+
+### T6 — api/calendar: DTOs (Events)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/dto/{calendar-event-response.dto,calendar-event-body.dto,calendar-event-attendee.dto,recurrence-edit.dto}.ts
+Soll: main.js:35420 (EventResponse), 35517 (EventBody), 35772 (Attendee), 35728 (RecurrenceEdit)
+Änderung: Event-DTOs 1:1: EventBody mit IsISO8601 (start/end/exdate[]), IsBoolean allDay, IsOptional rrule, IsIn classification/transparency, IsHexColor color, ValidateNested attendees[]/organizer/recurrenceEdit + Type()-Transform. RecurrenceEditDto (scope IsIn, occurrenceStart IsISO8601). Neue Dateien ⇒ SPDX.
+Verify: `npm run test:api` (Spec: RRULE-String + ISO-Zeiten akzeptiert, Bad-Enum abgelehnt); `npm run lint`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T2
+
+### T7 — api/calendar: Mongoose-Schema CalendarMetadata  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/{calendar-metadata.schema.ts,calendar-share-entry.schema.ts}
+Soll: main.js:34666-34692 (CalendarMetadata) · 34726-34752 (CalendarShareEntry)
+Änderung: `CalendarMetadata` (`@Schema({timestamps:true})`: calendarId required+unique+index, ownerUsername optional, shares [CalendarShareEntry] default [], tags [String] default []); eingebettetes `CalendarShareEntry` (`@Schema({_id:false})`: subjectId, subjectType default USER, label default '', permission default VIEW). Neue Dateien ⇒ SPDX. **Keine** Änderung an Fremd-Schemas → kein schemaVersion-Bump (s. Spec offene Frage 1).
+Verify: `npm run test:api` (SchemaFactory kompiliert, unique-Index auf calendarId gesetzt); `npm run lint`.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1
+
+### T8 — api/calendar: IcalMapper (Parse/Serialize + Serien-Engine)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/ical.mapper.ts, apps/api/src/calendar/ical.mapper.spec.ts
+Soll: main.js:34194ff (IcalMapper: parseIcsToEvent, serializeEventToIcs, extractUid, mapVeventToEventFields, parseAttendee, addExdate, upsertOccurrenceOverride, clipRrule, buildForkedSeriesIcs, applyFullSeriesEdit, occurrenceBeforeIso, icalTimeToIso, toIcalTime)
+Änderung: iCal-Mapper über `ical.js` nachbauen: VEVENT↔Event-Feld-Mapping (inkl. RRULE/EXDATE/RECURRENCE-ID/allDay/attendees/color) und die Serien-Chirurgie für die drei Recurrence-Scopes. Neue Dateien ⇒ SPDX. **Test zuerst grün** (heikelster Teil, s. Spec-Risiko): ICS-Fixtures für ALL (Full-Series-Edit), THIS (EXDATE + Override), THIS_AND_FOLLOWING (Clip + Fork).
+Verify: `npm run test:api` — ical.mapper.spec deckt alle 3 Scopes + all-day/timed + roundtrip parse→serialize→parse ab.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2, T4
+
+### T9 — api/calendar: CalendarService — Backend-Config + Kalender-Ops  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/calendar.service.ts, apps/api/src/calendar/calendar.service.spec.ts
+Soll: main.js:33515-33543 (updateBackendConfig/onModuleInit) · 33676 (listCalendars) · 33719 (createCalendar) · 33711 (setCalendarTags) · 33567 (DAVClient) · 33549 (undici Agent)
+Änderung: Service-Skelett + CalDAV-Client-Aufbau (tsdav DAVClient, authMethod Basic/Digest, undici-Agent für rejectUnauthorized); Backend-Config aus appConfig.extendedOptions (onModuleInit + Reaktion auf appconfig-Update-Event); listCalendars (Owner/Subscribed-Heuristik, Metadata-Merge), createCalendar (CalDAV makeCalendar + Metadata-Write mit Rollback), setCalendarTags (Metadata-Update). CustomHttpException mit calendar.errors.*-Keys. Neue Dateien ⇒ SPDX.
+Verify: `npm run test:api` — Service-Spec mit gemocktem DAVClient + gemocktem CalendarMetadataModel: BackendNotConfigured wenn baseUrl leer, createCalendar rollt Metadata bei CalDAV-Fehler zurück, setTags persistiert.
+i18n: keine (Error-Keys sind FE-i18n, s. T18)
+Doku: keine (intern)
+Abhängt von: T3, T4, T7
+
+### T10 — api/calendar: CalendarService — Event-Ops (inkl. Recurrence-Scopes)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/calendar.service.ts (Erweiterung), calendar.service.spec.ts (Erweiterung)
+Soll: main.js:33787 (listEvents) · 33811 (mapObjectToEvents) · 33847 (buildCanonicalEvent) · 33853 (createEvent) · 33873 (updateEvent) · 33950 (deleteEvent)
+Änderung: listEvents (calendarObjects im Zeitfenster, VEVENT-Filter, Mapping über IcalMapper — **kein** Server-Expand, rohe rrule zurückgeben), createEvent/updateEvent (ICS via IcalMapper, etag-Extraktion, buildCanonicalEvent), deleteEvent + updateEvent mit recurrenceEdit-Scope-Verzweigung (ALL/THIS/THIS_AND_FOLLOWING → IcalMapper-Methoden). Neue Datei: nein (Erweiterung).
+Verify: `npm run test:api` — Spec: listEvents gibt rrule-String unexpandiert zurück; deleteEvent THIS ⇒ addExdate-Pfad; THIS_AND_FOLLOWING ⇒ clip+fork-Pfad (IcalMapper gemockt/verifiziert).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T8, T9
+
+### T11 — api/calendar: Controller + Module + AppModule-Wiring (Guards)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/calendar/{calendar.controller.ts,calendar.module.ts,calendar.controller.spec.ts}, apps/api/src/app.module.ts
+Soll: main.js:33235-33381 (Controller/7 Routen/Guards) · 33176-33190 (Module) · Guard-Pattern: apps/api/src/bulletinboard/bulletinboard.controller.ts
+Änderung: Controller mit 7 Routen (s. Spec-Tabelle), **Guards mit-portiert**: `@ApiBearerAuth()` + `@RequireAppAccess(APPS.CALENDAR)` + globaler Auth-Guard, `@GetCurrentUsername()` + `@GetUsersEmailAddress()` (Decorator prüfen/ggf. mit-portieren, s. Spec offene Frage 3); Password via `UsersService.getPassword`. Module wired (MongooseModule.forFeature(CalendarMetadata), UsersModule, AppConfigModule); in AppModule importieren. Neue Dateien ⇒ SPDX.
+Verify: `npm run test:api` — Controller-Spec: alle 7 Routen gemappt; supertest ohne Token ⇒ 401, ohne App-Access ⇒ 403 (Guard greift); `npm run build:api` grün.
+i18n: keine
+Doku: docs/ DE+EN — API-Route-Gruppe `calendar/*` + `CALENDAR_CALDAV_*`-Config kurz dokumentieren
+Abhängt von: T5, T6, T10
+
+### T12 — libs/FE: CalDAV-ExtendedOptions + defaultAppConfig + Config-Page  [ ]
+Komponente: libs + apps/frontend · Dateien: libs/src/appconfig/constants/extendedOptions/calendarCaldavExtendedOptions.ts (neu), libs/src/appconfig/constants/defaultAppConfig.ts, apps/frontend/src/pages/Settings/AppConfig/appConfigOptions.ts
+Soll: main.js:2085-2087 · Pattern: onlyOffice.ts (ExtendedOptions) · appConfigOptions.ts (MAIL-Eintrag)
+Änderung: `CALENDAR_CALDAV_EXTENDED_OPTIONS` (input BaseUrl, dropdown AuthMode BASIC/DIGEST, switch RejectUnauthorized) neu; CALENDAR in appConfigOptions.ts (Icon + `AppConfigSectionsKeys.calendar`-Sektion, ggf. docker-Sektion) registrieren; defaultAppConfig-Eintrag (s. Spec offene Frage 2 — gegen 2.0-Seed diffen). Neue Datei ⇒ SPDX.
+Verify: `npm run test:frontend` (Config-Page rendert CalDAV-Felder für CALENDAR) + `npm run check-translations`; `npm run lint`.
+i18n: neu DE+EN — `appExtendedOptions.calendarCaldavBaseUrl(Title/Description)`, `…AuthMode…`, `…RejectUnauthorized…`
+Doku: keine (intern)
+Abhängt von: T3
+
+### T13 — FE: useCalendarStore (Zustand + eduApi)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Calendar/useCalendarStore.ts, useCalendarStore.test.ts
+Soll: main.js:33242-33276 (Controller-Signaturen = Store-Calls) · Pattern: apps/frontend/src/pages/BulletinBoard/useBulletinBoardStore.ts
+Änderung: Zustand-Store mit `eduApi` (AGENTS.md): fetchCalendars, createCalendar, setCalendarTags, fetchEvents(from,to,calendarIds), createEvent, updateEvent, deleteEvent(uid,calendarId,scope?,occurrenceStart?); Loading/Error-State. Shared Types aus T2. Neue Dateien ⇒ SPDX. **Neuer Flow ⇒ Test** (Repo hat 0 FE-Tests → msw-Mock).
+Verify: `npm run test:frontend` — Store-Test: fetchEvents ruft GET calendar/events mit korrekten Query-Params; deleteEvent hängt scope/occurrenceStart an.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T2
+
+### T14 — FE: CalendarPage-Scaffold + Monats-Grid + Routing  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Calendar/CalendarPage.tsx (+ MonthGrid-Komponente), apps/frontend/src/components/structure/layout/NativeAppPageManager.tsx
+Soll: laufende 2.0-crabbox (Live-Referenz) · Pattern: BulletinBoardPage + NativeAppPageManager-Map
+Änderung: CalendarPage als Native-Page registrieren (`[APPS.CALENDAR]: <CalendarPage/>`), Eigenbau-Monats-Grid mit `dayjs` (Wochenraster, Vor/Zurück/Heute), Events aus Store read-only rendern (Positionierung nach start/end, all-day-Zeile). Menü-/Sidebar-Eintrag + Icon. `cn()` statt className-Concat (AGENTS.md). Neue Dateien ⇒ SPDX. Test.
+Verify: `npm run test:frontend` — Grid rendert 42 Tages-Zellen für einen Monat + Event-Chip im richtigen Tag (msw-Fixture); `npm run lint`.
+i18n: neu DE+EN — `calendar.title`, `calendar.today`, `calendar.month`, `calendar.allDay`, `calendar.noEvents`
+Doku: keine (intern)
+Abhängt von: T13
+
+### T15 — FE: Wochen-/Tages-Ansicht + View-Switcher  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Calendar/{WeekGrid,DayGrid,ViewSwitcher}.tsx, CalendarPage.tsx (Erweiterung)
+Soll: laufende 2.0-crabbox (Live-Referenz)
+Änderung: Zeitraster-Ansichten (Stunden-Spalten, überlappende Events) für Woche/Tag + Umschalter Monat/Woche/Tag; fetchEvents-Fenster an aktive Ansicht koppeln. Neue Dateien ⇒ SPDX. Test.
+Verify: `npm run test:frontend` — ViewSwitcher wechselt Ansicht, WeekGrid rendert 7 Tagesspalten + Stundenzeilen; `npm run lint`.
+i18n: neu DE+EN — `calendar.week`, `calendar.day`
+Doku: keine (intern)
+Abhängt von: T14
+
+### T16 — FE: Event-Dialog (anlegen/bearbeiten, ohne Wiederholung)  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Calendar/EventDialog.tsx, EventDialog.test.tsx
+Soll: main.js:35517 (CalendarEventBodyDto = Formularfelder) · Pattern: bestehende Dialog-/react-hook-form-Komponenten (SH-Wrapper)
+Änderung: Dialog mit react-hook-form: summary/description/location/start/end/allDay/color/calendarId/attendees; create via Store.createEvent, edit via updateEvent; Klick auf Zelle/Event öffnet Dialog. SH-shadcn-Wrapper. Neue Dateien ⇒ SPDX. Test.
+Verify: `npm run test:frontend` — Absenden ruft createEvent mit gemapptem Body; Pflichtfeld-Validierung (summary/start/end) greift.
+i18n: neu DE+EN — `calendar.newEvent`, `calendar.editEvent`, `calendar.fields.*` (summary/location/start/end/attendees/color)
+Doku: keine (intern)
+Abhängt von: T13
+
+### T17 — FE: Wiederholungs-Editor (rrule) + Serien-Scope-Abfrage  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Calendar/{RecurrenceEditor,RecurrenceScopePrompt}.tsx, EventDialog.tsx (Einbindung)
+Soll: main.js:35472 (client-seitige rrule-Expansion) · 33439-33443 (RecurrenceEditScope) · rrule-Dep aus T4
+Änderung: RecurrenceEditor baut/parst RRULE-String (FREQ/INTERVAL/BYDAY/UNTIL/COUNT) via `rrule`; RecurrenceScopePrompt beim Bearbeiten/Löschen wiederkehrender Events (THIS / THIS_AND_FOLLOWING / ALL) → Scope + occurrenceStart an Store durchreichen. Grid expandiert Serien clientseitig per rrule fürs Zeitfenster. Neue Dateien ⇒ SPDX. Test.
+Verify: `npm run test:frontend` — rrule roundtrip (UI→RRULE-String→UI); Löschen einer Instanz sendet scope=THIS + occurrenceStart; wöchentliche Serie expandiert korrekt im Grid-Fenster.
+i18n: neu DE+EN — `calendar.recurrence.*` (none/daily/weekly/monthly/until/count/byday), `calendar.scope.{this,thisAndFollowing,all}`
+Doku: keine (intern)
+Abhängt von: T15, T16
+
+### T18 — FE: Kalender-Verwaltung (anlegen/teilen/taggen) + Fehler-i18n  [ ]
+Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Calendar/CalendarManagementDialog.tsx (+ ShareEditor), CalendarManagementDialog.test.tsx
+Soll: main.js:35835 (CreateCalendarBodyDto) · 35364 (Share) · 34779/34813 (Permission/SubjectType) · 34086-34096 (Error-Keys)
+Änderung: Dialog „Kalender anlegen" (displayName/description/color/tags[timetable]) via Store.createCalendar; Freigabe-Editor (User/Gruppe × NONE/FREE_BUSY/VIEW/MODIFY/ADMIN) + setCalendarTags. Server-Fehler auf `calendar.errors.*` mappen (Toaster/sonner). **MVP-Schnitt** möglich (s. Spec offene Frage 5: erst anlegen+tag, Freigabe-UI nachziehen). Neue Dateien ⇒ SPDX. Test.
+Verify: `npm run test:frontend` — createCalendar-Body korrekt (inkl. timetable-Tag); CalDavConnectionFailed-Antwort zeigt den übersetzten Fehlertext; `npm run check-translations`.
+i18n: neu DE+EN — `calendar.newCalendar`, `calendar.share.*`, `calendar.timetableTag`, **`calendar.errors.*` (alle 9 Keys)**
+Doku: keine (intern)
+Abhängt von: T13
+
+## p5-linbo [P5] — Linbo (Imaging)
+_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 13
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js:16922-18603 (Controller/Service/DTOs/Pipe), main.js:14172-14370 (Queue-Delta+UpstreamError), main.js:634-671 (Endpoints), main.js:12903/12980-12989 (Konstanten/Fehler) · kein upstream/<rescue-branch> vorhanden · keine scratchpad/real/*.png (BE-only)
+
+> Kalibrierungs-Notiz (P5): Geerdetes Rekonstruktions-Ledger. Reihenfolge/Bündelung schärfen sich
+> nach dem p2-chat-Piloten (gleiches lmn-api-Proxy-Muster) und der P0-Basis-Drift-Analyse. Rein
+> Backend — kein Frontend, kein appconfig, keine Migration.
+> Abhängt-von-Paket: p2-chat.
+
+---
+
+### T1 — LINBO-Endpoint-Konstanten (shared libs)  [ ]
+Komponente: libs · Dateien: libs/src/lmnApi/constants/lmnApiEndpoints.ts, libs/src/lmnApi/constants/lmnApiEduApiEndpoints.ts
+Soll: main.js:12903 (`LINBO_LMN_API_ENDPOINT = 'linbo'`), main.js:660-671 (`LINBO` + granulare `LINBO_*`)
+Änderung: In `lmnApiEndpoints.ts` `export const LINBO_LMN_API_ENDPOINT = 'linbo';` ergänzen (Upstream-Pfad). In `lmnApiEduApiEndpoints.ts` `LINBO: \`${LMN_API_EDU_API_ENDPOINT}/linbo\`` (vom Controller genutzt) plus die granularen `LINBO_HEALTH…LINBO_IMAGES_UPLOAD`-Keys für Contract-Parität ergänzen. Nur Linbo-Keys, keine `DEVICES`/`STUDENTS_LIST`.
+Verify: `npx nx run api:build` (remote via iter.sh) kompiliert; `grep -q "LINBO_LMN_API_ENDPOINT = 'linbo'" libs/src/lmnApi/constants/lmnApiEndpoints.ts`.
+i18n: keine
+Doku: keine (intern)
+
+### T2 — LmnApiErrorMessage-Linbo-Keys + i18n DE+EN  [ ]
+Komponente: libs + apps/frontend · Dateien: libs/src/lmnApi/types/lmnApiErrorMessage.ts, apps/frontend/src/locales/{de,en,fr}/translation.json
+Soll: main.js:12980-12989 (10 `LmnApiErrorMessage`-Einträge)
+Änderung: 10 Enum-Einträge (`GetLinboHealthFailed`…`GetLinboDhcpExportFailed`) mit Wert `lmnApi.errors.<Key>` anhängen (bestehende Enum-Struktur beibehalten). In den drei `translation.json` je 10 Keys unter `lmnApi.errors` ergänzen (DE+EN inhaltlich, FR = EN-Fallback). DE-Werte z. B. „Abrufen des LINBO-Systemstatus fehlgeschlagen", „Hochladen des LINBO-Images fehlgeschlagen".
+Verify: `node -e "const d=require('./apps/frontend/src/locales/de/translation.json'); ['GetLinboHealthFailed','UploadLinboImageFailed','GetLinboDhcpExportFailed'].forEach(k=>{if(!d.lmnApi.errors[k])throw new Error('missing '+k)})"` (remote); dito en.
+i18n: 10 neue Keys unter `lmnApi.errors.*` — DE+EN (FR mitgeführt)
+Doku: keine (intern)
+
+### T3 — HTTP_HEADERS.ContentRange ergänzen  [ ]
+Komponente: libs · Dateien: libs/src/common/types/http-methods.ts
+Soll: main.js — Upload nutzt `HTTP_HEADERS.ContentRange` (`bytes 0-…/…`); Header fehlt in 1.6 (grep = 0)
+Änderung: `ContentRange: 'Content-Range'` in das `HTTP_HEADERS`-Objekt aufnehmen.
+Verify: `grep -q "ContentRange: 'Content-Range'" libs/src/common/types/http-methods.ts`; api-Build grün.
+i18n: keine
+Doku: keine (intern)
+
+### T4 — SafePathSegmentPipe + Pattern (Guardrail Path-Traversal)  [ ]
+Komponente: apps/api + libs · Dateien: libs/src/common/constants/safePathSegmentPattern.ts, apps/api/src/common/pipes/safe-path-segment.pipe.ts, apps/api/src/common/pipes/safe-path-segment.pipe.spec.ts
+Soll: main.js:18456 (`SAFE_PATH_SEGMENT_PATTERN = /^(?!\.)(?!.*\.\.)[\p{L}\p{N}\p{M} ._-]{1,200}$/u`), main.js:18589-18603 (Pipe)
+Änderung: Pattern-Konstante (neue Datei, SPDX) exportieren. `SafePathSegmentPipe implements PipeTransform`: bei nicht-String/leer → `BadRequestException('Path segment must be a non-empty string')`; bei Pattern-Miss → `BadRequestException('… path separators, control characters or ".." sequences')`; sonst Wert durchreichen. Spec: gültig (`win10`), abgelehnt (`..`, `a/b`, `\x00`, `""`, `.hidden`, 201 Zeichen).
+Verify: `npx nx test api --testPathPattern=safe-path-segment` (remote) grün.
+i18n: keine
+Doku: keine (intern)
+
+### T5 — Queue-Delta: LmnApiQueueUpstreamError + paramsSerializer + Fehler-Wrapping  [?]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/queue/lmn-api-queue-upstream.error.ts (neu), apps/api/src/lmnApi/queue/lmn-api-request.queue.ts, apps/api/src/lmnApi/queue/lmn-api-request.queue.spec.ts (neu/erw.)
+Soll: main.js:14341-14370 (`LmnApiQueueUpstreamError` + `encode`/`tryParse`, `LMN_QUEUE_UPSTREAM_PREFIX`), main.js:14172-14340 (Queue: `paramsSerializer:{indexes:null}`, `handleJob`-catch → 4xx `UnrecoverableError(encode)` / 5xx `Error`, `enqueue`-catch → `tryParse`→rethrow)
+Änderung: (1) Neue Fehlerklasse + Prefix-Konstante (SPDX). (2) axiosClient um `paramsSerializer: { indexes: null }` erweitern (repeated `?id=`). (3) `handleJob` try/catch: axios-4xx → `UnrecoverableError(LmnApiQueueUpstreamError.encode({status,data,message}))`, 5xx → retrybarer `Error(message)`, mit Log-Helfern (`formatErrorDataForLog`/`extractUpstreamDetail`/`truncateForLog`). (4) `enqueue` fängt Finished-Error, `tryParse` → typisierten Fehler rethrowen. Spec: 4xx wird als `LmnApiQueueUpstreamError` mit korrektem `status` propagiert; 5xx bleibt generisch.
+Verify: `npx nx test api --testPathPattern=lmn-api-request.queue` (remote) grün. Achtung Regressions-Radius (alle lmn-api-Routen) → T13 Voll-Stack.
+i18n: keine
+Doku: keine (intern)
+Entscheidung nötig: falls ein früheres P-Paket (Devices/Pairing) diese Queue-Änderung schon einführt → No-op; sonst hier zuerst mergen. Siehe Spec Offene Frage 5.
+
+### T6 — Linbo-DTOs Teil 1: health/server-info/changes/grub/startconf  [ ]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/linbo/dto/{linbo-health-response,linbo-server-info-response,linbo-changes-response,linbo-grub-configs-response,linbo-grub-config,linbo-start-confs-response,linbo-start-conf}.dto.ts
+Soll: main.js:17573-17992 (LinboHealthResponseDto, LinboServerInfoResponseDto, LinboChangesResponseDto, LinboGrubConfigsResponseDto, LinboGrubConfigDto, LinboStartConfsResponseDto, LinboStartConfDto)
+Änderung: DTO-Klassen mit `@ApiProperty` 1:1 nach Felderliste der Spec (z. B. Health: `status`/`devicesCSV`/`linboDir`/`startConfs`/`grubConfigs`; Changes: `allConfigIds`/`allHostMacs`/`allStartConfIds`/`configsChanged`/`deletedHosts`/`deletedStartConfs`/`dhcpChanged`/`hostsChanged`/`nextCursor`/`startConfsChanged`). Alle neuen Dateien SPDX AGPL. Default-Export je DTO.
+Verify: `npx nx run api:build` (remote) grün; `grep -rl "LinboChangesResponseDto" apps/api/src/lmnApi/linbo/dto`.
+i18n: keine
+Doku: keine (intern)
+
+### T7 — Linbo-DTOs Teil 2: images-manifest/hosts/dhcp  [ ]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/linbo/dto/{linbo-images-manifest-response,linbo-image-manifest-entry,linbo-image-info-sidecar,linbo-image-file,linbo-hosts-query-response,linbo-host,linbo-dhcp-isc-export-response}.dto.ts
+Soll: main.js:17993-18557 (LinboImagesManifestResponseDto, LinboImageManifestEntryDto, LinboImageInfoSidecarDto, LinboImageFileDto, LinboHostsQueryResponseDto, LinboHostDto, LinboDhcpIscExportResponseDto)
+Änderung: DTOs nach Felderliste der Spec (Manifest-Entry: `name`/`filename`/`base`/`path`/`size`/`info`/`description`/`extra_files`/`files`/`updatedAt`; Host: `hostname`/`mac`/`ip`/`group`/`room`/`school`/`sophomorixRole`/`sophomorixComment`/`pxeFlag`/`pxeEnabled`/`officeKey`/`windowsKey`/`dhcpOptions`/`options`; DHCP-ISC: `school`/`subnets`/`subnetsUpdatedAt`/`devices`/`devicesUpdatedAt`). SPDX AGPL, Default-Export.
+Verify: `npx nx run api:build` (remote) grün; `grep -rl "LinboImageManifestEntryDto" apps/api/src/lmnApi/linbo/dto`.
+i18n: keine
+Doku: keine (intern)
+
+### T8 — Linbo-DTOs Teil 3: request/body (batch-macs, upload)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/linbo/dto/{linbo-batch-macs,linbo-upload-image-body,linbo-upload-image-response}.dto.ts
+Soll: main.js:17529-17572 (LinboBatchMacsDto: `macs` mit `@IsArray/@ArrayNotEmpty/@ArrayMaxSize(500)/@IsString({each:true})`), main.js:18405-18531 (LinboUploadImageBodyDto: `imageName`/`filename`; LinboUploadImageResponseDto: `ok`/`bytesUploaded`/`upstream`)
+Änderung: Die drei DTOs inkl. `class-validator`-Dekoratoren (max 500 MACs) und Swagger-`@ApiProperty`. SPDX AGPL, Default-Export.
+Verify: `npx nx run api:build` (remote) grün; Validierungsverhalten wird in T10-Spec abgedeckt.
+i18n: keine
+Doku: keine (intern)
+
+### T9 — LinboService (Proxy: Queue + binaryClient)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/linbo/linbo.service.ts, apps/api/src/lmnApi/linbo/linbo.service.spec.ts
+Soll: main.js:17276-17516 (LinboService inkl. `binaryClient`-Setup, `authHeaders`/`withSchool`/`mapAxiosError`, `FORWARDABLE_CLIENT_STATUSES` 17274, alle Proxy-Methoden, `uploadImage`/`extractUpstreamBytes`/`downloadImage`)
+Änderung: `@Injectable` Service, ctor-injiziert `LmnApiRequestQueue`; `binaryClient = axios.create({baseURL: LMN_API_BASE_URL, httpsAgent rejectUnauthorized:false, timeout: LMN_API_BINARY_TIMEOUT_MS ?? 600000, maxBody/ContentLength:Infinity})`. JSON-Methoden via `queue.enqueue` (+ `withSchool`/`since`/`id`-Params); `getDhcpDnsmasqExport` mit `responseType:TEXT`. `uploadImage`: Validierung (imageName/filename/file/size>0), `PUT …/images/upload/:image/:file` (Header inkl. `Content-Range`) + `POST …/complete`, Byte-Abgleich, `finally` stream-destroy + `unlink`. `downloadImage`: `GET` als Stream (`decompress:false`, `signal`). `mapAxiosError`: AxiosError **und** `LmnApiQueueUpstreamError` → `CustomHttpException` (4xx forwardable, sonst 502). Spec: erfolgreicher Proxy-Call, 4xx-Forwarding (via gemockte Queue → `LmnApiQueueUpstreamError`), Upload-Byte-Mismatch → 502, Upload-Validierung → 400.
+Verify: `npx nx test api --testPathPattern=linbo.service` (remote) grün.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T1, T2, T3, T5, T6, T7, T8
+
+### T10 — LinboController (11 Routen + Streaming + Guard-Fidelity)  [ ]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/linbo/linbo.controller.ts, apps/api/src/lmnApi/linbo/linbo.controller.spec.ts
+Soll: main.js:16922-17264 (Controller, alle 11 Routen-Dekoratoren, `LINBO_ROUTE`/`SCHOOL_QUERY_PARAM`/`STARTCONF_ID_QUERY_PARAM`/`LINBO_MAX_UPLOAD_BYTES`, `forwardHeader`/`getCaseInsensitive`, `downloadImage`-pipeline/Abort-Handling)
+Änderung: `@Controller(LMN_API_EDU_API_ENDPOINTS.LINBO)` + `@ApiTags` + `@ApiBearerAuth()` (kein `@Public`!) + `@UsePipes(new ValidationPipe({whitelist:true,transform:true}))`. Alle 11 Routen mit `@Headers(HTTP_HEADERS.XApiKey)` + `@Query(SCHOOL_QUERY_PARAM)` wie im Soll; `startconfs` mit `id`→Array-Normalisierung; `images/upload` mit `@UseInterceptors(FileInterceptor('file', diskStorage(os.tmpdir(), randomUUID-Name, limits.fileSize=LINBO_MAX_UPLOAD_BYTES)))`; `dhcp/export/dnsmasq-proxy` + `images/download` mit `@Res`; Download-Params mit `SafePathSegmentPipe`; Stream-`pipeline` + `AbortController` + `req.on('close')` + `ECONNRESET`/`ERR_STREAM_PREMATURE_CLOSE`-Handling. Spec: alle Routen delegieren an Service (gemockt); **Auth-Guard-Fidelity** (kein `@Public`, unauthenticated → 401/geschützt); `SafePathSegmentPipe` greift bei `..` in Download-Param (400); `hosts/query` mit >500 MACs → 400.
+Verify: `npx nx test api --testPathPattern=linbo.controller` (remote) grün.
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T4, T9
+
+### T11 — Registrierung in LmnApiModule  [ ]
+Komponente: apps/api · Dateien: apps/api/src/lmnApi/lmnApi.module.ts
+Soll: main.js:14784-14786 (`providers: […, LinboService]`, `controllers: […, LinboController]`)
+Änderung: `LinboController` zu `controllers`, `LinboService` zu `providers` ergänzen (Imports oben). `LmnApiRequestQueue` bleibt Provider (bereits vorhanden).
+Verify: `npx nx run api:build` grün; Bootstrap-Smoke: `GET /edu-api/lmn-api/linbo/health` ist geroutet (in T13 gegen echten LMN, hier Route-Mapping via Controller-Spec/`nx test`).
+i18n: keine
+Doku: keine (intern)
+Abhängt von: T10
+
+### T12 — Env-Defaults + interne Modul-Doku  [ ]
+Komponente: apps/api + docs · Dateien: apps/api/.env.default, docs/ (interner Modul-Abschnitt)
+Soll: main.js:16953-16956 (`LINBO_MAX_UPLOAD_BYTES` Default 100 GiB), main.js:17278 (`LMN_API_BINARY_TIMEOUT_MS ?? 600000`), 1.6-Queue (`LMN_API_TIMEOUT_MS ?? 15000`)
+Änderung: In `.env.default` (kommentiert, mit Defaults) `LMN_API_TIMEOUT_MS=15000`, `LMN_API_BINARY_TIMEOUT_MS=600000`, `LINBO_MAX_UPLOAD_BYTES=107374182400` unter dem bestehenden `LMN_API_BASE_URL` ergänzen. Kurzer Doku-Absatz „Linbo = BE-only lmn-api-Imaging-Proxy, Zwei-Transport (Queue/binaryClient), kein FE".
+Verify: `grep -q "LINBO_MAX_UPLOAD_BYTES" apps/api/.env.default`.
+i18n: keine
+Doku: interner Modul-Abschnitt (DE; EN nur falls Modul-Doku zweisprachig)
+
+### T13 — Voll-Stack-Verify gegen echten LMN (ggf. degradiert)  [?]
+Komponente: — (Verifikation) · Dateien: — (nutzt scripts/crabbox + /test)
+Soll: PLAN §6 „Linbo: Imaging am echten linuxmuster-api7"; Spec „Externe Integrationen/Risiken"
+Änderung: keine Code-Änderung. Voll-Stack /test: JSON-Routen gegen echtes `linuxmuster-api7` (`GET linbo/health`, `server-info`, `grub-configs`, `startconfs?id=…` (repeated-Param-Serialisierung!), `changes?since=0`) verifizieren; `hosts/query` mit synthetischen MACs (keine echte PII); `images/upload`+`download` gegen realen LINBO-Store — falls Store nicht bestückt: **degradiert** dokumentieren (nur Route-Wiring/Pipe/Validierung + Mock). Regression der Queue-Änderung (T5) an ≥1 bestehender lmn-api-Route mitprüfen.
+Verify: /test-Report mit Route-für-Route-Ergebnis (grün oder „degraded: Grund"); keine echte Schüler-PII (§2.7).
+i18n: keine
+Doku: Verify-Ergebnis + Degradations-Notiz im PR-/Test-Report
+Abhängt von: T11
+Entscheidung nötig: Umfang hängt an realer LINBO-Store-Verfügbarkeit in crabbox (Spec Offene Frage 4).
+
+## p6-mobile-devices [P6] — MobileDevices / MDM (Relution)
+_Ziel:_ DEFERRED: MobileDevices/MDM (Relution kommerziell) · _Abhängt-von:_ — · _Status:_ blockiert (deferred) · _Tasks:_ 0
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p6-mobile-devices.md` · Soll: main.js:65239 (Module) · 65306 (Controller) · ~65706 (Service) · 65969 (RelutionUserTokenService) · 66663 (RelutionUserToken-Schema) · 65528 (Endpoints) · 65567 (Fehler-Keys) — KEIN brauchbarer Rescue-Branch (upstream/1546-add-android-section-to-mobile-access ist die ältere 1.6-„Mobile Access"-QR-FE, NICHT das MDM-Modul) · scratchpad/real: keine Baseline (nicht deploybar ohne Relution)
+
+---
+
+## DEFERRED — nicht jetzt bauen
+
+Dieses Paket ist **blockiert** und enthält bewusst **keine ausführbaren Detail-Tasks**
+(Kalibrierung P6). Es wird erst in Tasks zerlegt, wenn die Reaktivierungs-
+Voraussetzungen erfüllt sind. Bis dahin bleibt der Status `blockiert (deferred)`.
+
+### Blocker (hart)
+- **Kein Relution-Zugang.** Relution ist eine **kommerzielle** MDM-Plattform. Bauen
+  UND Verifizieren erfordern einen (Test-)Tenant + API-Key + Service-Account. Ohne
+  den ist das Modul weder betreibbar noch remote auf crabbox testbar
+  (Service liefert sonst nur `SERVICE_UNAVAILABLE`/`BAD_GATEWAY`).
+- **Scope-Entscheidung offen** (Master-Plan §400, Frage 8): dauerhaft zurückstellen
+  (Empfehlung) vs. bei realem Bedarf anstreben. Kein aktueller Fork-Bedarf.
+- **DSGVO (R12):** Drittempfänger Relution + Minderjährigen-Geräte-PII ⇒ AVV/PII-
+  Inventar vor Produktivbetrieb.
+
+### Umriss (was später zu bauen wäre — NICHT ausgearbeitet)
+Reihenfolge grob BE→FE, jede Zeile wird bei Reaktivierung erst zur echten Task:
+- BE: Modul + `relutionUserTokens`-Schema + **forward-only Migration** (`schemaVersion++`).
+- BE: `RelutionUserTokenService` (Admin-Client aus AppConfig-Options `url`/`apiKey`,
+  Org-UUID, Service-Account-Erkennung, Per-User-`encryptedToken`-Provisioning via
+  `master.key`, `syncUsers`/`listManagedUsers`).
+- BE: `MobileDevicesService` (Relution-Proxy) + `buildRelutionAxios`/`extractRelutionOrigin`.
+- BE: `MobileDevicesController` mit 11 Routen unter `mobile-devices` — **Guards
+  mit-portieren**: global JWT (kein `@Public`) + `AdminGuard` auf
+  `devices/enrollments`(POST/GET/DELETE), `audit`, `users`, `users/sync`.
+- BE: DTOs (relution-device/app/enrollment-result/managed-user/sync-summary/
+  device-action-result/audit-entry, create-enrollment, trigger-device-action,
+  app-icon-response) + Fehler-Keys `mobiledevices.errors.*`.
+- FE: `pages/MobileDevices/` + Zustand-Store (`eduApi`), Geräte-/App-/Enrollment-/
+  Audit-/User-Ansichten; AppConfig-Options-Formular (`url`/`apiKey`).
+- Contract-Sync: API↔DTO↔FE↔appconfig-Options · Schema↔Migration.
+- i18n: Namespace `mobiledevices` (existiert als 1.6-Platzhalter) um MDM-Labels +
+  `mobiledevices.errors.*` erweitern — **DE+EN**.
+
+### Reaktivierungs-Voraussetzungen (Checkliste vor Task-Zerlegung)
+- [?] Betreiber bestätigt realen MDM-Bedarf (Plan §400 Frage 8 entschieden).
+- [?] Relution-(Test-)Tenant + API-Key + Service-Account bereitgestellt (nie ins Repo).
+- [?] AVV/PII-Inventar für Relution als Drittempfänger geklärt (R12).
+- [?] Danach: `feature-plan` erneut auf diesen Slug ansetzen und aus dem Umriss oben
+  konkrete, einzeln remote-verifizierbare Tasks ableiten (BE-Route/DTO/Schema/
+  Migration zuerst, dann FE-Seite/Store — getrennte Tasks).
+
+## p6-satellites [P6] — Satellites (Multi-Host / WireGuard-Föderation)
+_Ziel:_ DEFERRED: Satellites (Multi-Host/WireGuard) · _Abhängt-von:_ — · _Status:_ blockiert (deferred) · _Tasks:_ 0
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p6-satellites.md` · Soll: main.js:63311 (Module) · 63357–63453 (Schema) · 63481 (Status) · 63516ff (Service) · 64060–64338 (Controller) · 65115ff (Gateway) · 61789 (WG-Default) · kein upstream/-Rescue-Branch · keine 1.6-Source · scratchpad/real/— (keine Baseline)
+
+---
+
+## DEFERRED — Status: blockiert. Keine Detail-Tasks.
+
+Dieses Paket ist **dauerhaft zurückgestellt** (Master-Plan P6, §9.8). Es werden **jetzt keine
+Tasks angelegt und nichts gebaut.** Der Ledger dient nur als Umriss + Blocker-Register. Sobald
+der Blocker fällt, wird das Modul über `/feature-plan` neu in konkrete Tasks zerlegt (Reihenfolge
+unten als grober Umriss, KEINE ausführbaren Tasks).
+
+### Blocker (müssen ALLE fallen, bevor Planung startet)
+1. **2. physischer Host** an entferntem Standort — ohne ihn weder bau- noch verifizierbar
+   (`PLAN:385` R7, `:368` P6). **Harter Infra-Blocker.**
+2. **Companion-Images** `edulution-satellite-appliance` + `edulution-wireguard` — Rebuild/
+   Repoint/Mirror-Entscheidung (koppelt an P0-Lieferkette, `PLAN:274`).
+3. **Strategische Freigabe:** „Multi-Host anstreben" statt „dauerhaft zurückstellen"
+   (`PLAN:400` §9.8, offene Frage 1 der Spec).
+4. **Reihenfolge-Abhängigkeit:** erst nach P0-Basis-Drift-Analyse + Chat-Pilot (Aufwands-/
+   Granularitäts-Schärfung), frühestens.
+
+### Umriss künftiger Umsetzung (grob, ~15–25 PT Spike — NICHT jetzt)
+1. WG-Companion (`edulution-wireguard`) + `edulution-satellite-appliance` in
+   `dockerApplicationList.ts` + Installer-/ghcr-Repoint; Env (`EDU_WG_API_URL`,
+   `WIREGUARD_TUNNEL_ROUTE`, `PROVISIONING_URL`) ins Inventar + `.env.default`.
+2. **BE zuerst:** `Satellite`-Schema (+ forward-only Migration, `schemaVersion++`),
+   `satelliteStatus`/`satellitesDefaults`/`satellitesErrorMessages`-Consts, DTOs
+   (`register-`, `pair-`, `pair-…-response`, `satellite-status-response`,
+   `satellite-state-change-response`, `assign-school`).
+3. `SatellitesService` (WG-Config-Push, Socket-Registry, `proxyApiRequest`, Heartbeat).
+4. `SatellitesGateway` (`/edu-api/satellites/ws`, apiKey-Handshake-Auth — mit-portieren).
+5. `SatellitesController` — **`admin_guard` (Klasse) + `throttle_guard` (register) mit-portieren**,
+   `strictValidationPipe`; Endpunkte register/pair/unpair/accept/reject/school/reconfigure-wg/
+   proxy (s. Spec-Tabelle). **BE-Route/DTO/Schema und FE getrennte Tasks.**
+6. **FE danach:** Admin-Seite `Satellites/` + Zustand-Store (`eduApi`) + appconfig-Slug-Wiring
+   (`SATELLITES: 'satellites'` existiert) + Sidebar; QR-Pairing-Dialog; i18n `satellites` DE+EN.
+7. Voll-Stack-Verify gegen 2. Host (`/test`) + WG-Tunnel-Round-Trip.
+
+> Detail-Tasks (T1…) werden erst bei Blocker-Wegfall erzeugt. Bis dahin bleibt dieser Ledger auf
+> **blockiert**.
