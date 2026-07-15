@@ -1441,7 +1441,7 @@ Doku: docs/testing/spec-policy.md (dies IST die Doku)
 Abhängt von: T3, T9
 
 ## p1-security-cve-track [P1] — Eigener Security-/CVE-Track (Dependabot + Trivy-Gate + Cron-Andock)
-_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ geplant · _Tasks:_ 8
+_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ in Arbeit (3/8: T1/T2/T4 authored+lokal-verifiziert; T3 npm-audit, T5 scanImages.sh, T6/T7 Trivy-CI-Gates, T8 Doku offen) · _Tasks:_ 8
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-security-cve-track.md` · Soll: Greenfield-Ops-Track (kein main.js-Runtime-Anker · kein Rescue-Branch · kein Baseline-Shot). Belege: PLAN §5.1(:258/:256) · §5.2-P7(:270) · §7d/§7h(:337/:345) · §7i(:347) · §8-P1b(:363) · R10(:388) · §9-P5(:440) · apps/{api,frontend}/Dockerfile · .github/workflows/{build-and-test,container-build}.yml · package.json:19–22 · docker-compose.yml:4,22
 
 > Abhängt von Paket `p1-own-ci-registry`: Registry-Org + finale Image-Namen (Scan-Ziele) kommen von dort;
@@ -1451,7 +1451,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-security-cve-track.md` · 
 
 ---
 
-### T1 — Dependabot-Konfiguration (npm + github-actions + docker)  [ ]
+### T1 — Dependabot-Konfiguration (npm + github-actions + docker)  [x] OK `.github/dependabot.yml` v2 (SPDX): npm (grouped minor+patch, limit 10), github-actions, docker×2 (/apps/api + /apps/frontend), weekly, target main, labels [security,dependencies]; yaml-Parse + 3-Ökosysteme + SPDX lokal PASS
 Komponente: `.github` (CI) · Dateien: `.github/dependabot.yml` (neu, **SPDX AGPL-3.0-or-later** als YAML-`#`-Kommentar)
 Soll: PLAN §5.1(:258) — „`dependabot.yml`/Renovate (npm + Docker-Base-Digests + GitHub-Actions)"; Grep-0-Befund (keine bestehende Config)
 Änderung: `version: 2` mit drei `updates`-Einträgen — `npm` (directory `/`, `schedule.interval: weekly`, `groups` für minor+patch gebündelt, `open-pull-requests-limit`), `github-actions` (`/`, weekly), `docker` (Verzeichnisse der beiden Dockerfiles `apps/api` + `apps/frontend`, weekly). `target-branch: main`, `commit-message.prefix`, `labels: [security, dependencies]`. Nur öffentliche Config, keine Secrets.
@@ -1459,7 +1459,7 @@ Verify: `iter.sh cmd 'python3 -c "import yaml; d=yaml.safe_load(open(\".github/d
 i18n: keine
 Doku: keine (die YAML ist selbstdokumentierend; Track-Doku in T8)
 
-### T2 — Dockerfile-FROM auf `tag@digest`-Form (Digest-Bumps ermöglichen)  [ ]
+### T2 — Dockerfile-FROM auf `tag@digest`-Form (Digest-Bumps ermöglichen)  [x] OK beide FROMs → `node:22.21.1-alpine3.22@sha256:ef30b897…` / `nginx:1.29.2-alpine3.22@sha256:b03ccb74…` (Digest byte-identisch, nur Tag vorangestellt, redundanter Kommentar entfernt); grep-Verify PASS
 Komponente: `apps/api` + `apps/frontend` (Infra) · Dateien: `apps/api/Dockerfile`, `apps/frontend/Dockerfile`
 Soll: apps/api/Dockerfile:1–2 (`### manifest digest for node:22.21.1-alpine3.22` + `FROM node@sha256:…`); apps/frontend/Dockerfile:1–2 (`nginx:1.29.2-alpine3.22` + `FROM nginx@sha256:…`)
 Änderung: `FROM node@sha256:<d>` → `FROM node:22.21.1-alpine3.22@sha256:<d>` und `FROM nginx@sha256:<d>` → `FROM nginx:1.29.2-alpine3.22@sha256:<d>` — **denselben** Digest beibehalten (byte-identisches Image), nur das Tag voranstellen, damit der Dependabot-`docker`-Updater (T1) das Ziel kennt und den Digest bumpen kann. Kommentar-Zeile kann entfallen (Tag jetzt inline).
@@ -1477,7 +1477,7 @@ i18n: keine
 Doku: Begründung je Allowlist-Eintrag → gehört in `docs/security/accepted-cves.md` (T4)
 Abhängt von: T4
 
-### T4 — Trivy-Allowlist + Accepted-CVE-Register  [ ]
+### T4 — Trivy-Allowlist + Accepted-CVE-Register  [x] OK `.trivyignore` (SPDX, leer=strengstes Gate) + `docs/security/accepted-cves.md` (SPDX, Register + review-by-Ablaufprozess: akzeptierte CVE geht in beide, gemeinsam); grep-Verify PASS
 Komponente: Repo-Root + `docs` · Dateien: `.trivyignore` (neu, SPDX als `#`-Kommentar), `docs/security/accepted-cves.md` (neu, SPDX)
 Soll: PLAN §5.1(:258) — Trivy als CI-Gate mit gepflegter Allowlist; §7i(:347) — Backlog-Sektion „Security"
 Änderung: `.trivyignore` mit den bewusst akzeptierten (unfixbaren/Base-Image-)CVE-IDs; jede Zeile mit Kommentar `# <CVE> — <Grund> — review-by <Datum>`. `docs/security/accepted-cves.md` als menschenlesbares Register: je Eintrag Paket/Image, CVE, Schwere, Grund, Review-Datum, Verantwortlich. Prozess-Notiz: „neue akzeptierte CVE ⇒ Eintrag hier + `.trivyignore` gemeinsam; abgelaufene `review-by` erzwingen Re-Evaluation".
