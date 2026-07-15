@@ -148,7 +148,7 @@ vollständig, jede 1.6-Modulklasse hat genau eine Zeile.
 i18n: keine
 Doku: docs/analysis/base-drift-2.0.200.md (intern, DE) — ist das Deliverable
 
-### T2 — Controller-Route-Drift der 29 Bestands-Controller  [ ]
+### T2 — Controller-Route-Drift der 29 Bestands-Controller  [x] ✓ 23/29 stabil; Mail +26, Filesharing-Split, Linbo/ProfilePicture ausgegliedert
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: main.js `class …Controller ` (39) ↔ 1.6 29 Controller in apps/api/src/**
 Änderung: Je Bestands-Controller die Route-Dekoratoren aus den `tslib_1.__decorate([...])`-

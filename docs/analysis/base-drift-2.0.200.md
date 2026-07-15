@@ -83,4 +83,57 @@ Bestandsmodule** — v. a. Mails, Filesharing, Docker, License, Sse. Diese Drift
 
 ---
 
-<!-- T2–T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->
+## T2 — Controller-Route-Drift (29 Bestands-Controller)
+
+**Zählung (Verify):** `MJ` `class …Controller ` = **39** · 1.6 = **29** → **10 neue** Controller.
+Route-Zählung = `@(Get|Post|Put|Patch|Delete|All)`-Dekoratoren je Controller (1.6: Quelle;
+2.0: kompilierte `(0, common_*.<Verb>)(`-Dekoratoren je Klasse in `MJ`).
+
+### Drift der 29 Bestands-Controller (Routen 1.6 → 2.0)
+
+| Controller | 1.6 | 2.0 | Δ | Bewertung |
+|---|---:|---:|---:|---|
+| **MailsController** | 10 | 36 | **+26** | **gebrochen/neu** — voller IMAP-Client + Mailcow-Admin (Backlog `p4-mail-rework`) |
+| FilesharingController | 19 | 18 | −1 | **gedriftet+gesplittet** — + neu `PublicFilesharingController` (14) + `WopiController` (3) → Backlog `p4-filesharing-wopi` |
+| LmnApiController | 38 | 42 | +4 | gedriftet — + Linbo als eigener `LinboController` (11) ausgegliedert (`p5-linbo`) |
+| NotificationsController | 6 | 9 | +3 | gedriftet (Push/Inbox) |
+| WebdavSharesController | 4 | 6 | +2 | gedriftet |
+| UsersController | 12 | 13 | +1 | gedriftet (+ `ProfilePictureController` (4) neu) |
+| GlobalSettingsController | 5 | 6 | +1 | gedriftet (Branding/theme) |
+| VdiController | 5 | 4 | −1 | gedriftet |
+| SurveysController | 21 | 21 | 0 | bestätigt |
+| WireguardController | 19 | 19 | 0 | bestätigt |
+| FileSystemController | 9 | 9 | 0 | bestätigt |
+| PublicSurveysController | 8 | 8 | 0 | bestätigt |
+| ConferencesController | 8 | 8 | 0 | bestätigt |
+| BulletinBoardController | 8 | 8 | 0 | bestätigt |
+| AuthController | 8 | 8 | 0 | bestätigt (Guards separat, T6) |
+| AppConfigController | 8 | 8 | 0 | bestätigt |
+| DockerController | 6 | 6 | 0 | bestätigt (Engine-Logik driftet, nicht Routen — s. T3) |
+| BulletinCategoryController | 6 | 6 | 0 | bestätigt |
+| VeyonController | 4 | 4 | 0 | bestätigt |
+| TLDrawSyncController | 4 | 4 | 0 | bestätigt |
+| WebhookClientsController | 3 | 3 | 0 | bestätigt |
+| UserPreferencesController | 3 | 3 | 0 | bestätigt |
+| HealthController | 3 | 3 | 0 | bestätigt (Body driftet: Build-Metadaten) |
+| MobileAppController | 2 | 2 | 0 | bestätigt |
+| LicenseController | 2 | 2 | 0 | bestätigt (Server-URL driftet, nicht Routen) |
+| GroupsController | 2 | 2 | 0 | bestätigt |
+| WebhookController | 1 | 1 | 0 | bestätigt |
+| MetricsController | 1 | 1 | 0 | bestätigt |
+| SseController | 0 | 0 | 0 | bestätigt (Contract driftet: neue MessageTypes, T6) |
+
+### 10 neue Controller in 2.0.200
+
+Modul-Controller der 6 neuen Module + **Splits** aus Bestands-Modulen:
+`PublicFilesharingController` (14) + `WopiController` (3) ← aus Filesharing · `LinboController` (11)
+← aus LmnApi · `ProfilePictureController` (4) ← aus Users · sowie `MobileDevicesController` (11),
+`SatellitesController` (11), `WikiController` (9), `CalendarController` (7),
+`ParentChildPairingController` (6), `ChatController` (6).
+
+**T2-Fazit:** **23 von 29** Bestands-Controllern haben **0 Routen-Drift** → additiv bestätigt.
+Echte Drift konzentriert sich auf **Mail** (+26, Neubau), **Filesharing** (Split + Wopi) und die
+**Ausgliederungen** (Linbo, ProfilePicture). Diese sind bereits als eigene Backlog-Abschnitte
+erfasst — die Route-Zahlen dort als Aufwands-Anker nutzen.
+
+<!-- T3–T12 hängen hier ihre Abschnitte an (Report ist das Deliverable dieses Pakets). -->

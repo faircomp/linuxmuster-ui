@@ -25,11 +25,22 @@ case "$T" in
   *) echo "unbekanntes Ziel: $T"; exit 2;;
 esac
 echo "[iter:$T] auf $SLUG …"
-crabbox run --id "$SLUG" -keep-on-failure \
-  -capture-stdout .crabbox/out/last.out -capture-stderr .crabbox/out/last.err \
-  -- "$CMD"
-rc=$?
-if [ $rc -ne 0 ]; then
+# Retry auf INFRA-Flakes (rc=5 = crabbox-SSH-Timeout, kein Test-Fehler). Nach dem CPU-Reboot
+# braucht SSH manchmal Anlauf. Echte Test-Fehler (rc=1) werden NICHT wiederholt.
+rc=0
+for attempt in 1 2 3; do
+  crabbox run --id "$SLUG" -keep-on-failure \
+    -capture-stdout .crabbox/out/last.out -capture-stderr .crabbox/out/last.err \
+    -- "$CMD"
+  rc=$?
+  [ "$rc" -eq 0 ] && break
+  if [ "$rc" -eq 5 ]; then
+    echo "[iter:$T] Infra/SSH-Flake (rc=5, Versuch $attempt/3) — warte 20s + retry…"
+    sleep 20; continue
+  fi
+  break   # echter Fehler (Test rot etc.) → nicht wiederholen
+done
+if [ "$rc" -ne 0 ]; then
   echo "[iter:$T] FAIL (rc=$rc) — Fehler in .crabbox/out/last.err:"
   tail -20 .crabbox/out/last.err 2>/dev/null
 fi
