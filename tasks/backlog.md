@@ -33,6 +33,12 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
 
 **Vorstufe erledigt:** V0 Fork-Setup (Repos `faircomp/linuxmuster-ui` + `-ui-installer`, `main`@v1.6.266, Tags + `upstream/*`-Rescue-Branches).
 
+**Phasenabschluss-Log & offene Human-Gates:**
+- **P0 abgeschlossen (2026-07-15)** — alle 5 Abschnitte: `p0-base-drift-analysis` (12/12) · `p0-migrations-inventory` (7/7) · `p0-supply-chain-inventory` (4/4) · `p0-realm-diff-baseline` (6/8, **T4/T6 live-gated offen**) · `p0-pii-inventory` (7/7). 13 Commits `088992218`→`2c6bc14a0` auf `feat/2.0-backlog`. **P0 ist deploy-neutral** (nur `docs/`, `scripts/`, CI/husky, `package.json`-Scripts, `.gitignore`, `.env.default` — kein `apps/`-Produktcode, keine Migration/Route/Guard) → Voll-Stack-Verify **path-gated übersprungen**. Infra-freie Gates lokal grün (`check-external-references`, `check:pii-fixtures`, `test:scripts`, realm/migrations `node --test`); nx-Suiten n/a (keine nx-Quelle geändert). Fresh-Review je Code-Task (supply-chain-Gate, realm-Scrubber, pii-Fixtures) — approve nach Fixes.
+  - `[?] human-gate: PR Phase P0 (linuxmuster-ui)` — `git push -u origin feat/2.0-backlog` + `gh pr create --draft` sind prompt-pflichtig; **warten auf Kevins OK**. (Nur Repo `linuxmuster-ui`; Installer in P0 nicht berührt.)
+  - `[?] human-gate: p0-realm-diff-baseline T4+T6` — brauchen eine laufende 2.0.200-Keycloak-Instanz (Voll-Stack/Box) → an den **P1-Voll-Stack** koppeln; Werkzeug (export/normalize/diff) steht.
+  - Hinweis: Kevins 3 uncommittete `notifications`-WIP-Dateien liegen unberührt im Working-Tree (nicht in den P0-Commits).
+
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
 ## Reihenfolge (Topo-Sort; ⭐ = kritischer Pfad)
