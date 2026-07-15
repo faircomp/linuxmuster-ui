@@ -1441,7 +1441,7 @@ Doku: docs/testing/spec-policy.md (dies IST die Doku)
 Abhängt von: T3, T9
 
 ## p1-security-cve-track [P1] — Eigener Security-/CVE-Track (Dependabot + Trivy-Gate + Cron-Andock)
-_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ in Arbeit (3/8: T1/T2/T4 authored+lokal-verifiziert; T3 npm-audit, T5 scanImages.sh, T6/T7 Trivy-CI-Gates, T8 Doku offen) · _Tasks:_ 8
+_Ziel:_ Security-/CVE-Track: Dependabot + Trivy-Gate am Wochen-Cron · _Abhängt-von:_ p1-own-ci-registry · _Status:_ in Arbeit (4/8: T1/T2/T3/T4 authored+lokal-verifiziert; T5 scanImages.sh, T6/T7 Trivy-CI-Gates, T8 Doku offen) · _Tasks:_ 8
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-security-cve-track.md` · Soll: Greenfield-Ops-Track (kein main.js-Runtime-Anker · kein Rescue-Branch · kein Baseline-Shot). Belege: PLAN §5.1(:258/:256) · §5.2-P7(:270) · §7d/§7h(:337/:345) · §7i(:347) · §8-P1b(:363) · R10(:388) · §9-P5(:440) · apps/{api,frontend}/Dockerfile · .github/workflows/{build-and-test,container-build}.yml · package.json:19–22 · docker-compose.yml:4,22
 
 > Abhängt von Paket `p1-own-ci-registry`: Registry-Org + finale Image-Namen (Scan-Ziele) kommen von dort;
@@ -1468,7 +1468,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — npm-audit-Gate (Skript + typisierte Allowlist + Test + Verdrahtung)  [ ]
+### T3 — npm-audit-Gate (Skript + typisierte Allowlist + Test + Verdrahtung)  [x] OK scripts/security/checkNpmAudit.ts (reine `evaluateAudit` + `main`, SPDX) + npmAuditAllowlist.ts (30 Pakete baselined: 26 high/4 critical aus v1.6.266-Basis, reviewBy 2026-10-15) + .spec.ts (6 node:test-Cases). **Härter als gefordert:** severity-Ceiling (neues critical auf baselined high re-surface) + reviewBy-Ablauf. Wired: `check-npm-audit` in CI-Run-Checks; `test:scripts`-Glob rekursiv gefixt. Lokal: Spec 6/6, gate exit 0. Review approve (2 wichtig-Fixes: Glob+Ceiling). **Befund: 30 high/critical Prod-CVEs Alt-Last der Basis — dokumentiert in docs/security/accepted-cves.md, Remediation via Dependabot bis reviewBy**
 Komponente: `scripts` (Ops) + Repo-Root · Dateien: `scripts/security/checkNpmAudit.ts` (neu, SPDX), `scripts/security/npmAuditAllowlist.ts` (neu, SPDX), `scripts/security/checkNpmAudit.spec.ts` (neu, SPDX), `package.json` (Script)
 Soll: PLAN §5.1(:258) — `npm audit`-Signal; Muster `scripts/checkTranslations.ts`/`scripts/supply-chain/checkExternalReferences.ts` (in-Repo-Gate, keine neue Runtime-Dep)
 Änderung: `checkNpmAudit.ts` führt `npm audit --json --omit=dev` aus, parst die Advisories, filtert auf Schwere `high`/`critical`, ignoriert die in `npmAuditAllowlist.ts` (typisierter const-Export `{ id, package, reason, reviewBy }`) gelisteten und exitet 1 bei verbleibenden Findings. **Aktuelle Findings als Baseline** mit `reviewBy`-Datum in die Allowlist aufnehmen, damit das Gate grün startet und nur **neue** CVEs blockt. `package.json`: Script `"check-npm-audit": "tsx scripts/security/checkNpmAudit.ts"` + in `check`-Kette einhängen. Spec: Fixture-JSON (a) nur allowlistete Advisory → pass, (b) nicht-allowlistete high/critical → fail.
