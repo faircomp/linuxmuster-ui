@@ -154,8 +154,28 @@ jobs:
           labels: ${{ steps.meta_frontend.outputs.labels }}
           context: .
           file: apps/frontend/Dockerfile
-          push: true
+          push: false
+          load: true
           tags: ${{ needs.prepare.outputs.frontend-docker-tags }}
+
+      - name: Resolve frontend scan ref
+        id: scan_ref_fe
+        run: echo "ref=$(echo '${{ needs.prepare.outputs.frontend-docker-tags }}' | cut -d, -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Scan frontend image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.scan_ref_fe.outputs.ref }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
+
+      - name: Push scanned frontend image
+        run: |
+          IFS=',' read -ra IMAGE_TAGS <<< "${{ needs.prepare.outputs.frontend-docker-tags }}"
+          for image_tag in "${IMAGE_TAGS[@]}"; do
+            docker push "$image_tag"
+          done
 
   build-api:
     runs-on: ubuntu-24.04
@@ -213,5 +233,25 @@ jobs:
           labels: ${{ steps.meta_api.outputs.labels }}
           context: .
           file: apps/api/Dockerfile
-          push: true
+          push: false
+          load: true
           tags: ${{ needs.prepare.outputs.api-docker-tags }}
+
+      - name: Resolve api scan ref
+        id: scan_ref_api
+        run: echo "ref=$(echo '${{ needs.prepare.outputs.api-docker-tags }}' | cut -d, -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Scan api image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.scan_ref_api.outputs.ref }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
+
+      - name: Push scanned api image
+        run: |
+          IFS=',' read -ra IMAGE_TAGS <<< "${{ needs.prepare.outputs.api-docker-tags }}"
+          for image_tag in "${IMAGE_TAGS[@]}"; do
+            docker push "$image_tag"
+          done

@@ -392,3 +392,6 @@ $RECYCLE.BIN/
 # Keycloak realm raw exports (cleartext secrets/key material — scrub via normalize-realm.mjs first)
 /scratchpad/
 *.raw.json
+
+# Security scanner binaries installed on demand by scripts/security/scanImages.sh
+/bin/

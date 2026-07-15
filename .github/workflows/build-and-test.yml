@@ -91,9 +91,18 @@ jobs:
           context: .
           file: apps/frontend/Dockerfile
           push: false
+          load: true
           tags: ${{ steps.generate_docker_tags_fe.outputs.docker_tags_fe }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Scan frontend image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.generate_docker_tags_fe.outputs.docker_tags_fe }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
 
   build-api:
     runs-on: ubuntu-24.04
@@ -147,9 +156,18 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
+          load: true
           tags: ${{ steps.generate_docker_tags_api.outputs.docker_tags_api }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Scan api image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.generate_docker_tags_api.outputs.docker_tags_api }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
 
   test:
     runs-on: ubuntu-24.04
