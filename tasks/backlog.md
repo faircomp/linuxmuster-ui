@@ -971,7 +971,7 @@ i18n: keine
 Doku: Installer-README: Hinweis „kein privates npm-Token mehr nötig"
 Abhängt von: T4
 
-### T6 — BE: Lizenzserver env-gaten + Community-Modus-Stub (+ isCommunity im DTO)  [ ]
+### T6 — BE: Lizenzserver env-gaten + Community-Modus-Stub (+ isCommunity im DTO)  [x] OK LICENSE_SERVER_URL aus env||'' → Community (kein Outbound; axios nie gebaut), signLicense 409, getLicenseDetails isCommunity=true; i18n de/en/fr; .env.default; jest-Spec (Review approve, box-gated Lauf)
 Komponente: apps/api (+ libs) · Dateien: apps/api/src/license/license.service.ts, libs/src/license/constants/licenseServerUrl.ts, libs/src/license/types/license-info.dto.ts
 Soll: main.js:43800 / licenseServerUrl.ts:20 (`https://license.edulution.io/api/v1`) · license.service.ts:51–53 (axios baseURL), :84–96 (checkLicenseValidity), :123–182 (signLicense), :184–213 (verifyToken)
 Änderung: `LICENSE_SERVER_URL` aus `process.env.LICENSE_SERVER_URL` (Default **leer**) beziehen. Ist keine URL konfiguriert → Community-Modus: `signLicense`/`verifyToken`/`checkLicenseValidity` machen **keinen** Outbound-Call (kein axios-Client bauen), `getLicenseDetails` ergänzt berechnetes `isCommunity: true` im `LicenseInfoDto`; POST-Handler bleibt unter `AdminGuard`, antwortet im Community-Modus deterministisch (No-op/HTTP 409 mit klarer Meldung, kein Netzint-Call). Jest-Test: im Community-Modus wird `axios.create`/`.post` **nie** aufgerufen und `GET`-Response trägt `isCommunity=true`.

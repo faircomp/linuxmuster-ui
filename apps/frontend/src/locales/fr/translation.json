@@ -1449,7 +1449,8 @@
       "noLicenseRegistered": "Aucune licence enregistrée",
       "errors": {
         "signingFailed": "L'inscription a échoué",
-        "verificationFailed": "La vérification des jetons a échoué"
+        "verificationFailed": "La vérification des jetons a échoué",
+        "communityMode": "L'enregistrement de licence n'est pas disponible en mode communautaire AGPL."
       }
     },
     "userAdministration": {

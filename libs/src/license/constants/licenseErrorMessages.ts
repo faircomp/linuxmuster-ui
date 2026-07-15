@@ -20,6 +20,7 @@
 const LicenseErrorMessages = {
   LICENSE_SIGNING_FAILED: 'settings.license.errors.signingFailed',
   LICENSE_VERIFICATION_FAILED: 'settings.license.errors.verificationFailed',
+  LICENSE_COMMUNITY_MODE: 'settings.license.errors.communityMode',
 } as const;
 
 export default LicenseErrorMessages;

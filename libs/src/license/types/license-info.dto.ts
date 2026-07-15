@@ -26,6 +26,7 @@ interface LicenseInfoDto {
   validFromUtc: Date;
   validToUtc: Date;
   isLicenseActive: boolean;
+  isCommunity?: boolean;
 }
 
 export default LicenseInfoDto;

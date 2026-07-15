@@ -471,12 +471,10 @@
       "saveSuccess": "File saved successfully",
       "saveError": "Failed to save file"
     },
-
     "publicShareFilesPage": {
       "title": "Shared Files",
       "description": "Here you will find all the files you have shared. Please note: Anyone who has the share link and the corresponding password can download these files."
     },
-
     "publicFileSharing": {
       "fileName": "Filename",
       "selectedFile": "Selected file: ",
@@ -525,14 +523,12 @@
         "restrictedHint": "Only selected users or groups can access this content."
       }
     },
-
     "expiry": {
       "select": "Select expiry time",
       "selectedItemPrefix": "Selected content that is shared:",
       "noInviteesWarning": "⚠️  WARNING: Anyone with the share link will be able to download this content.",
       "inviteesWarning": "⚠️  WARNING: Anyone within the selected groups or users will be able to download this content."
     },
-
     "eta": {
       "fewSeconds": "a few seconds remaining",
       "lessThanMinute": "less than a minute remaining",
@@ -548,7 +544,6 @@
       "moreThanDays_one": "more than {{count}} day remaining",
       "moreThanDays_other": "more than {{count}} days remaining"
     },
-
     "webdavInfo": {
       "title": "WebDAV Access",
       "description": "Use this URL to connect to your files via WebDAV clients",
@@ -1227,11 +1222,9 @@
         "edulution-binduser-dn": "Distinguished Name (DN)",
         "edulution-binduser-password": "Password"
       },
-
       "branding": {
         "title": "Branding"
       },
-
       "logo": {
         "title": "Logo",
         "descriptionSchool": "Upload your logo. It will be shown on the login screen and on the linuxmuster app ID card.",
@@ -1301,7 +1294,9 @@
       "deleteSuccess": "Webhook client deleted",
       "filterPlaceholder": "Filter webhook clients..."
     },
-    "lmnVersion": { "title": "Linuxmuster version overview" },
+    "lmnVersion": {
+      "title": "Linuxmuster version overview"
+    },
     "appconfig": {
       "position": {
         "title": "Sorting",
@@ -1344,7 +1339,6 @@
           "title": "Proxy Configuration",
           "description": "You can store your own proxy configuration for Traefik here. You can either work via the input fields using a template or create a configuration in YAML format directly in expert mode. <br/><strong>Warning:</strong> A wrong configuration could lead to the application being unreachable."
         },
-
         "docker": {
           "title": "Docker Applications",
           "description": "To be able to use the extended services, the required container applications must be started here.",
@@ -1476,7 +1470,8 @@
       "noLicenseRegistered": "No license registered",
       "errors": {
         "signingFailed": "Registration failed",
-        "verificationFailed": "Token verification failed"
+        "verificationFailed": "Token verification failed",
+        "communityMode": "License registration is unavailable in AGPL community mode."
       }
     }
   },
@@ -2093,7 +2088,6 @@
     "unknownErrorOccurred": "An unknown error occurred"
   },
   "currentDirectory": "Current directory",
-
   "saveExternalFileDialogBody": {
     "saveExternalFile": "Save external file",
     "destinationFolder": "Destination folder",
@@ -2103,12 +2097,10 @@
     "fileSavedSuccessful": "File saved successfully",
     "fileSaveFailed": "File could not be saved"
   },
-
   "fileSelectorDialogBody": {
     "title": "Select a file to open",
     "selectFile": "Selected file"
   },
-
   "moveItemDialog": {
     "changeDirectory": "Change directory",
     "currentDirectory": "Current directory",
@@ -2122,12 +2114,10 @@
     "unknownErrorOccurred": "An unknown error occurred",
     "selectedItem": "selected item"
   },
-
   "shareDialog": {
     "shareFilesOrDirectories": "Share files",
     "share": "Share"
   },
-
   "deleteDialog": {
     "areYouSure": "Are you absolutely sure?",
     "actionCannotBeUndone": "This action cannot be undone. This will permanently delete the files:",

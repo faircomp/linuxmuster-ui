@@ -41,6 +41,8 @@ import { License, LicenseDocument } from './license.schema';
 class LicenseService implements OnModuleInit {
   private licenseServerApi: AxiosInstance;
 
+  private readonly isCommunityMode = !LICENSE_SERVER_URL;
+
   constructor(
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(License.name) private licenseModel: Model<LicenseDocument>,
@@ -48,9 +50,11 @@ class LicenseService implements OnModuleInit {
 
     private jwtService: JwtService,
   ) {
-    this.licenseServerApi = axios.create({
-      baseURL: LICENSE_SERVER_URL,
-    });
+    if (!this.isCommunityMode) {
+      this.licenseServerApi = axios.create({
+        baseURL: LICENSE_SERVER_URL,
+      });
+    }
   }
 
   async onModuleInit() {
@@ -83,6 +87,10 @@ class LicenseService implements OnModuleInit {
 
   @Interval(LICENSE_CHECK_INTERVAL)
   async checkLicenseValidity() {
+    if (this.isCommunityMode) {
+      return;
+    }
+
     const licenseInfo = await this.licenseModel.findOne<LicenseInfoDto>({}, 'licenseKey token isLicenseActive').lean();
 
     if (licenseInfo?.isLicenseActive && licenseInfo?.token) {
@@ -105,7 +113,7 @@ class LicenseService implements OnModuleInit {
       licenseInfo = await this.licenseModel
         .findOne<LicenseInfoDto>({}, 'customerId licenseId isLicenseActive numberOfUsers validFromUtc validToUtc')
         .lean();
-      return licenseInfo;
+      return { ...(licenseInfo ?? {}), isCommunity: this.isCommunityMode };
     } catch (error) {
       throw new CustomHttpException(CommonErrorMessages.DB_ACCESS_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -121,6 +129,15 @@ class LicenseService implements OnModuleInit {
   }
 
   async signLicense(signLicenseDto: SignLicenseDto) {
+    if (this.isCommunityMode) {
+      throw new CustomHttpException(
+        LicenseErrorMessages.LICENSE_COMMUNITY_MODE,
+        HttpStatus.CONFLICT,
+        undefined,
+        LicenseService.name,
+      );
+    }
+
     try {
       Logger.log('Signing license...', LicenseService.name);
       const { data: token } = await this.licenseServerApi.post<string>('sign', signLicenseDto);
@@ -182,6 +199,10 @@ class LicenseService implements OnModuleInit {
   }
 
   async verifyToken(licenseInfo: LicenseInfoDto) {
+    if (this.isCommunityMode) {
+      return;
+    }
+
     const { token, licenseKey } = licenseInfo;
 
     try {
