@@ -126,15 +126,15 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-base-drift-analysis.md` ·
 > **Analyse-Paket — Verify-Realität:** Dies sind **Investigations-Tasks (kein Produktivcode)**.
 > Der Ledger-Kopf oben ist die Standard-Vorlage; **crabbox/iter.sh und Voll-Stack-Verify laufen
 > hier leer** (es gibt keinen Runtime-Diff). Der **reale Verify jeder Task** ist der angegebene
-> `grep`/`diff` gegen `scratchpad/api-img/opt/edulution/api/main.js` (2.0.200) und die
+> `grep`/`diff` gegen `.reference/2.0.200/api/main.js` (2.0.200) und die
 > Repo-Source (1.6.266) **plus** der belegte Report-Abschnitt in
 > `docs/analysis/base-drift-2.0.200.md` (Assertion: „Diff erzeugt / Tabelle vollständig /
 > Bewertung gesetzt"). `npm run lint` ist nur für ein optional angelegtes Skript relevant.
-> Abkürzung unten: `MJ` = `scratchpad/api-img/opt/edulution/api/main.js`.
+> Abkürzung unten: `MJ` = `.reference/2.0.200/api/main.js`.
 
 ---
 
-### T1 — Report-Gerüst + Modul-Inventar (32 ↔ 38, additive-These je Modul)  [ ]
+### T1 — Report-Gerüst + Modul-Inventar (32 ↔ 38, additive-These je Modul)  [x] ✓ 32→38, 6 neu, 0 entfernt/umbenannt
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md (neu)
 Soll: main.js `class …Module` (38) ↔ 1.6 `apps/api/src/**` `class …Module` (32)
 Änderung: Report-Datei anlegen (SPDX AGPL-Header, DE, Abschnitts-Gerüst für T2–T12 + Legende
@@ -295,11 +295,11 @@ Abhängt von: T1
 ### T11 — FE-App-Shell-/Routing-/Store-Struktur-Drift (Signal, §4.1)  [ ]
 Komponente: docs · Dateien: docs/analysis/base-drift-2.0.200.md
 Soll: 1.6 `apps/frontend/src/{routes,components/structure/layout/NativeAppPageManager.tsx,store}`
-↔ 2.0 `scratchpad/ui-img` index-Bundle (minifiziert) + `scratchpad/real/*` Live-Referenz
+↔ 2.0 `.reference/2.0.200/ui` index-Bundle (minifiziert) + `.reference/2.0.200/baselines/*` Live-Referenz
 Änderung: **Ehrlich signal-basiert** (2.0-FE ist minifiziert, keine Quell-Namen): im 2.0-index-
 Bundle auf **String-Ebene** heben — Route-Pfade, `APPS.*`-Slugs, `appType: NATIVE`-
 Registrierungen, CSS-Variablen (§4.1: neue `--code-*`), `bg-glass`-Nutzung — und gegen die
-1.6-Struktur + Baseline-Screenshots (`scratchpad/real/10-dashboard.png`, `18-settings.png`)
+1.6-Struktur + Baseline-Screenshots (`.reference/2.0.200/baselines/10-dashboard.png`, `18-settings.png`)
 plausibilisieren. Ziel: grobe Aussage „App-Shell/Routing/Store-Struktur stabil vs. gedriftet",
 **nicht** exakter Diff. Methoden-Vorbehalt im Report explizit vermerken.
 Verify: Report enthält die Signal-Liste (Routen/Slugs/CSS-Var-Δ aus dem index-Bundle) + eine
@@ -400,7 +400,7 @@ Abhängt von: T2, T3
 
 ## p0-supply-chain-inventory [P0] ⭐ — Supply-Chain-Inventar (edulution-io-Außenreferenzen)
 _Ziel:_ Alle edulution-io-Außenreferenzen (Datei:Zeile, Policy) + Manifest · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 4
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-supply-chain-inventory.md` · Soll: main.js:25090-25097 · main.js:26371/26891 · main.js:43634-43800 · main.js:54486 · main.js:59762 · Fork-Base libs/src/{mail,common,license,docker} · scratchpad/real/— (keine UI-Änderung)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-supply-chain-inventory.md` · Soll: main.js:25090-25097 · main.js:26371/26891 · main.js:43634-43800 · main.js:54486 · main.js:59762 · Fork-Base libs/src/{mail,common,license,docker} · .reference/2.0.200/baselines/— (keine UI-Änderung)
 
 > Analyse-Paket: Kern-Deliverable ist das versionierte Register + ein Drift-Gate. Die *Umsetzung*
 > einzelner Policies (Lizenzserver, Plugin-Repoint, SOGo-Vendoring, Image-Pinning, Rebrand) ist
@@ -1235,7 +1235,7 @@ Abhängt von: T5, T6
 
 ## p1-migration-upgrade-test [P1] — Migrations-Upgrade-Test (echte 1.6-DB → eigenes Image)
 _Ziel:_ 1.6-DB→eigenes Image Upgrade-Pfad real testen · _Abhängt-von:_ p1-installer-repoint, p0-migrations-inventory · _Status:_ geplant · _Tasks:_ 8
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-migration-upgrade-test.md` · Soll: main.js:2676 (Engine) · main.js:2678/2681 (Log-Strings) · main.js:9214 (getMasterKey) · main.js:7950 (unwrapEncryptKey) · docs/migrations/2.0-migrations-inventory.md (p0) · scratchpad/real/dashboard.png
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-migration-upgrade-test.md` · Soll: main.js:2676 (Engine) · main.js:2678/2681 (Log-Strings) · main.js:9214 (getMasterKey) · main.js:7950 (unwrapEncryptKey) · docs/migrations/2.0-migrations-inventory.md (p0) · .reference/2.0.200/baselines/dashboard.png
 
 > Voraussetzungen (Abhängt-von, paketweit): `p0-migrations-inventory` (Inventar + gedraftetes
 > `scripts/migrations/assert-schema-versions.*` + `docs/migrations/upgrade-1.6-to-2.0.md`),
@@ -1510,7 +1510,7 @@ Abhängt von: T5, T6, T7
 
 ## p1-master-key-provisioning [P1] — Master-Key-Provisioning & Backup-Kopplung
 _Ziel:_ Installer erzeugt MASTER_ENCRYPT_KEY + koppelt ihn ans Backup-Set · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 4
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-master-key-provisioning.md` · Soll: main.js:9214-9235 (getMasterKey) · main.js:8340-8345 (generateEncryptKey/64-hex) · main.js:9190-9194 (Konstanten) · edulution-installer/apps/webinstaller-api/app/main.py:699-834 (createEdulutionEnvFile) · scratchpad/real/— (keine UI-Änderung)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-master-key-provisioning.md` · Soll: main.js:9214-9235 (getMasterKey) · main.js:8340-8345 (generateEncryptKey/64-hex) · main.js:9190-9194 (Konstanten) · edulution-installer/apps/webinstaller-api/app/main.py:699-834 (createEdulutionEnvFile) · .reference/2.0.200/baselines/— (keine UI-Änderung)
 
 > Abhängt-von: `p1-installer-repoint`. **Cross-Repo:** T1/T2 committen ins Installer-Repo
 > (`edulution-installer`, Branch `feat/2.0-backlog`), T3 ins Produkt-Repo
@@ -1629,7 +1629,7 @@ Abhängt von: T1, T5
 
 ## p1-observability [P1] — Observability, Health-/Build-Metadaten & Sentry
 _Ziel:_ Health liefert Build-Metadaten; Observability + Sentry-Entscheidung · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 5
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-observability.md` · Soll: main.js:56941-56961 (HealthService.buildInfo/onModuleInit/Spread), 56932/57023-57029 (Disk-Threshold), 56789-56851 (HealthController-Guards), 59716-59723 (configuration-Contract — Fremd-Paket, nur Referenz), 59762-59795 & 54486-54495 (Sentry), 948 (LoggingInterceptor) · upstream/1166-logging-add-kibana-prometheus (Prometheus/Kibana — bewusst NICHT übernommen, Umriss) · scratchpad/real/— (kein Baseline-Shot; BE/Env/Ops)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-observability.md` · Soll: main.js:56941-56961 (HealthService.buildInfo/onModuleInit/Spread), 56932/57023-57029 (Disk-Threshold), 56789-56851 (HealthController-Guards), 59716-59723 (configuration-Contract — Fremd-Paket, nur Referenz), 59762-59795 & 54486-54495 (Sentry), 948 (LoggingInterceptor) · upstream/1166-logging-add-kibana-prometheus (Prometheus/Kibana — bewusst NICHT übernommen, Umriss) · .reference/2.0.200/baselines/— (kein Baseline-Shot; BE/Env/Ops)
 
 > Kontext-Notiz: Dieses Paket ist **disjunkt** zu `p1-own-ci-registry`. Dort liegt das gesamte
 > Build-Metadaten-Plumbing (configuration.ts=T5, Dockerfile ARG/ENV/LABEL=T3,
@@ -1685,7 +1685,7 @@ Doku: docs/observability.md (DE+EN)
 
 ## p1b-tracking-pipeline [P1b] — Tracking-/Image-Diff-Pipeline (linuxmuster-tracking)
 _Ziel:_ Repo linuxmuster-tracking: skopeo-Release-Erkennung + Image-Diff-Pipeline · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 16
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p1b-tracking-pipeline.md` · Soll: PLAN §7a–i(:325–:349) · §8-P1b(:363) · §9.7(:424) · Anker gemessen an main.js (2.0.200): Module=38 · Controller=39 · SchemaFactory.createForClass=39 · Dto roh 242/unique 241 · _ENDPOINT=41 · Migrations-Namen `'[0-9]{3}-…'`=32 · runMigrations(=12 · Guard=9 · Gateway=2 · `schedule_1.Cron)(`=4 · `new bullmq_1.Queue(`=4 · Baseline: scratchpad/api-img/opt/edulution/api/main.js + scratchpad/ui-img/.../assets/index-*.{js,css} + scratchpad/real/*.png
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p1b-tracking-pipeline.md` · Soll: PLAN §7a–i(:325–:349) · §8-P1b(:363) · §9.7(:424) · Anker gemessen an main.js (2.0.200): Module=38 · Controller=39 · SchemaFactory.createForClass=39 · Dto roh 242/unique 241 · _ENDPOINT=41 · Migrations-Namen `'[0-9]{3}-…'`=32 · runMigrations(=12 · Guard=9 · Gateway=2 · `schedule_1.Cron)(`=4 · `new bullmq_1.Queue(`=4 · Baseline: .reference/2.0.200/api/main.js + .reference/2.0.200/ui/.../assets/index-*.{js,css} + .reference/2.0.200/baselines/*.png
 
 > **Verifikations-Hinweis (wichtig, weicht vom Standard ab):** Das Deliverable ist ein **eigenes Repo
 > `linuxmuster-tracking`**, kein Diff im `edulution-ui`-Tree. Der crabbox-Host ist die Compute-/Netz-
@@ -1765,7 +1765,7 @@ Abhängt von: T3
 ### T8 — TLDraw-False-Positive-Filter + FE-Screenshot-Abgleich-Hinweis  [ ]
 Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh` (Allowlist), `bin/fingerprint-fe.sh`
 Soll: PLAN §7e(:337) — `TLDrawWithSync` ist **kein** 2.0-Neusignal (tldraw+@tldraw/sync bereits 1.6.266 `package.json:88-89,170`) → False-Positive; „immer gegen crabbox-Screenshot-Diff gegenprüfen"; sauberes Positiv-Beispiel = `WikiPage`
-Änderung: Allowlist bekannter False-Positives (`tldraw`,`@tldraw/sync`,`TLDrawWithSync`) in `anchors.sh`; `fingerprint-fe.sh` markiert Treffer als `knownFalsePositive:true` statt sie zu droppen (Nachvollziehbarkeit); Report (T14) blendet sie aus der „neue Seite"-Sektion aus und verweist auf `scratchpad/real/*.png`.
+Änderung: Allowlist bekannter False-Positives (`tldraw`,`@tldraw/sync`,`TLDrawWithSync`) in `anchors.sh`; `fingerprint-fe.sh` markiert Treffer als `knownFalsePositive:true` statt sie zu droppen (Nachvollziehbarkeit); Report (T14) blendet sie aus der „neue Seite"-Sektion aus und verweist auf `.reference/2.0.200/baselines/*.png`.
 Verify: `iter.sh cmd 'cd /tmp/trk && ./bin/fingerprint-fe.sh 2.0.200 | jq -e ".falsePositives|index(\"TLDrawWithSync\")"'` → Exit 0 (TLDraw als FP geführt, nicht als Neusignal).
 i18n: keine (Ops-Tooling)
 Doku: README — Notiz „FE-Signal ist grob, Screenshot-Pflicht"
@@ -1845,7 +1845,7 @@ Abhängt von: T15
 
 ## p2-chat [P2] ⭐ — Chat (nativer Gruppen-Chat)
 _Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 19
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · scratchpad/real/11-chat.png
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · .reference/2.0.200/baselines/11-chat.png
 
 > Hinweis Rekonstruktion: `1851` ist diverged (datiert vor 1.6→2.0-Merge) und kennt **kein**
 > `chatReadStatus`, nutzt `sophomorixType` statt `conversationType`. Wo `1851` und `main.js`
@@ -1962,7 +1962,7 @@ Abhängt von: T1
 
 ### T13 — i18n: Chat-Locale-Keys DE+EN  [ ]
 Komponente: apps/frontend · Dateien: `apps/frontend/src/locales/de/translation.json`, `apps/frontend/src/locales/en/translation.json`
-Soll: scratchpad/real/11-chat.png (sichtbare Strings) · main.js:69127 (`CHAT_ERROR_MESSAGES`-Schlüssel)
+Soll: .reference/2.0.200/baselines/11-chat.png (sichtbare Strings) · main.js:69127 (`CHAT_ERROR_MESSAGES`-Schlüssel)
 Änderung: Bestehenden `chat`-Block erweitern: `selectConversation`, `selectConversationDescription`, `refreshGroups`, `schoolClasses`, `projects`, `inputPlaceholder`, `send`, `noMessages`, `loadingMessages`, `errors.conversationNotFound`, `errors.invalidGroupType`, `errors.unauthorizedAccess` (Fehler-Keys müssen zu `CHAT_ERROR_MESSAGES` passen). DE **und** EN identische Schlüssel.
 Verify: `npm run check-translations` grün (DE/EN-Parität) · `npm run lint`
 i18n: neue Keys (Liste oben) DE+EN
@@ -1979,7 +1979,7 @@ Abhängt von: T1
 
 ### T15 — ChatPage-Shell + Empty-State + Sidebar-Sektionen + Mount  [ ]
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Chat/ChatPage.tsx`, `.../components/ChatEmptyState.tsx`, `.../components/ChatView.tsx`, `.../useRegisterChatSections.ts`, `.../useChatMenu.ts`, `.../ChatMenuBarFooter.tsx`, `apps/frontend/src/components/structure/layout/NativeAppPageManager.tsx`
-Soll: upstream/1851:`pages/Chat/ChatPage.tsx`/`useRegisterChatSections.ts` (PRIMÄR) · Baseline scratchpad/real/11-chat.png
+Soll: upstream/1851:`pages/Chat/ChatPage.tsx`/`useRegisterChatSections.ts` (PRIMÄR) · Baseline .reference/2.0.200/baselines/11-chat.png
 Änderung: `ChatPage` liest `:groupType/:groupName` via `useParams`; registriert Sidebar-Sektionen „School Classes"/„Projects" über `useRegisterChatSections` (`useSubMenuStore.setSections`) aus `useChatStore.userGroups`; zeigt bei leerer Auswahl `ChatEmptyState` (Icon + „Select conversation" + „Refresh groups"→`fetchUserGroups`). Mount: `[APPS.CHAT]: <ChatPage />` in `nativeAppPages` (NativeAppPageManager). `cn()` für classNames, `@fortawesome/free-solid-svg-icons`.
 Verify: crabbox-Deploy + Playwright: `/chat` rendert Titel „Chat", Sektionen School Classes/Projects, Empty-State „Select conversation" + „Refresh groups" → Visual-Diff gegen 11-chat.png
 i18n: nutzt T13-Keys
@@ -2015,7 +2015,7 @@ Abhängt von: T11, T16
 
 ### T19 — Pilot-Abschluss: crabbox-Deploy + Visual-Diff + Voll-Stack-Verify  [ ]
 Komponente: (Deploy/Verify) · Dateien: keine Produktivänderung (nutzt scripts/crabbox + /test)
-Soll: scratchpad/real/11-chat.png (Baseline) · Master-Plan §364 (Pilot-Exit-Kriterium)
+Soll: .reference/2.0.200/baselines/11-chat.png (Baseline) · Master-Plan §364 (Pilot-Exit-Kriterium)
 Änderung: Vollen Stack auf crabbox gegen echten LMN deployen; Playwright-Login → Chat-Screenshot; Visual-Diff gegen `11-chat.png`; Message-Flow (senden/empfangen/SSE) end-to-end prüfen; Guard-Check (unauth `GET /edu-api/chat/groups` → 401). Ergebnis dokumentiert das validierte „neue native App"-Rezept.
 Verify: `/test` (Voll-Stack) grün · Visual-Diff Chat-Empty-State ≈ 11-chat.png · Message-Roundtrip + SSE bestätigt · 401 ohne Auth
 i18n: keine
@@ -2168,7 +2168,7 @@ Abhängt von: T7, T13, T14
 
 ## p3-wiki [P3] — Wiki
 _Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 25
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · scratchpad/ui-img/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · .reference/2.0.200/ui/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
 
 > Kalibrierungs-Notiz (P3): BE-Tasks sind aus main.js hart verankert und ausführbar. Die FE-Tasks
 > (T14–T24) erben ihr Muster vom Chat-Piloten (p2-chat: Zustand-Store mit eduApi, Native-Route,
@@ -2395,7 +2395,7 @@ Abhängt von: T21
 ### T25 — Voll-Stack-Smoke gegen echten LMN (Wiki e2e)  [ ]
 Komponente: scripts/crabbox · Dateien: — (Verifikationslauf, kein Feature-Code)
 Soll: /test-Skill (crabbox gegen echten LMN, Playwright-Screenshots + Visual-Diff)
-Änderung: Voll-Stack-Verifikation: Login → Wiki öffnen → Seite anlegen/bearbeiten/speichern → Ordner anlegen → Suche (oder degradierter State) → Share-Visibility-Toggle greift. Screenshots gegen frisch aufgenommene Baseline (fehlt in scratchpad/real). Migration001 im Upgrade-Harness bestätigen.
+Änderung: Voll-Stack-Verifikation: Login → Wiki öffnen → Seite anlegen/bearbeiten/speichern → Ordner anlegen → Suche (oder degradierter State) → Share-Visibility-Toggle greift. Screenshots gegen frisch aufgenommene Baseline (fehlt in .reference/2.0.200/baselines). Migration001 im Upgrade-Harness bestätigen.
 Verify: /test — LMN-Login + Wiki-Modul-Flow grün; Visual-Diff im Toleranzrahmen; keine Guard-/Auth-Regression.
 i18n: keine
 Doku: docs/features/p3-wiki.md „Verifiziert"-Notiz — intern
@@ -2403,7 +2403,7 @@ Abhängt von: T13, T15, T22, T23, T24
 
 ## p4-mail-rework [P4] — Mail-Rework (BEIDES: nativer Client + SOGo-Iframe, EINE App, `ACTIVE_MAIL_CLIENT`-Selektor)
 _Ziel:_ Mail BEIDES: ACTIVE_MAIL_CLIENT-Selector (nativ⟷SOGo), phasiert + Mailcow-Admin · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 25
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-mail-rework.md` · Soll: Selektor-Präzedenz `ACTIVE_DOCUMENT_EDITOR` main.js:2114 (Key) · 26541-26542 (Lesung `?? ONLY_OFFICE`) · 27148-27152 (FILESHARING_DOCKER_CONTAINERS) · 27180-27184 (Const) · main.js:23140-24941 (MailsController, 36 Routen) · 23896 (MAIL_ENDPOINT_PATHS) · 25203/27545/28650/28907 (Services) · 32604 (MailRequestSizeGuard) · 4119 (Migration 012) · 2078-2117 (ExtendedOptionKeys) · 2158 (MAIL_DEFAULT_PORTS) · FE-Ist MailPage.tsx:24 / NativeFrameManager.tsx:64 / NativeAppPageManager.tsx:30-38 / NativeFrame.tsx:136-140 · upstream/997-mail-rework-imap-flow-and-add-additional-logging (nur Struktur-Referenz, 1.6-Zweig) · KEIN Baseline-Screenshot (scratchpad/real/ ohne Mail-Shot)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-mail-rework.md` · Soll: Selektor-Präzedenz `ACTIVE_DOCUMENT_EDITOR` main.js:2114 (Key) · 26541-26542 (Lesung `?? ONLY_OFFICE`) · 27148-27152 (FILESHARING_DOCKER_CONTAINERS) · 27180-27184 (Const) · main.js:23140-24941 (MailsController, 36 Routen) · 23896 (MAIL_ENDPOINT_PATHS) · 25203/27545/28650/28907 (Services) · 32604 (MailRequestSizeGuard) · 4119 (Migration 012) · 2078-2117 (ExtendedOptionKeys) · 2158 (MAIL_DEFAULT_PORTS) · FE-Ist MailPage.tsx:24 / NativeFrameManager.tsx:64 / NativeAppPageManager.tsx:30-38 / NativeFrame.tsx:136-140 · upstream/997-mail-rework-imap-flow-and-add-additional-logging (nur Struktur-Referenz, 1.6-Zweig) · KEIN Baseline-Screenshot (.reference/2.0.200/baselines/ ohne Mail-Shot)
 
 > Kalibrierung (P4): geerdetes Rekonstruktions-Ledger, **phasiert**. Der Selektor (Phase 1) ist 1:1 aus
 > `ACTIVE_DOCUMENT_EDITOR` abgeleitet — dieselbe `extendedOption`-Plumbing, **aber ohne** Container-
@@ -2594,10 +2594,10 @@ Doku: keine (intern; Migrations-Hinweis in p1-migration-upgrade-test)
 Abhängt von: T15
 
 ### T17 — FE: Baseline-Screenshot 2.0-Mail aufnehmen  [ ]
-Komponente: scratchpad/real · Dateien: `scratchpad/real/19-mail.png` (neu)
+Komponente: .reference/2.0.200/baselines · Dateien: `.reference/2.0.200/baselines/19-mail.png` (neu)
 Soll: Live-2.0-crabbox (kein vorhandener Baseline-Shot). Referenz für Visual-Diff der nativen FE.
 Änderung: Playwright-Login → Mail-Modul auf laufender 2.0-Referenz-Instanz, Screenshot ablegen (siehe /test). Kein Code.
-Verify: `ls scratchpad/real/19-mail.png` existiert; Shot zeigt nativen 2.0-Client (Ordnerbaum/Liste), nicht SOGo-Iframe.
+Verify: `ls .reference/2.0.200/baselines/19-mail.png` existiert; Shot zeigt nativen 2.0-Client (Ordnerbaum/Liste), nicht SOGo-Iframe.
 i18n: keine
 Doku: keine (intern)
 Abhängt von: —
@@ -2616,7 +2616,7 @@ Abhängt von: p2-chat (FE-Store-Muster)
 Komponente: apps/frontend/src/pages/Mail · Dateien: `apps/frontend/src/pages/Mail/MailPage.tsx`
 Soll: Live-2.0 (native Route) + Baseline-Shot (T17). Phase 1 (T2) hat MailPage bereits selektor-verdrahtet mit Platzhalter — hier die echte Shell.
 Änderung: Platzhalter durch native Shell ersetzen (Layout: Ordnerbaum-Slot | Listen-Slot | Detail-Slot, Compose-Trigger). Selektor-Gating (nur `=== NATIVE`) bleibt aus T2. **Rollback-Anker** (Ein-Zeilen-Revert auf `<NativeFrame>`) bleibt gültig. SPDX bleibt.
-Verify: crabbox-Deploy mit `ACTIVE_MAIL_CLIENT=native` (Seed) → `/mail` rendert native Shell (kein SOGo-Iframe); mit Default `sogo` → weiterhin SOGo; Playwright-Diff gegen `scratchpad/real/19-mail.png` (Grobstruktur).
+Verify: crabbox-Deploy mit `ACTIVE_MAIL_CLIENT=native` (Seed) → `/mail` rendert native Shell (kein SOGo-Iframe); mit Default `sogo` → weiterhin SOGo; Playwright-Diff gegen `.reference/2.0.200/baselines/19-mail.png` (Grobstruktur).
 i18n: `mail.emptyState.*` DE+EN+FR
 Doku: keine (intern)
 Abhängt von: T2, T17, T18
@@ -2685,7 +2685,7 @@ Abhängt von: T19, T24
 
 ## p4-filesharing-wopi [P4] — Filesharing / WOPI / Collabora-Editing + ACTIVE_DOCUMENT_EDITOR
 _Ziel:_ Filesharing/WOPI/Collabora + ACTIVE_DOCUMENT_EDITOR-Selektor · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 14
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-filesharing-wopi.md` · Soll: main.js:2114/27180 · main.js:26538/27148 · main.js:40352/43199 · main.js:37560/37726 · main.js:42259/42468 · main.js:1726 (== appconfig.service.ts:258) · 1.6-Source apps/api/src/filesharing/onlyoffice.service.ts, apps/frontend/.../FilePreview/OnlyOffice · scratchpad/real/*
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-filesharing-wopi.md` · Soll: main.js:2114/27180 · main.js:26538/27148 · main.js:40352/43199 · main.js:37560/37726 · main.js:42259/42468 · main.js:1726 (== appconfig.service.ts:258) · 1.6-Source apps/api/src/filesharing/onlyoffice.service.ts, apps/frontend/.../FilePreview/OnlyOffice · .reference/2.0.200/baselines/*
 
 > Kalibrierung (P4): geerdetes Rekonstruktions-Ledger. Granularität schärft sich nach P0-Basis-Drift
 > (echtes 1.6→2.0-Delta im `filesharing`-Ordner) + Chat-Pilot (p2). Kein dedizierter Rescue-Branch für
@@ -2818,7 +2818,7 @@ Abhängt von: T13
 
 ## p4-app-store-verify [P4] — App-Store-/DockerService-Engine (Verify + 2.0-Drift)
 _Ziel:_ DockerService-App-Store auf 2.0-Parität + Store-Fetch-Contract · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 17
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-app-store-verify.md` · Soll: main.js:26371–26787 (DockerService) · main.js:32732–32853 (DockerController) · main.js:27112–27336 (Listen/Helper) · main.js:33073–33101 (DTO) · kein dedizierter upstream/-Rescue-Branch (Bestandscode seit 1.6) · scratchpad/real/18-settings.png
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-app-store-verify.md` · Soll: main.js:26371–26787 (DockerService) · main.js:32732–32853 (DockerController) · main.js:27112–27336 (Listen/Helper) · main.js:33073–33101 (DTO) · kein dedizierter upstream/-Rescue-Branch (Bestandscode seit 1.6) · .reference/2.0.200/baselines/18-settings.png
 
 > Kalibrierung P4: T1–T11 = 2.0-Drift-Close (Rekonstruktion aus main.js), **provisorisch hier
 > verortet** — Zuschnitt/Zuordnung (P0-Engine-Paket vs. P4) schärft sich nach der
@@ -2982,7 +2982,7 @@ Abhängt von: T13
 
 ## p5-calendar [P5] — Calendar
 _Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 18
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main.js:33176-33381 (Module/Controller) · 33439-34752 (Enums/Schemas/Service/IcalMapper) · 35267-35925 (DTOs) · 2085-2087 (appconfig-Keys) · kein Rescue-Branch · kein scratchpad/real/*calendar* (FE = laufende 2.0-crabbox als Live-Referenz)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main.js:33176-33381 (Module/Controller) · 33439-34752 (Enums/Schemas/Service/IcalMapper) · 35267-35925 (DTOs) · 2085-2087 (appconfig-Keys) · kein Rescue-Branch · kein .reference/2.0.200/baselines/*calendar* (FE = laufende 2.0-crabbox als Live-Referenz)
 
 > P5-Kalibrierungs-Notiz: Geerdetes Rekonstruktions-Ledger. BE-Anker sind aus main.js
 > verifiziert; die **FE-Task-Granularität (T13–T18) schärft sich nach der P0-Basis-Drift-Analyse
@@ -3152,7 +3152,7 @@ Abhängt von: T13
 
 ## p5-linbo [P5] — Linbo (Imaging)
 _Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 13
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js:16922-18603 (Controller/Service/DTOs/Pipe), main.js:14172-14370 (Queue-Delta+UpstreamError), main.js:634-671 (Endpoints), main.js:12903/12980-12989 (Konstanten/Fehler) · kein upstream/<rescue-branch> vorhanden · keine scratchpad/real/*.png (BE-only)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js:16922-18603 (Controller/Service/DTOs/Pipe), main.js:14172-14370 (Queue-Delta+UpstreamError), main.js:634-671 (Endpoints), main.js:12903/12980-12989 (Konstanten/Fehler) · kein upstream/<rescue-branch> vorhanden · keine .reference/2.0.200/baselines/*.png (BE-only)
 
 > Kalibrierungs-Notiz (P5): Geerdetes Rekonstruktions-Ledger. Reihenfolge/Bündelung schärfen sich
 > nach dem p2-chat-Piloten (gleiches lmn-api-Proxy-Muster) und der P0-Basis-Drift-Analyse. Rein
@@ -3273,7 +3273,7 @@ Entscheidung nötig: Umfang hängt an realer LINBO-Store-Verfügbarkeit in crabb
 
 ## p6-mobile-devices [P6] — MobileDevices / MDM (Relution)
 _Ziel:_ DEFERRED: MobileDevices/MDM (Relution kommerziell) · _Abhängt-von:_ — · _Status:_ blockiert (deferred) · _Tasks:_ 0
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p6-mobile-devices.md` · Soll: main.js:65239 (Module) · 65306 (Controller) · ~65706 (Service) · 65969 (RelutionUserTokenService) · 66663 (RelutionUserToken-Schema) · 65528 (Endpoints) · 65567 (Fehler-Keys) — KEIN brauchbarer Rescue-Branch (upstream/1546-add-android-section-to-mobile-access ist die ältere 1.6-„Mobile Access"-QR-FE, NICHT das MDM-Modul) · scratchpad/real: keine Baseline (nicht deploybar ohne Relution)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p6-mobile-devices.md` · Soll: main.js:65239 (Module) · 65306 (Controller) · ~65706 (Service) · 65969 (RelutionUserTokenService) · 66663 (RelutionUserToken-Schema) · 65528 (Endpoints) · 65567 (Fehler-Keys) — KEIN brauchbarer Rescue-Branch (upstream/1546-add-android-section-to-mobile-access ist die ältere 1.6-„Mobile Access"-QR-FE, NICHT das MDM-Modul) · .reference/2.0.200/baselines: keine Baseline (nicht deploybar ohne Relution)
 
 ---
 
@@ -3322,7 +3322,7 @@ Reihenfolge grob BE→FE, jede Zeile wird bei Reaktivierung erst zur echten Task
 
 ## p6-satellites [P6] — Satellites (Multi-Host / WireGuard-Föderation)
 _Ziel:_ DEFERRED: Satellites (Multi-Host/WireGuard) · _Abhängt-von:_ — · _Status:_ blockiert (deferred) · _Tasks:_ 0
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p6-satellites.md` · Soll: main.js:63311 (Module) · 63357–63453 (Schema) · 63481 (Status) · 63516ff (Service) · 64060–64338 (Controller) · 65115ff (Gateway) · 61789 (WG-Default) · kein upstream/-Rescue-Branch · keine 1.6-Source · scratchpad/real/— (keine Baseline)
+Branch: `feat/2.0-backlog` · Spec: `docs/features/p6-satellites.md` · Soll: main.js:63311 (Module) · 63357–63453 (Schema) · 63481 (Status) · 63516ff (Service) · 64060–64338 (Controller) · 65115ff (Gateway) · 61789 (WG-Default) · kein upstream/-Rescue-Branch · keine 1.6-Source · .reference/2.0.200/baselines/— (keine Baseline)
 
 ---
 
