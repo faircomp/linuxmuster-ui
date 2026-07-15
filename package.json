@@ -29,6 +29,7 @@
     "check-circular-deps": "./scripts/checkCircDeps.sh",
     "check-external-references": "tsx scripts/checkExternalReferences.ts",
     "test:scripts": "tsx --test scripts/*.spec.ts",
+    "realm:diff": "node scripts/keycloak-realm-diff/diff-realm.mjs docs/keycloak/realm-template.reference.json docs/keycloak/realm-2.0.200.baseline.json",
     "format": "pretty-quick --staged",
     "check-translations": "tsx ./scripts/checkTranslations.ts",
     "check-error-message-translations": "tsx scripts/checkErrorMessages.ts",

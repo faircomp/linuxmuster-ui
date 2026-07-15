@@ -388,3 +388,7 @@ $RECYCLE.BIN/
 !/data/public/assets/generalsettings/generalsettings-default-background-light.webp
 !/data/public/assets/generalsettings/generalsettings-default-logo.webp
 .reference/
+
+# Keycloak realm raw exports (cleartext secrets/key material — scrub via normalize-realm.mjs first)
+/scratchpad/
+*.raw.json

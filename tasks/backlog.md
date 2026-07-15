@@ -444,7 +444,7 @@ Doku: keine (Kommentar in .env.default genügt)
 Abhängt von: T3
 
 ## p0-realm-diff-baseline [P0] — Keycloak-Realm-Diff-Baseline
-_Ziel:_ Keycloak-Realm der 2.0.200 exportieren, scrubben, als Soll-Baseline · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 8
+_Ziel:_ Keycloak-Realm der 2.0.200 exportieren, scrubben, als Soll-Baseline · _Abhängt-von:_ — · _Status:_ blockiert (6/8 erledigt; T4/T6 live-gated an P1) · _Tasks:_ 8
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-realm-diff-baseline.md` · Soll: main.js:57195–57260 (ScriptsService + keycloakConfigScripts) · main.js:57291/57353/57439/57515 (Einzelskripte) · realm-edulution.json.template (Installer, Clients :670/:776/:880, LDAP :1830/:2195–2295, Rollen :49–72) · webinstaller-api/app/main.py:702–765 · apps/api/src/scripts/keycloak/*.ts · libs/src/ldapKeycloakSync/constants/* · Live-Realm-Export der laufenden 2.0.200-Instanz (T4)
 
 > ANALYSE-Ledger (P0). Deliverables sind Werkzeug + committete Soll-Baseline + Provisioning-Doku,
@@ -453,7 +453,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-realm-diff-baseline.md` ·
 > T4 hängt an der offenen Frage 1 (Instanzquelle) — bis dahin sind alle Werkzeug-/Doku-Tasks
 > (T1–T3, T5, T7) unabhängig auf der warmen Box lauffähig.
 
-### T1 — Installer-Realm-Template als On-Box-Referenzkopie vendoren  [ ]
+### T1 — Installer-Realm-Template als On-Box-Referenzkopie vendoren  [x] ✓ realm-template.reference.json (3027 Z., Secrets maskiert) + README
 Komponente: docs · Dateien: docs/keycloak/realm-template.reference.json, docs/keycloak/README.md
 Soll: realm-edulution.json.template (Installer, unverändert; Secrets bereits `**********`)
 Änderung: Das Installer-Template 1:1 nach `docs/keycloak/realm-template.reference.json` kopieren (Template-Seite des Diffs, damit der Diff on-box ohne Installer-Checkout läuft). In `docs/keycloak/README.md` Herkunft, Sync-Pflicht (Single-Source = Installer-Repo) und Maskierungshinweis notieren. Keine Werte ändern.
@@ -461,7 +461,7 @@ Verify: `scripts/crabbox/iter.sh cmd 'node -e "const r=require(\"./docs/keycloak
 i18n: keine
 Doku: docs/keycloak/README.md (DE, intern)
 
-### T2 — Realm-Export-Werkzeug schreiben  [ ]
+### T2 — Realm-Export-Werkzeug schreiben  [x] ✓ export-realm.sh (admin-cli ROPC + partial-export + /components-Merge), bash -n ok
 Komponente: scripts · Dateien: scripts/keycloak-realm-diff/export-realm.sh
 Soll: webinstaller-api/app/main.py:726–765 (Realm-Struktur) · getKeycloakToken.ts (admin-cli/master-Realm ROPC) · createKeycloakAxiosClient.ts (`/admin/realms/<realm>`)
 Änderung: Bash-Skript (nur `curl`): admin-cli-Token vom `master`-Realm holen (Env `KEYCLOAK_API`, `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`), dann `POST /admin/realms/edulution/partial-export?exportClients=true&exportGroupsAndRoles=true` **und** `GET /admin/realms/edulution/components` (LDAP-Federation + Mapper) nach `scratchpad/` schreiben. `kc.sh export` als Fallback im Skript-Kommentar dokumentieren. SPDX-Header AGPL-3.0-or-later.
@@ -469,7 +469,7 @@ Verify: `scripts/crabbox/iter.sh cmd 'bash -n scripts/keycloak-realm-diff/export
 i18n: keine
 Doku: Verfahren in export-realm.sh-Kopf (DE, intern)
 
-### T3 — Normalisierungs-/Scrub-Werkzeug + Test  [ ]
+### T3 — Normalisierungs-/Scrub-Werkzeug + Test  [x] ✓ normalize-realm.mjs (Scrub+unabh. Assert PEM/Namen, det. Sort) + Test 9/9 (Review approve)
 Komponente: scripts · Dateien: scripts/keycloak-realm-diff/normalize-realm.mjs, scripts/keycloak-realm-diff/normalize-realm.test.mjs, scripts/keycloak-realm-diff/fixtures/realm.sample.json
 Soll: Spec §Secrets/Env (Scrub-Regeln) · main.js:57439–57470 (patchEduUiClient-Felder als Beispiel volatiler Client-Attribute)
 Änderung: Node-ESM `normalize-realm.mjs`: Realm-JSON deterministisch sortieren, volatile Felder entfernen (`id`, `*.creation.time`, `client.secret.creation.time`, `lastSync`, `notBefore`, KC-`keys`/Schlüsselmaterial) und Secrets redigieren (`secret`, `bindCredential`, `bindCredential`-Config-Arrays → `"REDACTED"`). CLI-Modi: `<in> > <out>` und `--assert-scrubbed <file>` (Exit≠0, falls ein Secret nicht `REDACTED`). `node --test`-Spec gegen `fixtures/realm.sample.json` prüft: (a) Secrets→REDACTED, (b) `id`/`lastSync` entfernt, (c) Idempotenz (zweifach == einfach). SPDX-Header auf allen drei Dateien.
@@ -477,7 +477,7 @@ Verify: `scripts/crabbox/iter.sh cmd 'node --test scripts/keycloak-realm-diff/no
 i18n: keine
 Doku: keine (intern)
 
-### T4 — Soll-Baseline der 2.0.200-Instanz erfassen, scrubben, committen  [?]
+### T4 — Soll-Baseline der 2.0.200-Instanz erfassen, scrubben, committen  [?] human-gate: braucht laufende 2.0.200-Keycloak-Instanz (Voll-Stack/Box) → an P1-Voll-Stack koppeln; Werkzeug (T2/T3) steht
 Komponente: docs · Dateien: docs/keycloak/realm-2.0.200.baseline.json
 Soll: Live-Realm-Export der laufenden 2.0.200-Instanz (partial-export + `/components`)
 Änderung: `export-realm.sh` gegen die 2.0.200-Instanz laufen lassen (Roh-Export nach `scratchpad/`, **nie ins Repo**), Roh-Export durch `normalize-realm.mjs` scrubben und das Ergebnis als `docs/keycloak/realm-2.0.200.baseline.json` committen. Im Commit-Text Herkunft (Image-Tag, Datum, Instanz) festhalten.
@@ -487,7 +487,7 @@ Doku: keine (Artefakt) · Herkunft im Commit
 Abhängt von: T2, T3
 Entscheidung: offene Frage 1 (Instanzquelle) — vor Start klären
 
-### T5 — Diff-Werkzeug (normalisiert, feldgenau) + Test  [ ]
+### T5 — Diff-Werkzeug (normalisiert, feldgenau) + Test  [x] ✓ diff-realm.mjs (Clients/Components/Roles added/removed/changed) + Test 3/3
 Komponente: scripts · Dateien: scripts/keycloak-realm-diff/diff-realm.mjs, scripts/keycloak-realm-diff/diff-realm.test.mjs
 Soll: Spec §Datenmodell (Diff-Achsen) · realm-template.reference.json vs. Baseline
 Änderung: Node-ESM `diff-realm.mjs <template.json> <baseline.json>`: beide via `normalize-realm.mjs` normalisieren, dann strukturierten Diff (added/removed/changed) ausgeben, gruppiert nach `clients[clientId]`, `components` (LDAP-Federation + Mapper) und `roles`. Exit-Code 0, JSON-Report auf stdout. `node --test`-Spec mit zwei synthetischen Realms (eine bekannte Client-Flag-Änderung) prüft, dass der Diff sie unter `changed` meldet. SPDX-Header.
@@ -496,7 +496,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1, T3
 
-### T6 — Diff-Report dokumentieren  [ ]
+### T6 — Diff-Report dokumentieren  [?] human-gate: hängt an T4-Baseline (live-gated); Diff-Werkzeug T5 + Ursachen-Zuordnung (Provisioning-Doc) stehen
 Komponente: docs · Dateien: docs/keycloak/realm-diff-2.0.200.md
 Soll: Ausgabe von `diff-realm.mjs realm-template.reference.json realm-2.0.200.baseline.json`
 Änderung: Diff-Tool gegen Referenz-Template + Soll-Baseline laufen lassen und das Delta menschenlesbar dokumentieren, zugeordnet nach Ursache: (a) **Installer-Substitution** (Secrets, edu-ui-URLs, LDAP `connectionUrl`/`bindDn`/`usersDn`/`groups.dn`, `frontendUrl`), (b) **6 Boot-Skripte** (removeRealmRoles → default-roles-edulution ohne query-users/view-users/query-groups; addMailcowSyncRoles → Service-Account-Rollen; patchEduUiClient → publicClient=true/implicitFlow=false/device-grant=false; addLdapGroupMappers/addUserAttributeMappers → Mapper; disableLdapConnectionPoolingAndPagination), (c) **KC-Auto-Gen** (IDs, Schlüsselmaterial, Timestamps, Service-Account-User). Report nennt je Delta die Quell-Zeile.
@@ -505,7 +505,7 @@ i18n: keine
 Doku: docs/keycloak/realm-diff-2.0.200.md (DE, intern)
 Abhängt von: T4, T5
 
-### T7 — Provisioning-Referenz dokumentieren (Clients · LDAP-Mapper · Rollen)  [ ]
+### T7 — Provisioning-Referenz dokumentieren (Clients · LDAP-Mapper · Rollen)  [x] ✓ realm-provisioning.md (7 Schlüsselbegriffe verifiziert; Findings Wildcard-Origins/example.com/ROPC)
 Komponente: docs · Dateien: docs/keycloak/realm-provisioning.md
 Soll: realm-template.reference.json (Clients/LDAP/Rollen) · main.js:57195–57260 (Boot-Reihenfolge) · webinstaller-api/app/main.py:702–810 (Secrets/Env) · libs/src/ldapKeycloakSync/constants/{requiredUserAttributes,requiredGroupAttributes}.ts · apps/api/.env.default:40–86
 Änderung: Provisioning-Referenz (DE) schreiben mit Abschnitten: **Clients** (`edu-api`/`edu-ui`/`edu-mailcow-sync`: Flags, Scopes inkl. custom `school`/`group-membership`, Service-Accounts, ROPC); **LDAP-User-Federation** (`vendor=ad`, `editMode=READ_ONLY`, `uuidLDAPAttribute=samaccountname` + alle Mapper: `username`/`first name`/`last name`/`email`/`proxyAddresses`/`sophomorix*`/`school`/`global-groups`/`school-groups`, sowie REQUIRED_USER/GROUP_ATTRIBUTES aus den Boot-Skripten); **Rollen** (`default-roles-edulution`-Composites + removeRealmRoles-Invariante, mailcow-Service-Account-Rollen); **Boot-Reihenfolge** (60 s Timeout, 6 idempotente Skripte); **Secret-Inventar + Rotationspfad** (`KEYCLOAK_EDU_*_SECRET` ↔ `edulution.env`); **Findings** (Wildcard-`webOrigins`/`redirectUris`, ROPC, `example.com`-Leftover → Fix ist P1/R11) und **Auth-Anker** (Signing-Key aus Datei, R9). ParentChildPairing-Eltern-Rolle nur als Ist-Zustand/„für P3 zu klären" notieren.
@@ -514,7 +514,7 @@ i18n: keine
 Doku: docs/keycloak/realm-provisioning.md (DE, intern)
 Abhängt von: T1
 
-### T8 — Wiederverwendbaren Diff-Alias + Release-Hinweis verdrahten  [ ]
+### T8 — Wiederverwendbaren Diff-Alias + Release-Hinweis verdrahten  [x] ✓ realm:diff-npm-Alias + Re-Export-README (P1b-Verweis); `npm run realm:diff`-Selbstlauf an T4-Baseline gekoppelt
 Komponente: scripts · Dateien: package.json (Script `realm:diff`), docs/keycloak/README.md
 Soll: Spec §Nicht-Ziele (kein CI-Gate — P1b) · PLAN §7f/§8 (Realm-Diff als Pipeline-Schritt)
 Änderung: npm-Script `realm:diff` ergänzen, das `diff-realm.mjs docs/keycloak/realm-template.reference.json docs/keycloak/realm-2.0.200.baseline.json` aufruft; in `docs/keycloak/README.md` das Re-Export-/Diff-Verfahren für künftige Releases beschreiben und explizit auf P1b (Tracking-Pipeline/CI-Gate) verweisen. Kein CI-Job hier.
