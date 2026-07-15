@@ -45,7 +45,7 @@ jobs:
       - name: Generate Frontend Docker Tags
         id: generate_docker_tags_fe
         run: |
-          docker_registry_path="ghcr.io/edulution-io/edulution-ui"
+          docker_registry_path="ghcr.io/faircomp/linuxmuster-ui"
           docker_tags_fe="$docker_registry_path:$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/-/gi')"
           if [[ ${{ github.ref }} = 'refs/heads/master' ]] || [[ ${{ github.ref }} =~ ^refs/tags/v.*$ ]]; then
             docker_tags_fe+=",$docker_registry_path:latest"
@@ -103,7 +103,7 @@ jobs:
       - name: Generate API Docker Tags
         id: generate_docker_tags_api
         run: |
-          docker_registry_path="ghcr.io/edulution-io/edulution-api"
+          docker_registry_path="ghcr.io/faircomp/linuxmuster-api"
           docker_tags_api="$docker_registry_path:$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/-/gi')"
           if [[ ${{ github.ref }} = 'refs/heads/master' ]] || [[ ${{ github.ref }} =~ ^refs/tags/v.*$ ]]; then
             docker_tags_api+=",$docker_registry_path:latest"

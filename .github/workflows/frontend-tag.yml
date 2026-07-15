@@ -17,7 +17,7 @@ jobs:
     steps:
       - id: generate_docker_tags
         run: |
-          docker_registry_path="ghcr.io/edulution-io/edulution-ui"
+          docker_registry_path="ghcr.io/faircomp/linuxmuster-ui"
           docker_tags="$docker_registry_path:$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/-/gi')"
           if [[ ${{ github.ref }} = 'refs/heads/master' ]] || [[ ${{ github.ref }} =~ ^refs/tags/v.*$ ]]
           then

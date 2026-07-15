@@ -627,7 +627,7 @@ Verify: `! grep -nE "ghcr.io/edulution-io/edulution" README.md` und `grep -qi "f
 i18n: keine
 Doku: README.md (dies IST die Doku)
 
-### T4 — CI-Workflow-Refs repointen (nur Refs, keine CI-Architektur)  [ ]
+### T4 — CI-Workflow-Refs repointen (nur Refs, keine CI-Architektur)  [x] OK 6 ghcr-Refs -> faircomp/linuxmuster-{ui,api}, 0 Rest
 Komponente: `.github/workflows` · Dateien: `container-build.yml`, `build-and-test.yml`, `api-tag.yml`, `frontend-tag.yml`
 Soll: container-build.yml:47,57 · build-and-test.yml:48,106 · api-tag.yml:20 · frontend-tag.yml:20
 Änderung: alle `docker_registry_path="ghcr.io/edulution-io/edulution-{ui,api}"` → `ghcr.io/faircomp/linuxmuster-{ui,api}`. **Kein** `permissions:`-Block, **kein** Green-Gate, **kein** Löschen redundanter Workflows (→ CI-Härtungs-Paket, OF6).
@@ -635,7 +635,7 @@ Verify: `! grep -rnE "ghcr.io/edulution-io/edulution" .github/workflows`
 i18n: keine
 Doku: keine (intern)
 
-### T5 — package.json docker-Script-Refs repointen  [ ]
+### T5 — package.json docker-Script-Refs repointen  [x] OK 4 docker-Script-Refs -> faircomp/linuxmuster-{ui,api}, JSON valide
 Komponente: Repo-Root · Dateien: `package.json`
 Soll: package.json:19,20,21,22 (`build:docker:ui/api`, `push:docker:ui/api`)
 Änderung: `ghcr.io/edulution-io/edulution-{ui,api}:preview` → `ghcr.io/faircomp/linuxmuster-{ui,api}:preview`. `@edulution-io/ui-kit`-Dependency/Scope **nicht** ändern (Allowlist).
@@ -643,7 +643,7 @@ Verify: `! grep -nE "ghcr.io/edulution-io/edulution" package.json` und `npm run 
 i18n: keine
 Doku: keine (intern)
 
-### T6 — nx.json defaultBase dev → main  [ ]
+### T6 — nx.json defaultBase dev → main  [x] OK defaultBase=main
 Komponente: Repo-Root · Dateien: `nx.json`
 Soll: nx.json:3 `"defaultBase": "dev"`
 Änderung: `"defaultBase": "dev"` → `"defaultBase": "main"` (sonst `nx affected` gegen tote Basis).
@@ -651,7 +651,7 @@ Verify: `grep -q '"defaultBase": "main"' nx.json` und `npx nx show projects --af
 i18n: keine
 Doku: keine (intern)
 
-### T7 — addLicenseHeader.ts licenseText → AGPL-SPDX-Stamp (idempotent)  [ ]
+### T7 — addLicenseHeader.ts licenseText → AGPL-SPDX-Stamp (idempotent)  [x] OK licenseText=SPDX-AGPL (GNU-Phrase bleibt->idempotent, Probe=1 Header); Netzint-Dateien byte-identisch übersprungen
 Komponente: `scripts` · Dateien: `scripts/addLicenseHeader.ts`
 Soll: scripts/addLicenseHeader.ts:23–39 (`licenseText`), :46 (`hasLicenseHeader`)
 Änderung: **nur** die `licenseText`-Konstante ersetzen durch einen Header mit `SPDX-License-Identifier: AGPL-3.0-or-later` + `Copyright (C) 2026 Kevin Stenzel and linuxmuster-ui contributors` + der Phrase „GNU Affero General Public License" (damit `hasLicenseHeader` unverändert matcht, Idempotenz) — **kein** „all rights reserved", **kein** Netzint-Kommerz-Arm, **kein** info@netzint.de. Den **Datei-Kopf** (Bestands-Netzint-Header) von addLicenseHeader.ts selbst **NICHT** ändern.
