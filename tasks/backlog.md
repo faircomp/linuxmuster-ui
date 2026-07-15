@@ -399,7 +399,7 @@ Doku: docs/migrations/2.0-migrations-inventory.md (Korrektur-Notiz, intern, DE)
 Abhängt von: T2, T3
 
 ## p0-supply-chain-inventory [P0] ⭐ — Supply-Chain-Inventar (edulution-io-Außenreferenzen)
-_Ziel:_ Alle edulution-io-Außenreferenzen (Datei:Zeile, Policy) + Manifest · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 4
+_Ziel:_ Alle edulution-io-Außenreferenzen (Datei:Zeile, Policy) + Manifest · _Abhängt-von:_ — · _Status:_ erledigt (4/4, Review approve) · _Tasks:_ 4
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-supply-chain-inventory.md` · Soll: main.js:25090-25097 · main.js:26371/26891 · main.js:43634-43800 · main.js:54486 · main.js:59762 · Fork-Base libs/src/{mail,common,license,docker} · .reference/2.0.200/baselines/— (keine UI-Änderung)
 
 > Analyse-Paket: Kern-Deliverable ist das versionierte Register + ein Drift-Gate. Die *Umsetzung*
@@ -408,7 +408,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-supply-chain-inventory.md`
 
 ---
 
-### T1 — Maschinenlesbares Referenz-Manifest  [ ]
+### T1 — Maschinenlesbares Referenz-Manifest  [x] ✓ externalReferences.ts, 24 typisierte Einträge (Kat. A–D), lokal verifiziert ≥15
 Komponente: scripts (Ops) · Dateien: `scripts/supply-chain/externalReferences.ts`
 Soll: Fork-Base-Fundstellen + main.js-Anker (SOGo 25090-25097, Plugin urls.ts:21, Cookie cookieTestUrl.ts:20, License 43800, Companion-Images 27083-64073, Sentry 54486/59762)
 Änderung: Typisierter const-Export `EXTERNAL_REFERENCES` als Quelle der Wahrheit: je Referenz `{ id, host, category ('A-runtime-fetch'|'B-image'|'C-telemetry'|'D-branding'), files: string[], breakImpact, policy, owningPackage }`. Enthält NUR öffentliche Host-Namen, keine Secrets. Deckt alle in der Spec kategorisierten Referenzen ab.
@@ -416,7 +416,7 @@ Verify: `iter.sh cmd 'npx tsx -e "import(\"./scripts/supply-chain/externalRefere
 i18n: keine
 Doku: keine (intern; Register-Doku folgt in T2)
 
-### T2 — Inventar-Register (Doku)  [ ]
+### T2 — Inventar-Register (Doku)  [x] ✓ Register-Doc mit Policy+Folge-Paket je Referenz, jede T1-id abgedeckt
 Komponente: docs · Dateien: `docs/supply-chain/edulution-io-external-references.md`
 Soll: identisch zu T1-Manifest (menschenlesbare Fassung) + Policy-Begründung je Referenz
 Änderung: Deutsches Register mit Tabellen je Kategorie A–D (Host · Datei:Zeile · Consumer · Break-Impact · Policy · Folge-Paket). Kategorie A = SOGo-CSS ×2, Plugin-Compose, Cookie-Test (neu), Lizenzserver. B = ~12 Companion-Images (+ 2 Kern-App-Images, `DOCKER_PROTECTED_CONTAINERS` main.js:26891; Hinweis: Fork-Base `dockerApplicationList.ts` listet nur 6, Rest kommt mit 2.0-Modulen). C = Sentry. D = Branding/Doku-Links (nur inventarisiert). Kopf-Notiz: Umsetzung je Policy = anderes Paket.
@@ -425,7 +425,7 @@ i18n: keine (Dev-/Ops-Doku, Deutsch)
 Doku: docs/supply-chain/edulution-io-external-references.md (dies IST die Doku)
 Abhängt von: T1
 
-### T3 — Drift-Gate + Fixture-Test  [ ]
+### T3 — Drift-Gate + Fixture-Test  [x] ✓ checkExternalReferences.ts+spec, in husky+CI verdrahtet; gate exit0/1889 Dateien, Spec 6/6, Negativfall exit1 (Review approve)
 Komponente: scripts (Ops) · Dateien: `scripts/checkExternalReferences.ts`, `scripts/checkExternalReferences.spec.ts`, `package.json`
 Soll: Muster des bestehenden `scripts/checkTranslations.ts`; Allowlist = T1-Manifest
 Änderung: Script scannt `apps/**`+`libs/**` (ts/tsx/html/json/env, ohne node_modules/dist) auf Netz-Host-Muster `https?://[^ "']*edulution\.io`, `raw.githubusercontent.com/edulution-io`, `edulution-io.github.io`, `license.edulution.io`; excludiert `@edulution-io/ui-kit` und `github.com/edulution-io/edulution-ui`; meldet jede Fundstelle, die nicht per Datei+Host im Manifest allowlistet ist, mit exit 1. Zusätzlich: Fehler bei nicht-leerem `SENTRY_*_DSN`-Literal in committeten Dateien. `package.json`: Script `check-external-references` + Einhängen in `check`/`precommit`. Spec: Fixture mit (a) sauberem Snippet → pass, (b) eingeschleuster Fremd-Referenz → fail.
@@ -434,7 +434,7 @@ i18n: keine
 Doku: kurzer Verweis auf `npm run check-external-references` im Register-Doc (T2) und README/Ops-Notiz
 Abhängt von: T1
 
-### T4 — Sentry-Telemetrie-Default explizit härten  [ ]
+### T4 — Sentry-Telemetrie-Default explizit härten  [x] ✓ ENABLE_SENTRY=false explizit + leere DSNs + Kommentar (3 Treffer)
 Komponente: apps/api (Env-Default) · Dateien: `apps/api/.env.default`
 Soll: `getSentryConfig` main.js:54486, `enableSentryForNest` main.js:59762 (`sendDefaultPii:true`, `tracesSampleRate:1.0`); Env-Block `.env.default:88-91`
 Änderung: `ENABLE_SENTRY=false` explizit setzen (statt leer), `SENTRY_EDU_UI_DSN=`/`SENTRY_EDU_API_DSN=` leer belassen, Kommentar ergänzen: „Default aus; nie Fremd-DSN erben — eigener DSN nur opt-in". Keine Code-/Verhaltensänderung (Egress bleibt aus). Verankert die Policy aus dem Register.

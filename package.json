@@ -27,6 +27,8 @@
     "prepare": "husky install",
     "precommit": "npm run test && npm run build:all",
     "check-circular-deps": "./scripts/checkCircDeps.sh",
+    "check-external-references": "tsx scripts/checkExternalReferences.ts",
+    "test:scripts": "tsx --test scripts/*.spec.ts",
     "format": "pretty-quick --staged",
     "check-translations": "tsx ./scripts/checkTranslations.ts",
     "check-error-message-translations": "tsx scripts/checkErrorMessages.ts",

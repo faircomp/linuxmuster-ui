@@ -12,6 +12,8 @@ npm run check-circular-deps
 npm run check-translations
 npm run check-error-message-translations
 npm run check-filenames
+npm run check-external-references
+npm run test:scripts
 npm run addLicenseHeader
 npm run format
 npm run lint:staged
