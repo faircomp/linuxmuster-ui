@@ -862,7 +862,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T5 — configuration.ts auf 2.0-Metadaten-Contract erweitern  [ ]
+### T5 — configuration.ts auf 2.0-Metadaten-Contract erweitern  [x] OK version/commitSha/buildDate/buildNumber aus env||UNKNOWN (Konstante); Logik via tsx verifiziert (SET→Werte, UNSET→unknown, APP_VERSION fehlt→package.version); jest-Spec authored (SPDX), Harness-Lauf box-gated (ts-node nicht lokal) → an P1
 Komponente: apps/api · Dateien: apps/api/src/config/configuration.ts, apps/api/src/config/configuration.spec.ts (neu)
 Soll: main.js:59718–59722 (`version/commitSha/buildDate/buildNumber`, jeweils `process.env.* || 'unknown'`)
 Änderung: Die Config-Factory (1.6: nur `{ version }`) auf den SOLL erweitern: `version: process.env.APP_VERSION || rootPackage.version`, `commitSha/buildDate/buildNumber` aus den Env-Vars mit `|| 'unknown'`. Damit sind die T3/T4-Metadaten in der Runtime sichtbar (Health nicht mehr „unknown"). Neuer Jest-Spec deckt env-gesetzt + Fallback ab. `'unknown'` als benannte Konstante (keine Magic-Strings).
