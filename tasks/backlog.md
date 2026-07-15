@@ -327,7 +327,7 @@ Doku: docs/analysis/base-drift-2.0.200.md (intern, DE) + Rückverweis-Notiz PLAN
 Abhängt von: T2, T3, T4, T5, T6, T7, T8, T9, T10, T11
 
 ## p0-migrations-inventory [P0] — P0 DB-Migrations-Inventar & Upgrade-Pfad 1.6→2.0
-_Ziel:_ Alle 2.0-Migrationen + Delta 1.6→2.0 als Upgrade-Pfad-Grundlage inventarisieren · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 7
+_Ziel:_ Alle 2.0-Migrationen + Delta 1.6→2.0 als Upgrade-Pfad-Grundlage inventarisieren · _Abhängt-von:_ — · _Status:_ erledigt (7/7; T5-remote-Selbsttest an P1 gekoppelt) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-migrations-inventory.md` · Soll: main.js:2676 (Engine) · main.js:1601/4938/5499/7801/20680/38245/44391/46418/47807/51355/52464 (11 runMigrations) · main.js:57200/57252 (Keycloak-Runner) · apps/api/src/**/migrations/* (1.6-Baseline)
 
 > Hinweis: ANALYSE-Paket. Die meisten Tasks produzieren Referenz-Doku/Skripte, keinen Feature-Code.
@@ -337,7 +337,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-migrations-inventory.md` �
 
 ---
 
-### T1 — Migrations-Engine & schemaVersion-Contract dokumentieren  [ ]
+### T1 — Migrations-Engine & schemaVersion-Contract dokumentieren  [x] ✓ Engine 1.6↔2.0 identisch (kein Port); .runMigrations( ==11
 Komponente: docs · Dateien: docs/migrations/2.0-migrations-inventory.md (Kopf-Abschnitt „Engine")
 Soll: main.js:2676 (`runMigrations`) · apps/api/src/migration/migration.service.ts + migration.type.ts (1.6, identisch)
 Änderung: Dokumentiere die Engine (`Migration<T> = {name, version, execute(model)}`, sequentielles `reduce`, Wiring pro Modell in `onModuleInit`) und das Idempotenz-Muster (`find({schemaVersion: prev})` → transform → `set(newSchemaVersion)`, leere Menge = No-Op; `appConfig/000` nutzt `prev=undefined`). Halte fest, dass Engine 1.6↔2.0 **byte-logisch identisch** ist (kein Engine-Port nötig) und Migrationen Objekt-Literale sind.
@@ -345,7 +345,7 @@ Verify: `diff <(sed -n '2677,2684p' main.js) apps/api/src/migration/migration.se
 i18n: keine
 Doku: docs/migrations/2.0-migrations-inventory.md (intern, DE)
 
-### T2 — Vollständiges 2.0-Migrations-Inventar (38 Mongoose + 6 Keycloak)  [ ]
+### T2 — Vollständiges 2.0-Migrations-Inventar (38 Mongoose + 6 Keycloak)  [x] ✓ 44 Namen (38 Mongoose/11 Modelle + 6 Keycloak), je Zeile Modell/ver/prev→new/@
 Komponente: docs · Dateien: docs/migrations/2.0-migrations-inventory.md
 Soll: main.js Listen-Anker (appConfig:2728 · webdav:5368 · globalSettings:5943 · users:7796 · notifications:21931 · publicShares:41391 · surveys:44663 · surveyTemplates:46529 · surveyAnswers:48299 · bulletinCategory:51690 · bulletins:53016) + Keycloak:57252
 Änderung: Tabelle mit **jeder** Migration: Modell · Name · `version` · `prev→new schemaVersion` · Zweck (1 Satz) · `main.js`-Zeilenanker. Getrennter Abschnitt für die 6 Keycloak-Realm-Skripte (Runner main.js:57200, **nicht** MigrationService). Stelle die „32"-Korrektur klar heraus: **38 Mongoose über 11 Modelle + 6 Keycloak = 44** Namensliterale; Ursache des Under-Counts = lowercase-only-Grep + `const name=`-Form.
@@ -354,7 +354,7 @@ i18n: keine
 Doku: docs/migrations/2.0-migrations-inventory.md (intern, DE)
 Abhängt von: T1
 
-### T3 — 1.6→2.0-Delta & Owner-Map  [ ]
+### T3 — 1.6→2.0-Delta & Owner-Map  [x] ✓ 11 neu, 0 entfernt, Keycloak-Δ=0; 3 neu-verdrahtete Modelle (users/notifications/publicShares) + Owner-Map
 Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md
 Soll: 1.6-Baseline `apps/api/src/**/migrations/*` + `apps/api/src/scripts/keycloak/*` vs. main.js
 Änderung: Dokumentiere die **11 neuen Mongoose-Migrationen** + **3 neu verdrahteten Modelle** (users/notifications/publicShares — 1.6 hat dort kein `runMigrations`) mit je Vor-Abhängigkeit (`master_key_util`, `SURVEY_PARTICIPATION`, `createReadonlyAclSection`, `mailDefaultPorts`, neue Schema-Felder) und Owner-Feature-Paket (Owner-Map aus Spec). Halte fest: **Keycloak-Delta = 0** (1.6 hat identische 6 Skripte). Notiere die Nicht-Migration `delete ONLY_OFFICE_JWT_SECRET` (main.js:1726 = Read-Projection, keine Migration).
@@ -363,7 +363,7 @@ i18n: keine
 Doku: docs/migrations/upgrade-1.6-to-2.0.md (intern, DE)
 Abhängt von: T2
 
-### T4 — Per-Modell Ziel-schemaVersion-Tabelle & Fresh-Install-Bezug  [ ]
+### T4 — Per-Modell Ziel-schemaVersion-Tabelle & Fresh-Install-Bezug  [x] ✓ Terminal-Tabelle (appConfig=13 … bulletins=1) + Fresh-Install-Cross-Verweis
 Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md (Abschnitt „Terminal-schemaVersion")
 Soll: `newSchemaVersion` der jeweils letzten Migration pro Modell (main.js)
 Änderung: Tabelle Terminal-`schemaVersion` je Modell nach vollem Lauf (appConfig=13, globalSettings=8, notifications=2, publicShares=2, surveys=2, surveyTemplates=4, surveyAnswers=4, users=1, webdav=1, bulletinCategory=1, bulletins=1). Diese Werte sind die Assertion-Basis für T5. Kurzer Cross-Verweis auf das separate `defaultAppConfig`-Fresh-Install-Diff-Paket (Fresh-Install muss dieselben Terminalwerte erreichen); **hier keine defaultAppConfig-Detailanalyse** (YAGNI).
@@ -372,7 +372,7 @@ i18n: keine
 Doku: docs/migrations/upgrade-1.6-to-2.0.md (intern, DE)
 Abhängt von: T2
 
-### T5 — Upgrade-Test-Runbook + Assertion-Skript  [ ]
+### T5 — Upgrade-Test-Runbook + Assertion-Skript  [x] ✓ Runbook (Dump+master.key) + assert-schema-versions.ts (SPDX) — remote-Selbsttest box-gated → an P1-Voll-Stack gekoppelt (Box down, keine 2.0.200-Mongo)
 Komponente: scripts · Dateien: scripts/migrations/assert-schema-versions.ts (oder mongosh-Skript) · docs/migrations/upgrade-1.6-to-2.0.md (Runbook-Abschnitt)
 Soll: Terminal-schemaVersion-Tabelle (T4) + Spot-Checks aus main.js (mail-extendedOptions unified 4119, user.encryptKey WRAPPED_KEY_PREFIX 9238, publicShare.acl 41430)
 Änderung: (a) Runbook: `mongodump` **+ `./data/master.key` gemeinsam** sichern → Fork-Image booten → Migrationen laufen lassen → assert. (b) Standalone-Skript, das gegen eine Mongo pro Modell prüft: `distinct(schemaVersion)`-Max == dokumentierter Terminalwert; plus Spot-Checks (kein `MAIL_IMAP_URL` mehr in appConfig-MAIL-`extendedOptions`, `encryptKey` beginnt mit Wrap-Prefix, publicShares haben `acl`). Neue Datei ⇒ SPDX `AGPL-3.0-or-later`, Copyright Kevin Stenzel.
@@ -381,7 +381,7 @@ i18n: keine
 Doku: docs/migrations/upgrade-1.6-to-2.0.md (Runbook, intern, DE)
 Abhängt von: T4
 
-### T6 — Guardrail-Doku (forward-only, master.key-Kopplung, schemaVersion++-Regel)  [ ]
+### T6 — Guardrail-Doku (forward-only, master.key-Kopplung, schemaVersion++-Regel)  [x] ✓ 4 Guardrails: forward-only (down: ==0), master.key-Kopplung (wrapEncryptKey 24×), append-only, master_key_util-Vor-Dep
 Komponente: docs · Dateien: docs/migrations/upgrade-1.6-to-2.0.md (Abschnitt „Guardrails")
 Soll: main.js:9238 (`wrapEncryptKey`) · 41449 (publicShare-Passwort-Wrap) · 2676 (kein down())
 Änderung: Halte die Guardrails fest: (1) forward-only, kein `down()`, `schemaVersion++` bricht Downgrade → Rollback = Dump **+ `master.key`** + Vor-Image. (2) `master.key`-Backup-Kopplung: users-000 wrappt jede `encryptKey`, publicShares-000 wrappt `password` → Restore ohne Key = unlesbar. (3) Regel für künftige Fork-Migrationen: neue Migration ⇒ neues Objekt-Literal, `schemaVersion++`, an die Modell-Liste **anhängen** (nie umsortieren), idempotenter `find({schemaVersion: prev})`-Filter. (4) `master_key_util` ist geteilte Vor-Abhängigkeit zweier Migrationen (P1-Paket).
@@ -390,7 +390,7 @@ i18n: keine
 Doku: docs/migrations/upgrade-1.6-to-2.0.md (intern, DE)
 Abhängt von: T3
 
-### T7 — Anker-/Zähl-Korrektur ins Tracking & Plan zurückspielen  [ ]
+### T7 — Anker-/Zähl-Korrektur ins Tracking & Plan zurückspielen  [x] ✓ 11 runMigr/38+6=44; quote-normalisiertes Tracking-Muster (44/33), Quote-Inflation (49) dokumentiert
 Komponente: docs/scripts (Tracking) · Dateien: docs/migrations/2.0-migrations-inventory.md (Korrektur-Notiz) · Hinweis-Notiz für fingerprint.sh-Anker (openedulution-tracking) · Verweis auf PLAN §3.3
 Änderung: Dokumentiere die Zähl-Korrektur (Plan §3.3: „12× runMigrations, 32 Namen" → **11 Mongoose-runMigrations, 38 Mongoose-Migrationen über 11 Modelle + 6 Keycloak = 44 Namensliterale**) und liefere das **korrigierte Grep-Muster** für den Tracking-`fingerprint.sh`-Anker: `['\"][0-9]{3}-[A-Za-z0-9-]+['\"]` **plus** die `const name = '…'`-Form (camelCase-Pitfall). Keine Änderung an PLAN-Datei selbst nötig — nur die Korrektur-Notiz + Muster festhalten, damit das Tracking-Fingerprint künftige Migrationen zuverlässig zählt.
 Verify: Korrigiertes Muster ergibt in main.js `== 44` und im 1.6-Repo `== 33`; die ins Inventar geschriebene Korrektur-Notiz nennt beide Zahlen und den Grund (lowercase-only + `const name=`).
