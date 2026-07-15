@@ -38,6 +38,11 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - `[?] human-gate: PR Phase P0 (linuxmuster-ui)` — `git push -u origin feat/2.0-backlog` + `gh pr create --draft` sind prompt-pflichtig; **warten auf Kevins OK**. (Nur Repo `linuxmuster-ui`; Installer in P0 nicht berührt.)
   - `[?] human-gate: p0-realm-diff-baseline T4+T6` — brauchen eine laufende 2.0.200-Keycloak-Instanz (Voll-Stack/Box) → an den **P1-Voll-Stack** koppeln; Werkzeug (export/normalize/diff) steht.
   - Hinweis: Kevins 3 uncommittete `notifications`-WIP-Dateien liegen unberührt im Working-Tree (nicht in den P0-Commits).
+- **P1 läuft (Stand 2026-07-15)** — fertig authored: `p1-rebrand` · `x-i18n-fr` · `p1-own-ci-registry` (11/11) · `p1-installer-repoint` (11/11) · `p1-installer-ci` (7/7). Beide Repos auf `feat/2.0-backlog`. Offene nach-außen-Gates sammeln sich fürs **P1-Phasenende** (nicht autonom ausgeführt):
+  - `[?] human-gate: PR Phase P1 (beide Repos)` — `git push` + `gh pr create --draft` je Repo (`linuxmuster-ui` + `linuxmuster-ui-installer`), Cross-Link in beiden Bodies; **warten auf Kevins OK**.
+  - `[?] human-gate: Erst-Image-Push + GHCR-Packages public` — UI/API (`p1-own-ci-registry` T11) **und** Installer (`p1-installer-ci` T1/T7): erster CI-Image-Push, dann `linuxmuster-{ui,api,ui-installer}` auf **public** (anonymer `docker pull`); Verify auf crabbox/echtem Actions-Runner.
+  - `[?] human-gate: Repo-Freigabe (public) erst nach Rebrand-Gate` — `p1-installer-rebrand-dist` T7 (+ `p1-rebrand`) müssen gelandet sein, bevor ein Repo public wird (sonst edulution-Branding/Netzint-Header öffentlich); erfüllt zugleich AGPL-§13.
+  - Box-gated Verifies zum Nachziehen am P1-Voll-Stack: `p1-own-ci-registry` T3/T5, `p0-realm-diff-baseline` T4/T6, `p1-installer-ci` CI-Run/skopeo.
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
@@ -1025,13 +1030,13 @@ Doku: keine (intern)
 Abhängt von: T10
 
 ## p1-installer-ci [P1] ⭐ — Installer-Image: eigene CI, Tags, Package-Sichtbarkeit
-_Ziel:_ Das Installer-Image reproduzierbar unter faircomp bauen/publishen und **anonym pullbar** machen · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 7
+_Ziel:_ Das Installer-Image reproduzierbar unter faircomp bauen/publishen und **anonym pullbar** machen · _Abhängt-von:_ p1-installer-repoint · _Status:_ erledigt (7/7 authored; T2–T6 Config [x], CI-Run/skopeo-Verify box/gate-gated; T1 Erst-Build + T7 Sichtbarkeit human-gate) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** (Working-Copy `../edulution-installer`) · Soll: `.github/workflows/build-docker.yml` · `Dockerfile` · `apps/public-page/public/installer:213/216`
 
 > **Befund (verifiziert):** Die Installer-CI **existiert** und hat bereits `permissions: {contents: read, packages: write}` — anders als die UI-Repo-CI. `images: ghcr.io/${{ github.repository }}` **repointet automatisch** auf `ghcr.io/faircomp/linuxmuster-ui-installer`, sobald das Repo unter faircomp liegt. Offen ist daher nicht „bauen an sich", sondern: privater `@edulution-io/ui-kit`-npm-Bezug (blockiert `npm ci` in CI bis `p1-installer-repoint` T4/T5 vendorn), Tag-Strategie (heute = Branch-Name), Green-Gate, Action-Pinning und die **Package-Sichtbarkeit**.
 > **Load-bearing:** Ohne öffentliches GHCR-Package kann ein Schul-Admin das Image nicht ziehen → der eigene Installer wäre unbenutzbar. Package-Sichtbarkeit ist **unabhängig** von der Repo-Sichtbarkeit (Repos dürfen privat bleiben).
 
-### T1 — Erst-Build unter faircomp auslösen + belegen  [ ]
+### T1 — Erst-Build unter faircomp auslösen + belegen  [?] human-gate: Erst-Build braucht Branch-Push + Image-Push (nach p1-installer-repoint T4/T5-Vendoring ist der private-ui-kit-npm-ci-Blocker weg → `npm ci` tokenlos möglich); `gh run list`/`skopeo inspect` = ops/manuell
 Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml` (keine Änderung)
 Soll: build-docker.yml (`images: ghcr.io/${{ github.repository }}`, `permissions` vorhanden)
 Änderung: Workflow einmal auslösen (`workflow_dispatch`) und belegen, dass `ghcr.io/faircomp/linuxmuster-ui-installer:<branch>` entsteht. Image-Ref + Digest im Ledger notieren. Scheitert `npm ci` am privaten ui-kit → `[?]` und auf `p1-installer-repoint` T4/T5 warten (echte Abhängigkeit, nicht umgehen).
@@ -1039,7 +1044,7 @@ Verify: `gh run list --repo faircomp/linuxmuster-ui-installer --limit 1` grün �
 i18n: keine
 Doku: keine (intern)
 
-### T2 — npm-ci-Schritt vom privaten Token entkoppeln  [ ]
+### T2 — npm-ci-Schritt vom privaten Token entkoppeln  [x] OK `env: GITHUB_TOKEN` am npm-ci-Schritt entfernt (ui-kit vendored → kein privater Registry-Bezug); grep-Verify lokal PASS; CI-Run-Verify box/gate-gated (an T1)
 Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
 Soll: build-docker.yml (`- name: Install dependencies` mit `env: GITHUB_TOKEN`), `.npmrc` (von p1-installer-repoint T5 entfernt)
 Änderung: Nach dem ui-kit-Vendoring den `GITHUB_TOKEN`-`env` am `npm ci`-Schritt entfernen (kein privater Registry-Bezug mehr). Abhängt von p1-installer-repoint T4/T5.
@@ -1048,7 +1053,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — Green-Gate: lint/build vor dem Image-Push  [ ]
+### T3 — Green-Gate: lint/build vor dem Image-Push  [x] OK `npm run lint`-Step + `nx build webinstaller` vor `build-push-action` im selben sequenziellen Job → Push-Step bei rotem Lint unerreichbar (kein Image aus rotem Stand); Real-CI-Rot-Test box/gate-gated (an T1)
 Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
 Soll: Analog zum UI-Repo-Green-Gate (`p1-own-ci-registry` T2)
 Änderung: Vor `build-push-action` einen Job/Step `npm run lint` (bzw. vorhandene Checks des Installer-Repos) einziehen; Push nur bei grün. Kein Image aus rotem Stand.
@@ -1056,7 +1061,7 @@ Verify: CI-Run mit absichtlich rotem Lint pusht **kein** Image (Run rot); danach
 i18n: keine
 Doku: keine (intern)
 
-### T4 — Tag-/Release-Strategie: gepinnte `2.0.x`-Tags statt nur Branch-Namen  [ ]
+### T4 — Tag-/Release-Strategie: gepinnte `2.0.x`-Tags statt nur Branch-Namen  [x] OK `on.push.tags: ["v*.*.*"]`-Trigger + metadata-action `tags:` semver `{{version}}`/`{{major}}.{{minor}}` neben `type=ref,event=branch` (Branch-Tags für `--branch` bleiben); Bootstrap-Default bleibt `main` (noch kein Release-Tag); README Tag/Release-Abschnitt; `skopeo inspect` nach Tag-Push box/gate-gated (an T1)
 Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
 Soll: build-docker.yml (`on.push.branches: ["**"]`, `metadata-action` ohne Tag-Config) · Bootstrap `installer:11` (`EDULUTION_INSTALLER_TAG="main"`)
 Änderung: `metadata-action` um `tags:` erweitern (semver aus git-Tag + `main`), damit ein **gepinnter Release-Tag** existiert, auf den der Bootstrap-Default zeigen kann (Branch-Tags für `--branch` bleiben erhalten). Versionsschema `2.0.x` (§9.2).
@@ -1064,7 +1069,7 @@ Verify: git-Tag `v2.0.x` pushen → Image `ghcr.io/faircomp/linuxmuster-ui-insta
 i18n: keine
 Doku: Installer-README: Tag-/Release-Hinweis
 
-### T5 — OCI-Labels + Build-Metadaten am Installer-Image  [ ]
+### T5 — OCI-Labels + Build-Metadaten am Installer-Image  [x] OK metadata-`labels` durchgereicht + Dockerfile `ARG COMMIT_SHA/BUILD_DATE/APP_VERSION` + `LABEL org.opencontainers.image.source/revision/version/created` (source=faircomp/linuxmuster-ui-installer, licenses=AGPL-3.0-or-later); build-args aus CI durchgereicht; `skopeo inspect`-Verify box/gate-gated (an T1)
 Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`, `Dockerfile`
 Soll: Analog UI-Repo (`p1-own-ci-registry` T3/T4): `org.opencontainers.image.source/revision/version`
 Änderung: `metadata-action`-Labels durchreichen + `ARG`/`LABEL` im Dockerfile, damit Herkunft/Version am Image ablesbar sind (§13-Quellcode-Link-Bezug).
@@ -1072,7 +1077,7 @@ Verify: `skopeo inspect docker://ghcr.io/faircomp/linuxmuster-ui-installer:2.0.x
 i18n: keine
 Doku: keine (intern)
 
-### T6 — Alle Actions SHA-pinnen  [ ]
+### T6 — Alle Actions SHA-pinnen  [x] OK 6 Action-Refs → 40-hex-SHA + Versionskommentar (checkout@v6/setup-node@v6/setup-buildx@v3 via GitHub-API aufgelöst; login@v3.3.0/metadata@v5.5.1/build-push@v6.10.0 aus UI-Repo wiederverwendet); grep `! grep -E 'uses: .*@v[0-9]+$'` lokal PASS
 Komponente: linuxmuster-ui-installer · Dateien: `.github/workflows/build-docker.yml`
 Soll: `actions/checkout@v6`, `setup-node@v6`, `setup-buildx-action@v3`, `login-action@v3`, `metadata-action@v5`, `build-push-action@v6` (alle tag-gepinnt)
 Änderung: Auf Commit-SHA pinnen (Supply-Chain, analog `p1-own-ci-registry` T10).
@@ -1080,7 +1085,7 @@ Verify (crabbox): `! grep -E 'uses: .*@v[0-9]+$' .github/workflows/build-docker.
 i18n: keine
 Doku: keine (intern)
 
-### T7 — Sichtbarkeit: GHCR-Packages **public** (+ Repo-Freigabe nach Rebrand, §13)  [ ]
+### T7 — Sichtbarkeit: GHCR-Packages **public** (+ Repo-Freigabe nach Rebrand, §13)  [?] human-gate: Doku `docs/ci-package-visibility.{de,en,fr}.md` geschrieben ✓ (welche Packages/Repos public, warum, Reihenfolge); Package-public-Toggle (installer/ui/api) + Repo-Freigabe (erst nach Rebrand-Gate `p1-installer-rebrand-dist` T7) = ops/manuell im GHCR/GitHub-UI, `docker pull` anonym auf crabbox
 Komponente: linuxmuster-ui-installer (+ GHCR-/Repo-Settings) · Dateien: Doku (`docs/`), keine Code-Datei
 Soll: Anforderung „Schul-Admin installiert ohne GitHub-Account" · Bootstrap `installer:213` (`docker pull …`) · §13-Pflicht (Quellcode-Angebot)
 Änderung: (a) Package-Sichtbarkeit von `linuxmuster-ui-installer` **und** `linuxmuster-ui`/`-api` auf **public** setzen (Paket-Sichtbarkeit ist unabhängig von der Repo-Sichtbarkeit). **Ohne das ist der eigene Installer für Dritte unbenutzbar.** (b) **Repo-Freigabe (public) erst NACH dem Rebrand** — `p1-rebrand` (UI) und `p1-installer-rebrand-dist` (Installer) müssen gelandet sein, sonst wird ein Repo mit „edulution"-Branding + Netzint-„all rights reserved"-Headern veröffentlicht. Ein öffentliches Repo erfüllt zugleich das **§13-Quellcode-Angebot** am elegantesten → `PRODUCT_SOURCE_URL` (`p1-rebrand` T8) darauf zeigen lassen. Entscheidung + Reihenfolge dokumentieren.
