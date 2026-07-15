@@ -1451,7 +1451,8 @@
         "signingFailed": "L'inscription a échoué",
         "verificationFailed": "La vérification des jetons a échoué",
         "communityMode": "L'enregistrement de licence n'est pas disponible en mode communautaire AGPL."
-      }
+      },
+      "communityNotice": "Ce fork fonctionne en mode communautaire AGPL. Aucun enregistrement de licence commerciale n'est requis ; l'offre de code source est disponible sous Info › Offre de code source."
     },
     "userAdministration": {
       "resetMfaForm": "Réinitialiser l'authentification à deux facteurs",

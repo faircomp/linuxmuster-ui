@@ -979,7 +979,7 @@ Verify (crabbox): `npm run test:api -- license` grün; Assertion: kein Outbound-
 i18n: keine
 Doku: docs/ (DE+EN) Kurz-Absatz „AGPL-Community-Lizenzmodus"; `.env.default` Eintrag `LICENSE_SERVER_URL=` (leer)
 
-### T7 — FE: kommerzielle Lizenz-Register-UI im Community-Modus ausblenden  [ ]
+### T7 — FE: kommerzielle Lizenz-Register-UI im Community-Modus ausblenden  [x] OK bei isCommunity: Register-Button+Dialog aus, communityNotice statt; Read-only-Overview bleibt; i18n de/en/fr; vitest 2/2
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/components/{LicenseOverview,RegisterLicenseDialog}.tsx (+ locales)
 Soll: GET /license liefert `isCommunity` (T6). LicenseOverview.tsx (Register-Button/Felder), RegisterLicenseDialog.tsx (Key-Eingabe → Netzint)
 Änderung: Wenn `isCommunity` → Register-Button/Dialog + kommerzielle Felder (customerId/licenseId/Key) ausblenden und stattdessen kurzen `settings.license.communityNotice`-Hinweis zeigen (Verweis aufs §13-Angebot). Read-only-Overview bleibt.

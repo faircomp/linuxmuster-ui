@@ -1473,7 +1473,8 @@
         "signingFailed": "Registrierung fehlgeschlagen",
         "verificationFailed": "Tokenverifizierung fehlgeschlagen",
         "communityMode": "Lizenzregistrierung ist im AGPL-Community-Modus nicht verfügbar."
-      }
+      },
+      "communityNotice": "Dieser Fork läuft im AGPL-Community-Modus. Eine kommerzielle Lizenzregistrierung ist nicht erforderlich; das Quellcode-Angebot findest du unter Info › Quellcode-Angebot."
     },
     "sourceOffer": {
       "title": "Quellcode-Angebot",

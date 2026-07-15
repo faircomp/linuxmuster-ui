@@ -1472,7 +1472,8 @@
         "signingFailed": "Registration failed",
         "verificationFailed": "Token verification failed",
         "communityMode": "License registration is unavailable in AGPL community mode."
-      }
+      },
+      "communityNotice": "This fork runs in AGPL community mode. Commercial license registration is not required; the source code offer is available under Info › Source code offer."
     },
     "sourceOffer": {
       "title": "Source code offer",
