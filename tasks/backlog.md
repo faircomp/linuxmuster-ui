@@ -38,7 +38,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - `[?] human-gate: PR Phase P0 (linuxmuster-ui)` — `git push -u origin feat/2.0-backlog` + `gh pr create --draft` sind prompt-pflichtig; **warten auf Kevins OK**. (Nur Repo `linuxmuster-ui`; Installer in P0 nicht berührt.)
   - `[?] human-gate: p0-realm-diff-baseline T4+T6` — brauchen eine laufende 2.0.200-Keycloak-Instanz (Voll-Stack/Box) → an den **P1-Voll-Stack** koppeln; Werkzeug (export/normalize/diff) steht.
   - Hinweis: Kevins 3 uncommittete `notifications`-WIP-Dateien liegen unberührt im Working-Tree (nicht in den P0-Commits).
-- **P1 läuft (Stand 2026-07-15)** — fertig authored: `p1-rebrand` · `x-i18n-fr` · `p1-own-ci-registry` (11/11) · `p1-installer-repoint` (11/11) · `p1-installer-ci` (7/7). Beide Repos auf `feat/2.0-backlog`. Offene nach-außen-Gates sammeln sich fürs **P1-Phasenende** (nicht autonom ausgeführt):
+- **P1 läuft (Stand 2026-07-15)** — fertig authored: `p1-rebrand` · `x-i18n-fr` · `p1-own-ci-registry` (11/11) · `p1-installer-repoint` (11/11) · `p1-installer-ci` (7/7) · `p1-installer-rebrand-dist` (7/7). Beide Repos auf `feat/2.0-backlog`. Damit ist der **Installer-Strang komplett** (get.edulution.io-Laufzeit-Fetch eliminiert, Templates aus dem Image, auf linuxmuster-ui rebrandet, AGPL-Attribution) → Rebrand-Gate für die Repo-Freigabe erfüllt. Offene nach-außen-Gates sammeln sich fürs **P1-Phasenende** (nicht autonom ausgeführt):
   - `[?] human-gate: PR Phase P1 (beide Repos)` — `git push` + `gh pr create --draft` je Repo (`linuxmuster-ui` + `linuxmuster-ui-installer`), Cross-Link in beiden Bodies; **warten auf Kevins OK**.
   - `[?] human-gate: Erst-Image-Push + GHCR-Packages public` — UI/API (`p1-own-ci-registry` T11) **und** Installer (`p1-installer-ci` T1/T7): erster CI-Image-Push, dann `linuxmuster-{ui,api,ui-installer}` auf **public** (anonymer `docker pull`); Verify auf crabbox/echtem Actions-Runner.
   - `[?] human-gate: Repo-Freigabe (public) erst nach Rebrand-Gate` — `p1-installer-rebrand-dist` T7 (+ `p1-rebrand`) müssen gelandet sein, bevor ein Repo public wird (sonst edulution-Branding/Netzint-Header öffentlich); erfüllt zugleich AGPL-§13.
@@ -1097,7 +1097,7 @@ Abhängt von: T4
 ---
 
 ## p1-installer-rebrand-dist [P1] ⭐ — Installer-Rebrand + eigene Template-Auslieferung (kein `get.edulution.io`)
-_Ziel:_ Der Installer zieht Templates aus **unserer** Quelle statt von `get.edulution.io` und trägt eigenes Branding · _Abhängt-von:_ p1-installer-repoint, p1-installer-ci · _Status:_ geplant · _Tasks:_ 7
+_Ziel:_ Der Installer zieht Templates aus **unserer** Quelle statt von `get.edulution.io` und trägt eigenes Branding · _Abhängt-von:_ p1-installer-repoint, p1-installer-ci · _Status:_ erledigt (7/7 authored; T3/T4/T6/T7 lokal grün; T1/T2/T5-Build box-gated) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** · Soll: `apps/public-page/public/installer:190` (Template-curl-Loop) · `Dockerfile` · `apps/webinstaller-api/app/main.py` · `apps/public-page/*`
 
 > **Der Show-Stopper (verifiziert):** `installer:190` lädt zur **Installationszeit** alle 5 Templates
@@ -1110,7 +1110,7 @@ Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** · Soll: `app
 > `/edulution-ui/` legen → **kein Laufzeit-Fetch mehr**, funktioniert auch mit privatem Repo (kein
 > raw.githubusercontent-Token-Problem). Der Bootstrap-curl-Loop entfällt ersatzlos.
 
-### T1 — Templates ins Installer-Image aufnehmen  [ ]
+### T1 — Templates ins Installer-Image aufnehmen  [x] OK `COPY apps/public-page/public/download/ /app/templates/` im Dockerfile (alle 5 *.template ins Image); `docker run ls /app/templates`-Verify box-gated
 Komponente: linuxmuster-ui-installer · Dateien: `Dockerfile`
 Soll: `Dockerfile` (COPY-Blöcke: `apps/webinstaller-api/app /app`, `dist/apps/webinstaller /app/static`) · Templates unter `apps/public-page/public/download/*.template`
 Änderung: `COPY apps/public-page/public/download/ /app/templates/` ergänzen, damit alle 5 `.template`-Dateien im Image liegen.
@@ -1118,7 +1118,7 @@ Verify (crabbox): Image bauen, `docker run --rm --entrypoint ls <img> /app/templ
 i18n: keine
 Doku: keine (intern)
 
-### T2 — Container legt Templates beim Start ins gemountete Verzeichnis  [ ]
+### T2 — Container legt Templates beim Start ins gemountete Verzeichnis  [x] OK startup.sh `place_template()` kopiert idempotent (`[ ! -f dest ]`, nie überschreiben) je Template an das exakte Alt-Ziel: 4× nach `/edulution-ui/`, `edulution-default.yml` → `data/traefik/config/` (ersetzt den Bootstrap-`mv`); vor `uvicorn`, `bash -n` grün; Container-Start-Verify box-gated
 Komponente: linuxmuster-ui-installer · Dateien: `apps/webinstaller-api/startup.sh` (bzw. `app/main.py`)
 Soll: `startup.sh` (erzeugt heute nur Cert + startet uvicorn) · Mount `-v ${DIRECTORY}:/edulution-ui/` (`installer:215`) · main.py liest `/edulution-ui/realm-edulution.json` (:726)
 Änderung: Beim Start jede `/app/templates/<f>.template` nach `/edulution-ui/<f>` kopieren, **nur wenn dort noch nicht vorhanden** (idempotent, überschreibt keine bestehende Installation). `edulution-default.yml` weiterhin nach `data/traefik/config` (bisher machte das der Bootstrap).
@@ -1127,7 +1127,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — Bootstrap: `get.edulution.io`-curl-Loop entfernen  [ ]
+### T3 — Bootstrap: `get.edulution.io`-curl-Loop entfernen  [x] OK Curl-Loop (5× get.edulution.io) + `mv edulution-default.yml` ersatzlos entfernt; Verzeichnis-Anlage + docker pull/run + Readiness-Wait bleiben; `! grep get.edulution.io installer` + `bash -n` lokal PASS
 Komponente: linuxmuster-ui-installer · Dateien: `apps/public-page/public/installer`
 Soll: `installer:188–199` (for-Loop + `curl … get.edulution.io/download/…` + Fehlerprüfung), `installer:~205` (`mv edulution-default.yml data/traefik/config`)
 Änderung: curl-Loop ersatzlos entfernen (Templates kommen aus dem Image, T2). Reihenfolge anpassen: Verzeichnisse anlegen → Installer-Container starten (legt Templates) → auf Templates warten statt sie zu laden. `mv edulution-default.yml` entfällt bzw. wandert in T2.
@@ -1136,7 +1136,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2
 
-### T4 — Restliche `get.edulution.io`-/Fremd-URLs im Installer-Repo repointen  [ ]
+### T4 — Restliche `get.edulution.io`-/Fremd-URLs im Installer-Repo repointen  [x] OK index.html (canonical/og/schema/installUrl), App.tsx-INSTALL_COMMAND, README Quick-Install, edulution-lmninstaller/README (2× raw.githubusercontent) auf faircomp-Quellen; Attribution unangetastet; `! grep get.edulution.io apps/ README.md` lokal PASS
 Komponente: linuxmuster-ui-installer · Dateien: `apps/public-page/**`, `apps/webinstaller/**`, `README.md`
 Soll: grep `get.edulution.io|edulution.io|edulution-io` über das Installer-Repo (Deny/Allowlist wie `p1-rebrand`)
 Änderung: Verbleibende Fremd-URLs/Download-Links auf eigene Quelle bzw. Repo-Links umstellen. **Historische Attribution/Copyright-Vermerke NICHT anfassen** (AGPL-Provenienz).
@@ -1144,7 +1144,7 @@ Verify (crabbox): `! grep -rn 'get\.edulution\.io' --include='*' apps/ README.md
 i18n: keine
 Doku: keine (intern)
 
-### T5 — Installer-Rebrand: Wizard-Texte, Branding, Public-Page  [ ]
+### T5 — Installer-Rebrand: Wizard-Texte, Branding, Public-Page  [x] OK Public-Page+Wizard auf „linuxmuster-ui": Titel/Meta/og/schema, sichtbarer Text, Footer-Links (PRODUCT_URL/DOCS_URL-Konstanten), i18n-Werte de+en (allowlist, Keys/Identifier + `/api/lmn/edulution-config`-Contract unangetastet), fehlendes edulution-Logo → self-contained linuxmuster-ui-Wordmark-SVG (SPDX); schema.org-Lizenz MIT→AGPL korrigiert. **Offen (bewusst):** finale Logo-Grafik (Design-`[?]`); tiefer Realm-/Identifier-De-Brand (Realm `edulution`, `edulution.env`, Container-Namen, Wizard-Code-Identifier) = eigene Realm-/Contract-Rename-Aufgabe. `nx build webinstaller` + dist-grep box-gated
 Komponente: linuxmuster-ui-installer · Dateien: `apps/webinstaller/**` (UI-Texte/Logos), `apps/public-page/**`
 Soll: `p1-rebrand` T8 (`PRODUCT_NAME`/`PRODUCT_SOURCE_URL` im UI-Repo) als Namensquelle
 Änderung: Produktname/Logos/Titel im Wizard + Public-Page auf `linuxmuster-ui` umstellen; keine Marke „edulution" im sichtbaren Text. Deny/Allowlist statt naivem sed.
@@ -1152,7 +1152,7 @@ Verify (crabbox): Wizard-Build grün (`npx nx build webinstaller`) · `! grep -r
 i18n: Wizard-Texte DE+EN+FR, falls der Wizard i18n hat (sonst: keine)
 Doku: Installer-README rebranden
 
-### T6 — NOTICE/Attribution + §13-Hinweis im Installer-Repo  [ ]
+### T6 — NOTICE/Attribution + §13-Hinweis im Installer-Repo  [x] OK `NOTICE` neu (AGPL-3.0-or-later, Fork-Attribution edulution-io/edulution-installer + Netzint, Trademark-Statement, §13-Quellcode-Link) + README-Abschnitt „Attribution & License"; `test -f NOTICE && grep AGPL-3.0-or-later` PASS. **Follow-up:** Top-Level `LICENSE` (AGPL-Volltext) fehlt noch (NOTICE verweist auf gnu.org) — mechanischer Nachtrag
 Komponente: linuxmuster-ui-installer · Dateien: `NOTICE` (neu, **SPDX AGPL-3.0-or-later**), `README.md`
 Soll: `p1-rebrand` T1/T2 (Analog im UI-Repo)
 Änderung: Fork-Attribution (Ursprung edulution-io/edulution-installer, AGPLv3), Trademark-Statement, Link auf den Quellcode (§13-Bezug) ergänzen.
@@ -1160,7 +1160,7 @@ Verify (crabbox): `test -f NOTICE && grep -q 'AGPL-3.0-or-later' NOTICE`
 i18n: keine
 Doku: README-Abschnitt Attribution/Lizenz
 
-### T7 — Gate: keine `edulution-io`-Laufzeit-Referenz mehr im Installer  [ ]
+### T7 — Gate: keine `edulution-io`-Laufzeit-Referenz mehr im Installer  [x] OK `! grep -rnE 'ghcr\.io/edulution-io|get\.edulution\.io|edulution-io/edulution-installer' apps/ edulution-lmninstaller/ .github/ Dockerfile` lokal PASS; einzige verbleibende `edulution-io/edulution-installer`-Nennung = Fork-Attribution in README/NOTICE (Ausnahme)
 Komponente: linuxmuster-ui-installer · Dateien: — (Prüf-Task)
 Soll: Summe aus `p1-installer-repoint` T1–T3 + diesem Paket
 Änderung: Repo-weiter grep-Gate als Abschluss: keine `edulution-io/`-Image-/Repo-Refs und kein `get.edulution.io` mehr in ausführbaren Pfaden (Bootstrap, Templates, Wizard, CI). Ausnahmen nur in Attribution/History.
