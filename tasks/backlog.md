@@ -44,7 +44,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - `[?] human-gate: Repo-Freigabe (public) erst nach Rebrand-Gate` — `p1-installer-rebrand-dist` T7 (+ `p1-rebrand`) müssen gelandet sein, bevor ein Repo public wird (sonst edulution-Branding/Netzint-Header öffentlich); erfüllt zugleich AGPL-§13.
   - Box-gated Verifies zum Nachziehen am P1-Voll-Stack: `p1-own-ci-registry` T3/T5, `p0-realm-diff-baseline` T4/T6, `p1-installer-ci` CI-Run/skopeo.
   - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
-  - **In Arbeit:** `p1-port-api-specs-ci` (3/11 — T1–T3 authored: `test:api:ci`-Gate, CI-Step, Contract-Reflection-Helper; als Nächstes T4–T8 = 14 Controller-Smoke/Contract-Specs, jest-Lauf box-gated).
+  - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
@@ -1330,7 +1330,7 @@ Doku: docs/migrations/upgrade-1.6-to-2.0.md (DE, intern) — diese Task IST die 
 Abhängt von: T7
 
 ## p1-port-api-specs-ci [P1] — API-Specs als CI-Green-Gate + Smoke/Contract-Tests
-_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ in Arbeit (3/11: T1–T3 authored+lokal-verifiziert; T4–T8 Controller-Specs, T9–T11 Guard/Wiring/Doku offen) · _Tasks:_ 11
+_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ erledigt (11/11 authored; T1-T3+T9-T11 lokal verifiziert [tsc/eslint/tsx/yaml], T4-T8 eslint+route-grep verifiziert; jest/nx-Lauf box-gated) · _Tasks:_ 11
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-port-api-specs-ci.md` · Soll: PLAN §6/Zeile 317 · §5.1/Zeile 252 · §3.2/Zeile 156 · §6.8/Zeile 314 · §8-P1/Zeile 362 · app.module.ts:150–158 (globaler AuthGuard+AccessGuard) · Bestands-Specs sse.controller.spec.ts / users.controller.spec.ts · scripts/checkFilenames.ts (Check-Muster) · Guard-Anker main.js:11219/56551/56883/59956/63161
 
 > Kontext: 28 Bestands-Specs (nativ aus 1.6.266). 29 Controller, davon 14 ohne Spec:
@@ -1368,7 +1368,7 @@ Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test -- --testPathPatt
 i18n: keine
 Doku: keine (intern; Nutzung in docs/testing/spec-policy.md T11)
 
-### T4 — Smoke/Contract-Specs: health, metrics, license  [ ]
+### T4 — Smoke/Contract-Specs: health, metrics, license  [x] OK 3 Specs: health(readiness public+LocalhostGuard), metrics(getMetrics AdminGuard), license(signLicense AdminGuard, getLicense frei); eslint grün, Route-Namen grep-verifiziert
 Komponente: apps/api · Dateien: `apps/api/src/health/health.controller.spec.ts`, `apps/api/src/metrics/metrics.controller.spec.ts`, `apps/api/src/license/license.controller.spec.ts` (neu, SPDX AGPL)
 Soll: health.controller.ts:37–38 (`@Public`+`LocalhostGuard`) · metrics.controller.ts:28 (`AdminGuard`) · license.controller.ts:43 (`AdminGuard`)
 Änderung: Je Controller `Test.createTestingModule({ controllers:[X], providers:[{provide:XService,useValue:mock}] })` (Muster sse.controller.spec.ts). Assertions: `expect(controller).toBeDefined()` (Smoke) + Contract via T3-Helper (`getClassGuards`/`getRouteGuards`/`isRoutePublic`: metrics/license → AdminGuard; health-Check-Route → public + LocalhostGuard).
@@ -1377,7 +1377,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T5 — Smoke/Contract-Specs: user-preferences, notifications, bulletin-category  [ ]
+### T5 — Smoke/Contract-Specs: user-preferences, notifications, bulletin-category  [x] OK 3 Specs: user-preferences/notifications = nur globaler AuthGuard (Class+Route guard-frei), bulletin-category Mutationen AdminGuard; notifications-Spec passt zu committet+Kevins WIP (Route-Namen identisch)
 Komponente: apps/api · Dateien: `apps/api/src/user-preferences/user-preferences.controller.spec.ts`, `apps/api/src/notifications/notifications.controller.spec.ts`, `apps/api/src/bulletin-category/bulletin-category.controller.spec.ts` (neu, SPDX AGPL)
 Soll: bulletin-category.controller.ts:44–68 (AdminGuard auf allen Mutations-Routen)
 Änderung: Wie T4. Service-Mock je Controller; ggf. `getModelToken`/`CACHE_MANAGER`-Mocks nach Bedarf (Muster users.controller.spec.ts, `../common/cache-manager.mock`). Contract: bulletin-category-Mutationen → AdminGuard; user-preferences/notifications → nicht public, kein AdminGuard (nur globaler AuthGuard).
@@ -1386,7 +1386,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T6 — Smoke/Contract-Specs: auth, webhook, mobileApp  [ ]
+### T6 — Smoke/Contract-Specs: auth, webhook, mobileApp  [x] OK 3 Specs: auth (@Public genau authconfig/authenticate/getTotpInfo/loginViaApp; getQrCode/setupTotp/disableTotp/disableTotpForUser geschützt), webhook (public+WebhookGuard), mobileApp (nur global) — Auth-Bypass-Schutz
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.spec.ts`, `apps/api/src/webhook/webhook.controller.spec.ts`, `apps/api/src/mobileAppModule/mobileApp.controller.spec.ts` (neu, SPDX AGPL)
 Soll: auth.controller.ts:64/72/88/110 (`@Public`-Routen: authconfig/authenticate/getTotpInfo/loginViaApp) · webhook.controller.ts:32–33 (`@Public`+`WebhookGuard`)
 Änderung: Wie T4. Contract-Fokus auf die `@Public()`-Opt-outs (Auth-Bypass-Schutz): assertieren, dass genau die erwarteten Auth-Routen public sind und die geschützten (getQrCode/setupTotp/disableTotp) NICHT public; webhook-Route → public + WebhookGuard. AuthService/WebhookService/MobileAppService mocken.
@@ -1395,7 +1395,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T7 — Smoke/Contract-Specs: docker, webhook-clients, webdav-shares  [ ]
+### T7 — Smoke/Contract-Specs: docker, webhook-clients, webdav-shares  [x] OK 3 Specs: docker (Class-AdminGuard via getClassGuards + einzige @Public-Route), webhook-clients (Class-AdminGuard), webdav-shares (Mutationen AdminGuard)
 Komponente: apps/api · Dateien: `apps/api/src/docker/docker.controller.spec.ts`, `apps/api/src/webhook-clients/webhook-clients.controller.spec.ts`, `apps/api/src/webdav/shares/webdav-shares.controller.spec.ts` (neu, SPDX AGPL)
 Soll: docker.controller.ts:34 (Class-`AdminGuard`) + :63 (eine `@Public`-Route) · webhook-clients.controller.ts:28 (Class-`AdminGuard`) · webdav-shares.controller.ts:51–63 (AdminGuard auf Mutationen)
 Änderung: Wie T4. Contract: docker/webhook-clients Class-Level-AdminGuard (`getClassGuards`); docker-`@Public`-Route bewusst gelistet und geprüft; webdav-shares-Mutationen AdminGuard. Services mocken.
@@ -1404,7 +1404,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T8 — Smoke/Contract-Specs: mails, filesharing (mehrfache DI)  [ ]
+### T8 — Smoke/Contract-Specs: mails, filesharing (mehrfache DI)  [x] OK 2 Specs: mails (3 DI-Mocks, 5 Mailcow-Admin-Routen AdminGuard), filesharing (3 DI-Mocks, genau 2 @Public-Download-Routen, alle 17 übrigen geschützt)
 Komponente: apps/api · Dateien: `apps/api/src/mails/mails.controller.spec.ts`, `apps/api/src/filesharing/filesharing.controller.spec.ts` (neu, SPDX AGPL)
 Soll: mails.controller.ts:39–43 (UsersService+MailsService+MailIdleService), :69ff (AdminGuard auf Mailcow-Admin) · filesharing.controller.ts:68–72 (FilesharingService+WebdavService+ThumbnailService), :62 `@RequireAppAccess(APPS.FILE_SHARING)`, :265/274 (`@Public`-Routen)
 Änderung: Wie T4, aber alle injizierten Services mocken. Contract: mails-Mailcow-Admin-Routen → AdminGuard; filesharing → `@RequireAppAccess`-Metadata gesetzt + die zwei `@Public`-Download-Routen bewusst gelistet/geprüft, alle übrigen NICHT public.
@@ -1413,7 +1413,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3
 
-### T9 — Spec-Coverage-Guard-Script + npm-Script  [ ]
+### T9 — Spec-Coverage-Guard-Script + npm-Script  [x] OK scripts/checkSpecCoverage.ts (SPDX AGPL, SPEC_NOT_REQUIRED-Allowlist) + npm check-spec-coverage; lokal: „All 29 controllers have a co-located spec!" exit 0; Negativ-Probe (Spec versteckt) → exit 1
 Komponente: scripts · Dateien: `scripts/checkSpecCoverage.ts` (neu, SPDX AGPL), `package.json`
 Soll: PLAN §6/Zeile 317 („pro rekonstruiertem Modul Specs verlangen") · Muster scripts/checkFilenames.ts
 Änderung: `tsx`-Script, das `apps/api/src` rekursiv nach `*.controller.ts` scannt und für jede eine kolokierte `*.controller.spec.ts` verlangt; fehlt eine → Liste ausgeben + `process.exit(1)`. Konstante `SPEC_NOT_REQUIRED: string[]` (default leer) als Ausnahme-Allowlist. `package.json`-Script `"check-spec-coverage": "tsx ./scripts/checkSpecCoverage.ts"`.
@@ -1422,7 +1422,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4, T5, T6, T7, T8
 
-### T10 — Spec-Coverage-Guard in CI + Pre-Commit verdrahten  [ ]
+### T10 — Spec-Coverage-Guard in CI + Pre-Commit verdrahten  [x] OK check-spec-coverage in build-and-test.yml (vor lint) + .husky/pre-commit (nach check-filenames); yaml-Parse grün, grep-Verify PASS
 Komponente: CI + Git-Hooks · Dateien: `.github/workflows/build-and-test.yml`, `.husky/pre-commit`
 Soll: PLAN §6/Zeile 317 (Contract-/Smoke-Test je Controller „in build-and-test.yml verdrahten")
 Änderung: In build-and-test.yml (Job `test`, Checks-Step) `npm run check-spec-coverage` zu den Checks hinzufügen (vor `npm run lint`). In `.husky/pre-commit` `npm run check-spec-coverage` ergänzen (nach `check-filenames`), damit ein neuer Controller ohne Spec lokal blockiert.
@@ -1431,7 +1431,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T9
 
-### T11 — Test-/Spec-Policy-Doku  [ ]
+### T11 — Test-/Spec-Policy-Doku  [x] OK docs/testing/spec-policy.md (SPDX): Spec-pro-Controller-Regel, controllerContractReflection-Beispiel, going-forward 401/403-Verhaltensspec ab p2-chat, Ausführung; grep-Verify PASS
 Komponente: Doku · Dateien: `docs/testing/spec-policy.md` (neu, SPDX AGPL falls Header-Konvention für .md gilt — sonst ohne)
 Soll: PLAN §6/Zeile 314/317 (Auth-Spec je Modul) · Spec „Doku-Impact"
 Änderung: Kurze DE-Dev-Doku: (1) jeder Controller braucht `*.controller.spec.ts` (Smoke + Contract), erzwungen durch `check-spec-coverage`; (2) Contract-Assertions via `controllerContractReflection` (T3) — Beispiel; (3) going-forward: jedes NEUE/rekonstruierte Modul zusätzlich ein verhaltensbasierter Auth-Spec (401/403) ab P2-Chat-Pilot (OF1); (4) wie man `npm run test:api:ci` und `npm run check-spec-coverage` lokal/remote laufen lässt.
