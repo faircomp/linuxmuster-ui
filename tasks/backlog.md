@@ -46,6 +46,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
   - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
   - **`p1-security-cve-track` fertig** (8/8 authored) — Dependabot (npm/actions/docker), Base-Image-Digest-Pinning, npm-audit-Gate (severity-Ceiling + reviewBy-Ablauf), 2 Trivy-Image-Scan-Gates (PR + fail-closed Release), `scanImages.sh`-Cron-Scanner, Accepted-CVE-Register + Track-Doku. **Befund: 30 high/critical Prod-CVEs Alt-Last der v1.6.266-Basis** baselined (reviewBy 2026-10-15, [[cve-baseline-debt]]) — Remediation via Dependabot vor Public-Gehen priorisieren. Lokal verifiziert; Trivy-CI-Runs box-gated.
+  - **`p1-master-key-provisioning` fertig** (4/4 authored, **Cross-Repo**: Installer `ff09a9b` + UI `e4bcf7684`) — Installer provisioniert `MASTER_ENCRYPT_KEY` (64-hex) in `edulution.env` und **erhält ihn beim Re-Run** (Rotation = Totalverlust aller gewrappten Passwörter; Review bestätigt Round-Trip + fail-safe); DR-Backup-Kopplungs-Doku; Prod-Compose-`env_file`-Contract statisch bestätigt. **Offen [?] für Kevin:** breitere Installer-Re-Run-Idempotenz-Policy (Spec Offene Frage 3). Runtime-Key-im-Container-Verify box-gated.
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
@@ -1523,7 +1524,7 @@ Doku: docs/security/cve-track.md (dies IST die Doku)
 Abhängt von: T5, T6, T7
 
 ## p1-master-key-provisioning [P1] — Master-Key-Provisioning & Backup-Kopplung
-_Ziel:_ Installer erzeugt MASTER_ENCRYPT_KEY + koppelt ihn ans Backup-Set · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 4
+_Ziel:_ Installer erzeugt MASTER_ENCRYPT_KEY + koppelt ihn ans Backup-Set · _Abhängt-von:_ p1-installer-repoint · _Status:_ erledigt (4/4 authored; T1/T2/T3 code+doc lokal verifiziert, T4-Contract statisch bestätigt/Runtime box-gated; breitere Re-Run-Policy-[?] bleibt für Kevin) · _Tasks:_ 4
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-master-key-provisioning.md` · Soll: main.js:9214-9235 (getMasterKey) · main.js:8340-8345 (generateEncryptKey/64-hex) · main.js:9190-9194 (Konstanten) · edulution-installer/apps/webinstaller-api/app/main.py:699-834 (createEdulutionEnvFile) · .reference/2.0.200/baselines/— (keine UI-Änderung)
 
 > Abhängt-von: `p1-installer-repoint`. **Cross-Repo:** T1/T2 committen ins Installer-Repo
@@ -1536,7 +1537,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-master-key-provisioning.md
 
 ---
 
-### T1 — Installer: `MASTER_ENCRYPT_KEY` (64-Hex) deterministisch in `edulution.env`  [ ]
+### T1 — Installer: `MASTER_ENCRYPT_KEY` (64-Hex) deterministisch in `edulution.env`  [x] OK `secrets.token_hex(32)` (64-hex/256-bit, NICHT base62-`generateSecret`) → `MASTER_ENCRYPT_KEY` im `# edulution-api`-Block der edulution.env; AST-extrahierter Funktions-Test lokal grün (64-hex), volle Funktion (`/edulution-ui/`-Pfade) box-gated. Installer-Repo `ff09a9b`
 Komponente: edulution-installer (webinstaller-api) · Dateien: `apps/webinstaller-api/app/main.py`
 Soll: main.js:9214-9235 (getMasterKey Env-Zweig) + main.js:8340-8345 (generateEncryptKey → 64-Hex/AES-GCM-256) · Ziel: installer main.py:702-712 (Secret-Block) + :767-786 (`# edulution-api`-Block)
 Änderung: In `createEdulutionEnvFile` `master_encrypt_key = secrets.token_hex(32)` erzeugen (64 Hex-Zeichen = 256-bit, format-kompatibel zu `getMasterKey`/`encryptWithKey`; **nicht** `generateSecret()` — base62 ergäbe einen degenerierten 16-Byte-Schlüssel) und die Zeile `MASTER_ENCRYPT_KEY={master_encrypt_key}` in den `# edulution-api`-Block der erzeugten `edulution.env` schreiben.
@@ -1544,7 +1545,7 @@ Verify: Installer-Assertion (in der crabbox-Shell/Installer-Repo ausführbar, ke
 i18n: keine
 Doku: keine (intern) — Env-Inventar-Eintrag als Cross-Ref (Spec Offene Frage 5)
 
-### T2 — Installer: bestehenden `MASTER_ENCRYPT_KEY` beim Re-Run erhalten  [?]
+### T2 — Installer: bestehenden `MASTER_ENCRYPT_KEY` beim Re-Run erhalten  [x] OK `resolveMasterEncryptKey` liest existierenden `^MASTER_ENCRYPT_KEY=[0-9a-f]{64}$` (Read-before-Write) und erhält ihn → keine Rotation (Datenverlust-Schutz); Lese-Fehler bricht ab statt neu zu generieren (fail-safe). Writer↔Reader-Round-Trip per Review bestätigt; über-Re-Runs-identisch lokal getestet. **Breitere Re-Run-Idempotenz-Policy = [?] für Kevin (Spec Offene Frage 3, s.u.)**
 Komponente: edulution-installer (webinstaller-api) · Dateien: `apps/webinstaller-api/app/main.py`
 Soll: main.js:9214-9235 (Rotation = irreversibler Verlust; wrap/unwrap main.js:7814/8119) · Plan §2.6(a)
 Änderung: Vor dem Erzeugen prüfen, ob `/edulution-ui/edulution.env` existiert und bereits `MASTER_ENCRYPT_KEY=<hex>` enthält; falls ja, **diesen Wert wiederverwenden** statt neu zu generieren (Rotation macht alle gewrappten Passwörter unlesbar). Nur wenn keiner existiert, `token_hex(32)` aus T1 nutzen.
@@ -1554,7 +1555,7 @@ Doku: Erhalt-Garantie im DR-Runbook (T3) referenzieren
 Abhängt von: T1
 [?] Entscheidung (Spec Offene Frage 3): Installer-Re-Run-Policy — sicherer idempotenter Re-Run vs. „einmalig + Master-Key-Erhalt als einzige Ausnahme".
 
-### T3 — DR-/Backup-Kopplung: Master-Key-Runbook-Abschnitt  [ ]
+### T3 — DR-/Backup-Kopplung: Master-Key-Runbook-Abschnitt  [x] OK `docs/ops/dr-master-key.md` (SPDX): Key+mongodump zwingend gemeinsam ins Backup, Restore-Reihenfolge, Totalverlust-Warnung, DR-Skript-Owner (p1-dr-runbook), Escrow/Bus-Factor; grep-Verify PASS. UI-Repo `e4bcf7684`
 Komponente: edulution-ui (docs, Ops) · Dateien: `docs/ops/dr-master-key.md` (neu, SPDX AGPL)
 Soll: Plan §2.6(c/d), §3.3, §5.6-DR, §6.2, R4 · main.js:9190-9235 · Cross-Ref `docs/datenschutz/verschluesselung-master-key.md`, `docs/features/p0-migrations-inventory.md`
 Änderung: Neues Ops-Dokument (DE), das verbindlich festhält: (1) `./data/master.key` bzw. `MASTER_ENCRYPT_KEY` (aus `edulution.env`) und `mongodump` gehören **zwingend gemeinsam** ins Backup-/Rollback-Set, **nie einzeln**; (2) Restore-Reihenfolge (Key/Env vor bzw. mit dem DB-Dump); (3) Warnung „Neustart ohne persistentes `./data`+Env = Totalverlust aller gespeicherten Passwörter"; (4) Verweis auf das §5.6-Voll-DR-Skript (`mongodump`+`pg_dump`+`./data`-Tar) als Owner der Skript-Umsetzung, mit der Kopplung als harter Anforderung; (5) Escrow-Hinweis (Plan §10.1, Bus-Factor).
@@ -1562,7 +1563,7 @@ Verify: `test -f edulution-ui/docs/ops/dr-master-key.md && head -1 edulution-ui/
 i18n: keine (internes Ops-Dokument, DE maßgeblich; EN zurückgestellt — Spec Offene Frage 1)
 Doku: dies IST das Doku-Deliverable
 
-### T4 — Voll-Stack-Contract: Key erreicht den `edulution-api`-Container  [ ]
+### T4 — Voll-Stack-Contract: Key erreicht den `edulution-api`-Container  [x] OK **Contract statisch bestätigt**: `edu-api`/`edulution-api`-Service im Prod-Compose reicht `edulution.env` via `env_file` durch (docker-compose.yml.template:20-21) → Key erreicht den Container ohne weitere Verdrahtung. Runtime-`printenv`-Verify (echter LMN) box-gated
 Komponente: Voll-Stack (crabbox gegen echten LMN, /test) · Dateien: — (Verifikation/Checklisten-Eintrag)
 Soll: Contract `edulution.env` (`MASTER_ENCRYPT_KEY`) → Prod-Compose `env_file` → getMasterKey (main.js:9218)
 Änderung: Keine Code-Änderung. Verifikationsschritt + Checklisten-Eintrag: nach Installer-Lauf muss der `edulution-api`-Container den provisionierten Key sehen; der Prod-Compose des `edulution-api`-Service muss `edulution.env` via `env_file` durchreichen (sonst Folge-Contract-Task in `p1-installer-repoint`). Solange die Wrapping-Portierung fehlt, wird der Key noch nicht konsumiert — geprüft wird die **Durchreichung**, nicht die Nutzung.
