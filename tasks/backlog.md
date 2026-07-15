@@ -524,7 +524,7 @@ Doku: docs/keycloak/README.md (DE, intern)
 Abhängt von: T5, T6
 
 ## p0-pii-inventory [P0] — DSGVO/PII-Datenfluss-Inventur
-_Ziel:_ DSGVO/PII-Datenfluss je Collection + master.key-Fluss + Drittempfänger · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 7
+_Ziel:_ DSGVO/PII-Datenfluss je Collection + master.key-Fluss + Drittempfänger · _Abhängt-von:_ — · _Status:_ erledigt (7/7) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-pii-inventory.md` · Soll: main.js:8960-9040 (User) · 8323-8365 (Krypto) · 9190-9330 (master.key+Migration000) · 69221-69425 (Chat) · 60650-60702 (Pairing) · 44261-44290 (SurveyAnswer) · 21630-21642 (Notification-TTL) · 39930-39938 (PublicShare-TTL) · 43707/43800 (License) · 54486/59762 (Sentry) · upstream/1717-add-pairing-administration-page · upstream/1683-chat-add-basic-chat-ui
 
 > Hinweis: Analyse-/Inventur-Paket. T1–T5 = Inventar-Dokumente (Prosa, DE). T6–T7 = synthetische
@@ -534,7 +534,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p0-pii-inventory.md` · Soll:
 
 ---
 
-### T1 — PII-Inventar je Collection dokumentieren  [ ]
+### T1 — PII-Inventar je Collection dokumentieren  [x] OK pii-inventar.md (11 Quellen; Chat/Survey/Pairing Minderjaehriger unverschluesselt+kein TTL = Hotspot)
 Komponente: docs · Dateien: docs/datenschutz/pii-inventar.md (neu)
 Soll: main.js:8960-9040 · account.schema.ts · 69221-69425 · 60650-60702 · 44261-44290 · 21630-21642 · 39930-39938 · 27364-27401
 Änderung: Tabelle je Datenquelle/Collection (`LDAP/linuxmuster-api7`, `users`, `useraccounts`, `conversations`, `chatmessages`, `parentchildpairings`, `surveyanswers`, `notifications`+`usernotifications`, `publicshares`, `mailproviders`, `license`) mit Spalten: PII-Felder · Betroffene (Minderjährige ja/nein) · Verschlüsselung-at-rest · Speicherort · Aufbewahrung. Kopf mit SPDX + kurzer Index auf die vier Schwester-Dokumente.
@@ -542,7 +542,7 @@ Verify: `iter.sh cmd 'test -f docs/datenschutz/pii-inventar.md && for c in users
 i18n: keine
 Doku: docs/datenschutz/pii-inventar.md (dies ist das Deliverable) · EN deferred (Spec-Offene-Frage 3)
 
-### T2 — Verschlüsselung & master.key-Datenfluss dokumentieren  [ ]
+### T2 — Verschlüsselung & master.key-Datenfluss dokumentieren  [x] OK verschluesselung-master-key.md (AES-GCM-256/WebCrypto, wrapped-Kette, Backup+master.key-Kopplung)
 Komponente: docs · Dateien: docs/datenschutz/verschluesselung-master-key.md (neu)
 Soll: main.js:8323-8365 (AES-GCM-256/WebCrypto) · 9190-9265 (getMasterKey/wrap/unwrap, `MASTER_ENCRYPT_KEY`, `./data/master.key` 0600, `wrapped:`-Prefix) · 9299-9330 (Migration 000) · 8793 (USER_DB_PROJECTION)
 Änderung: Beschreibe die Kette `master.key` → wrapped `user.encryptKey` → AES-GCM-verschlüsselte `user.password` + `useraccounts.accountPassword`; nenne Provisioning (Env vs. Auto-Gen ins Bind-Mount) und spiegle die **Backup-/DR-Kopplung** (Master-Key + `mongodump` immer gemeinsam) mit Verweis auf §2.6/§5.6-DR — nicht neu erfinden.
@@ -550,7 +550,7 @@ Verify: `iter.sh cmd 'grep -qi "AES-GCM" docs/datenschutz/verschluesselung-maste
 i18n: keine
 Doku: docs/datenschutz/verschluesselung-master-key.md · optionaler Verweis aus DR-Runbook/README-Betriebsteil
 
-### T3 — Drittempfänger-Liste dokumentieren  [ ]
+### T3 — Drittempfänger-Liste dokumentieren  [x] OK drittempfaenger.md (License=nur licenseKey; einziger aktiver PII-Empfaenger=Push; Sentry default aus)
 Komponente: docs · Dateien: docs/datenschutz/drittempfaenger.md (neu)
 Soll: main.js:43707/43800 (License = nur `licenseKey`) · 54486-54490 + 59762-59780 (Sentry, Gate `ENABLE_SENTRY`) · expo-server-sdk/`registeredPushTokens` · §5.3 (3 GitHub-Fetches, PII-frei)
 Änderung: Tabelle je Empfänger (`license.edulution.io`, Sentry BE/FE, Mailcow/SOGo, Expo/FCM/APNs, Relution [inaktiv], 3× GitHub-Fetch) mit Spalten: übermittelte PII · Default An/Aus · Rechts-/Ersetzungsstatus. Explizit festhalten: License-Server erhält **keine** Schüler-PII (nur `licenseKey`).
@@ -558,7 +558,7 @@ Verify: `iter.sh cmd 'for r in license.edulution.io Sentry Mailcow Expo Relution
 i18n: keine
 Doku: docs/datenschutz/drittempfaenger.md
 
-### T4 — Retention-/Löschkonzept dokumentieren  [ ]
+### T4 — Retention-/Löschkonzept dokumentieren  [x] OK retention-loeschkonzept.md (TTL nur notifications 30d/publicshares; Chat/Survey/Pairing kein TTL = Luecke)
 Komponente: docs · Dateien: docs/datenschutz/retention-loeschkonzept.md (neu)
 Soll: main.js:21630-21642 (Notification TTL 30d) · 39930-39938 (PublicShare TTL) · 69221-69425 + 60650-60702 + 44261-44290 (kein TTL → Lücke)
 Änderung: Gegenüberstellung „hat TTL" (`notifications`, `publicshares`) vs. „kein TTL/unbegrenzt" (`conversations`, `chatmessages`, `parentchildpairings`, `surveyanswers`, `users`, `useraccounts`). Benenne den Chat-Retention-Vorschlag und den Offboarding-Löschpfad als **offene Entscheidungen** (verweist auf Spec-Offene-Fragen 1+2) — hier wird NICHT implementiert.
@@ -566,7 +566,7 @@ Verify: `iter.sh cmd 'grep -qi "notifications" docs/datenschutz/retention-loesch
 i18n: keine
 Doku: docs/datenschutz/retention-loeschkonzept.md
 
-### T5 — AVV-Bedarf je Companion/Dienst dokumentieren  [ ]
+### T5 — AVV-Bedarf je Companion/Dienst dokumentieren  [x] OK avv-bedarf.md (Companions self-hosted->entfaellt; AVV nur extern: Push default, Sentry opt-in)
 Komponente: docs · Dateien: docs/datenschutz/avv-bedarf.md (neu)
 Soll: §5.3 Lieferketten-Inventar (Companion-Images) · Drittempfänger aus T3
 Änderung: Tabelle je Companion/externem Dienst mit Spalten: Hosting (self-hosted vs. extern) · verarbeitet PII? · AVV-Bedarf (ja/nein/entfällt) · Anmerkung. Nur **Bedarf** markieren, kein Vertragsentwurf (YAGNI).
@@ -574,7 +574,7 @@ Verify: `iter.sh cmd 'test -f docs/datenschutz/avv-bedarf.md && grep -qiE "AVV|A
 i18n: keine
 Doku: docs/datenschutz/avv-bedarf.md
 
-### T6 — Synthetischer Persona-Katalog + „keine-Echt-PII"-Gate  [ ]
+### T6 — Synthetischer Persona-Katalog + „keine-Echt-PII"-Gate  [x] OK synthetic-personas.ts + assert-synthetic.ts (Namensraum synth./example.invalid, Negativ-Selbsttest); check:pii-fixtures in husky+CI
 Komponente: scripts/crabbox/fixtures · Dateien: scripts/crabbox/fixtures/synthetic-personas.ts (neu) · scripts/crabbox/fixtures/assert-synthetic.ts (neu) · (optional) package.json
 Soll: main.js:8960-9040 (User-Feldform) — Personas nur mit eindeutig synthetischen Werten
 Änderung: `synthetic-personas.ts` exportiert einen typisierten Katalog fiktiver Betroffener (Schüler=minderjährig, Lehrkräfte, Eltern) mit reserviertem Namensraum (Präfix `synth.`, Schule `test-schule`, Domain `@example.invalid`). `assert-synthetic.ts` lädt den Katalog und **failt** (exit 1), wenn eine Kennung/Domain nicht dem Namensraum entspricht → das ist der maschinelle „keine Echt-PII"-Gate. Beide Dateien mit SPDX-Header. Optional npm-Skript `check:pii-fixtures` in package.json.
@@ -582,7 +582,7 @@ Verify: `iter.sh cmd 'npx tsx scripts/crabbox/fixtures/assert-synthetic.ts && ec
 i18n: keine
 Doku: keine (intern) — kurzer Kopfkommentar im Katalog genügt
 
-### T7 — Mongo-Seed für API-eigene PII-Collections aus Personas  [ ]
+### T7 — Mongo-Seed für API-eigene PII-Collections aus Personas  [x] OK seed-pii-collections.ts (Dry-Run-Default, Persona-Gate, Prod-Refuse=REFUSED_PROD)
 Komponente: scripts/crabbox/fixtures · Dateien: scripts/crabbox/fixtures/seed-pii-collections.ts (neu)
 Soll: main.js:69221-69425 (conversations/chatmessages) · 60650-60702 (parentchildpairings) · 44261-44290 (surveyanswers)
 Änderung: Skript, das aus `synthetic-personas.ts` deterministische Test-Dokumente für `conversations`, `chatmessages`, `parentchildpairings`, `surveyanswers` erzeugt und in Mongo schreibt. **Sicherheit:** Default **Dry-Run** (nur Ausgabe der geplanten Inserts); Schreiben nur mit `--apply`; harter Gate gegen `MONGODB_DATABASE_NAME` (Refuse, wenn nicht Test-DB, z. B. Muster `*_e2e|*-test`). Alle erzeugten Referenzen stammen ausschließlich aus dem Persona-Katalog (nutzt das Gate aus T6). SPDX-Header.
