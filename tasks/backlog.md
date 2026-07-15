@@ -1006,7 +1006,7 @@ i18n: Reuse `settings.sourceOffer.repositoryLink` (keine neuen Keys)
 Doku: keine (intern)
 Abhängt von: p1-rebrand T8, T8
 
-### T10 — FE: EDU_PLUGINS_GITHUB_URL → eigener Mirror (env-konfigurierbar)  [ ]
+### T10 — FE: EDU_PLUGINS_GITHUB_URL → eigener Mirror (env-konfigurierbar)  [x] OK import.meta.env.VITE_PLUGINS_BASE_URL || faircomp/linuxmuster-plugins-Mirror (getypter Cast → eslint clean); .env.default-Eintrag; tsc grün
 Komponente: libs · Dateien: libs/src/common/constants/urls.ts (nur Z21), apps/frontend/.env.default (Eintrag)
 Soll: urls.ts:21 (`EDU_PLUGINS_GITHUB_URL='https://raw.githubusercontent.com/edulution-io/edulution-plugins/main/apps'`)
 Änderung: `EDU_PLUGINS_GITHUB_URL` aus `import.meta.env.VITE_PLUGINS_BASE_URL` mit Fork-Default `<MIRROR>` beziehen (layout-gleicher eigener Plugins-Fork). **Nur** Z21 anfassen — Z20/22 (`EDU_APP_APPSTORE_URL`/`EDU_DOCS_URL`) gehören p1-rebrand T9 (Datei-Koordination, siehe OF6).
@@ -1015,7 +1015,7 @@ i18n: keine
 Doku: `.env.default` (Frontend) Eintrag `VITE_PLUGINS_BASE_URL=<MIRROR>`
 Abhängt von: p0-supply-chain-inventory (Mirror-Host/OF4)
 
-### T11 — FE: Store-Fetch-Contract gegen Mirror-Layout absichern (vitest)  [ ]
+### T11 — FE: Store-Fetch-Contract gegen Mirror-Layout absichern (vitest)  [x] OK useDockerApplicationStore.spec.ts (axios gemockt): URL=${MIRROR}/<app>/<container>/docker-compose.yml bzw. <app>.yml, services geparst; vitest 2/2
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/useDockerApplicationStore.spec.ts (neu)
 Soll: useDockerApplicationStore.ts:153 (`${EDU_PLUGINS_GITHUB_URL}/${app}/${container}/docker-compose.yml?ts=…`), :183 (`…/${app}.yml` Traefik)
 Änderung: Neuer vitest (SPDX AGPL-3.0-or-later) mit gemocktem `axios`: `getDockerContainerConfig`/`getTraefikConfig` bauen den URL korrekt aus `EDU_PLUGINS_GITHUB_URL` (= Mirror) + `<app>/<container>/docker-compose.yml` bzw. `<app>.yml`, parsen ein Beispiel-Compose in `services`. Sichert, dass der Mirror layout-gleich bleibt (bricht rot, falls Store oder Layout driftet).
