@@ -1474,6 +1474,12 @@
         "verificationFailed": "Tokenverifizierung fehlgeschlagen",
         "communityMode": "Lizenzregistrierung ist im AGPL-Community-Modus nicht verfügbar."
       }
+    },
+    "sourceOffer": {
+      "title": "Quellcode-Angebot",
+      "description": "Diese Software steht unter der GNU Affero General Public License v3. Gemäß §13 kannst du den vollständigen Quellcode der laufenden Version hier abrufen:",
+      "repositoryLink": "Quellcode-Repository öffnen",
+      "version": "Laufende Version: {{version}}"
     }
   },
   "usersettings": {

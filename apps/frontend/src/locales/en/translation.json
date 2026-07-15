@@ -1473,6 +1473,12 @@
         "verificationFailed": "Token verification failed",
         "communityMode": "License registration is unavailable in AGPL community mode."
       }
+    },
+    "sourceOffer": {
+      "title": "Source code offer",
+      "description": "This software is licensed under the GNU Affero General Public License v3. In accordance with section 13, the complete source code of the running version is available here:",
+      "repositoryLink": "Open source code repository",
+      "version": "Running version: {{version}}"
     }
   },
   "usersettings": {

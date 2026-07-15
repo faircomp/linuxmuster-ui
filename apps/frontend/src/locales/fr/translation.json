@@ -1464,6 +1464,12 @@
       "setAdminGroupWarning": "Au moins un groupe d'administrateurs doit être sélectionné.",
       "title": "Gestion des utilisateurs",
       "totpResetSuccess": "TOTP pour {{username}} a été réinitialisé avec succès."
+    },
+    "sourceOffer": {
+      "title": "Offre de code source",
+      "description": "Ce logiciel est sous licence GNU Affero General Public License v3. Conformément à l'article 13, le code source complet de la version en cours d'exécution est disponible ici :",
+      "repositoryLink": "Ouvrir le dépôt du code source",
+      "version": "Version en cours d'exécution : {{version}}"
     }
   },
   "usersettings": {

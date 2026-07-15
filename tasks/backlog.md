@@ -988,7 +988,7 @@ i18n: neu `settings.license.communityNotice` (DE+EN+fr)
 Doku: keine (intern)
 Abhängt von: T6
 
-### T8 — FE: §13-Quellcode-Angebot in Settings/Info (Repo-Link + laufende Version)  [ ]
+### T8 — FE: §13-Quellcode-Angebot in Settings/Info (Repo-Link + laufende Version)  [x] OK SourceOffer.tsx (PRODUCT_SOURCE_URL-Link + §13-Text + APP_VERSION||unknown) als InfoPage-Accordion; i18n de/en/fr; vitest 1/1
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/Info/SourceOffer.tsx (neu), apps/frontend/src/pages/Settings/Info/InfoPage.tsx (+ locales)
 Soll: main.js:56954–56956/:59719 (Health `commitSha/buildDate/buildNumber`) · Repo-URL = `PRODUCT_SOURCE_URL` aus p1-rebrand T8 (`libs/src/common/constants/...`)
 Änderung: Neue `SourceOffer`-Komponente (SPDX AGPL-3.0-or-later): prominenter Link auf `PRODUCT_SOURCE_URL` mit AGPL-§13-Text + best-effort laufende Version aus dem bestehenden Health-/Version-Pfad (degradiert zu „unknown", wenn Build-Metadaten fehlen). In `InfoPage.tsx` als eigenes `SectionAccordionItem` einhängen. `PRODUCT_SOURCE_URL` **wiederverwenden**, nicht neu anlegen (Contract mit p1-rebrand).
@@ -997,7 +997,7 @@ i18n: neu `settings.sourceOffer.{title,description,repositoryLink,version}` (DE+
 Doku: docs/ (DE+EN) 1–2 Sätze „Quellcode-Angebot im UI (Settings › Info)"
 Abhängt von: p1-rebrand T8 (Konstante PRODUCT_SOURCE_URL/PRODUCT_NAME)
 
-### T9 — FE: prominenter §13-Link im Login-Footer (statisch, pre-auth)  [ ]
+### T9 — FE: prominenter §13-Link im Login-Footer (statisch, pre-auth)  [x] OK LoginSourceOfferFooter (statischer PRODUCT_SOURCE_URL-Link, kein API-Call) in LoginPage; reuse repositoryLink; vitest 1/1
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/LoginPage/LoginPage.tsx (+ locales)
 Soll: AGPL §13 (Plan §2.4/Z81 — Netzwerk-Nutzer sehen den Login vor Auth) · Repo-URL = `PRODUCT_SOURCE_URL`
 Änderung: Dezenter, aber prominenter Footer-Link auf `PRODUCT_SOURCE_URL` mit `settings.sourceOffer.repositoryLink`-Label. **Kein** API-Call, **keine** Version (unauthentifiziert) → kein neuer Endpoint/Guard.

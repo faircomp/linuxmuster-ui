@@ -38,6 +38,7 @@ import AUTH_PATHS from '@libs/auth/constants/auth-paths';
 import QRCodeDisplay from '@/components/ui/QRCodeDisplay';
 import PageTitle from '@/components/PageTitle';
 import isMobileLoginToggleVisible from './isMobileLoginToggleVisible';
+import LoginSourceOfferFooter from './LoginSourceOfferFooter';
 import SSE_EDU_API_ENDPOINTS from '@libs/sse/constants/sseEndpoints';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import delay from '@libs/common/utils/delay';
@@ -424,6 +425,7 @@ const LoginPage: React.FC = () => {
           </Form>
         )}
       </Card>
+      <LoginSourceOfferFooter />
     </PageLayout>
   );
 };
