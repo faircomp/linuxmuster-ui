@@ -49,6 +49,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - **`p1-observability` fertig** (4/5 authored) — HealthService liefert Build-Metadaten in jeder Health-Antwort (Monitoring-Contract), Observability-Env gehärtet, getLogLevels-Regressions-Spec, `docs/observability.md` (DE+EN). `[?] human-gate: p1-observability T4` — **DSGVO-Entscheidung**: Sentry-Telemetrie im 2.0-SOLL sendet ALLE PII (`sendDefaultPii:true`); für eine Minderjährigen-Plattform (R12) **empfehle ich Härtung** — Kevins Entscheidung. Sentry ist default AUS, kein akutes Leak. jest-Lauf box-gated.
   - **`p1-dr-runbook` fertig** (6/6 authored) — DR-Runbook + geteilte `dr-lib.sh` + `dr-backup.sh` (pflicht-verschlüsselt, kein Klartext-Leak) + `dr-restore.sh` (Validierung vor jedem destruktiven Schritt) + `dr-drill.sh` (Round-Trip-Abnahmetest mit Prod-Guard) + Wiring (npm/systemd/.gitignore). Alle 4 Skripte shellcheck-CLEAN + docker-stub-verifiziert; **Reviews fanden real: Docker-Namens-Match-Bug, PW-auf-argv, einen Klartext-Leak-Blocker (in meinem Fix), ein False-Green-DR-Test-Loch, fehlender Prod-Guard — alle behoben.** Drill-RUN box-gated.
   - **`p1-master-key-provisioning` fertig** (4/4 authored, **Cross-Repo**: Installer `ff09a9b` + UI `e4bcf7684`) — Installer provisioniert `MASTER_ENCRYPT_KEY` (64-hex) in `edulution.env` und **erhält ihn beim Re-Run** (Rotation = Totalverlust aller gewrappten Passwörter; Review bestätigt Round-Trip + fail-safe); DR-Backup-Kopplungs-Doku; Prod-Compose-`env_file`-Contract statisch bestätigt. **Offen [?] für Kevin:** breitere Installer-Re-Run-Idempotenz-Policy (Spec Offene Frage 3). Runtime-Key-im-Container-Verify box-gated.
+- **P2-Pilot `p2-chat` läuft (Stand 2026-07-16)** — authored+committed: T1 Contract (25 libs), T2–T5 (SSE/Notif-Konstanten + 3 Mongoose-Schemas), **T8 Pipe** (a37cfcfb8). Alles eslint+isolierter-tsc CLEAN; jest/build box-gated (Box unten). **BLOCKER für Kevin:** **T7** (`markNotificationReadBySource`) editiert `apps/api/src/notifications/notifications.service.ts` = eine von Kevins **3 uncommitteten WIP-Dateien** → git-safety verbietet Anfassen, kein Hunk-Isolieren (`git add -p` nicht verfügbar). **Kaskade: T7 blockiert T9→T10→T11** (kompletter Chat-Service+Controller). → **Kevin: bitte notifications-WIP committen/stashen**, dann läuft der BE-Strang. Parallel weiter baubar (WIP-frei): T6 (GroupsService, tiefere Rekonstruktion), T12 (appconfig-Seed), T13 (i18n), T14 (useChatStore FE).
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
@@ -1924,7 +1925,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T7 — NotificationsService.markNotificationReadBySource  [ ]
+### T7 — NotificationsService.markNotificationReadBySource  [?] human-gate: blockiert durch Kevins uncommittetes WIP in `notifications.service.ts` (git-safety: nicht anfassen/stagen). Kein sauberes Hunk-Isolieren möglich (`git add -p` interaktiv/nicht verfügbar); ganze Datei stagen würde Kevins WIP in meinen Commit bündeln. → Kevin muss sein notifications-WIP committen/stashen, dann baubar. **Kaskade: blockiert T9 (Konstruktor nutzt notificationsService) + T10 (`markChatAsRead` ruft `markNotificationReadBySource`) + T11 (Controller hängt an T9/T10).**
 Komponente: apps/api · Dateien: `apps/api/src/notifications/notifications.service.ts`, `apps/api/src/notifications/notifications.service.spec.ts`
 Soll: main.js:69024 (`this.notificationsService.markNotificationReadBySource(CHAT, sourceId, username)`)
 Änderung: Additive Methode `markNotificationReadBySource(sourceType, sourceId, username)` — markiert Notifications einer Quelle für einen User als gelesen (analog zu vorhandenem `upsertNotificationForSource`, notifications.service.ts:220). Spec dazu.
@@ -1932,7 +1933,7 @@ Verify: `npm run test:api` (`notifications.service.spec`) grün
 i18n: keine
 Doku: keine (intern)
 
-### T8 — validateConversationType-Pipe  [ ]
+### T8 — validateConversationType-Pipe  [x] OK ValidateConversationTypePipe (main.js:69549, gewinnt): isAllowedConversationType-Guard (Modul 1066) + CustomHttpException(INVALID_GROUP_TYPE,400); Contract-Sync ChatErrorMessages→ErrorMessage-Union; Spec (allowed passthrough / unknown→400+Konstante); eslint+isolierter tsc CLEAN, test:api box-gated. Review approve (a37cfcfb8)
 Komponente: apps/api · Dateien: `apps/api/src/chat/pipes/validateConversationType.pipe.ts` (+ Spec)
 Soll: main.js:68465 (`validateConversationType_pipe_1.default` an `:conversationType`)
 Änderung: `PipeTransform`, das den `:conversationType`-Param gegen `ALLOWED_CONVERSATION_TYPES` prüft und sonst `BadRequestException`/`CustomHttpException(INVALID_GROUP_TYPE, 400)` wirft.
