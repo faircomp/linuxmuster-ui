@@ -43,7 +43,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - `[?] human-gate: Erst-Image-Push + GHCR-Packages public` — UI/API (`p1-own-ci-registry` T11) **und** Installer (`p1-installer-ci` T1/T7): erster CI-Image-Push, dann `linuxmuster-{ui,api,ui-installer}` auf **public** (anonymer `docker pull`); Verify auf crabbox/echtem Actions-Runner.
   - `[?] human-gate: Repo-Freigabe (public) erst nach Rebrand-Gate` — `p1-installer-rebrand-dist` T7 (+ `p1-rebrand`) müssen gelandet sein, bevor ein Repo public wird (sonst edulution-Branding/Netzint-Header öffentlich); erfüllt zugleich AGPL-§13.
   - Box-gated Verifies zum Nachziehen am P1-Voll-Stack: `p1-own-ci-registry` T3/T5, `p0-realm-diff-baseline` T4/T6, `p1-installer-ci` CI-Run/skopeo.
-  - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
+  - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`); `p1b-tracking-pipeline` (16/16 — **separates Greenfield-Repo `linuxmuster-tracking`** außerhalb des Zwei-Repo-Modells + box-gated skopeo/crane/trivy gegen live-ghcr; Repo-Anlage unter faircomp = Setup-Entscheidung). Alle warten auf warme Box + (Tracking) Repo-Setup.
   - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
   - **`p1-security-cve-track` fertig** (8/8 authored) — Dependabot (npm/actions/docker), Base-Image-Digest-Pinning, npm-audit-Gate (severity-Ceiling + reviewBy-Ablauf), 2 Trivy-Image-Scan-Gates (PR + fail-closed Release), `scanImages.sh`-Cron-Scanner, Accepted-CVE-Register + Track-Doku. **Befund: 30 high/critical Prod-CVEs Alt-Last der v1.6.266-Basis** baselined (reviewBy 2026-10-15, [[cve-baseline-debt]]) — Remediation via Dependabot vor Public-Gehen priorisieren. Lokal verifiziert; Trivy-CI-Runs box-gated.
   - **`p1-observability` fertig** (4/5 authored) — HealthService liefert Build-Metadaten in jeder Health-Antwort (Monitoring-Contract), Observability-Env gehärtet, getLogLevels-Regressions-Spec, `docs/observability.md` (DE+EN). `[?] human-gate: p1-observability T4` — **DSGVO-Entscheidung**: Sentry-Telemetrie im 2.0-SOLL sendet ALLE PII (`sendDefaultPii:true`); für eine Minderjährigen-Plattform (R12) **empfehle ich Härtung** — Kevins Entscheidung. Sentry ist default AUS, kein akutes Leak. jest-Lauf box-gated.
@@ -1701,7 +1701,7 @@ i18n: keine (UI) · Doku bilingual DE+EN im Dokument
 Doku: docs/observability.md (DE+EN)
 
 ## p1b-tracking-pipeline [P1b] — Tracking-/Image-Diff-Pipeline (linuxmuster-tracking)
-_Ziel:_ Repo linuxmuster-tracking: skopeo-Release-Erkennung + Image-Diff-Pipeline · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ geplant · _Tasks:_ 16
+_Ziel:_ Repo linuxmuster-tracking: skopeo-Release-Erkennung + Image-Diff-Pipeline · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ blockiert (human-gate: **separates Greenfield-Repo `linuxmuster-tracking`** — nicht in den Working-Copies/Zwei-Repo-Modell; Anlegen unter faircomp = Setup-Entscheidung; Kern-Verifies box-gated: skopeo/crane/trivy gegen live-ghcr, alle lokal ABSENT. Hinweis: Fingerprint-Anker T4/T5 lokal gegen `.reference/2.0.200/api/main.js` [73240 Zeilen, un-minified] berechenbar, sobald das Repo existiert) · _Tasks:_ 16
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1b-tracking-pipeline.md` · Soll: PLAN §7a–i(:325–:349) · §8-P1b(:363) · §9.7(:424) · Anker gemessen an main.js (2.0.200): Module=38 · Controller=39 · SchemaFactory.createForClass=39 · Dto roh 242/unique 241 · _ENDPOINT=41 · Migrations-Namen `'[0-9]{3}-…'`=32 · runMigrations(=12 · Guard=9 · Gateway=2 · `schedule_1.Cron)(`=4 · `new bullmq_1.Queue(`=4 · Baseline: .reference/2.0.200/api/main.js + .reference/2.0.200/ui/.../assets/index-*.{js,css} + .reference/2.0.200/baselines/*.png
 
 > **Verifikations-Hinweis (wichtig, weicht vom Standard ab):** Das Deliverable ist ein **eigenes Repo
@@ -1717,7 +1717,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1b-tracking-pipeline.md` · 
 
 ---
 
-### T1 — Repo-Skeleton + `lib/common.sh` (anon-ghcr, skopeo-Helfer, un-minified-Guard)  [ ]
+### T1 — Repo-Skeleton + `lib/common.sh` (anon-ghcr, skopeo-Helfer, un-minified-Guard) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking (neu) · Dateien: `lib/common.sh`, `state.json` (leer/Schema-Stub), `.gitignore`, `README.md` (Stub)
 Soll: PLAN §7 Kopf(:323) Layout `bin/`+`versions/<ver>/`+`reports/`+`state.json`; §7a(:325) anon-ghcr-Token
 Änderung: Repo-Grundgerüst anlegen; `lib/common.sh` mit Funktionen `ghcr_anon_token <image>`, `skopeo_inspect <ref>`, `assert_unminified <main.js>` (bricht ab, wenn Zeilen < 50000 ODER `class *Module`-Count außerhalb 20–60 → R-a-Guard), `json_get`/`state_read`/`state_write` (jq). Alle neuen Dateien mit SPDX-`#`-Header.
@@ -1725,7 +1725,7 @@ Verify: `iter.sh cmd 'git clone <tracking-repo> /tmp/trk && cd /tmp/trk && shell
 i18n: keine (Ops-Tooling)
 Doku: README-Stub (Zweck + Layout, Deutsch)
 
-### T2 — `bin/poll.sh` (§7a: skopeo-inspect beider Images → state.json-Diff)  [ ]
+### T2 — `bin/poll.sh` (§7a: skopeo-inspect beider Images → state.json-Diff) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/poll.sh`, `state.json`
 Soll: PLAN §7a(:325) — `skopeo inspect docker://ghcr.io/edulution-io/edulution-{api,ui}:latest` → `{version,revision,digest}` gegen `state.json`, **Digest mittracken** (stille Re-Builds), **beide** Images
 Änderung: `poll.sh` inspiziert beide `:latest`-Refs (anon-Token via T1), extrahiert `version`(Label `org.opencontainers.image.version`), `revision`, `Digest`; vergleicht mit `state.json`; gibt bei Änderung `CHANGED api 2.0.200→2.0.201 sha256:…` aus (Exit 10 = Änderung, 0 = keine) und aktualisiert `state.json`. Nur Lesezugriff.
@@ -1734,7 +1734,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Poll" (Deutsch)
 Abhängt von: T1
 
-### T3 — `bin/extract.sh` (§7b: skopeo copy → main.js/package.json + index-*.{js,css})  [ ]
+### T3 — `bin/extract.sh` (§7b: skopeo copy → main.js/package.json + index-*.{js,css}) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/extract.sh`
 Soll: PLAN §7b(:327) — `skopeo copy`/`crane export` → nur `main.js`+`package.json` (API) und `assets/*` (UI); kein Runtime
 Änderung: `extract.sh <ver>` zieht per `skopeo copy docker://…@<digest> oci:…` beide Images ohne Daemon, extrahiert **nur** `opt/edulution/api/main.js` + `opt/edulution/api/package.json` (API) und `usr/share/nginx/html/assets/index-*.js` + `index-*.css` + `index.html` (UI) nach `versions/<ver>/{api,ui}/`; ruft `assert_unminified` (T1) auf das gezogene `main.js`. `.gitignore` hält die Roh-Bundles optional draußen (Spec-Trade-off 5).
@@ -1743,7 +1743,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Extraktion"
 Abhängt von: T1
 
-### T4 — `lib/anchors.sh` + `bin/fingerprint-be.sh` Kern (Module/Controller/Schema/Dto/Endpoint)  [ ]
+### T4 — `lib/anchors.sh` + `bin/fingerprint-be.sh` Kern (Module/Controller/Schema/Dto/Endpoint) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh`, `bin/fingerprint-be.sh`
 Soll: PLAN §7c(:329–:333); gemessen: `class [A-Za-z]+Module`=38 · `class [A-Za-z]+Controller`=39 · `SchemaFactory\.createForClass`=39 (NICHT `class *Schema`) · Dto dedup=241 · `[A-Z0-9_]+_ENDPOINT = '`=41
 Änderung: Anker als benannte Konstanten in `lib/anchors.sh` (auslagern → 1-Zeilen-Kalibrierung, Spec-Trade-off 3). `fingerprint-be.sh <main.js>` normalisiert mit `js-beautify` (nur für Report-Zeilen-Anker), zählt **occurrence-basiert** (`grep -oE … | wc -l`), Dto **dedupliziert** (`… | awk '{print $2}' | sort -u | wc -l`), schreibt sortiertes `fingerprint-be.json` (`{modules,controllers,schemas,dtos_unique,dtos_raw,endpoints, names:{modules:[…],dtos:[…],endpoints:[…]}}`).
@@ -1752,7 +1752,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Anker-Tabelle (Deutsch)
 Abhängt von: T3
 
-### T5 — Fingerprint-BE erweitern: Migrationen + Guards + Gateways + Crons + Queues (webpack-Formen)  [ ]
+### T5 — Fingerprint-BE erweitern: Migrationen + Guards + Gateways + Crons + Queues (webpack-Formen) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh`, `bin/fingerprint-be.sh`
 Soll: PLAN §7c(:331–:333); **korrigierte, an 2.0.200 belegte Formen**: Migrations-Namen `'[0-9]{3}-[a-z0-9-]+'`=32 · `runMigrations\(`=12 · `class [A-Za-z]+Guard`=9 · `class [A-Za-z0-9]+Gateway`=2 · Cron `schedule_1\.Cron\)\(`=4 (NICHT `@Cron(`) · Queue `new bullmq_1\.Queue\(`=4 (NICHT `new Queue(`)
 Änderung: die 6 Anker in `anchors.sh` ergänzen (mit Kommentar, warum die naive Plan-Form 0 liefert); `fingerprint-be.sh` um Felder `migration_names[]`/`migration_runners`/`guards`/`gateways`/`crons`/`queues` erweitern. `registerAs`/`@Public` **nicht** hart schalten → als `TODO_CALIBRATE`-Feld mit Wert `null` ausweisen (Spec Offene Frage 1/2), damit der self-test sie nicht fälschlich auf 0 nagelt.
@@ -1761,7 +1761,7 @@ i18n: keine (Ops-Tooling)
 Doku: README — Notiz zu den webpack-Form-Korrekturen
 Abhängt von: T4
 
-### T6 — `bin/dep-diff.sh` (§7d: webpack-Import-Graph + Root-Dep-Liste)  [ ]
+### T6 — `bin/dep-diff.sh` (§7d: webpack-Import-Graph + Root-Dep-Liste) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/dep-diff.sh`
 Soll: PLAN §7d(:335) — NICHT die geprunte `package.json` allein diffen (übersieht gebundelte Pure-JS-Deps wie `slugify`), sondern `__webpack_require__`-Import-Graph in `main.js` scannen **und** Root-Dep-Liste vergleichen
 Änderung: `dep-diff.sh <ver>` extrahiert (a) die Root-Deps aus `versions/<ver>/api/package.json` und (b) die im Bundle referenzierten Modul-IDs/Namen aus dem `__webpack_require__`/Modul-Map-Muster in `main.js`; schreibt vereinigte, sortierte Liste `deps.json` (`{root:[…], bundled:[…]}`). Kein CVE hier (das ist T13).
@@ -1770,7 +1770,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Dependency-Diff"
 Abhängt von: T3
 
-### T7 — `bin/fingerprint-fe.sh` (§7e: Routen/i18n-Keys/APPS-Slugs/appType/CSS-Vars aus index-*)  [ ]
+### T7 — `bin/fingerprint-fe.sh` (§7e: Routen/i18n-Keys/APPS-Slugs/appType/CSS-Vars aus index-*) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/fingerprint-fe.sh`, `lib/anchors.sh` (FE-Sektion)
 Soll: PLAN §7e(:337); FE-Anker gegen `versions/<ver>/ui/index-*.js`+`index-*.css`: Route-Pfade `/<slug>`, i18n-Keys (eingebettetes en-JSON), `APPS.*`-Slugs (`libs/src/appconfig/constants/apps.ts`: `dashboard`,`chat`,`mail`,… 40+), `appType`-`native` (`appIntegrationVariant.ts:23`), CSS-Vars (u. a. `--code-keyword/--code-number/--code-string/--code-title`)
 Änderung: `fingerprint-fe.sh <ver>` hebt die 5 String-Achsen aus dem `index-*`-Bundle (sortierte, deduplizierte Sets) → `fingerprint-fe.json` (`{routes[], i18nKeys[], appSlugs[], nativeApps[], cssVars[]}`). CSS-Vars aus `index-*.css`.
@@ -1779,7 +1779,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Frontend-Signal" inkl. Grenzen
 Abhängt von: T3
 
-### T8 — TLDraw-False-Positive-Filter + FE-Screenshot-Abgleich-Hinweis  [ ]
+### T8 — TLDraw-False-Positive-Filter + FE-Screenshot-Abgleich-Hinweis [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `lib/anchors.sh` (Allowlist), `bin/fingerprint-fe.sh`
 Soll: PLAN §7e(:337) — `TLDrawWithSync` ist **kein** 2.0-Neusignal (tldraw+@tldraw/sync bereits 1.6.266 `package.json:88-89,170`) → False-Positive; „immer gegen crabbox-Screenshot-Diff gegenprüfen"; sauberes Positiv-Beispiel = `WikiPage`
 Änderung: Allowlist bekannter False-Positives (`tldraw`,`@tldraw/sync`,`TLDrawWithSync`) in `anchors.sh`; `fingerprint-fe.sh` markiert Treffer als `knownFalsePositive:true` statt sie zu droppen (Nachvollziehbarkeit); Report (T14) blendet sie aus der „neue Seite"-Sektion aus und verweist auf `.reference/2.0.200/baselines/*.png`.
@@ -1788,7 +1788,7 @@ i18n: keine (Ops-Tooling)
 Doku: README — Notiz „FE-Signal ist grob, Screenshot-Pflicht"
 Abhängt von: T7
 
-### T9 — Baseline 2.0.200 einfrieren + `.github/workflows/self-test.yml`  [ ]
+### T9 — Baseline 2.0.200 einfrieren + `.github/workflows/self-test.yml` [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `versions/2.0.200/*.json`, `.github/workflows/self-test.yml`
 Soll: PLAN §9.7(:424) — 2.0.200 als Baseline `versions/2.0.200/`, Fingerprint mit korrigierten Ankern **als Selbsttest**
 Änderung: die von T4/T5/T6/T7 erzeugten `fingerprint-be.json`/`fingerprint-fe.json`/`deps.json` als eingefrorene Baseline committen; `self-test.yml` (PR-Gate) läuft `fingerprint-be/-fe/dep-diff` erneut über `versions/2.0.200/` und `diff`t gegen die committeten JSONs → rot bei jeder Abweichung (fängt Anker-/Tool-Drift, Spec R-b). SPDX-Header in der YAML.
@@ -1797,7 +1797,7 @@ i18n: keine (Ops-Tooling)
 Doku: README — „Baseline & Selbsttest"
 Abhängt von: T5, T6, T8
 
-### T10 — `bin/diff.sh` (N-1→N-Delta je Achse → delta-*.json)  [ ]
+### T10 — `bin/diff.sh` (N-1→N-Delta je Achse → delta-*.json) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/diff.sh`
 Soll: PLAN §7i(:347) Basis — strukturierte Deltas als Report-Input; §3.0-Methode (Anker-Diff N-1↔N)
 Änderung: `diff.sh <from> <to>` vergleicht die `*.json` zweier Versionen und schreibt `delta-be.json`/`delta-fe.json`/`delta-deps.json` mit `{added:[…], removed:[…], counts:{from,to}}` je Achse (z. B. neue `module`/`dto`/`endpoint`/`migration`-Namen, neue `route`/`appSlug`/`cssVar`, neue/entfernte Deps). Rein set-basiert, deterministisch.
@@ -1806,7 +1806,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Diff/Delta"
 Abhängt von: T9
 
-### T11 — `bin/realm-diff.sh` (§7f: Realm-Export der crabbox-Instanz vs. Baseline)  [ ]
+### T11 — `bin/realm-diff.sh` (§7f: Realm-Export der crabbox-Instanz vs. Baseline) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/realm-diff.sh`
 Soll: PLAN §7f(:339) — Keycloak-Realm-Export aus der **laufenden crabbox-Instanz** (nicht `main.js`) als eigener Schritt; Baseline aus Paket `p0-realm-diff-baseline`
 Änderung: `realm-diff.sh` exportiert Realm `edulution` der laufenden Instanz (via `kcadm.sh`/Admin-API), **redigiert** Secrets/Passwörter/Keys (Spec R-d), diffT die Struktur (Clients, Scopes, Mapper, Rollen) gegen die P0-Baseline → `delta-realm.json`. Admin-Credentials aus der crabbox-Env, **nie** committen.
@@ -1815,7 +1815,7 @@ i18n: keine (Ops-Tooling)
 Doku: README — „Realm-Diff (braucht laufende Instanz)"
 Abhängt von: T1
 
-### T12 — `bin/infra-diff.sh` (§7g: Compose-Template/.env.default/Companion-Digests/Installer-Repo)  [ ]
+### T12 — `bin/infra-diff.sh` (§7g: Compose-Template/.env.default/Companion-Digests/Installer-Repo) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/infra-diff.sh`
 Soll: PLAN §7g(:341) — §7b ist blind für Dockerfiles/`docker-compose.yml.template`/Entrypoints/`nginx.conf`/`.env.default`/Companion-**Digests**/Installer-Repo; leichter Diff als eigener Schritt
 Änderung: `infra-diff.sh` holt (read-only) `docker-compose.yml.template` + `.env.default` aus dem Installer-Repo (`git`/GitHub-API), extrahiert die referenzierten Companion-Image-Refs und löst je Ref den aktuellen `skopeo inspect`-Digest auf; diffT Compose-Topologie + Env-Keys + Companion-Digests gegen Baseline → `delta-infra.json`. Keine Secrets.
@@ -1824,7 +1824,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Infra-Diff" + Grenzen (Infra-Blindheit)
 Abhängt von: T1
 
-### T13 — `bin/cve-scan.sh` (§7h: Trivy/Grype + npm-audit-Signal, an Cron angedockt)  [ ]
+### T13 — `bin/cve-scan.sh` (§7h: Trivy/Grype + npm-audit-Signal, an Cron angedockt) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/cve-scan.sh`
 Soll: PLAN §7h(:345) — Trivy/Grype über die gezogenen Images + `npm audit`-Signal an denselben Wochen-Cron; Findings in dieselbe `reports/`-Pipeline (Sektion „Security"). Betrieb/Policy = Paket `p1-security-cve-track` (hier nur Andockung)
 Änderung: `cve-scan.sh` läuft `trivy image --format json` (oder `grype`) gegen beide gezogenen ghcr-Images (`@<digest>` aus `state.json`) und `npm audit --json` gegen die extrahierte `package.json`; aggregiert nach Severity → `cve.json` (`{critical,high,medium,low, findings:[…]}`). Nur Signal, kein Fix.
@@ -1833,7 +1833,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „CVE-Signal" (Cross-Ref p1-security-cve-track)
 Abhängt von: T2
 
-### T14 — `bin/report.sh` (§7i: reports/<from>..<to>.md in festen Sektionen)  [ ]
+### T14 — `bin/report.sh` (§7i: reports/<from>..<to>.md in festen Sektionen) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `bin/report.sh`, `reports/` (Ausgabe-Ordner)
 Soll: PLAN §7i(:347) — `report.sh` → `reports/<from>..<to>.md` in Sektionen (Backend voll-nachbaubar / Migrationen / Auth-Contract / Full-Stack-Korrelation / Frontend-only-Signal / Realm-Diff / Infra-Diff / Security); jeder Task mit **Quell-Beleg** (Datei:Zeile/Anker) → `tasks/`-Ledger-Stub
 Änderung: `report.sh <from> <to>` komponiert die `delta-*.json` + `cve.json` zu einem Markdown mit **genau diesen 8 Sektionen**; je Delta-Item ein Bullet mit Anker-Beleg (z. B. „neues `ChatModule` → korreliert `upstream/1683-chat-add-basic-chat-ui`"), Guard-/`@Public`-Änderungen in „Auth-Contract", TLDraw-FPs ausgeblendet (T8). Schreibt nur bei nicht-leerem Delta (Spec R-e).
@@ -1842,7 +1842,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Report lesen" (Sektions-Legende, Deutsch)
 Abhängt von: T10, T13
 
-### T15 — `.github/workflows/weekly-poll.yml` (§8-P1b: Wochen-Cron orchestriert Kette + Draft-PR)  [ ]
+### T15 — `.github/workflows/weekly-poll.yml` (§8-P1b: Wochen-Cron orchestriert Kette + Draft-PR) [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `.github/workflows/weekly-poll.yml`
 Soll: PLAN §8-P1b(:363) — Wochen-Cron; §7a–i-Kette; §7i Draft-PR; §0/§9-Empfehlung: fine-grained-PAT/App statt weitem `GITHUB_TOKEN`
 Änderung: `schedule: cron` (wöchentlich) + `workflow_dispatch`; Job installiert Tools, läuft `poll.sh` → bei Exit 10 (Digest-Änderung): `extract → fingerprint-be/-fe → dep-diff → infra-diff → cve-scan → diff → report`; öffnet Draft-PR mit dem Report via `gh` unter `TRACKING_PR_TOKEN` (Repo-Secret, kein weiter Default-Scope). `permissions:`-Block minimal. Realm-Diff (T11, braucht laufende Instanz) als **getrennter, manueller** `workflow_dispatch`-Job (Spec Offene Frage 5). SPDX in YAML.
@@ -1851,7 +1851,7 @@ i18n: keine (Ops-Tooling)
 Doku: README-Abschnitt „Betrieb/Cron"
 Abhängt von: T14
 
-### T16 — README-Runbook finalisieren + SPDX-/Lizenz-Sweep + Sanity-Guard-Doku  [ ]
+### T16 — README-Runbook finalisieren + SPDX-/Lizenz-Sweep + Sanity-Guard-Doku [?] human-gate: separates Repo linuxmuster-tracking + box-gated (skopeo/crane/trivy), s. Section-Status
 Komponente: linuxmuster-tracking · Dateien: `README.md`, `LICENSE`, alle `bin/`+`lib/`-Header
 Soll: PLAN §7-Grenzen(:349) — pro Release Sanity-Check „`main.js` un-minifiziert" (Zeilenzahl/Klassennamen); Guardrail „neue Dateien AGPL-SPDX (nicht Netzint)"
 Änderung: `README.md` als vollständiges Runbook (Poll/Extract/Fingerprint/Diff/Realm/Infra/CVE/Report, Anker-Kalibrierungs-Prozedur inkl. der offenen `registerAs`/`@Public`-Punkte, Grenzen: FE teil-diffbar + Infra-Blindheit + Anker-Fäulnis); `LICENSE` = AGPL-3.0-or-later; Sweep: jede neue Datei trägt `SPDX-License-Identifier: AGPL-3.0-or-later`, keine `Netzint`-Header.
