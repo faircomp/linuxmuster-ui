@@ -59,6 +59,7 @@ import WebdavSharesModule from '../webdav/shares/webdav-shares.module';
 import LdapKeycloakSyncModule from '../ldap-keycloak-sync/ldap-keycloak-sync.module';
 import redisConnection from '../common/redis.connection';
 import NotificationsModule from '../notifications/notifications.module';
+import ChatModule from '../chat/chat.module';
 import MobileAppModule from '../mobileAppModule/mobileApp.module';
 import UserPreferencesModule from '../user-preferences/user-preferences.module';
 import DevCacheFlushService from '../common/cache/dev-cache-flush.service';
@@ -139,6 +140,7 @@ import WebhookClientsModule from '../webhook-clients/webhook-clients.module';
     BulletinCategoryModule,
     BulletinBoardModule,
     NotificationsModule,
+    ChatModule,
     MobileAppModule,
     SseModule,
     TLDrawSyncModule,

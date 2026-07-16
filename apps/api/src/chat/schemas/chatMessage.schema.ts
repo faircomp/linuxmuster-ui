@@ -29,6 +29,9 @@ export class ChatMessage {
   @Prop({ type: String })
   createdByUserLastName: string;
 
+  @Prop()
+  createdAt: Date;
+
   @Prop({ default: 1 })
   schemaVersion: number;
 }
