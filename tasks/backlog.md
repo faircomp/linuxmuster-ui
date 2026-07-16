@@ -46,6 +46,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
   - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
   - **`p1-security-cve-track` fertig** (8/8 authored) — Dependabot (npm/actions/docker), Base-Image-Digest-Pinning, npm-audit-Gate (severity-Ceiling + reviewBy-Ablauf), 2 Trivy-Image-Scan-Gates (PR + fail-closed Release), `scanImages.sh`-Cron-Scanner, Accepted-CVE-Register + Track-Doku. **Befund: 30 high/critical Prod-CVEs Alt-Last der v1.6.266-Basis** baselined (reviewBy 2026-10-15, [[cve-baseline-debt]]) — Remediation via Dependabot vor Public-Gehen priorisieren. Lokal verifiziert; Trivy-CI-Runs box-gated.
+  - **`p1-observability` fertig** (4/5 authored) — HealthService liefert Build-Metadaten in jeder Health-Antwort (Monitoring-Contract), Observability-Env gehärtet, getLogLevels-Regressions-Spec, `docs/observability.md` (DE+EN). `[?] human-gate: p1-observability T4` — **DSGVO-Entscheidung**: Sentry-Telemetrie im 2.0-SOLL sendet ALLE PII (`sendDefaultPii:true`); für eine Minderjährigen-Plattform (R12) **empfehle ich Härtung** — Kevins Entscheidung. Sentry ist default AUS, kein akutes Leak. jest-Lauf box-gated.
   - **`p1-dr-runbook` fertig** (6/6 authored) — DR-Runbook + geteilte `dr-lib.sh` + `dr-backup.sh` (pflicht-verschlüsselt, kein Klartext-Leak) + `dr-restore.sh` (Validierung vor jedem destruktiven Schritt) + `dr-drill.sh` (Round-Trip-Abnahmetest mit Prod-Guard) + Wiring (npm/systemd/.gitignore). Alle 4 Skripte shellcheck-CLEAN + docker-stub-verifiziert; **Reviews fanden real: Docker-Namens-Match-Bug, PW-auf-argv, einen Klartext-Leak-Blocker (in meinem Fix), ein False-Green-DR-Test-Loch, fehlender Prod-Guard — alle behoben.** Drill-RUN box-gated.
   - **`p1-master-key-provisioning` fertig** (4/4 authored, **Cross-Repo**: Installer `ff09a9b` + UI `e4bcf7684`) — Installer provisioniert `MASTER_ENCRYPT_KEY` (64-hex) in `edulution.env` und **erhält ihn beim Re-Run** (Rotation = Totalverlust aller gewrappten Passwörter; Review bestätigt Round-Trip + fail-safe); DR-Backup-Kopplungs-Doku; Prod-Compose-`env_file`-Contract statisch bestätigt. **Offen [?] für Kevin:** breitere Installer-Re-Run-Idempotenz-Policy (Spec Offene Frage 3). Runtime-Key-im-Container-Verify box-gated.
 
@@ -1644,7 +1645,7 @@ Doku: kurzer Verweis im README-Betriebsteil auf `docs/ops/dr-runbook.md` + Total
 Abhängt von: T1, T5
 
 ## p1-observability [P1] — Observability, Health-/Build-Metadaten & Sentry
-_Ziel:_ Health liefert Build-Metadaten; Observability + Sentry-Entscheidung · _Abhängt-von:_ — · _Status:_ geplant · _Tasks:_ 5
+_Ziel:_ Health liefert Build-Metadaten; Observability + Sentry-Entscheidung · _Abhängt-von:_ — · _Status:_ erledigt (4/5 authored; T1/T2/T3/T5 lokal verifiziert [eslint/grep], jest-Lauf box-gated; T4 [?] DSGVO-Produktentscheidung für Kevin) · _Tasks:_ 5
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-observability.md` · Soll: main.js:56941-56961 (HealthService.buildInfo/onModuleInit/Spread), 56932/57023-57029 (Disk-Threshold), 56789-56851 (HealthController-Guards), 59716-59723 (configuration-Contract — Fremd-Paket, nur Referenz), 59762-59795 & 54486-54495 (Sentry), 948 (LoggingInterceptor) · upstream/1166-logging-add-kibana-prometheus (Prometheus/Kibana — bewusst NICHT übernommen, Umriss) · .reference/2.0.200/baselines/— (kein Baseline-Shot; BE/Env/Ops)
 
 > Kontext-Notiz: Dieses Paket ist **disjunkt** zu `p1-own-ci-registry`. Dort liegt das gesamte
@@ -1657,7 +1658,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-observability.md` · Soll:
 
 ---
 
-### T1 — HealthService spreadet Build-Metadaten in alle Health-Antworten  [ ]
+### T1 — HealthService spreadet Build-Metadaten in alle Health-Antworten  [x] OK health.service.ts: ConfigService (7. Param, globales ConfigModule → keine Modul-Änderung), `buildInfo` in `onModuleInit` aus `configService.get(version/commitSha/buildDate/buildNumber)`, `{ ...result, ...this.buildInfo }` in allen 3 Check-Methoden (await+spread, Error-Pfad SOLL-treu). Spec (SPDX): buildInfo-Felder + getThresholdPercent-Grenzfälle (isolateModules). eslint CLEAN; test:api/build:api box-gated
 Komponente: apps/api · Dateien: apps/api/src/health/health.service.ts, apps/api/src/health/health.service.spec.ts (neu)
 Soll: main.js:56941-56961 (`buildInfo`, `onModuleInit`, `{ ...result, ...this.buildInfo }`), 57023-57029 (`getThresholdPercent`)
 Änderung: In `health.service.ts` `ConfigService` (7. Konstruktor-Param, `@nestjs/config`) injizieren, Feld `buildInfo` + `onModuleInit()` ergänzen, das `version/commitSha/buildDate/buildNumber` aus `this.configService.get(...)` liest, und in `checkEduApiResponding`/`checkEduApiHealth`/`getEduApiStats` das Ergebnis via `{ ...result, ...this.buildInfo }` anreichern. `health.controller.ts`/`health.module.ts` bleiben unverändert (`ConfigModule` global, `app.module.ts:78`). Neuer Jest-Spec: (a) `onModuleInit` + gemockter `ConfigService` → Antworten enthalten die vier Metadaten-Felder; (b) `getThresholdPercent` (gültig / <0 / >1 / NaN → 0.95).
@@ -1666,7 +1667,7 @@ i18n: keine
 Doku: keine (intern) — Monitoring-Contract wird in T5 dokumentiert
 Abhängt von: p1-own-ci-registry:T5 (paket-übergreifend; nur für reale Werte im Voll-Stack — der Unit-Test mockt ConfigService und ist unabhängig)
 
-### T2 — .env.default: Sentry-/Logging-/Disk-Defaults härten  [ ]
+### T2 — .env.default: Sentry-/Logging-/Disk-Defaults härten  [x] OK ENABLE_SENTRY=false + leere DSNs (bereits da, kein Fremd-DSN) + neue Kommentare EDUI_LOG_LEVEL (Prod-Default error,warn,log) + EDUI_DISK_SPACE_THRESHOLD (0.95); grep-Verify PASS, keine DSN-Werte
 Komponente: apps/api · Dateien: apps/api/.env.default
 Soll: main.js:59762-59795 (Sentry opt-in), 948/getLogLevels (Log-Level), 56932/57023-57029 (Disk-Threshold) · Master-Plan §2.6/§5.5/§9-Entscheidung 12 (Default-Config-Härtung)
 Änderung: Im `# Sentry logging config`-Block `ENABLE_SENTRY=false` explizit setzen und beide DSN-Zeilen mit Kommentar „leer lassen — nie eine Fremd-DSN (edulution.io) erben; eigenen DSN nur mit ENABLE_SENTRY=true" versehen; beim `EDUI_LOG_LEVEL`-Kommentar den Prod-Default (`leer → error,warn,log bei NODE_ENV=production`) ergänzen; beim `EDUI_DISK_SPACE_THRESHOLD`-Kommentar den Default `0.95` nennen. Keine Secrets, keine neuen Vars, keine Build-Metadaten-Vars (Image-provided).
@@ -1674,7 +1675,7 @@ Verify: `iter.sh cmd 'grep -q "^ENABLE_SENTRY=false" apps/api/.env.default && gr
 i18n: keine
 Doku: keine (intern) — Env-Inventar in T5
 
-### T3 — getLogLevels: Prod-Default-Regressions-Spec  [ ]
+### T3 — getLogLevels: Prod-Default-Regressions-Spec  [x] OK getLogLevels.spec.ts (SPDX): leer+prod→[error,warn,log], leer+non-prod→alle, off→undefined, unknown→fallback, debug→slice-Grenze; NODE_ENV save/restore; eslint CLEAN, jest-Lauf box-gated
 Komponente: apps/api · Dateien: apps/api/src/logging/getLogLevels.spec.ts (neu)
 Soll: main.js:948 (LoggingInterceptor liest `EDUI_LOG_LEVEL`) · getLogLevels (Prod-Fallback `[error,warn,log]`)
 Änderung: Jest-Spec, der den bestehenden Log-Level-Contract festnagelt (Observability-Basics, Regressions-Guard): leerer Env + `NODE_ENV=production` → `['error','warn','log']`; leerer Env + non-prod → alle Level; `'off'` → `undefined`; unbekannter Wert → Fallback `[error,warn,log]`; `'debug'` → `['error','warn','log','debug']` (Slice-Grenze). Reiner Test, kein Produktivcode-Diff.
@@ -1682,7 +1683,7 @@ Verify: `iter.sh test:api` grün inkl. `getLogLevels.spec.ts` (5 Assertions oben
 i18n: keine
 Doku: keine (intern)
 
-### T4 — Sentry-Telemetrie-Härtung (PII/Sampling)  [?]
+### T4 — Sentry-Telemetrie-Härtung (PII/Sampling)  [?] human-gate: **DSGVO-Produktentscheidung (Offene Frage 2)** — `sendDefaultPii:true`+`tracesSampleRate:1.0` im 2.0-SOLL an Sentry senden ALLE PII; für Schul-/Minderjährigen-Plattform (R12) **Empfehlung: härten** (`sendDefaultPii:false`, Sampling 0.1) in BE (enableSentryForNest.ts) + FE (useSentryStore.ts). Bewusste SOLL-Abweichung → Kevins Entscheidung. Sentry-Code **unverändert SOLL-treu** gelassen; Sentry ist default AUS (T2), also kein akutes Leak. Bei Freigabe: Code + docs/observability.md-Entscheidung im selben Commit
 Komponente: apps/api, apps/frontend · Dateien: apps/api/src/sentry/enableSentryForNest.ts, apps/frontend/src/store/useSentryStore.ts
 Soll: main.js:59762-59795 (BE `sendDefaultPii:true`, `tracesSampleRate:1.0`, `profilesSampleRate:1.0`) · useSentryStore.ts:50-56 (FE identisch)
 Änderung (nur bei Freigabe von Offener Frage 2): `sendDefaultPii` in BE **und** FE auf `false`, `tracesSampleRate`/`profilesSampleRate` auf einen konservativen Wert (z. B. `0.1`) senken — DSGVO-Härtung für Schul-/Minderjährigen-PII (R12). Bewusste Abweichung vom 2.0-SOLL; greift nur bei aktivem Sentry. Andernfalls Task als `[~]` (SOLL-treu belassen) schließen.
@@ -1691,7 +1692,7 @@ i18n: keine
 Doku: docs/observability.md (Entscheidung nachziehen) — im selben Commit
 Abhängt von: T5 (Entscheidung dort dokumentiert) · braucht Entscheidung (Offene Frage 2)
 
-### T5 — docs/observability.md: Monitoring-Contract, Env-Inventar, Sentry-Entscheidung (DE+EN)  [ ]
+### T5 — docs/observability.md: Monitoring-Contract, Env-Inventar, Sentry-Entscheidung (DE+EN)  [x] OK docs/observability.md (DE+EN, SPDX): Health-Endpoints als Monitoring-Contract (/edu-api/health {auth}, /check {@Public+LocalhostGuard}, /stats {auth} inkl. Build-Metadaten-Felder), Env-Inventar, Sentry-off-Entscheidung + R12, Cross-Link ci-release.md; grep-Verify PASS
 Komponente: Doku · Dateien: docs/observability.md (neu)
 Soll: main.js:56789-56851 (Health-Routen/Guards), 56941-56961 (Response-Shape inkl. Build-Metadaten) · Master-Plan §5.5 (Health als Monitoring-Contract, Sentry-Default) · §2.7/R12 (Dritt-Empfänger)
 Änderung: Neues bilinguales Betriebsdokument (DE-Abschnitt + EN-Abschnitt): (1) Health-Endpoints als Monitoring-Contract — `GET /edu-api/health` (Auth), `/edu-api/health/check` (@Public+LocalhostGuard, Readiness), `/edu-api/health/stats` (Auth) mit Response-Feldern inkl. `version/commitSha/buildDate/buildNumber`; (2) Observability-Env-Inventar (`EDUI_LOG_LEVEL` + Prod-Default, `EDUI_DISK_SPACE_THRESHOLD`=0.95, `ENABLE_SENTRY`, `SENTRY_EDU_*_DSN`); (3) Sentry-Telemetrie-Entscheidung: Default aus, nie Fremd-DSN, Dritt-Empfänger-Hinweis; (4) Cross-Link auf `docs/ci-release.md` (Build-Metadaten-Plumbing, p1-own-ci-registry) statt Duplikat.
