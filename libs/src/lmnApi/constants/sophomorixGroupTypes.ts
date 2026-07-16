@@ -22,6 +22,7 @@ import SOPHOMORIX_SCHOOL_CLASS_GROUP_TYPES from '@libs/lmnApi/constants/sophomor
 const SOPHOMORIX_OTHER_GROUP_TYPES = {
   STUDENT: 'student',
   TEACHER: 'teacher',
+  ADMIN_CLASS: 'adminclass',
   PROJECT: 'project',
   UNKNOWN: 'unknown',
   DEVICE: 'device',
