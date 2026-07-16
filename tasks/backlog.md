@@ -1969,7 +1969,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T8, T9, T10
 
-### T12 — appconfig-Seed: Chat als Default-App  [ ]
+### T12 — appconfig-Seed: Chat als Default-App  [?] human-gate: **Prämisse falsch — 2.0.200 seedet Chat NICHT.** Die einzige `defaultAppConfig` (main.js:2380–2470) hat genau 7 Apps: DASHBOARD/BULLETIN_BOARD/FILE_SHARING/SURVEYS/CLASS_MANAGEMENT/WHITEBOARD/**WIKI** (Pos 7); **kein CHAT**. `APPS.CHAT` erscheint in 2.0 nur als Notification-Source/Push-Channel/Route/`@Controller('chat')`, nicht als Seed. Zudem **kein Chat-Icon-Asset** im Fork (nur `edu_KI-Chat.svg`=AiChat). Einen CHAT-Eintrag zu ergänzen widerspräche „gemäß main.js / Fresh-Install-Fidelity" UND bräuchte ein nicht existentes Icon. → **Entscheidung Kevin:** (a) 2.0-treu bleiben (Chat NICHT seeden; Admin fügt via Settings→AppConfig hinzu) **oder** (b) Fork-Abweichung: Chat als Default-App seeden, damit der Pilot out-of-the-box sichtbar ist — dann Icon-Asset (`edu_Chat.svg`) nötig. **Betrifft T15-Verify** („Chat erscheint in Sidebar nach Deploy" setzt (b) voraus; bei (a) ist die Page nur per Route erreichbar, nicht in der Sidebar).
 Komponente: libs · Dateien: `libs/src/appconfig/constants/defaultAppConfig.ts`
 Soll: main.js:2380–2468 (`defaultAppConfig`) — Chat-Eintrag abgleichen (Fresh-Install-Fidelity, Plan §127)
 Änderung: CHAT-Eintrag in `defaultAppConfig` ergänzen (App-Typ NATIVE, Slug `APPS.CHAT`, Icon/Reihenfolge gemäß main.js). Nur Fresh-Install-Seed; keine Upgrade-Migration (siehe Spec Offene Frage 3/6).
