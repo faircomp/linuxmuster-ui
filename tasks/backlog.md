@@ -46,6 +46,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`). Beide warten auf warme Box + (bei Migration) Harness-Reko.
   - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
   - **`p1-security-cve-track` fertig** (8/8 authored) — Dependabot (npm/actions/docker), Base-Image-Digest-Pinning, npm-audit-Gate (severity-Ceiling + reviewBy-Ablauf), 2 Trivy-Image-Scan-Gates (PR + fail-closed Release), `scanImages.sh`-Cron-Scanner, Accepted-CVE-Register + Track-Doku. **Befund: 30 high/critical Prod-CVEs Alt-Last der v1.6.266-Basis** baselined (reviewBy 2026-10-15, [[cve-baseline-debt]]) — Remediation via Dependabot vor Public-Gehen priorisieren. Lokal verifiziert; Trivy-CI-Runs box-gated.
+  - **`p1-dr-runbook` fertig** (6/6 authored) — DR-Runbook + geteilte `dr-lib.sh` + `dr-backup.sh` (pflicht-verschlüsselt, kein Klartext-Leak) + `dr-restore.sh` (Validierung vor jedem destruktiven Schritt) + `dr-drill.sh` (Round-Trip-Abnahmetest mit Prod-Guard) + Wiring (npm/systemd/.gitignore). Alle 4 Skripte shellcheck-CLEAN + docker-stub-verifiziert; **Reviews fanden real: Docker-Namens-Match-Bug, PW-auf-argv, einen Klartext-Leak-Blocker (in meinem Fix), ein False-Green-DR-Test-Loch, fehlender Prod-Guard — alle behoben.** Drill-RUN box-gated.
   - **`p1-master-key-provisioning` fertig** (4/4 authored, **Cross-Repo**: Installer `ff09a9b` + UI `e4bcf7684`) — Installer provisioniert `MASTER_ENCRYPT_KEY` (64-hex) in `edulution.env` und **erhält ihn beim Re-Run** (Rotation = Totalverlust aller gewrappten Passwörter; Review bestätigt Round-Trip + fail-safe); DR-Backup-Kopplungs-Doku; Prod-Compose-`env_file`-Contract statisch bestätigt. **Offen [?] für Kevin:** breitere Installer-Re-Run-Idempotenz-Policy (Spec Offene Frage 3). Runtime-Key-im-Container-Verify box-gated.
 
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
@@ -1573,7 +1574,7 @@ Doku: Checklisten-Eintrag im DR-Runbook (T3)
 Abhängt von: T1
 
 ## p1-dr-runbook [P1] — Betriebs-/DR-Runbook + Backup-/Restore-Skript
-_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ in Arbeit (3/6: T1/T2/T3 authored+lokal-verifiziert; T4 restore, T5 drill, T6 wiring offen) · _Tasks:_ 6
+_Ziel:_ DR-Runbook + Backup-/Restore-Skript (master.key-Kopplung, Drill) · _Abhängt-von:_ p1-master-key-provisioning · _Status:_ erledigt (6/6 authored; Doc+4 Skripte lokal verifiziert [bash -n/shellcheck/docker-stub]; Drill-RUN box-gated) · _Tasks:_ 6
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-dr-runbook.md` · Soll: main.js:9207-9235 (getMasterKey/master.key) · main.js:55805 (edulution.pem) · main.js:8854-8856 (Redis flüchtig/BullMQ) · docker-compose.yml.template:60-68/147-162/88-89 · PLAN §5.6/§2.6/§6.2/R4
 
 > Hinweis: Ops-Paket. Deliverables = 1 Runbook-Doc + Shell-Skripte unter `scripts/ops/`. Kein
@@ -1616,7 +1617,7 @@ i18n: keine
 Doku: keine (im Runbook aus T1 beschrieben)
 Abhängt von: T2
 
-### T4 — Restore-Skript `dr-restore.sh` (entschlüsseln→data→DB→up)  [ ]
+### T4 — Restore-Skript `dr-restore.sh` (entschlüsseln→data→DB→up)  [x] OK scripts/ops/dr-restore.sh (SPDX): **jede Validierung vor dem ersten destruktiven Schritt** — --confirm-Gate → decrypt (age/gpg) → sha256-Manifest → master.key-im-Bundle-Check → compose down → geguardetes DB-Dir-Wipe → tar -xzpf ./data (master.key 0600) → DB-Layer hoch (mongosh/pg_isready-Wait) → mongorestore --drop + psql ON_ERROR_STOP → Stack hoch. PW via forwarded-env, trap-Cleanup, umask 077. shellcheck CLEAN + docker-stub/real-bundle-Tests. Review approve
 Komponente: scripts/ops · Dateien: scripts/ops/dr-restore.sh (neu)
 Soll: PLAN §5.6/§6.2 (Restore = Dump + master.key) · main.js:9214-9235 (master.key Pflicht)
 Änderung: `--confirm` erforderlich (sonst Abbruch); Bundle entschlüsseln (age/gpg) + `sha256`-Prüfung; **`master.key` im Bundle prüfen → sonst `dr_die`** (unlesbare Passwörter); Stack herunterfahren (ohne `--force`), `./data` zurückspielen (`master.key` mit `0600`), `mongorestore --archive --gzip --drop`, Keycloak-DB `psql`/`pg_restore --clean`, Stack hochfahren, Healthcheck-Warten. Reverse zu T3.
@@ -1625,7 +1626,7 @@ i18n: keine
 Doku: keine (im Runbook aus T1 beschrieben)
 Abhängt von: T2
 
-### T5 — Wiederkehrender crabbox-Restore-Drill `dr-drill.sh`  [ ]
+### T5 — Wiederkehrender crabbox-Restore-Drill `dr-drill.sh`  [x] OK scripts/ops/dr-drill.sh (SPDX): Baseline-Count → backup --quiesce → down+wipe → restore → Asserts (a) Doc-Count identisch, (b) OIDC-Discovery 200, (c) kein 'Generated new master key', (d) App-Root 200 + RTO. **Safety:** Prod-Guard (DR_STACK_DIR muss drill/staging enthalten), DR_OUT_DIR-unter-data-Guard, Baseline-Fail-Fast (kein False-Green). shellcheck CLEAN, Guards per Stub verifiziert; **RUN box-gated** (deployter Stack). Review approve (2 wichtig-Fixes)
 Komponente: scripts/ops · Dateien: scripts/ops/dr-drill.sh (neu)
 Soll: PLAN §5.6 (wiederkehrender Restore-Drill) · main.js:9207-9235 (master.key Round-Trip) · main.js:55805 (edulution.pem/Login)
 Änderung: End-to-End-Drill auf crabbox: Stack seed (deploy) → `dr-backup.sh` → `./data`+DB-Volumes wipen → `dr-restore.sh --confirm` → **Assertions**: (a) Mongo-Doc-Count einer Kern-Collection vor/nach identisch; (b) `GET /auth/realms/edulution/.well-known/openid-configuration` == 200 (Postgres-Restore ok); (c) **master.key-Round-Trip** — `edu-api`-Log enthält **nicht** „Generated new master key" **und** ein authentifizierter Call, der ein gewrappt-gespeichertes Secret dereferenziert, liefert 200; (d) Login 200. Exit-Code + RTO-Zeit ausgeben. Dies ist der **Test** des DR-Sets (neuer Flow ⇒ Test).
@@ -1634,7 +1635,7 @@ i18n: keine
 Doku: keine (Kadenz im Runbook aus T1)
 Abhängt von: T3, T4
 
-### T6 — Verdrahtung: npm-Aliasse + Timer-Vorlage + .gitignore  [ ]
+### T6 — Verdrahtung: npm-Aliasse + Timer-Vorlage + .gitignore  [x] OK package.json dr:backup/dr:restore/dr:drill; scripts/ops/dr-drill.{timer,service}.example (SPDX, *-drill-Stack); .gitignore-Härtung (*.age/*.gpg/*.tar*/dr-out/); README-Ops-Abschnitt + Totalverlust-Warnung; node/grep-Verify PASS
 Komponente: root · Dateien: package.json · scripts/ops/dr-drill.timer.example (neu) · scripts/ops/dr-drill.service.example (neu) · .gitignore
 Änderung: `package.json`-Scripts `dr:backup`/`dr:restore`/`dr:drill` (delegieren an `scripts/ops/*`); systemd-Timer-/Service-Vorlage (bzw. Cron-Kommentar) für die wiederkehrende Ausführung, SPDX; `.gitignore`-Härtung gegen versehentliches Committen von Bundles/Klartext-Secrets (`scripts/ops/**/*.tar*`, `*.age`, `*.gpg`, `scripts/ops/out/`, `dr-out/`).
 Verify: `iter.sh cmd 'node -e "const s=require(\"./package.json\").scripts; if(!(s[\"dr:backup\"]&&s[\"dr:restore\"]&&s[\"dr:drill\"])) process.exit(1)" && grep -q "\.age" .gitignore && grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" scripts/ops/dr-drill.timer.example && echo WIRE_OK'`
