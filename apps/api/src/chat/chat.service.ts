@@ -14,6 +14,8 @@ import CHAT_MESSAGES_DEFAULT_LIMIT from '@libs/chat/constants/chatMessagesDefaul
 import { CHAT_ERROR_MESSAGES } from '@libs/chat/types/chatErrorMessages';
 import ConversationType from '@libs/chat/types/conversationType';
 import type ChatMessageResponse from '@libs/chat/types/chatMessage';
+import type ChatUnreadCount from '@libs/chat/types/chatUnreadCount';
+import type ChatReadReceipt from '@libs/chat/types/chatReadReceipt';
 import { SORT_DIRECTION } from '@libs/common/constants/sortDirection';
 import type SortDirection from '@libs/common/constants/sortDirection';
 import { GROUP_WITH_MEMBERS_CACHE_KEY } from '@libs/groups/constants/cacheKeys';
@@ -29,8 +31,10 @@ import JwtUser from '@libs/user/types/jwt/jwtUser';
 import CustomHttpException from '../common/CustomHttpException';
 import NotificationsService from '../notifications/notifications.service';
 import SseService from '../sse/sse.service';
+import GroupsService from '../groups/groups.service';
 import { Conversation, ConversationDocument } from './schemas/conversation.schema';
 import { ChatMessage, ChatMessageDocument } from './schemas/chatMessage.schema';
+import { ChatReadStatus, ChatReadStatusDocument } from './schemas/chatReadStatus.schema';
 
 type AggregatedChatMessage = Omit<ChatMessageResponse, 'createdAt'> & { createdAt: Date };
 
@@ -39,9 +43,11 @@ class ChatService {
   constructor(
     @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
     @InjectModel(ChatMessage.name) private chatMessageModel: Model<ChatMessageDocument>,
+    @InjectModel(ChatReadStatus.name) private chatReadStatusModel: Model<ChatReadStatusDocument>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly sseService: SseService,
     private readonly notificationsService: NotificationsService,
+    private readonly groupsService: GroupsService,
   ) {}
 
   private static readonly CACHE_PATH_PREFIX: Record<ConversationType, string> = {
@@ -229,6 +235,106 @@ class ChatService {
     }
 
     return message;
+  }
+
+  async getUnreadCounts(username: string): Promise<ChatUnreadCount[]> {
+    const { classes, projects, groups } = await this.groupsService.getUserGroupsAndProjects(username);
+
+    const allowedConversations = [
+      ...classes.map((group) => ({ groupName: group.name, conversationType: SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS })),
+      ...projects.map((group) => ({ groupName: group.name, conversationType: SOPHOMORIX_GROUP_TYPES.PROJECT })),
+      ...groups.map((group) => ({ groupName: group.name, conversationType: GENERIC_CHAT_GROUP_TYPE })),
+    ];
+
+    if (allowedConversations.length === 0) {
+      return [];
+    }
+
+    return this.conversationModel.aggregate<ChatUnreadCount>([
+      { $match: { type: CHAT_TYPES.GROUP, $or: allowedConversations } },
+      {
+        $lookup: {
+          from: this.chatReadStatusModel.collection.name,
+          let: { conversationId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [{ $eq: ['$conversationId', '$$conversationId'] }, { $eq: ['$username', username] }],
+                },
+              },
+            },
+            { $project: { _id: 0, readAt: 1 } },
+          ],
+          as: 'readStatus',
+        },
+      },
+      {
+        $lookup: {
+          from: this.chatMessageModel.collection.name,
+          let: {
+            conversationId: '$_id',
+            readAt: { $ifNull: [{ $arrayElemAt: ['$readStatus.readAt', 0] }, null] },
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$conversationId', '$$conversationId'] },
+                    { $ne: ['$createdBy', username] },
+                    { $or: [{ $eq: ['$$readAt', null] }, { $gt: ['$createdAt', '$$readAt'] }] },
+                  ],
+                },
+              },
+            },
+            { $count: 'count' },
+          ],
+          as: 'unread',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          groupName: 1,
+          conversationType: 1,
+          count: { $ifNull: [{ $arrayElemAt: ['$unread.count', 0] }, 0] },
+        },
+      },
+      { $match: { count: { $gt: 0 } } },
+    ]);
+  }
+
+  async getReadReceipts(
+    conversationType: ConversationType,
+    groupName: string,
+    username: string,
+  ): Promise<ChatReadReceipt[]> {
+    const { members } = await this.getVerifiedGroup(groupName, conversationType, username);
+
+    const conversation = await this.conversationModel.findOne({ groupName, conversationType });
+
+    if (!conversation) {
+      return members.map((member) => ({
+        username: member.username,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        readAt: null,
+      }));
+    }
+
+    const memberUsernames = members.map((member) => member.username);
+    const statuses = await this.chatReadStatusModel
+      .find({ conversationId: conversation.id, username: { $in: memberUsernames } })
+      .exec();
+    const statusMap = new Map(statuses.map((status) => [status.username, status.readAt.toISOString()]));
+
+    return members.map((member) => ({
+      username: member.username,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      readAt: statusMap.get(member.username) ?? null,
+    }));
   }
 
   private async notifyGroupMembers(

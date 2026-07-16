@@ -13,8 +13,10 @@ import JwtUser from '@libs/user/types/jwt/jwtUser';
 import CustomHttpException from '../common/CustomHttpException';
 import SseService from '../sse/sse.service';
 import NotificationsService from '../notifications/notifications.service';
+import GroupsService from '../groups/groups.service';
 import { Conversation } from './schemas/conversation.schema';
 import { ChatMessage } from './schemas/chatMessage.schema';
+import { ChatReadStatus } from './schemas/chatReadStatus.schema';
 import ChatService from './chat.service';
 
 const GROUP_NAME = '07a';
@@ -22,6 +24,7 @@ const USERNAME = 'alice';
 const CONVERSATION_TYPE = SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS;
 
 const mockConversationModel = {
+  findOne: jest.fn(),
   findOneAndUpdate: jest.fn(),
   findByIdAndUpdate: jest.fn(),
   aggregate: jest.fn(),
@@ -30,9 +33,14 @@ const mockChatMessageModel = {
   create: jest.fn(),
   collection: { name: 'chatmessages' },
 };
+const mockChatReadStatusModel = {
+  find: jest.fn(),
+  findOneAndUpdate: jest.fn(),
+};
 const mockCacheManager = { get: jest.fn() };
 const mockSseService = { sendEventToUsers: jest.fn() };
 const mockNotificationsService = { upsertNotificationForSource: jest.fn() };
+const mockGroupsService = { getUserGroupsAndProjects: jest.fn() };
 
 describe('ChatService', () => {
   let service: ChatService;
@@ -43,9 +51,11 @@ describe('ChatService', () => {
         ChatService,
         { provide: getModelToken(Conversation.name), useValue: mockConversationModel },
         { provide: getModelToken(ChatMessage.name), useValue: mockChatMessageModel },
+        { provide: getModelToken(ChatReadStatus.name), useValue: mockChatReadStatusModel },
         { provide: CACHE_MANAGER, useValue: mockCacheManager },
         { provide: SseService, useValue: mockSseService },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: GroupsService, useValue: mockGroupsService },
       ],
     }).compile();
 
@@ -114,6 +124,66 @@ describe('ChatService', () => {
       const result = await service.getAuthorizedMessages(GROUP_NAME, CONVERSATION_TYPE, USERNAME);
 
       expect(result).toEqual([{ id: 'message-1', role: 'user', content: 'hello', createdAt: createdAt.toISOString() }]);
+    });
+  });
+
+  describe('getUnreadCounts', () => {
+    it('returns an empty list when the user has no chat groups', async () => {
+      mockGroupsService.getUserGroupsAndProjects.mockResolvedValue({ classes: [], projects: [], groups: [] });
+
+      const result = await service.getUnreadCounts(USERNAME);
+
+      expect(result).toEqual([]);
+      expect(mockConversationModel.aggregate).not.toHaveBeenCalled();
+    });
+
+    it('aggregates unread counts across the user groups', async () => {
+      mockGroupsService.getUserGroupsAndProjects.mockResolvedValue({
+        classes: [{ name: GROUP_NAME, path: '/07a' }],
+        projects: [],
+        groups: [],
+      });
+      const counts = [{ groupName: GROUP_NAME, conversationType: CONVERSATION_TYPE, count: 3 }];
+      mockConversationModel.aggregate.mockResolvedValue(counts);
+
+      const result = await service.getUnreadCounts(USERNAME);
+
+      expect(result).toEqual(counts);
+      expect(mockConversationModel.aggregate).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getReadReceipts', () => {
+    it('returns a null read status for every member when no conversation exists', async () => {
+      mockCacheManager.get.mockResolvedValue({
+        members: [{ username: USERNAME, firstName: 'Alice', lastName: 'Adams' }],
+      });
+      mockConversationModel.findOne.mockResolvedValue(null);
+
+      const result = await service.getReadReceipts(CONVERSATION_TYPE, GROUP_NAME, USERNAME);
+
+      expect(result).toEqual([{ username: USERNAME, firstName: 'Alice', lastName: 'Adams', readAt: null }]);
+    });
+
+    it('maps each member to their persisted read status', async () => {
+      const readAt = new Date('2026-07-16T08:00:00.000Z');
+      mockCacheManager.get.mockResolvedValue({
+        members: [
+          { username: USERNAME, firstName: 'Alice', lastName: 'Adams' },
+          { username: 'bob', firstName: 'Bob', lastName: 'Brown' },
+        ],
+      });
+      mockConversationModel.findOne.mockResolvedValue({ id: 'conversation-1' });
+      mockChatReadStatusModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([{ username: USERNAME, readAt }]),
+      });
+
+      const result = await service.getReadReceipts(CONVERSATION_TYPE, GROUP_NAME, USERNAME);
+
+      expect(result).toEqual([
+        { username: USERNAME, firstName: 'Alice', lastName: 'Adams', readAt: readAt.toISOString() },
+        { username: 'bob', firstName: 'Bob', lastName: 'Brown', readAt: null },
+      ]);
     });
   });
 
