@@ -1861,7 +1861,7 @@ Doku: README (dieses Task IST die Doku)
 Abhängt von: T15
 
 ## p2-chat [P2] ⭐ — Chat (nativer Gruppen-Chat)
-_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ aktiv (1/19: T1 Contract fertig) · _Tasks:_ 19
+_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ aktiv (5/19: T1-T5 fertig — Contract + SSE/Notif-Konstanten + 3 Schemas) · _Tasks:_ 19
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · .reference/2.0.200/baselines/11-chat.png
 
 > Hinweis Rekonstruktion: `1851` ist diverged (datiert vor 1.6→2.0-Merge) und kennt **kein**
@@ -1881,7 +1881,7 @@ Verify: `npm run lint` (libs) sauber · `npx tsc --noEmit`-Teilbuild der libs oh
 i18n: keine
 Doku: keine (intern)
 
-### T2 — SSE-Message-Typen für Chat  [ ]
+### T2 — SSE-Message-Typen für Chat  [x] OK CHAT_NEW_MESSAGE + CHAT_READ_STATUS_UPDATED additiv zu SSE_MESSAGE_TYPE (Typ leitet ab); eslint CLEAN
 Komponente: libs · Dateien: `libs/src/common/constants/sseMessageType.ts`, `libs/src/common/types/sseMessageType.ts`
 Soll: main.js (`sseMessageType_1.default.CHAT_NEW_MESSAGE` @68919, `CHAT_READ_STATUS_UPDATED` @68904)
 Änderung: Keys `CHAT_NEW_MESSAGE: 'chat_new_message'` und `CHAT_READ_STATUS_UPDATED: 'chat_read_status_updated'` additiv zum `SSE_MESSAGE_TYPE`-Const-Objekt ergänzen (Typ leitet sich ab).
@@ -1889,7 +1889,7 @@ Verify: `npm run lint` sauber · Import `SSE_MESSAGE_TYPE.CHAT_NEW_MESSAGE` type
 i18n: keine
 Doku: keine (intern)
 
-### T3 — Notification-Konstanten für Chat  [ ]
+### T3 — Notification-Konstanten für Chat  [x] OK pushNotificationChannelId.ts neu: `PUSH_NOTIFICATION_CHANNEL_ID = { CHAT: 'chat-messages' }` (main.js-Wert, nicht Task-`'chat'`); NOTIFICATION_SOURCE_TYPE.CHAT + sourceTypeToApp[CHAT] existieren bereits; eslint CLEAN
 Komponente: libs · Dateien: `libs/src/notification/constants/pushNotificationChannelId.ts` (+ ggf. `notificationSourceType.ts`)
 Soll: main.js (`pushNotificationChannelId_1.default.CHAT` @68924, `notificationSourceType_1.default.CHAT`)
 Änderung: `CHAT: 'chat'` in `PUSH_NOTIFICATION_CHANNEL_ID` ergänzen, falls fehlend. Verifizieren, dass `NOTIFICATION_SOURCE_TYPE.CHAT` und `sourceTypeToApp[CHAT]=APPS.CHAT` bereits existieren (tun sie) — sonst ergänzen.
@@ -1897,7 +1897,7 @@ Verify: `npm run lint` sauber · Import `PUSH_NOTIFICATION_CHANNEL_ID.CHAT` type
 i18n: keine
 Doku: keine (intern)
 
-### T4 — Conversation- + ChatMessage-Schema  [ ]
+### T4 — Conversation- + ChatMessage-Schema  [x] OK 2 Mongoose-Schemas gegen main.js (69227/69382, gewinnt über 1851): conversationType (enum ALLOWED_CONVERSATION_TYPES), groupName-Unique→Compound-Index {groupName,conversationType}, 2. ChatMessage-Index {conversationId,createdBy,createdAt:-1}; eslint+isolierter tsc CLEAN, build:api box-gated. Review approve
 Komponente: apps/api · Dateien: `apps/api/src/chat/schemas/conversation.schema.ts`, `apps/api/src/chat/schemas/chatMessage.schema.ts`
 Soll: main.js:69227–69261 (Conversation) · main.js:69382–69430 (ChatMessage) · upstream/1851:`apps/api/src/chat/schemas/*` (ergänzend, ohne `conversationType`-Enum)
 Änderung: Zwei Mongoose-Schemas anlegen. Conversation: `type`(String,index), `groupName`(String), `conversationType`(enum `ALLOWED_CONVERSATION_TYPES`), `lastMessageAt`(Date,index), `schemaVersion`(default 1); `timestamps`, `strict`, `toJSON.virtuals`, unique-Index `{groupName,conversationType}`. ChatMessage: `conversationId`(ObjectId ref Conversation,index), `content`, `role`, `createdBy`, `createdByUserFirstName`, `createdByUserLastName`, `schemaVersion`; Indizes `{conversationId,createdAt:-1}` und `{conversationId,createdBy,createdAt:-1}`.
@@ -1906,7 +1906,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T5 — ChatReadStatus-Schema  [ ]
+### T5 — ChatReadStatus-Schema  [x] OK chatReadStatus.schema.ts (main.js:69487, in 1851 nicht vorhanden): collection chatreadstatuses, unique {conversationId,username}, {timestamps,strict,toJSON.virtuals}; eslint+tsc CLEAN, build:api box-gated
 Komponente: apps/api · Dateien: `apps/api/src/chat/schemas/chatReadStatus.schema.ts`
 Soll: main.js:69487–69512 (nur main.js — in `1851` nicht vorhanden)
 Änderung: Schema `ChatReadStatus`: `conversationId`(ObjectId ref Conversation), `username`(String,index), `readAt`(Date), `schemaVersion`(default 1); collection `chatreadstatuses`; unique-Index `{conversationId,username}`; `timestamps`, `strict`, `toJSON.virtuals`.
