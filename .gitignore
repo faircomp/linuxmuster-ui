@@ -395,3 +395,10 @@ $RECYCLE.BIN/
 
 # Security scanner binaries installed on demand by scripts/security/scanImages.sh
 /bin/
+
+# DR backup bundles / plaintext dumps — never commit (contain the master key + secrets)
+scripts/ops/**/*.tar*
+*.age
+*.gpg
+scripts/ops/out/
+dr-out/

@@ -107,3 +107,7 @@ docker compose up -d
 ## Deploy
 
 Use the companion installer [faircomp/linuxmuster-ui-installer](https://github.com/faircomp/linuxmuster-ui-installer) to provision a full stack.
+
+## Operations & DR
+
+Backup/restore and the recurring restore-drill live under `scripts/ops/` (`npm run dr:backup` / `dr:restore` / `dr:drill`); the procedure is in [`docs/ops/dr-runbook.md`](docs/ops/dr-runbook.md). **The DB dump and the master key (`MASTER_ENCRYPT_KEY` / `./data/master.key`) must be backed up together — a restart without persistent `./data` and the key means total, irreversible loss of every stored password.**
