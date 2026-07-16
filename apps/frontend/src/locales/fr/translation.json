@@ -283,6 +283,10 @@
     "send": "Envoyer",
     "noMessages": "Aucun message pour le moment",
     "loadingMessages": "Chargement des messages...",
+    "schoolClass": "Classe",
+    "project": "Projet",
+    "startConversation": "Écrivez le premier message",
+    "error": "Erreur",
     "errors": {
       "conversationNotFound": "Conversation introuvable.",
       "groupNotFound": "Groupe introuvable.",

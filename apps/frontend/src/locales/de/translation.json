@@ -284,6 +284,10 @@
     "send": "Senden",
     "noMessages": "Noch keine Nachrichten",
     "loadingMessages": "Nachrichten werden geladen...",
+    "schoolClass": "Schulklasse",
+    "project": "Projekt",
+    "startConversation": "Schreibe die erste Nachricht",
+    "error": "Fehler",
     "errors": {
       "conversationNotFound": "Konversation nicht gefunden.",
       "groupNotFound": "Gruppe nicht gefunden.",

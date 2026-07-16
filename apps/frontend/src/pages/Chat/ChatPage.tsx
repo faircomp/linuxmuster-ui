@@ -10,6 +10,7 @@ import GroupTypeLocation from '@libs/chat/types/groupTypeLocation';
 import PageLayout from '@/components/structure/layout/PageLayout';
 import LoadingIndicatorDialog from '@/components/ui/Loading/LoadingIndicatorDialog';
 import useChatStore from '@/store/useChatStore';
+import ChatContent from './components/ChatContent';
 import ChatNoSelectionState from './components/ChatNoSelectionState';
 import useRegisterChatSections from './useRegisterChatSections';
 
@@ -21,16 +22,15 @@ const ChatPage = () => {
   const { isLoadingGroups } = useChatStore();
   useRegisterChatSections();
 
-  const hasActiveConversation = !!groupName && isValidGroupType(groupType);
-
   return (
     <PageLayout hasFullWidthMain>
       <LoadingIndicatorDialog isOpen={isLoadingGroups} />
       <div className="flex h-full flex-col">
-        {hasActiveConversation ? (
-          <div className="border-b border-muted px-4 py-3">
-            <h3 className="font-semibold text-background">{groupName}</h3>
-          </div>
+        {groupName && isValidGroupType(groupType) ? (
+          <ChatContent
+            groupName={groupName}
+            groupType={groupType}
+          />
         ) : (
           <ChatNoSelectionState />
         )}

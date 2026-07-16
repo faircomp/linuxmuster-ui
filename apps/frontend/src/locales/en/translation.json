@@ -293,6 +293,10 @@
     "send": "Send",
     "noMessages": "No messages yet",
     "loadingMessages": "Loading messages...",
+    "schoolClass": "School class",
+    "project": "Project",
+    "startConversation": "Write the first message",
+    "error": "Error",
     "errors": {
       "conversationNotFound": "Conversation not found.",
       "groupNotFound": "Group not found.",
