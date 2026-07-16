@@ -25,10 +25,12 @@ import axios from 'axios';
 import { Group } from '@libs/groups/types/group';
 import { LDAPUser } from '@libs/groups/types/ldapUser';
 import SPECIAL_SCHOOLS from '@libs/common/constants/specialSchools';
+import DEPLOYMENT_TARGET from '@libs/common/constants/deployment-target';
 import {
   ALL_GROUPS_CACHE_KEY,
   ALL_SCHOOLS_CACHE_KEY,
   GROUP_WITH_MEMBERS_CACHE_KEY,
+  DEPLOYMENT_TARGET_CACHE_KEY,
 } from '@libs/groups/constants/cacheKeys';
 import CustomHttpException from '../common/CustomHttpException';
 import mockCacheManager from '../common/cache-manager.mock';
@@ -233,6 +235,63 @@ describe('GroupsService', () => {
       ];
       const flatGroups = GroupsService['flattenGroups'](groups);
       expect(flatGroups).toHaveLength(2);
+    });
+  });
+
+  describe('getUserGroupsAndProjects', () => {
+    const memberGroupFixtures = [
+      { id: '1', name: '07a', path: '/07a', attributes: { sophomorixType: ['adminclass'] }, members: [{ username: 'alice' }] },
+      { id: '2', name: 'p_chess', path: '/p_chess', attributes: { sophomorixType: ['project'] }, members: [{ username: 'alice' }] },
+      { id: '3', name: '07b', path: '/07b', attributes: { sophomorixType: ['adminclass'] }, members: [{ username: 'bob' }] },
+    ];
+
+    const mockCacheForDeployment = (deploymentTarget: string | undefined) => {
+      mockCacheManager.get.mockImplementation((key: string) => {
+        if (key === ALL_GROUPS_CACHE_KEY + SPECIAL_SCHOOLS.GLOBAL) {
+          return Promise.resolve(memberGroupFixtures);
+        }
+        if (key === DEPLOYMENT_TARGET_CACHE_KEY) {
+          return Promise.resolve(deploymentTarget);
+        }
+        return Promise.resolve(
+          memberGroupFixtures.find((group) => key === `${GROUP_WITH_MEMBERS_CACHE_KEY}-${group.path}`),
+        );
+      });
+    };
+
+    it('splits memberships into classes and projects for a linuxmuster deployment', async () => {
+      mockCacheForDeployment(DEPLOYMENT_TARGET.LINUXMUSTER);
+
+      const result = await service.getUserGroupsAndProjects('alice');
+
+      expect(result).toEqual({
+        classes: [{ name: '07a', path: '/07a' }],
+        projects: [{ name: 'chess', path: '/p_chess' }],
+        groups: [],
+      });
+    });
+
+    it('returns all memberships as generic groups for a generic deployment', async () => {
+      mockCacheForDeployment(DEPLOYMENT_TARGET.GENERIC);
+
+      const result = await service.getUserGroupsAndProjects('alice');
+
+      expect(result).toEqual({
+        classes: [],
+        projects: [],
+        groups: [
+          { name: '07a', path: '/07a' },
+          { name: 'p_chess', path: '/p_chess' },
+        ],
+      });
+    });
+
+    it('returns empty buckets when the user is a member of no cached group', async () => {
+      mockCacheForDeployment(DEPLOYMENT_TARGET.LINUXMUSTER);
+
+      const result = await service.getUserGroupsAndProjects('charlie');
+
+      expect(result).toEqual({ classes: [], projects: [], groups: [] });
     });
   });
 });

@@ -31,6 +31,7 @@ import {
   ALL_GROUPS_CACHE_KEY,
   ALL_SCHOOLS_CACHE_KEY,
   GROUP_WITH_MEMBERS_CACHE_KEY,
+  DEPLOYMENT_TARGET_CACHE_KEY,
 } from '@libs/groups/constants/cacheKeys';
 import { HTTP_HEADERS, HttpMethods, RequestResponseContentType } from '@libs/common/types/http-methods';
 import JwtUser from '@libs/user/types/jwt/jwtUser';
@@ -45,6 +46,11 @@ import DEFAULT_SCHOOL from '@libs/lmnApi/constants/defaultSchool';
 import ALL_GROUPS_PREFIX from '@libs/lmnApi/constants/prefixes/allGroupsPrefix';
 import LINBO_DEVICE_GROUPS_PREFIX from '@libs/lmnApi/constants/prefixes/dPrefix';
 import ROLES_PREFIX from '@libs/lmnApi/constants/prefixes/rolesPrefix';
+import SOPHOMORIX_GROUP_TYPES from '@libs/lmnApi/constants/sophomorixGroupTypes';
+import DEPLOYMENT_TARGET from '@libs/common/constants/deployment-target';
+import DeploymentTarget from '@libs/common/types/deployment-target';
+import ChatGroup from '@libs/chat/types/chatGroup';
+import UserChatGroups from '@libs/chat/types/userChatGroups';
 import {
   KEYCLOAK_GROUPS_SYNC_INTERVAL_MS,
   KEYCLOAK_STARTUP_TIMEOUT_MS,
@@ -549,6 +555,59 @@ class GroupsService {
     } catch (error) {
       Logger.error(`Failed to delete group ${groupPath} from cache: ${(error as Error).message}`, GroupsService.name);
     }
+  }
+
+  async getUserGroupsAndProjects(username: string): Promise<UserChatGroups> {
+    const allGroups = (await this.cacheManager.get<Group[]>(ALL_GROUPS_CACHE_KEY + SPECIAL_SCHOOLS.GLOBAL)) || [];
+    const deploymentTarget = await this.cacheManager.get<DeploymentTarget>(DEPLOYMENT_TARGET_CACHE_KEY);
+
+    const memberGroups = (
+      await Promise.all(
+        allGroups.map(async (group) => {
+          const groupWithMembers = await this.cacheManager.get<GroupWithMembers>(
+            `${GROUP_WITH_MEMBERS_CACHE_KEY}-${group.path}`,
+          );
+
+          return groupWithMembers?.members?.some((member) => member.username === username) ? groupWithMembers : null;
+        }),
+      )
+    ).filter((group): group is GroupWithMembers => group !== null);
+
+    if (deploymentTarget === DEPLOYMENT_TARGET.GENERIC) {
+      return { classes: [], projects: [], groups: memberGroups.map((group) => GroupsService.toClassChatGroup(group)) };
+    }
+
+    const classes = memberGroups
+      .filter((group) => GroupsService.getSophomorixType(group) === SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS)
+      .map((group) => GroupsService.toClassChatGroup(group));
+    const projects = memberGroups
+      .filter((group) => GroupsService.getSophomorixType(group) === SOPHOMORIX_GROUP_TYPES.PROJECT)
+      .map((group) => GroupsService.toProjectChatGroup(group));
+
+    return { classes, projects, groups: [] };
+  }
+
+  private static getSophomorixType(group: Group): string | undefined {
+    const sophomorixType = group.attributes?.sophomorixType;
+
+    if (typeof sophomorixType === 'string') {
+      return sophomorixType;
+    }
+
+    if (Array.isArray(sophomorixType)) {
+      const [first] = sophomorixType as unknown[];
+      return typeof first === 'string' ? first : undefined;
+    }
+
+    return undefined;
+  }
+
+  private static toClassChatGroup(group: Group): ChatGroup {
+    return { name: group.path.startsWith('/') ? group.path.substring(1) : group.name, path: group.path };
+  }
+
+  private static toProjectChatGroup(group: Group): ChatGroup {
+    return { name: group.path.replace(PROJECTS_PREFIX, ''), path: group.path };
   }
 }
 
