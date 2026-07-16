@@ -1861,7 +1861,7 @@ Doku: README (dieses Task IST die Doku)
 Abhängt von: T15
 
 ## p2-chat [P2] ⭐ — Chat (nativer Gruppen-Chat)
-_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 19
+_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ aktiv (1/19: T1 Contract fertig) · _Tasks:_ 19
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · .reference/2.0.200/baselines/11-chat.png
 
 > Hinweis Rekonstruktion: `1851` ist diverged (datiert vor 1.6→2.0-Merge) und kennt **kein**
@@ -1873,7 +1873,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:
 
 ---
 
-### T1 — libs/src/chat Contract (Konstanten + Typen + Utils)  [ ]
+### T1 — libs/src/chat Contract (Konstanten + Typen + Utils)  [x] OK 25 Dateien (10 Konstanten/13 Typen/2 Utils) aus origin/upstream/1851 portiert + gegen main.js abgeglichen (main.js gewinnt): conversationType-Nomenklatur, CHAT_ERROR_MESSAGES 5 Keys, ALLOWED_CONVERSATION_TYPES [ADMIN_CLASS,PROJECT,genericChatGroupType='group'], GROUPS-Location, MAX_LENGTH=20000, DEFAULT_LIMIT=50, ChatUnreadCount.count, ChatReadReceipt {username,firstName,lastName,readAt|null}. **Drift-Fix:** ADMIN_CLASS:'adminclass' in sophomorixGroupTypes (fehlte in 1.6.266). eslint+tsc CLEAN, CHAT_ERROR_MESSAGES==main.js; Review approve nach 3 Faithfulness-Fixes. Commit adba59238
 Komponente: libs · Dateien: `libs/src/chat/{constants,types,utils}/*` (Scaffold, ~28 Deklarationsdateien — bewusst eine Task, siehe Spec-Trade-off 3)
 Soll: upstream/1851:`libs/src/chat/*` (PRIMÄR) · abgeglichen gegen main.js:69127/69344 (Fehlerschlüssel, `ALLOWED_CONVERSATION_TYPES`)
 Änderung: Shared-Contract anlegen: `CHAT_TYPES`, `CHAT_ROLES`, `CHAT_PATH`/`CHAT_*_LOCATION`, `CHAT_*_ENDPOINT`, `CHAT_MESSAGE_MAX_LENGTH`, `CHAT_MESSAGES_DEFAULT_LIMIT`, `ALLOWED_CONVERSATION_TYPES`, `genericChatGroupType`, `ALLOWED_CHAT_SOPHOMORIX_TYPES`, `groupTypeToLocation`; Typen `ChatMessage`, `CreateMessageDto`, `ChatGroup`, `UserChatGroups`, `ConversationType`, `ChatType`, `ChatRole`, `ChatMessageSsePayload`, `ChatUnreadCount`, `ChatReadReceipt`, `GroupTypeLocation`, `CHAT_ERROR_MESSAGES`; Utils `isAllowedChatSophomorixType`, `toChatRoute`. **Nomenklatur `conversationType` führen** (nicht `sophomorixType`). Const-Objekte statt enums.
