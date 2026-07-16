@@ -40,6 +40,7 @@ import { MOBILE_APP_ENABLED } from '@libs/common/constants/productInfo';
 import UserSettingsWireguardPage from '@/pages/UserSettings/WireguardAccess/UserSettingsWireguardPage';
 import getSettingsRoutes from '@/router/routes/getSettingsRoutes';
 import getClassManagementRoutes from '@/router/routes/getClassManagementRoutes';
+import getChatRoutes from '@/router/routes/getChatRoutes';
 import getSurveyRoutes from '@/router/routes/getSurveyRoutes';
 import getFileSharingRoutes from '@/router/routes/getFileSharingRoutes';
 import getLinuxmusterRoutes from '@/router/routes/getLinuxmusterRoutes';
@@ -111,6 +112,7 @@ const getPrivateRoutes = (appConfigs: AppConfigDto[]) => (
 
     <Route element={<ProtectedRoute />}>{getSettingsRoutes()}</Route>
     {getClassManagementRoutes()}
+    {getChatRoutes()}
     {getSurveyRoutes()}
     {getFileSharingRoutes()}
     {getLinuxmusterRoutes()}
