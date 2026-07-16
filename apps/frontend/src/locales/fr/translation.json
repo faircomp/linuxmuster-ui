@@ -273,7 +273,23 @@
   },
   "chat": {
     "title": "Chat",
-    "sidebar": "Chat"
+    "sidebar": "Chat",
+    "schoolClasses": "Classes",
+    "projects": "Projets",
+    "selectConversation": "Sélectionner une conversation",
+    "selectConversationDescription": "Choisissez une classe ou un projet à gauche pour ouvrir le chat.",
+    "refreshGroups": "Actualiser les groupes",
+    "inputPlaceholder": "Écrire un message...",
+    "send": "Envoyer",
+    "noMessages": "Aucun message pour le moment",
+    "loadingMessages": "Chargement des messages...",
+    "errors": {
+      "conversationNotFound": "Conversation introuvable.",
+      "groupNotFound": "Groupe introuvable.",
+      "unauthorizedAccess": "Vous n'avez pas accès à cette conversation.",
+      "messageSendFailed": "Le message n'a pas pu être envoyé.",
+      "invalidGroupType": "Type de groupe invalide."
+    }
   },
   "errors": {
     "unexpectedError": "Une erreur inattendue s'est produite",

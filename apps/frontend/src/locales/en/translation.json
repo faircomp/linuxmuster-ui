@@ -283,7 +283,23 @@
   },
   "chat": {
     "title": "CHAT",
-    "sidebar": "Chat"
+    "sidebar": "Chat",
+    "schoolClasses": "School Classes",
+    "projects": "Projects",
+    "selectConversation": "Select conversation",
+    "selectConversationDescription": "Choose a class or project on the left to open the chat.",
+    "refreshGroups": "Refresh groups",
+    "inputPlaceholder": "Write a message...",
+    "send": "Send",
+    "noMessages": "No messages yet",
+    "loadingMessages": "Loading messages...",
+    "errors": {
+      "conversationNotFound": "Conversation not found.",
+      "groupNotFound": "Group not found.",
+      "unauthorizedAccess": "You don't have access to this conversation.",
+      "messageSendFailed": "The message could not be sent.",
+      "invalidGroupType": "Invalid group type."
+    }
   },
   "errors": {
     "automaticLoginFailed": "Automatic login failed",
