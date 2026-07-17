@@ -16,6 +16,10 @@ vi.mock('@/components/structure/layout/PageLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock('./components/WikiSidebar', () => ({
+  default: () => null,
+}));
+
 describe('WikiPage', () => {
   it('renders the empty-state hint and a labelled sidebar placeholder', () => {
     const html = renderToStaticMarkup(<WikiPage />);

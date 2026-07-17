@@ -35,11 +35,9 @@ describe('useWikiStore', () => {
     vi.clearAllMocks();
     useWikiStore.setState({
       shares: [],
-      tree: [],
       currentPage: null,
       currentPageEtag: null,
       isLoadingShares: false,
-      isLoadingTree: false,
       isLoadingPage: false,
       isSaving: false,
       error: null,
@@ -56,12 +54,14 @@ describe('useWikiStore', () => {
     expect(useWikiStore.getState().isLoadingShares).toBe(false);
   });
 
-  it('fetchTree passes the path as a query param', async () => {
-    mockedEduApi.get.mockResolvedValue({ data: [] });
+  it('fetchTree passes the path as a query param and returns the children', async () => {
+    const children = [{ type: 'folder', name: 'sub', path: 'MyShare/sub' }];
+    mockedEduApi.get.mockResolvedValue({ data: children });
 
-    await useWikiStore.getState().fetchTree('MyShare/sub');
+    const result = await useWikiStore.getState().fetchTree('MyShare/sub');
 
     expect(mockedEduApi.get).toHaveBeenCalledWith(TREE_ENDPOINT, { params: { path: 'MyShare/sub' } });
+    expect(result).toEqual(children);
   });
 
   it('fetchPage carries the ETag from the response body', async () => {

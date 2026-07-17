@@ -2015,6 +2015,10 @@
   "wiki": {
     "description": "Collaborative wiki for your shares",
     "sidebar": "Wiki navigation",
+    "menu": {
+      "newPage": "New page",
+      "newFolder": "New folder"
+    },
     "empty": {
       "selectPageHint": "Select a page on the left to view it."
     }

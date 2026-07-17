@@ -23,17 +23,15 @@ const WIKI_FOLDER_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.FOLDER}`;
 
 interface WikiStore {
   shares: WebdavShareDto[];
-  tree: WikiTreeChildDto[];
   currentPage: WikiPageDto | null;
   currentPageEtag: string | null;
   isLoadingShares: boolean;
-  isLoadingTree: boolean;
   isLoadingPage: boolean;
   isSaving: boolean;
   error: string | null;
 
   fetchShares: () => Promise<void>;
-  fetchTree: (path: string) => Promise<void>;
+  fetchTree: (path: string) => Promise<WikiTreeChildDto[]>;
   fetchPage: (path: string) => Promise<WikiPageDto | null>;
   createPage: (dto: CreateWikiPageDto) => Promise<WikiPageDto | null>;
   updatePage: (path: string, content: string, etag: string | null) => Promise<WikiPageDto | null>;
@@ -44,11 +42,9 @@ interface WikiStore {
 
 const initialState = {
   shares: [],
-  tree: [],
   currentPage: null,
   currentPageEtag: null,
   isLoadingShares: false,
-  isLoadingTree: false,
   isLoadingPage: false,
   isSaving: false,
   error: null,
@@ -70,14 +66,13 @@ const useWikiStore = create<WikiStore>((set) => ({
   },
 
   fetchTree: async (path) => {
-    set({ isLoadingTree: true, error: null });
+    set({ error: null });
     try {
       const response = await eduApi.get<WikiTreeChildDto[]>(WIKI_TREE_ENDPOINT, { params: { path } });
-      set({ tree: response.data });
+      return response.data;
     } catch (error) {
       handleApiError(error, set);
-    } finally {
-      set({ isLoadingTree: false });
+      return [];
     }
   },
 

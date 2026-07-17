@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBookOpen } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@edulution-io/ui-kit';
 import PageLayout from '@/components/structure/layout/PageLayout';
+import WikiSidebar from './components/WikiSidebar';
 
 const WikiPage = () => {
   const { t } = useTranslation();
@@ -17,9 +18,11 @@ const WikiPage = () => {
     <PageLayout hasFullWidthMain>
       <div className={cn('flex h-full')}>
         <aside
-          className={cn('flex w-72 shrink-0 flex-col border-r border-muted bg-glass')}
+          className={cn('flex w-72 shrink-0 flex-col overflow-hidden border-r border-muted bg-glass')}
           aria-label={t('wiki.sidebar')}
-        />
+        >
+          <WikiSidebar />
+        </aside>
         <div className={cn('bg-glass flex flex-1 flex-col items-center justify-center')}>
           <FontAwesomeIcon
             icon={faBookOpen}

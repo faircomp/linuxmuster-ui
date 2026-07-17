@@ -2012,6 +2012,10 @@
   "wiki": {
     "description": "Wiki collaboratif pour vos partages",
     "sidebar": "Navigation du wiki",
+    "menu": {
+      "newPage": "Nouvelle page",
+      "newFolder": "Nouveau dossier"
+    },
     "empty": {
       "selectPageHint": "Sélectionnez une page à gauche pour l'afficher."
     }

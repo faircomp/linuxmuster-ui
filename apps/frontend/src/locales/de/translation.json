@@ -2016,6 +2016,10 @@
   "wiki": {
     "description": "Kollaboratives Wiki für Ihre Freigaben",
     "sidebar": "Wiki-Navigation",
+    "menu": {
+      "newPage": "Neue Seite",
+      "newFolder": "Neuer Ordner"
+    },
     "empty": {
       "selectPageHint": "Wählen Sie links eine Seite aus, um sie anzuzeigen."
     }
