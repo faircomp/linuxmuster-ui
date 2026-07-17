@@ -2220,7 +2220,7 @@ i18n: keine (Werte sind i18n-Key-Strings)
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — libs+BE: WebdavShareDto & WebdavShares-Schema um Wiki-Felder erweitern  [ ]
+### T3 — libs+BE: WebdavShareDto & WebdavShares-Schema um Wiki-Felder erweitern  [x] OK (843541b28) additiv: Schema `@Prop({type:Array,default:[]}) wikiAccessGroups: MultipleSelectorGroup[]` + `@Prop({type:Boolean,default:false}) wikiDisabled: boolean` (main.js:5219); DTO `@IsArray() wikiAccessGroups=[]` + `@IsBoolean() wikiDisabled=false` (main.js:58297). Contract-sync Schema↔DTO. Defaults = backward-kompatibel. schemaVersion-default in T3 unangetastet (Bump in T4). eslint+isolierter tsc CLEAN. Direkt committet (mechanisch additiv).
 Komponente: libs + apps/api · Dateien: libs/src/filesharing/types/webdavShareDto.ts · apps/api/src/webdav/shares/webdav-shares.schema.ts
 Soll: main.js:58251/58297/58301 (DTO) · main.js:5219–5224 (Schema-Props)
 Änderung: `wikiAccessGroups: MultipleSelectorGroup[] = []` (`@Prop({type:Array, default:[]})`) und `wikiDisabled: boolean = false` (`@Prop({type:Boolean, default:false})`) additiv ergänzen; DTO spiegelt beide (default `[]`/`false`). `schemaVersion` bleibt Feld — Bump erfolgt in T4.
@@ -2229,7 +2229,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2
 
-### T4 — BE: Migration WebdavShares schemaVersion 1→2 (Wiki-Felder)  [ ]
+### T4 — BE: Migration WebdavShares schemaVersion 1→2 (Wiki-Felder)  [x] OK (a777ef5c9) migration001 ('001-add-wiki-visibility-to-webdav-shares', version 2, forward-only, idempotent via find({schemaVersion:1})→updateMany $set wikiAccessGroups:[]/wikiDisabled:false/schemaVersion:2) + Liste angehängt. **Bewusste Fork-Divergenz:** 2.0.200 hat KEINE Wiki-Migration (Liste=nur migration000, terminal 1); Fork migriert+bumpt (AGENTS.md-Guardrail). **Voller Contract-Sync** (Review approve): Schema-@Prop-default 1→2 + Runtime-Seed schemaVersion 1→2 (WebdavShares laufzeit-erstellt → Fresh-Shares am Terminal, sonst Fidelity-Lücke — Reviewer-Fund) + assert-schema-versions.ts webdavshares:2 + Fork-Delta-Notiz in p0-migrations-inventory.md (2.0.200-Baseline-Zeile unangetastet). eslint+isolierter tsc CLEAN; echter 1.6→2.0-Upgrade-Test box-gated (p1). Muster: global-settings/migration001 + webdav/migration000.
 Komponente: apps/api · Dateien: apps/api/src/webdav/shares/migrations/migration001.ts · apps/api/src/webdav/shares/migrations/webdavSharesMigrationList.ts
 Soll: Muster main.js/1.6 migration000.ts (forward-only, per-Dokument schemaVersion-Filter)
 Änderung: `migration001` (name '001-add-wiki-visibility-to-webdav-shares', version 2) setzt auf Dokumenten mit schemaVersion<2 `wikiAccessGroups: []`, `wikiDisabled: false`, `schemaVersion: 2` (bulk, idempotent). In `webdavSharesMigrationList` anhängen.
