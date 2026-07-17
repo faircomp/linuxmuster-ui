@@ -24,6 +24,14 @@ vi.mock('./components/WikiPageView', () => ({
   default: () => null,
 }));
 
+vi.mock('@/pages/Wiki/store/useWikiStore', () => ({
+  default: (selector: (state: { refreshTree: () => void }) => unknown) => selector({ refreshTree: vi.fn() }),
+}));
+
+vi.mock('./components/dialogs/CreatePageDialog', () => ({ default: () => null }));
+vi.mock('./components/dialogs/CreateFolderDialog', () => ({ default: () => null }));
+vi.mock('./components/dialogs/DeleteDialog', () => ({ default: () => null }));
+
 describe('WikiPage', () => {
   it('lays out a labelled sidebar column next to the content pane', () => {
     const html = renderToStaticMarkup(<WikiPage />);

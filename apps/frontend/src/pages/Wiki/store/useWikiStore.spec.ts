@@ -37,6 +37,7 @@ describe('useWikiStore', () => {
       shares: [],
       currentPage: null,
       currentPageEtag: null,
+      treeVersion: 0,
       isLoadingShares: false,
       isLoadingPage: false,
       isSaving: false,
@@ -143,5 +144,53 @@ describe('useWikiStore', () => {
 
     expect(useWikiStore.getState().isLoadingShares).toBe(false);
     expect(useWikiStore.getState().error).not.toBeNull();
+  });
+
+  it('refreshTree bumps the tree version so expanded folders reload lazily', () => {
+    useWikiStore.getState().refreshTree();
+
+    expect(useWikiStore.getState().treeVersion).toBe(1);
+  });
+
+  it('clears the current page when that page is deleted', async () => {
+    useWikiStore.setState({
+      currentPage: { path: 'MyShare/p', title: 'P', content: 'c', etag: 'v1', mtime: 1, isIndex: false },
+    });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deletePage('MyShare/p');
+
+    expect(useWikiStore.getState().currentPage).toBeNull();
+  });
+
+  it('clears the current page when its containing folder is deleted', async () => {
+    useWikiStore.setState({
+      currentPage: { path: 'MyShare/sub/p', title: 'P', content: 'c', etag: 'v1', mtime: 1, isIndex: false },
+    });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deleteFolder('MyShare/sub');
+
+    expect(useWikiStore.getState().currentPage).toBeNull();
+  });
+
+  it('keeps the current page when an unrelated page is deleted', async () => {
+    const page = { path: 'MyShare/keep', title: 'K', content: 'c', etag: 'v1', mtime: 1, isIndex: false };
+    useWikiStore.setState({ currentPage: page });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deletePage('MyShare/other');
+
+    expect(useWikiStore.getState().currentPage).toEqual(page);
+  });
+
+  it('keeps the current page when a folder sharing only a name prefix is deleted', async () => {
+    const page = { path: 'MyShare/subtle/p', title: 'P', content: 'c', etag: 'v1', mtime: 1, isIndex: false };
+    useWikiStore.setState({ currentPage: page });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deleteFolder('MyShare/sub');
+
+    expect(useWikiStore.getState().currentPage).toEqual(page);
   });
 });

@@ -19,6 +19,7 @@ vi.mock('@/pages/Wiki/store/useWikiStore', () => ({
     fetchTree: vi.fn(),
     fetchPage: vi.fn(),
     currentPage: null,
+    treeVersion: 0,
   }),
 }));
 

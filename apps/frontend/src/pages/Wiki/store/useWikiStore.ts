@@ -25,6 +25,7 @@ interface WikiStore {
   shares: WebdavShareDto[];
   currentPage: WikiPageDto | null;
   currentPageEtag: string | null;
+  treeVersion: number;
   isLoadingShares: boolean;
   isLoadingPage: boolean;
   isSaving: boolean;
@@ -38,19 +39,21 @@ interface WikiStore {
   deletePage: (path: string) => Promise<boolean>;
   createFolder: (dto: CreateWikiFolderDto) => Promise<WikiFolderCreatedDto | null>;
   deleteFolder: (path: string) => Promise<boolean>;
+  refreshTree: () => void;
 }
 
 const initialState = {
   shares: [],
   currentPage: null,
   currentPageEtag: null,
+  treeVersion: 0,
   isLoadingShares: false,
   isLoadingPage: false,
   isSaving: false,
   error: null,
 };
 
-const useWikiStore = create<WikiStore>((set) => ({
+const useWikiStore = create<WikiStore>((set, get) => ({
   ...initialState,
 
   fetchShares: async () => {
@@ -125,6 +128,9 @@ const useWikiStore = create<WikiStore>((set) => ({
     set({ isSaving: true, error: null });
     try {
       await eduApi.delete<WikiSuccessDto>(WIKI_PAGE_ENDPOINT, { params: { path } });
+      if (get().currentPage?.path === path) {
+        set({ currentPage: null, currentPageEtag: null });
+      }
       return true;
     } catch (error) {
       handleApiError(error, set);
@@ -151,6 +157,10 @@ const useWikiStore = create<WikiStore>((set) => ({
     set({ isSaving: true, error: null });
     try {
       await eduApi.delete<WikiSuccessDto>(WIKI_FOLDER_ENDPOINT, { params: { path } });
+      const openPath = get().currentPage?.path;
+      if (openPath !== undefined && (openPath === path || openPath.startsWith(`${path}/`))) {
+        set({ currentPage: null, currentPageEtag: null });
+      }
       return true;
     } catch (error) {
       handleApiError(error, set);
@@ -159,6 +169,8 @@ const useWikiStore = create<WikiStore>((set) => ({
       set({ isSaving: false });
     }
   },
+
+  refreshTree: () => set((state) => ({ treeVersion: state.treeVersion + 1 })),
 }));
 
 export default useWikiStore;

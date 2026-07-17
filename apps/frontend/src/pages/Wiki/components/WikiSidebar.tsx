@@ -6,6 +6,7 @@
 import React, { useEffect } from 'react';
 import { cn } from '@edulution-io/ui-kit';
 import { WIKI_NODE_TYPE } from '@libs/wiki/constants/wikiNodeType';
+import type WikiNodeType from '@libs/wiki/constants/wikiNodeType';
 import type WikiTreeChildDto from '@libs/wiki/types/wikiTreeChildDto';
 import useWikiStore from '@/pages/Wiki/store/useWikiStore';
 import WikiTreeNode from './WikiTreeNode';
@@ -13,9 +14,10 @@ import WikiTreeNode from './WikiTreeNode';
 interface WikiSidebarProps {
   onCreatePage?: (parentPath: string) => void;
   onCreateFolder?: (parentPath: string) => void;
+  onDelete?: (path: string, nodeType: WikiNodeType) => void;
 }
 
-const WikiSidebar = ({ onCreatePage, onCreateFolder }: WikiSidebarProps) => {
+const WikiSidebar = ({ onCreatePage, onCreateFolder, onDelete }: WikiSidebarProps) => {
   const { shares, fetchShares } = useWikiStore();
 
   useEffect(() => {
@@ -39,6 +41,7 @@ const WikiSidebar = ({ onCreatePage, onCreateFolder }: WikiSidebarProps) => {
               depth={0}
               onCreatePage={onCreatePage}
               onCreateFolder={onCreateFolder}
+              onDelete={onDelete}
             />
           );
         })}

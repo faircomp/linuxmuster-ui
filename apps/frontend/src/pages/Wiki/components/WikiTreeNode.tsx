@@ -3,21 +3,23 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faChevronDown,
   faChevronRight,
+  faEllipsisVertical,
   faFile,
   faFolder,
   faFolderOpen,
-  faPlus,
   faSpinner,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@edulution-io/ui-kit';
 import type WikiTreeChildDto from '@libs/wiki/types/wikiTreeChildDto';
 import { WIKI_NODE_TYPE } from '@libs/wiki/constants/wikiNodeType';
+import type WikiNodeType from '@libs/wiki/constants/wikiNodeType';
 import DropdownMenu from '@/components/shared/DropdownMenu';
 import useWikiStore from '@/pages/Wiki/store/useWikiStore';
 
@@ -26,17 +28,34 @@ interface WikiTreeNodeProps {
   depth: number;
   onCreatePage?: (parentPath: string) => void;
   onCreateFolder?: (parentPath: string) => void;
+  onDelete?: (path: string, nodeType: WikiNodeType) => void;
 }
 
-const WikiTreeNode = ({ node, depth, onCreatePage, onCreateFolder }: WikiTreeNodeProps) => {
+const WikiTreeNode = ({ node, depth, onCreatePage, onCreateFolder, onDelete }: WikiTreeNodeProps) => {
   const { t } = useTranslation();
-  const { fetchTree, fetchPage, currentPage } = useWikiStore();
+  const { fetchTree, fetchPage, currentPage, treeVersion } = useWikiStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [childNodes, setChildNodes] = useState<WikiTreeChildDto[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const lastVersionRef = useRef(treeVersion);
 
   const isFolder = node.type === WIKI_NODE_TYPE.FOLDER;
   const isActive = currentPage?.path === node.path;
+
+  const loadChildren = useCallback(async () => {
+    const loaded = await fetchTree(node.path);
+    setChildNodes(loaded);
+  }, [fetchTree, node.path]);
+
+  useEffect(() => {
+    if (lastVersionRef.current === treeVersion) {
+      return;
+    }
+    lastVersionRef.current = treeVersion;
+    if (isExpanded && childNodes !== null) {
+      void loadChildren();
+    }
+  }, [treeVersion, isExpanded, childNodes, loadChildren]);
 
   const handleToggle = async () => {
     if (isLoading) {
@@ -44,8 +63,7 @@ const WikiTreeNode = ({ node, depth, onCreatePage, onCreateFolder }: WikiTreeNod
     }
     if (!isExpanded && childNodes === null) {
       setIsLoading(true);
-      const loaded = await fetchTree(node.path);
-      setChildNodes(loaded);
+      await loadChildren();
       setIsLoading(false);
     }
     setIsExpanded((prev) => !prev);
@@ -71,10 +89,14 @@ const WikiTreeNode = ({ node, depth, onCreatePage, onCreateFolder }: WikiTreeNod
     nodeIcon = isExpanded ? faFolderOpen : faFolder;
   }
 
-  const menuItems = [
-    { label: t('wiki.menu.newPage'), icon: faFile, onClick: () => onCreatePage?.(node.path) },
-    { label: t('wiki.menu.newFolder'), icon: faFolder, onClick: () => onCreateFolder?.(node.path) },
-  ];
+  const deleteItem = { label: t('common.delete'), icon: faTrash, onClick: () => onDelete?.(node.path, node.type) };
+  const menuItems = isFolder
+    ? [
+        { label: t('wiki.menu.newPage'), icon: faFile, onClick: () => onCreatePage?.(node.path) },
+        { label: t('wiki.menu.newFolder'), icon: faFolder, onClick: () => onCreateFolder?.(node.path) },
+        deleteItem,
+      ]
+    : [deleteItem];
 
   return (
     <li>
@@ -100,23 +122,21 @@ const WikiTreeNode = ({ node, depth, onCreatePage, onCreateFolder }: WikiTreeNod
           />
           <span className={cn('truncate')}>{node.name}</span>
         </button>
-        {isFolder && (
-          <DropdownMenu
-            trigger={
-              <button
-                type="button"
-                aria-label={t('common.options')}
-                className={cn('px-2 py-1 opacity-0 group-hover:opacity-100')}
-              >
-                <FontAwesomeIcon
-                  icon={faPlus}
-                  className={cn('h-3 w-3 text-muted-foreground')}
-                />
-              </button>
-            }
-            items={menuItems}
-          />
-        )}
+        <DropdownMenu
+          trigger={
+            <button
+              type="button"
+              aria-label={t('common.options')}
+              className={cn('px-2 py-1 opacity-0 group-hover:opacity-100')}
+            >
+              <FontAwesomeIcon
+                icon={faEllipsisVertical}
+                className={cn('h-3 w-3 text-muted-foreground')}
+              />
+            </button>
+          }
+          items={menuItems}
+        />
       </div>
       {isFolder && isExpanded && childNodes && childNodes.length > 0 && (
         <ul>
@@ -127,6 +147,7 @@ const WikiTreeNode = ({ node, depth, onCreatePage, onCreateFolder }: WikiTreeNod
               depth={depth + 1}
               onCreatePage={onCreatePage}
               onCreateFolder={onCreateFolder}
+              onDelete={onDelete}
             />
           ))}
         </ul>
