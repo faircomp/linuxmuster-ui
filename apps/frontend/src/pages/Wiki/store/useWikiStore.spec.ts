@@ -109,12 +109,13 @@ describe('useWikiStore', () => {
     );
   });
 
-  it('deletePage deletes with the path query param', async () => {
+  it('deletePage deletes with the path query param and reports success', async () => {
     mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
 
-    await useWikiStore.getState().deletePage('MyShare/p');
+    const result = await useWikiStore.getState().deletePage('MyShare/p');
 
     expect(mockedEduApi.delete).toHaveBeenCalledWith(PAGE_ENDPOINT, { params: { path: 'MyShare/p' } });
+    expect(result).toBe(true);
   });
 
   it('createFolder posts the DTO to the folder endpoint', async () => {
@@ -126,12 +127,13 @@ describe('useWikiStore', () => {
     expect(mockedEduApi.post).toHaveBeenCalledWith(FOLDER_ENDPOINT, dto);
   });
 
-  it('deleteFolder deletes with the path query param', async () => {
+  it('deleteFolder deletes with the path query param and reports success', async () => {
     mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
 
-    await useWikiStore.getState().deleteFolder('MyShare/sub');
+    const result = await useWikiStore.getState().deleteFolder('MyShare/sub');
 
     expect(mockedEduApi.delete).toHaveBeenCalledWith(FOLDER_ENDPOINT, { params: { path: 'MyShare/sub' } });
+    expect(result).toBe(true);
   });
 
   it('records an error and clears the loading flag when a request fails', async () => {

@@ -2022,6 +2022,31 @@
     "actions": {
       "edit": "Modifier"
     },
+    "dialog": {
+      "location": "Emplacement :",
+      "noLocationSelected": "Aucun emplacement sélectionné.",
+      "createPage": {
+        "title": "Créer une page",
+        "titlePlaceholder": "Titre de la page",
+        "asIndex": "Comme page d'index du dossier",
+        "indexSlugReserved": "« index » est réservé à la page d'index du dossier — activez l'option page d'index ou choisissez un autre titre."
+      },
+      "createFolder": {
+        "title": "Créer un dossier",
+        "namePlaceholder": "Nom du dossier"
+      },
+      "delete": {
+        "pageTitle": "Supprimer la page",
+        "folderTitle": "Supprimer le dossier",
+        "pageMessage": "Supprimer cette page de wiki ?",
+        "folderMessage": "Supprimer ce dossier et tout son contenu ?"
+      }
+    },
+    "notifications": {
+      "pageSaved": "Page enregistrée",
+      "folderCreated": "Dossier créé",
+      "deleted": "Supprimé"
+    },
     "empty": {
       "selectPageHint": "Sélectionnez une page à gauche pour l'afficher."
     }

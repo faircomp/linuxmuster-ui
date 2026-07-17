@@ -2025,6 +2025,31 @@
     "actions": {
       "edit": "Edit"
     },
+    "dialog": {
+      "location": "Location:",
+      "noLocationSelected": "No location selected.",
+      "createPage": {
+        "title": "Create a new page",
+        "titlePlaceholder": "Page title",
+        "asIndex": "As the folder index page",
+        "indexSlugReserved": "\"index\" is reserved for the folder index page — enable the index-page option or choose a different title."
+      },
+      "createFolder": {
+        "title": "Create a new folder",
+        "namePlaceholder": "Folder name"
+      },
+      "delete": {
+        "pageTitle": "Delete page",
+        "folderTitle": "Delete folder",
+        "pageMessage": "Delete this wiki page?",
+        "folderMessage": "Delete this folder and all of its contents?"
+      }
+    },
+    "notifications": {
+      "pageSaved": "Page saved",
+      "folderCreated": "Folder created",
+      "deleted": "Deleted"
+    },
     "empty": {
       "selectPageHint": "Select a page on the left to view it."
     }

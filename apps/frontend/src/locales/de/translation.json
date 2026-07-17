@@ -2026,6 +2026,31 @@
     "actions": {
       "edit": "Bearbeiten"
     },
+    "dialog": {
+      "location": "Speicherort:",
+      "noLocationSelected": "Kein Speicherort ausgewählt.",
+      "createPage": {
+        "title": "Neue Seite erstellen",
+        "titlePlaceholder": "Seitentitel",
+        "asIndex": "Als Ordner-Startseite (Index)",
+        "indexSlugReserved": "„index“ ist für die Ordner-Startseite reserviert – aktiviere „Als Ordner-Startseite“ oder wähle einen anderen Titel."
+      },
+      "createFolder": {
+        "title": "Neuen Ordner erstellen",
+        "namePlaceholder": "Ordnername"
+      },
+      "delete": {
+        "pageTitle": "Seite löschen",
+        "folderTitle": "Ordner löschen",
+        "pageMessage": "Diese Wiki-Seite wirklich löschen?",
+        "folderMessage": "Diesen Ordner und seinen gesamten Inhalt wirklich löschen?"
+      }
+    },
+    "notifications": {
+      "pageSaved": "Seite gespeichert",
+      "folderCreated": "Ordner erstellt",
+      "deleted": "Gelöscht"
+    },
     "empty": {
       "selectPageHint": "Wählen Sie links eine Seite aus, um sie anzuzeigen."
     }

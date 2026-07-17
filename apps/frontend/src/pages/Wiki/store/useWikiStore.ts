@@ -35,9 +35,9 @@ interface WikiStore {
   fetchPage: (path: string) => Promise<WikiPageDto | null>;
   createPage: (dto: CreateWikiPageDto) => Promise<WikiPageDto | null>;
   updatePage: (path: string, content: string, etag: string | null) => Promise<WikiPageDto | null>;
-  deletePage: (path: string) => Promise<void>;
+  deletePage: (path: string) => Promise<boolean>;
   createFolder: (dto: CreateWikiFolderDto) => Promise<WikiFolderCreatedDto | null>;
-  deleteFolder: (path: string) => Promise<void>;
+  deleteFolder: (path: string) => Promise<boolean>;
 }
 
 const initialState = {
@@ -125,8 +125,10 @@ const useWikiStore = create<WikiStore>((set) => ({
     set({ isSaving: true, error: null });
     try {
       await eduApi.delete<WikiSuccessDto>(WIKI_PAGE_ENDPOINT, { params: { path } });
+      return true;
     } catch (error) {
       handleApiError(error, set);
+      return false;
     } finally {
       set({ isSaving: false });
     }
@@ -149,8 +151,10 @@ const useWikiStore = create<WikiStore>((set) => ({
     set({ isSaving: true, error: null });
     try {
       await eduApi.delete<WikiSuccessDto>(WIKI_FOLDER_ENDPOINT, { params: { path } });
+      return true;
     } catch (error) {
       handleApiError(error, set);
+      return false;
     } finally {
       set({ isSaving: false });
     }
