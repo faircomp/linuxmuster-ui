@@ -2307,7 +2307,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T8
 
-### T12 — BE: Throttle-Infra für Such-Route  [ ]
+### T12 — BE: Throttle-Infra für Such-Route  [x] OK (edc398fe2)
+> **OF-3 entschieden: EIGENBAU** (kein @nestjs/throttler — nicht als Dep vorhanden/installierbar, Box down; main.js macht ohnehin Eigenbau). Feldgetreu aus main.js:64400 (Throttle-Decorator SetMetadata) / 64484-64538 (ThrottleGuard). `@Throttle(limit, ttl, {byIp?})`-Decorator + `ThrottleGuard implements CanActivate`: In-Memory-Fixed-Window-Counter (throttleCache Map, MAX 10000, Eviction alle 20 Inserts nach expiresAt-Sort), Principal user.preferred_username → byIp-Fallback → skip, cacheKey `principal:method:route`, `count>=limit`→**429** + Retry-After, X-RateLimit-Limit/-Remaining-Header. **Fail-open** (kein config / unauth ohne byIp → allow; Auth-Guard greift separat). +libs: THROTTLE_METADATA_KEY('throttle_config'), ThrottleConfig-Typ, 3 Rate-Limit-Header in HTTP_HEADERS, CommonErrorMessages.RATE_LIMIT_EXCEEDED (bereits ErrorMessage-Union-Member). **i18n** common.errors.rateLimitExceeded DE+EN+FR (check-translations grün — Ledger-„i18n:keine" war ungenau, Guard führt user-facing Key ein). Guard-Spec 5 Fälle (no-config-allow/Zählung+Remaining/429+Retry-After/unauth-skip/byIp-Fallback; modul-globaler Cache per distinkte Principals isoliert) box-gated. eslint+isolierter tsc CLEAN (express.d.ts-Augmentation für request.user). **Standalone** — Verdrahtung an search-Route erst T13. Review approve.
 Komponente: apps/api · Dateien: apps/api/src/common/throttle/{throttle.decorator,throttle.guard}.ts (o. @nestjs/throttler-Setup) · package.json
 Soll: main.js:71761 (Throttle-Decorator + Guard) · 71843 (Limit 60 / TTL 60000)
 Änderung: **Drift-Task.** Throttle-Infra einführen — bevorzugt `@nestjs/throttler` (OF-3), sonst minimaler Eigen-Decorator+Guard, der 60 Anfragen/60 s pro User erzwingt. Nur die Wiki-Such-Route nutzt ihn (in T13 verdrahtet).
