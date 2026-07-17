@@ -2349,7 +2349,8 @@ i18n: neue Keys `settings.appconfig.sections.wikiShareVisibility.*` + Tabellen-S
 Doku: Admin-Doku Share-Visibility — DE+EN, knapp
 Abhängt von: T3, T14
 
-### T16 — FE: Native-Route + WikiPage-Gerüst  [ ]
+### T16 — FE: Native-Route + WikiPage-Gerüst  [x] OK (3ae177bf7)
+> **OK (3ae177bf7):** `[APPS.WIKI]: <WikiPage />` im NativeAppPageManager-Mapping (Route generisch über getNativeAppRoutes, kein Extra-Wiring). WikiPage = minimales zweispaltiges Shell (PageLayout hasFullWidthMain, wie Chat-Pilot): `<aside>`-Sidebar-Platzhalter (aria-label `wiki.sidebar`, gefüllt in T18) + Content-`<div>` mit faBookOpen + `wiki.empty.selectPageHint` (Empty-State-Muster von ChatNoSelectionState). +wiki-i18n-Namespace (description/sidebar/empty.selectPageHint) **DE+EN+FR** (check-translations grün). vitest-Spec (renderToStaticMarkup, i18n+PageLayout gemockt) **lokal 1/1 grün**, eslint clean. FE-Rekonstruktion aus Verhalten+Fork-Muster (2.0-ui-Bundle nicht rekonstruierbar). Review: 1 Runde request_changes (verschachteltes `<main>` in PageLayout-`<main>` → `<div>`, wie Pilot) → gefixt → approve. Kein Scope-Creep (Store/Sidebar/PageView = T17-T19).
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/WikiPage.tsx · apps/frontend/src/components/structure/layout/NativeAppPageManager.tsx
 Soll: FE-Referenz WikiPage-CCeoG8Ux.js · getNativeAppRoutes-Muster (1.6) · Chat-Piloten-Muster (p2-chat)
 Änderung: WIKI→WikiPage im NativeAppPageManager-Mapping; leeres WikiPage-Gerüst (zweispaltig: Sidebar-Platzhalter + leerer Content-Bereich mit `wiki.empty.selectPageHint`). Route läuft bereits generisch über getNativeAppRoutes (appType NATIVE).
