@@ -39,6 +39,7 @@ import PathValidationErrorMessages from '@libs/common/constants/path-validation-
 import WireguardErrorMessages from '@libs/wireguard/types/wireguardErrorMessages';
 import WebhookErrorMessages from '@libs/webhook/types/webhookErrorMessages';
 import ChatErrorMessages from '@libs/chat/types/chatErrorMessages';
+import ParentChildPairingErrorMessagesType from '@libs/parent-child-pairing/types/parentChildPairingErrorMessagesType';
 
 type ErrorMessage =
   | CommonErrorMessages
@@ -62,6 +63,7 @@ type ErrorMessage =
   | PathValidationErrorMessages
   | WireguardErrorMessages
   | WebhookErrorMessages
-  | ChatErrorMessages;
+  | ChatErrorMessages
+  | ParentChildPairingErrorMessagesType;
 
 export default ErrorMessage;
