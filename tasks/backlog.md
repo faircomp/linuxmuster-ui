@@ -2083,7 +2083,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T4 — BE: Schema `ParentChildPairing` + LogEntry-Subdoc  [ ]
+### T4 — BE: Schema `ParentChildPairing` + LogEntry-Subdoc  [x] OK Schema (main.js:951/952 + Rescue-Basis): parent/student/school/status/logs/schemaVersion/createdAt/updatedAt, unique {parent,student}, timestamps, toJSON.virtuals; LogEntry-Subdoc (action-enum/performedBy/timestamp default now/details) in **eigener Datei** (main.js-Modul-Struktur + eslint max-classes-per-file). Neue Collection → Baseline schemaVersion 1, keine Migration. eslint+isolierter tsc CLEAN, unique-Index präsent. Review approve (57e8a9578)
 Komponente: apps/api/src/parent-child-pairing · Dateien: `parent-child-pairing.schema.ts`
 Soll: main.js:60700-60705 (Index/toJSON), :60735-60760 (`ParentChildPairingLogEntry`: `action` enum, `performedBy`, `timestamp` default now, `details`) · upstream/1717-…:apps/api/src/parent-child-pairing/parent-child-pairing.schema.ts (Basis, ohne logs)
 Änderung: Rescue-Schema portieren, `logs: ParentChildPairingLogEntry[]`-Feld + Subdoc-Klasse ergänzen, `schemaVersion:number default 1`, Unique-Index `{parent:1,student:1}`, `timestamps:true`, `toJSON:{virtuals:true}`. SPDX-AGPL-Header.
