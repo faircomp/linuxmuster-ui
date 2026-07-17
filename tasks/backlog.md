@@ -2369,7 +2369,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2, T16
 
-### T18 — FE: Sidebar-Baum (Shares + Tree-Navigation)  [ ]
+### T18 — FE: Sidebar-Baum (Shares + Tree-Navigation)  [x] OK (525bcf2fc)
+> **OK (525bcf2fc):** `WikiSidebar` (fetchShares on mount, Shares als Root-Ordner) + rekursive `WikiTreeNode` — Ordner lazy-expand via `fetchTree` (Kinder pro Knoten lokal gecacht, isLoading-Doppel-Fetch-Schutz), Seiten-Klick→`fetchPage` + Aktiv-Highlight (`currentPage?.path`), Ordner-Kontextmenü (DropdownMenu) newPage/newFolder via Callback-Props (Dialoge=T20). In WikiPage-`<aside>` eingebunden (Landmark bleibt am aside, WikiSidebar rendert `<div>` — kein Doppel-Landmark). **Store-Verfeinerung (T17-getrieben):** `fetchTree` gibt jetzt `Promise<WikiTreeChildDto[]>` zurück (Multi-Expand-Baum, Knoten hält Teilbaum lokal); ungenutzter `tree`/`isLoadingTree`-Slot entfernt; T17-Spec angepasst (10/10). Icons nur free-solid (faChevron*/faFolder*/faFile/faPlus/faSpinner), kein nested-ternary, keine API-Calls in Komponenten. +i18n `wiki.menu.newPage/newFolder` **DE+EN+FR**. vitest **13/13 lokal grün** (WikiPage 1 + WikiSidebar 2 static + Store 10), eslint clean, Parität grün. Review approve. **Nits/Follow-up:** (1) fetchTree-Fehler→`[]` wird als leerer Ordner gecacht (kein Retry bis Remount) — später Retry-Pfad; (2) `hasChildren`-Chevron-Unterdrückung bei kinderlosen Ordnern optional. **Test-Gap ehrlich:** Interaktionen (Expand/Klick) nur box-gated (kein @testing-library/react).
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/WikiSidebar.tsx (+ Tree-Knoten) (+ *.spec.tsx)
 Soll: FE-Referenz WikiPage-Chunk · WikiTreeChildDto (T2)
 Änderung: Sidebar listet Shares (fetchShares) und lädt Kinder lazy pro Ordner (fetchTree); Ordner/Seiten-Icons, Auswahl setzt aktive Seite; Kontextmenü-Einträge `wiki.menu.newPage|newFolder` (Dialoge in T20).
