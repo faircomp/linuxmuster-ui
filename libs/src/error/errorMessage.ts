@@ -40,6 +40,7 @@ import WireguardErrorMessages from '@libs/wireguard/types/wireguardErrorMessages
 import WebhookErrorMessages from '@libs/webhook/types/webhookErrorMessages';
 import ChatErrorMessages from '@libs/chat/types/chatErrorMessages';
 import ParentChildPairingErrorMessagesType from '@libs/parent-child-pairing/types/parentChildPairingErrorMessagesType';
+import WikiErrorMessagesType from '@libs/wiki/types/wikiErrorMessagesType';
 
 type ErrorMessage =
   | CommonErrorMessages
@@ -64,6 +65,7 @@ type ErrorMessage =
   | WireguardErrorMessages
   | WebhookErrorMessages
   | ChatErrorMessages
-  | ParentChildPairingErrorMessagesType;
+  | ParentChildPairingErrorMessagesType
+  | WikiErrorMessagesType;
 
 export default ErrorMessage;
