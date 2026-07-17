@@ -2065,7 +2065,7 @@ Verify: `npx nx run libs:typecheck` (remote via iter.sh) grün; `grep -r "RELATI
 i18n: keine
 Doku: keine (intern)
 
-### T2 — libs: Types + DTOs (inkl. logs + enriched)  [ ]
+### T2 — libs: Types + DTOs (inkl. logs + enriched)  [x] OK 8 Dateien: 7 Rescue-Types (1717) byte-nah + ParentChildPairingDto um logs erweitert (main.js:60380, {action,performedBy,timestamp:ISO-string,details?}) + enrichedRelationshipResponseDto neu (main.js:60268, extends DTO + student/parent-Namen + isGroupActive). eslint+isolierter tsc CLEAN. Review approve.
 Komponente: libs/src/parent-child-pairing/types · Dateien: `parentChildPairingDto.ts`, `parentChildPairingCodeResponseDto.ts`, `parentChildPairingStatusType.ts`, `parentChildPairingErrorMessagesType.ts`, `submitParentChildPairingCodeDto.ts`, `updateParentChildPairingStatusDto.ts`, `parentChildPairingQrPayload.ts`, `enrichedRelationshipResponseDto.ts`
 Soll: main.js:60169-60378 (DTO-Shape mit `logs`), :60239-60309 (enriched: `studentFirstName/LastName`, `parentFirstName/LastName`, `isGroupActive`) · upstream/1717-…:libs/src/parent-child-pairing/types/*
 Änderung: Rescue-Types portieren, `ParentChildPairingDto` um `logs: {action;performedBy;timestamp;details}[]` erweitern, `enrichedRelationshipResponseDto` (Namen + `isGroupActive`) neu. SPDX-AGPL-Header.
