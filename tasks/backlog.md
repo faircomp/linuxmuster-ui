@@ -2074,7 +2074,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — BE: LMN-API `addParentToStudent` / `deleteParentFromStudent`  [ ]
+### T3 — BE: LMN-API `addParentToStudent` / `deleteParentFromStudent`  [x] OK 2 Methoden (main.js:12624/12634 byte-treu: POST/DELETE users/<student>/parents, {users:[parent]}, x-api-key-Header, Fehler→CustomHttpException BAD_GATEWAY) + 2 Enum-Keys + Spec (Erfolg-Shape + BAD_GATEWAY). **i18n-Korrektur:** die 2 lmnApi.errors.*-Keys DE+EN+FR übersetzt (Ledger-Annahme „i18n: keine" war falsch — bestehende lmnApi.errors.* sind alle einzeln übersetzt; check-translations grün). eslint+isolierter tsc CLEAN, jest box-gated. Review approve (Nit i18n → gefixt) (00f0b4e7a)
 Komponente: apps/api/src/lmnApi + libs/src/lmnApi · Dateien: `apps/api/src/lmnApi/lmnApi.service.ts`, `libs/src/lmnApi/types/lmnApiErrorMessage.ts`, `apps/api/src/lmnApi/lmnApi.service.spec.ts`
 Soll: main.js:12624 (`POST users/{student}/parents {users:[parent]}`, Header `x-api-key`), :12634 (`DELETE …/parents`); Fehler `AddParentToStudentFailed`/`DeleteParentFromStudentFailed` → `CustomHttpException(BAD_GATEWAY)`
 Änderung: zwei Methoden ergänzen (Muster `this.request(...)` mit `USERS_LMN_API_ENDPOINT`), zwei Fehlermeldungs-Keys in `lmnApiErrorMessage.ts`. Spec deckt Erfolg + BAD_GATEWAY-Pfad (gemockter `request`) ab.
