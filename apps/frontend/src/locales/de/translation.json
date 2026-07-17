@@ -2020,6 +2020,12 @@
       "newPage": "Neue Seite",
       "newFolder": "Neuer Ordner"
     },
+    "metadata": {
+      "updatedAt": "Zuletzt geändert:"
+    },
+    "actions": {
+      "edit": "Bearbeiten"
+    },
     "empty": {
       "selectPageHint": "Wählen Sie links eine Seite aus, um sie anzuzeigen."
     }

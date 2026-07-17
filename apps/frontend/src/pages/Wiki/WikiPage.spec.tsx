@@ -20,11 +20,14 @@ vi.mock('./components/WikiSidebar', () => ({
   default: () => null,
 }));
 
+vi.mock('./components/WikiPageView', () => ({
+  default: () => null,
+}));
+
 describe('WikiPage', () => {
-  it('renders the empty-state hint and a labelled sidebar placeholder', () => {
+  it('lays out a labelled sidebar column next to the content pane', () => {
     const html = renderToStaticMarkup(<WikiPage />);
 
-    expect(html).toContain('wiki.empty.selectPageHint');
     expect(html).toContain('aria-label="wiki.sidebar"');
   });
 });

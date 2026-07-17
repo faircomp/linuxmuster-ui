@@ -2019,6 +2019,12 @@
       "newPage": "New page",
       "newFolder": "New folder"
     },
+    "metadata": {
+      "updatedAt": "Last updated:"
+    },
+    "actions": {
+      "edit": "Edit"
+    },
     "empty": {
       "selectPageHint": "Select a page on the left to view it."
     }
