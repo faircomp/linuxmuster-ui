@@ -2428,7 +2428,8 @@ i18n: `wiki.conflict.*`, `wiki.draftRecovery.*`, `wiki.saveStatus.*`, `wiki.acti
 Doku: keine (intern)
 Abhängt von: T21
 
-### T23 — FE: Suche (Panel + Store-Aktion + degradierte UX)  [ ]
+### T23 — FE: Suche (Panel + Store-Aktion + degradierte UX)  [x] OK (047528805)
+> **OK (047528805):** Store-Aktion `search(query, scope, shareId?)` (POST `wiki/search`, body {query,scope,shareId?,page:0,size:20} → WikiSearchResponseDto|null, searchResult/isSearching-State, Fehler→handleApiError+searchResult=null). `WikiSearch`-Panel (oben in WikiSidebar): Query-Input, Scope-Toggle all/current (current leitet shareId aus `currentPage.path.split('/')[0]` ab, disabled ohne offene Seite → Fallback all), Hit-Liste (Titel + `snippets.join(' … ')`, Klick→fetchPage), Zustände **empty/degraded/unavailable** + `unavailableShares`-Reason-Keys. Snippets als **Text** (kein XSS), leere Query geblockt, 429 via handleApiError. **Editor-unabhängig gebaut** (T21-Dep lose — Treffer öffnen die Seitenansicht). +i18n `wiki.search.*` (scope/empty/degraded/unavailable/reasons) **DE+EN+FR**. vitest **44/44 lokal grün** (WikiSearch 4 static + Store 2 search-POST all/share + Rest), eslint clean, **isolierter FE-tsc inkl. Specs CLEAN**, Parität grün. Review: request_changes (1 wichtig: Spec-Fixture ließ required `WikiSearchHitDto.sort` weg → TS2741, nur bei Specs-im-tsc sichtbar → gefixt +aria-pressed-Nit; **Lehre verschärft: tsc muss Specs einschließen**) → approve. Interaktions-Gap (Tippen/Klick) box-gated.
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/WikiSearch.tsx · Store-Aktion in useWikiStore (+ *.spec.tsx)
 Soll: BE search-Route (T11/T13) · WikiSearchResponseDto (T2) · FE-Referenz (i18n wiki.search.*)
 Änderung: Such-Panel (Query, Scope all/current), Store-Aktion `search()` (POST /wiki/search); Ergebnisliste mit Snippets/Score; Leer-/Degraded-/Unavailable-Zustände (unavailableShares + reason-Keys). Rate-Limit-Fehler (429) sauber melden.
