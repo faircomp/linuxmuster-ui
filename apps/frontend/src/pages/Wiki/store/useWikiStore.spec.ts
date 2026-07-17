@@ -29,6 +29,7 @@ const SHARES_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.SHARES}`;
 const TREE_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.TREE}`;
 const PAGE_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.PAGE}`;
 const FOLDER_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.FOLDER}`;
+const SEARCH_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.SEARCH}`;
 
 describe('useWikiStore', () => {
   beforeEach(() => {
@@ -38,9 +39,11 @@ describe('useWikiStore', () => {
       currentPage: null,
       currentPageEtag: null,
       treeVersion: 0,
+      searchResult: null,
       isLoadingShares: false,
       isLoadingPage: false,
       isSaving: false,
+      isSearching: false,
       error: null,
     });
   });
@@ -144,6 +147,37 @@ describe('useWikiStore', () => {
 
     expect(useWikiStore.getState().isLoadingShares).toBe(false);
     expect(useWikiStore.getState().error).not.toBeNull();
+  });
+
+  it('search posts the query and scope to the search endpoint and stores the result', async () => {
+    const result = { hits: [], total: 0, status: 'ok', unavailableShares: [] };
+    mockedEduApi.post.mockResolvedValue({ data: result });
+
+    const returned = await useWikiStore.getState().search('hello', 'all');
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(SEARCH_ENDPOINT, {
+      query: 'hello',
+      scope: 'all',
+      shareId: undefined,
+      page: 0,
+      size: 20,
+    });
+    expect(useWikiStore.getState().searchResult).toEqual(result);
+    expect(returned).toEqual(result);
+  });
+
+  it('search forwards a shareId for a share-scoped query', async () => {
+    mockedEduApi.post.mockResolvedValue({ data: { hits: [], total: 0, status: 'ok', unavailableShares: [] } });
+
+    await useWikiStore.getState().search('term', 'share', 'ShareA');
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(SEARCH_ENDPOINT, {
+      query: 'term',
+      scope: 'share',
+      shareId: 'ShareA',
+      page: 0,
+      size: 20,
+    });
   });
 
   it('refreshTree bumps the tree version so expanded folders reload lazily', () => {

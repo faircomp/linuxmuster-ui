@@ -13,6 +13,8 @@ import type CreateWikiPageDto from '@libs/wiki/types/createWikiPageDto';
 import type CreateWikiFolderDto from '@libs/wiki/types/createWikiFolderDto';
 import type WikiFolderCreatedDto from '@libs/wiki/types/wikiFolderCreatedDto';
 import type WikiSuccessDto from '@libs/wiki/types/wikiSuccessDto';
+import type WikiSearchResponseDto from '@libs/wiki/types/wikiSearchResponseDto';
+import type WikiSearchScope from '@libs/wiki/constants/wikiSearchScope';
 import eduApi from '@/api/eduApi';
 import handleApiError from '@/utils/handleApiError';
 
@@ -20,18 +22,23 @@ const WIKI_SHARES_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.SHARES}`;
 const WIKI_TREE_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.TREE}`;
 const WIKI_PAGE_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.PAGE}`;
 const WIKI_FOLDER_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.FOLDER}`;
+const WIKI_SEARCH_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.SEARCH}`;
+const WIKI_SEARCH_PAGE_SIZE = 20;
 
 interface WikiStore {
   shares: WebdavShareDto[];
   currentPage: WikiPageDto | null;
   currentPageEtag: string | null;
   treeVersion: number;
+  searchResult: WikiSearchResponseDto | null;
   isLoadingShares: boolean;
   isLoadingPage: boolean;
   isSaving: boolean;
+  isSearching: boolean;
   error: string | null;
 
   fetchShares: () => Promise<void>;
+  search: (query: string, scope: WikiSearchScope, shareId?: string) => Promise<WikiSearchResponseDto | null>;
   fetchTree: (path: string) => Promise<WikiTreeChildDto[]>;
   fetchPage: (path: string) => Promise<WikiPageDto | null>;
   createPage: (dto: CreateWikiPageDto) => Promise<WikiPageDto | null>;
@@ -47,9 +54,11 @@ const initialState = {
   currentPage: null,
   currentPageEtag: null,
   treeVersion: 0,
+  searchResult: null,
   isLoadingShares: false,
   isLoadingPage: false,
   isSaving: false,
+  isSearching: false,
   error: null,
 };
 
@@ -65,6 +74,27 @@ const useWikiStore = create<WikiStore>((set, get) => ({
       handleApiError(error, set);
     } finally {
       set({ isLoadingShares: false });
+    }
+  },
+
+  search: async (query, scope, shareId) => {
+    set({ isSearching: true, error: null });
+    try {
+      const response = await eduApi.post<WikiSearchResponseDto>(WIKI_SEARCH_ENDPOINT, {
+        query,
+        scope,
+        shareId,
+        page: 0,
+        size: WIKI_SEARCH_PAGE_SIZE,
+      });
+      set({ searchResult: response.data });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, set);
+      set({ searchResult: null });
+      return null;
+    } finally {
+      set({ isSearching: false });
     }
   },
 

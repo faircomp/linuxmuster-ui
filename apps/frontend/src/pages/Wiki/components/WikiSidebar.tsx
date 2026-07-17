@@ -10,6 +10,7 @@ import type WikiNodeType from '@libs/wiki/constants/wikiNodeType';
 import type WikiTreeChildDto from '@libs/wiki/types/wikiTreeChildDto';
 import useWikiStore from '@/pages/Wiki/store/useWikiStore';
 import WikiTreeNode from './WikiTreeNode';
+import WikiSearch from './WikiSearch';
 
 interface WikiSidebarProps {
   onCreatePage?: (parentPath: string) => void;
@@ -25,8 +26,9 @@ const WikiSidebar = ({ onCreatePage, onCreateFolder, onDelete }: WikiSidebarProp
   }, [fetchShares]);
 
   return (
-    <div className={cn('flex-1 overflow-y-auto p-2')}>
-      <ul>
+    <div className={cn('flex flex-1 flex-col overflow-y-auto')}>
+      <WikiSearch />
+      <ul className={cn('p-2')}>
         {shares.map((share) => {
           const rootNode: WikiTreeChildDto = {
             type: WIKI_NODE_TYPE.FOLDER,

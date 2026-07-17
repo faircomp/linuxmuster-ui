@@ -2047,6 +2047,24 @@
       "folderCreated": "Dossier créé",
       "deleted": "Supprimé"
     },
+    "search": {
+      "placeholder": "Rechercher dans le wiki …",
+      "action": "Rechercher",
+      "scope": {
+        "all": "Tout",
+        "current": "Partage actuel"
+      },
+      "empty": "Aucun résultat.",
+      "degraded": "Certains partages n'ont pas pu être recherchés.",
+      "unavailable": "La recherche est actuellement indisponible.",
+      "reasons": {
+        "timeout": "Délai dépassé",
+        "connection_error": "Erreur de connexion",
+        "http_5xx": "Erreur serveur",
+        "http_4xx": "Erreur de requête",
+        "health_check_down": "Partage hors ligne"
+      }
+    },
     "empty": {
       "selectPageHint": "Sélectionnez une page à gauche pour l'afficher."
     }

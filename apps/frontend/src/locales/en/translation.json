@@ -2050,6 +2050,24 @@
       "folderCreated": "Folder created",
       "deleted": "Deleted"
     },
+    "search": {
+      "placeholder": "Search the wiki …",
+      "action": "Search",
+      "scope": {
+        "all": "All",
+        "current": "Current share"
+      },
+      "empty": "No results.",
+      "degraded": "Some shares could not be searched.",
+      "unavailable": "Search is currently unavailable.",
+      "reasons": {
+        "timeout": "Timed out",
+        "connection_error": "Connection error",
+        "http_5xx": "Server error",
+        "http_4xx": "Request error",
+        "health_check_down": "Share offline"
+      }
+    },
     "empty": {
       "selectPageHint": "Select a page on the left to view it."
     }

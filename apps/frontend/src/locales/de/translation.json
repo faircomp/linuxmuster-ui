@@ -2051,6 +2051,24 @@
       "folderCreated": "Ordner erstellt",
       "deleted": "Gelöscht"
     },
+    "search": {
+      "placeholder": "Wiki durchsuchen …",
+      "action": "Suchen",
+      "scope": {
+        "all": "Alle",
+        "current": "Aktuelle Freigabe"
+      },
+      "empty": "Keine Treffer.",
+      "degraded": "Einige Freigaben konnten nicht durchsucht werden.",
+      "unavailable": "Die Suche ist derzeit nicht verfügbar.",
+      "reasons": {
+        "timeout": "Zeitüberschreitung",
+        "connection_error": "Verbindungsfehler",
+        "http_5xx": "Serverfehler",
+        "http_4xx": "Anfragefehler",
+        "health_check_down": "Freigabe offline"
+      }
+    },
     "empty": {
       "selectPageHint": "Wählen Sie links eine Seite aus, um sie anzuzeigen."
     }

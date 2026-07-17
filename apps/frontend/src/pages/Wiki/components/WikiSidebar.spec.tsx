@@ -23,6 +23,10 @@ vi.mock('@/pages/Wiki/store/useWikiStore', () => ({
   }),
 }));
 
+vi.mock('./WikiSearch', () => ({
+  default: () => null,
+}));
+
 vi.mock('@/components/shared/DropdownMenu', () => ({
   default: ({ items }: { items: { label: string }[] }) => (
     <ul>
