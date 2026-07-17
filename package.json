@@ -166,6 +166,7 @@
     "sass": "^1.70.0",
     "shadcn": "^2.9.3",
     "sharp": "^0.34.5",
+    "slugify": "^1.6.9",
     "sonner": "^1.4.3",
     "survey-analytics": "^1.12.51",
     "survey-core": "^1.12.51",
