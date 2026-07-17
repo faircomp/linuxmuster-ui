@@ -2192,7 +2192,7 @@ Doku: kurzer Modul-Abschnitt „ParentChildPairing" (DE+EN) im selben Commit
 Abhängt von: T7, T13, T14
 
 ## p3-wiki [P3] — Wiki
-_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 25
+_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ aktiv · _Tasks:_ 25
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · .reference/2.0.200/ui/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
 
 > Kalibrierungs-Notiz (P3): BE-Tasks sind aus main.js hart verankert und ausführbar. Die FE-Tasks
@@ -2203,7 +2203,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:
 
 ---
 
-### T1 — libs: Wiki-Konstanten & Enums  [ ]
+### T1 — libs: Wiki-Konstanten & Enums  [x] OK (f4529d01d) 7 Dateien aus main.js feldgenau: WIKI_ENDPOINTS(:71807), WIKI_CONSTANTS(:69943, .wiki/.md/index/5MB), WIKI_NODE_TYPE(:69976), WIKI_SEARCH_STATUS(:70490), UNAVAILABLE_SHARE_REASON(5 Member), WIKI_SEARCH_SCOPE(:71283) — enum-artige als named const + default derived Type (sortDirection-Muster). **Abweichung:** Throttle als Config-Objekt `WIKI_SEARCH_THROTTLE_CONFIG{LIMIT:60,TTL_MS:60_000}` statt 2 Named-Consts (Fork-cacheConfig-Präzedenz, Werte identisch). `UNAVAILABLE_SHARE_REASONS` (Plural) weggelassen — toter Export in main.js. **Kein libs-Spec:** Fork-Basis hat keine libs-Test-Infra (vitest.workspace nur *.mts, libs/tsconfig excludet Specs) → tsc-only wie pcp-T1/T2. eslint+isolierter tsc CLEAN. Review approve.
 Komponente: libs · Dateien: libs/src/wiki/constants/{wikiEndpoints,wikiConstants,wikiNodeType,wikiSearchStatus,unavailableShareReason,wikiSearchScope,wikiSearchThrottleConfig}.ts
 Soll: main.js:71807 (WIKI_ENDPOINTS) · 69943 (WIKI_CONSTANTS) · 69976 (WIKI_NODE_TYPE) · 70490 (WIKI_SEARCH_STATUS/UNAVAILABLE_SHARE_REASON) · 71843 (Throttle) · 72170 (wikiSearchScope)
 Änderung: Const-Objekte + derived Types (kein enum) 1:1 spiegeln: Endpoints BASE/SHARES/TREE/PAGE/FOLDER/SEARCH, WIKI_FOLDER_NAME='.wiki'/INDEX_PAGE_SLUG/MARKDOWN_EXTENSION='.md'/MAX_WIKI_PAGE_SIZE_BYTES=5*1024*1024, Node-Typ FOLDER/PAGE, Such-Status/Reason, Throttle 60/60000.
