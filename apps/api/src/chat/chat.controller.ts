@@ -8,6 +8,8 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseEnumPipe,
   ParseIntPipe,
@@ -63,6 +65,17 @@ class ChatController {
     @GetCurrentUser() currentUser: JwtUser,
   ): Promise<ChatReadReceipt[]> {
     return this.chatService.getReadReceipts(conversationType, groupName, currentUser.preferred_username);
+  }
+
+  @ApiOperation({ summary: 'Mark a group conversation as read for the current user' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('conversations/:conversationType/:groupName/read')
+  async markAsRead(
+    @Param('conversationType', ValidateConversationTypePipe) conversationType: ConversationType,
+    @Param('groupName') groupName: string,
+    @GetCurrentUser() currentUser: JwtUser,
+  ): Promise<void> {
+    await this.chatService.markChatAsRead(conversationType, groupName, currentUser.preferred_username);
   }
 
   @ApiOperation({ summary: 'Fetch paginated messages for a group conversation the current user has access to' })

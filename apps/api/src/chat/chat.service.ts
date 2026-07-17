@@ -337,6 +337,37 @@ class ChatService {
     }));
   }
 
+  async markChatAsRead(conversationType: ConversationType, groupName: string, username: string): Promise<void> {
+    const members = await this.verifyGroupAccess(groupName, conversationType, username);
+
+    const conversation = await this.conversationModel.findOne({ groupName, conversationType });
+
+    if (!conversation) {
+      return;
+    }
+
+    await this.chatReadStatusModel.findOneAndUpdate(
+      { conversationId: conversation.id, username },
+      { $set: { readAt: new Date() } },
+      { upsert: true },
+    );
+
+    const sourceId = `${conversationType}/${groupName}`;
+    await this.notificationsService.markNotificationReadBySource(NOTIFICATION_SOURCE_TYPE.CHAT, sourceId, username);
+
+    const recipients = members.filter((member) => member !== username);
+
+    if (recipients.length > 0) {
+      const payload = JSON.stringify({ conversationType, groupName, username });
+
+      try {
+        this.sseService.sendEventToUsers(recipients, payload, SSE_MESSAGE_TYPE.CHAT_READ_STATUS_UPDATED);
+      } catch {
+        Logger.warn(`Could not send read status SSE for ${conversationType}/${groupName}`, ChatService.name);
+      }
+    }
+  }
+
   private async notifyGroupMembers(
     members: string[],
     groupName: string,

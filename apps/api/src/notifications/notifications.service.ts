@@ -204,6 +204,24 @@ class NotificationsService {
     return this.notificationModel.findOne({ sourceType, sourceId }).exec();
   }
 
+  async markNotificationReadBySource(
+    sourceType: NotificationSourceType,
+    sourceId: string,
+    username: string,
+  ): Promise<void> {
+    const notification = await this.findNotificationBySource(sourceType, sourceId);
+
+    if (!notification) {
+      return;
+    }
+
+    await this.userNotificationModel.updateOne(
+      { notificationId: new Types.ObjectId(String(notification.id)), username },
+      { $set: { readAt: new Date() } },
+      { timestamps: false },
+    );
+  }
+
   async cascadeDeleteBySourceId(sourceId: string): Promise<void> {
     const notification = await this.notificationModel.findOne({ sourceId }).exec();
     if (!notification) {

@@ -23,6 +23,7 @@ const mockChatService = {
   getAuthorizedMessages: jest.fn(),
   getOrCreateAuthorizedConversation: jest.fn(),
   sendMessage: jest.fn(),
+  markChatAsRead: jest.fn(),
 };
 const mockGroupsService = { getUserGroupsAndProjects: jest.fn() };
 
@@ -68,6 +69,12 @@ describe('ChatController', () => {
       await controller.getReadReceipts(CONVERSATION_TYPE, GROUP_NAME, CURRENT_USER);
 
       expect(mockChatService.getReadReceipts).toHaveBeenCalledWith(CONVERSATION_TYPE, GROUP_NAME, 'alice');
+    });
+
+    it('markAsRead delegates to markChatAsRead with the current username', async () => {
+      await controller.markAsRead(CONVERSATION_TYPE, GROUP_NAME, CURRENT_USER);
+
+      expect(mockChatService.markChatAsRead).toHaveBeenCalledWith(CONVERSATION_TYPE, GROUP_NAME, 'alice');
     });
 
     it('getMessages delegates the pagination arguments to getAuthorizedMessages', async () => {
@@ -134,7 +141,7 @@ describe('ChatController', () => {
   });
 
   describe('auth contract', () => {
-    it.each(['getUserGroups', 'getUnreadCounts', 'getReadReceipts', 'getMessages', 'sendMessage'])(
+    it.each(['getUserGroups', 'getUnreadCounts', 'getReadReceipts', 'markAsRead', 'getMessages', 'sendMessage'])(
       'keeps %s behind the global JWT guard (not public)',
       (route) => {
         expect(controllerContractReflection.isRoutePublic(ChatController, route)).toBe(false);

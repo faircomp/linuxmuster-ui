@@ -9,6 +9,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import SOPHOMORIX_GROUP_TYPES from '@libs/lmnApi/constants/sophomorixGroupTypes';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
+import NOTIFICATION_SOURCE_TYPE from '@libs/notification/constants/notificationSourceType';
 import JwtUser from '@libs/user/types/jwt/jwtUser';
 import CustomHttpException from '../common/CustomHttpException';
 import SseService from '../sse/sse.service';
@@ -39,7 +40,7 @@ const mockChatReadStatusModel = {
 };
 const mockCacheManager = { get: jest.fn() };
 const mockSseService = { sendEventToUsers: jest.fn() };
-const mockNotificationsService = { upsertNotificationForSource: jest.fn() };
+const mockNotificationsService = { upsertNotificationForSource: jest.fn(), markNotificationReadBySource: jest.fn() };
 const mockGroupsService = { getUserGroupsAndProjects: jest.fn() };
 
 describe('ChatService', () => {
@@ -240,6 +241,46 @@ describe('ChatService', () => {
 
       expect(mockSseService.sendEventToUsers).not.toHaveBeenCalled();
       expect(mockNotificationsService.upsertNotificationForSource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('markChatAsRead', () => {
+    it('upserts the read status, marks the source notification read and broadcasts to the other members', async () => {
+      mockCacheManager.get.mockResolvedValue({ members: [{ username: USERNAME }, { username: 'bob' }] });
+      mockConversationModel.findOne.mockResolvedValue({ id: 'conversation-1' });
+      mockChatReadStatusModel.findOneAndUpdate.mockResolvedValue(undefined);
+      mockNotificationsService.markNotificationReadBySource.mockResolvedValue(undefined);
+
+      await service.markChatAsRead(CONVERSATION_TYPE, GROUP_NAME, USERNAME);
+
+      expect(mockChatReadStatusModel.findOneAndUpdate).toHaveBeenCalledTimes(1);
+      const [filter, , options] = mockChatReadStatusModel.findOneAndUpdate.mock.calls[0] as [
+        { conversationId: string; username: string },
+        unknown,
+        { upsert: boolean },
+      ];
+      expect(filter).toEqual({ conversationId: 'conversation-1', username: USERNAME });
+      expect(options.upsert).toBe(true);
+      expect(mockNotificationsService.markNotificationReadBySource).toHaveBeenCalledWith(
+        NOTIFICATION_SOURCE_TYPE.CHAT,
+        `${CONVERSATION_TYPE}/${GROUP_NAME}`,
+        USERNAME,
+      );
+      expect(mockSseService.sendEventToUsers).toHaveBeenCalledWith(
+        ['bob'],
+        expect.any(String),
+        SSE_MESSAGE_TYPE.CHAT_READ_STATUS_UPDATED,
+      );
+    });
+
+    it('returns early without side effects when the conversation does not exist', async () => {
+      mockCacheManager.get.mockResolvedValue({ members: [{ username: USERNAME }] });
+      mockConversationModel.findOne.mockResolvedValue(null);
+
+      await service.markChatAsRead(CONVERSATION_TYPE, GROUP_NAME, USERNAME);
+
+      expect(mockChatReadStatusModel.findOneAndUpdate).not.toHaveBeenCalled();
+      expect(mockNotificationsService.markNotificationReadBySource).not.toHaveBeenCalled();
     });
   });
 });
