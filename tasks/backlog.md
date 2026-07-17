@@ -2379,7 +2379,9 @@ i18n: `wiki.menu.newPage`, `wiki.menu.newFolder` — DE+EN
 Doku: keine (intern)
 Abhängt von: T17
 
-### T19 — FE: Seitenansicht (Read-only Markdown + KaTeX)  [ ]
+### T19 — FE: Seitenansicht (Read-only Markdown + KaTeX)  [x] OK Markdown+Code (c2b26a376) · [?] human-gate: KaTeX box-gated (Dep-Install)
+> **OK (c2b26a376):** `WikiPageView` rendert `useWikiStore.currentPage` — Titel, `wiki.metadata.updatedAt` (aus `mtime`, epoch-ms, Guard `>0` gegen 1970), **Read-only-Markdown via bestehenden `MarkdownRenderer`** (`@uiw/react-md-editor` + remarkGfm + rehypeHighlight — alles installiert; AGENTS „reuse existing patterns"), Edit-Einstieg via `onEdit`-Callback (Editor=T21, bis dahin inert). Empty-State (Hint) aus WikiPage hierher verschoben; WikiPage rendert jetzt `<WikiPageView />`. +i18n `wiki.metadata.updatedAt`/`wiki.actions.edit` **DE+EN+FR** (Ledger-Key `finishEditing` bewusst NICHT — gehört zum T21-Editor-Toggle, wäre jetzt Ballast). vitest **15/15 lokal grün** (WikiPageView 2 + Rest), eslint clean, Parität grün. Review approve.
+> **⚠️ KaTeX GEPARKT — box-gated Follow-up:** `katex`/`rehype-katex`/`remark-math` sind NICHT installiert; ihr Import würde tsc/eslint/vitest lokal brechen, und ein package.json-Eintrag ohne `package-lock`-Update bräche `npm ci` auf der Box. **Wenn die crabbox up ist:** `npm i katex rehype-katex remark-math` (Root), dann in `MarkdownRenderer` (oder einer Wiki-Variante) `remarkMath` zu `remarkPlugins` + `rehypeKatex` zu `rehypePlugins` + `import 'katex/dist/katex.min.css'` ergänzen. Bis dahin rendern `$…$`-Formeln als Rohtext.
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/WikiPageView.tsx (+ *.spec.tsx)
 Soll: FE-Referenz · WikiPageDto (T2)
 Änderung: Gerenderte Read-only-Ansicht der aktiven Seite (Markdown via remark-gfm + rehype-highlight, Formeln via KaTeX), Titel/`wiki.metadata.updatedAt`, „Bearbeiten"-Einstieg. `katex` neu in Root-package.json.
