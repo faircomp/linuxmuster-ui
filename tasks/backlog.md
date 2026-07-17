@@ -2286,7 +2286,7 @@ i18n: keine (nutzt wiki.errors.*)
 Doku: keine (intern)
 Abhängt von: T8
 
-### T10 — BE: WikiFolderService  [ ]
+### T10 — BE: WikiFolderService  [x] OK (91b2b70bd) main.js:70884 feldgenau: createFolder (Name-Guard !isSafeLeafName/.wiki/index/`.`-Prefix→400, probeFolder-Existenz→409 FOLDER_ALREADY_EXISTS, MKCOL→WikiFolderCreatedDto{path}, catch 401/403/405/409→ACCESS_DENIED sonst→500) + deleteFolder (resolve, !relativePath→400 INVALID_PATH, Leaf-Guard + segments.some(`.`-Prefix)→400 INVALID_NAME, rekursiv deletePath, 404/403-Mapping). **Abweichung (Review approve):** probe-before-delete ergänzt (probeFolder===null→404) — Fork-deletePath plättet 404→500 (executeWebdavRequest, s. T8/T9-Follow-up), sonst wäre catch-404 tot + „delete non-existent" ergäbe 500 statt gefordertem 404; probe ändert rekursive Semantik NICHT. **Kein T9-Blocker:** createFolder probet VOR create (Common-Path bricht nicht; nur Race degradiert). errorStatus/errorMessage module-local (wie T9, nutzen apps/api-CustomHttpException → nicht libs-fähig). Auth (assertShareAccessible vor jeder Op) + `.wiki`/Traversal-Guards sicher. Spec 6 (createFolder happy/409/reserved-400 + deleteFolder delete/404-real/root-400). eslint+isolierter tsc CLEAN, jest box-gated.
 Komponente: apps/api · Dateien: apps/api/src/wiki/wiki-folder.service.ts (+ *.spec.ts)
 Soll: main.js:70884 (WikiFolderService: createFolder, deleteFolder)
 Änderung: `createFolder(username, userGroups, parentPath, name)` — Name-Validierung, 409 bei Existenz (probeFolder), WebDAV-MKCOL; `deleteFolder(username, userGroups, path)` — rekursiv, INVALID_NAME wenn Leaf `.wiki`, 404/403-Mapping.
