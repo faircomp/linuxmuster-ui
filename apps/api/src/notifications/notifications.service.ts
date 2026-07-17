@@ -27,13 +27,18 @@ import NotificationSourceType from '@libs/notification/types/notificationSourceT
 import InboxNotificationDto from '@libs/notification/types/inboxNotification.dto';
 import USER_NOTIFICATION_STATUS from '@libs/notification/constants/userNotificationStatus';
 import NOTIFICATION_TYPE from '@libs/notification/constants/notificationType';
+import NOTIFICATION_SOURCE_TYPE from '@libs/notification/constants/notificationSourceType';
 import { NOTIFICATION_FILTER_TYPE, NotificationFilterType } from '@libs/notification/types/notificationFilterType';
 import BULK_INSERT_BATCH_SIZE from '@libs/common/constants/bulkInsertBatchSize';
 import BulkInsertResult from '@libs/common/types/bulkInsertResult';
 import SAME_SOURCE_PUSH_DEBOUNCE_MINUTES from '@libs/notification/constants/sameSourcePushDebounceMinutes';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
+import SOURCE_TYPE_TO_APP from '@libs/notification/constants/sourceTypeToApp';
+import getIsAdmin from '@libs/user/utils/getIsAdmin';
 import UsersService from '../users/users.service';
 import SseService from '../sse/sse.service';
+import AppConfigService from '../appconfig/appconfig.service';
+import GlobalSettingsService from '../global-settings/global-settings.service';
 import PushNotificationQueue from './queue/push-notification.queue';
 import { Notification, NotificationDocument } from './notification.schema';
 import { UserNotification, UserNotificationDocument } from './userNotification.schema';
@@ -43,6 +48,8 @@ class NotificationsService {
   constructor(
     private userService: UsersService,
     private sseService: SseService,
+    private appConfigService: AppConfigService,
+    private globalSettingsService: GlobalSettingsService,
     private pushNotificationQueue: PushNotificationQueue,
     @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
     @InjectModel(UserNotification.name) private userNotificationModel: Model<UserNotificationDocument>,
@@ -338,7 +345,18 @@ class NotificationsService {
     username: string,
     additionalUserNotificationMatch: object = {},
     additionalNotificationMatch: object = {},
+    accessibleSourceTypes?: NotificationSourceType[],
   ): PipelineStage[] {
+    const accessibleSourceTypeMatch = accessibleSourceTypes
+      ? {
+          $or: [
+            { 'notification.sourceType': { $exists: false } },
+            { 'notification.sourceType': null },
+            { 'notification.sourceType': { $in: accessibleSourceTypes } },
+          ],
+        }
+      : {};
+
     return [
       { $match: { username, ...additionalUserNotificationMatch } },
       { $sort: { updatedAt: -1 as const } },
@@ -351,15 +369,40 @@ class NotificationsService {
         },
       },
       { $unwind: '$notification' },
-      { $match: { 'notification.createdBy': { $ne: username }, ...additionalNotificationMatch } },
+      {
+        $match: {
+          'notification.createdBy': { $ne: username },
+          ...accessibleSourceTypeMatch,
+          ...additionalNotificationMatch,
+        },
+      },
     ];
+  }
+
+  private async getAccessibleSourceTypes(ldapGroups: string[]): Promise<NotificationSourceType[]> {
+    const adminGroups = await this.globalSettingsService.getAdminGroupsFromCache();
+    const isAdmin = getIsAdmin(ldapGroups, adminGroups);
+    const accessibleApps = new Set<string>();
+
+    this.appConfigService.appAccessMap.forEach((allowedGroups, appName) => {
+      const hasAppAccess = isAdmin || ldapGroups.some((group) => allowedGroups.has(group));
+      if (hasAppAccess) {
+        accessibleApps.add(appName);
+      }
+    });
+
+    return Object.values<NotificationSourceType>(NOTIFICATION_SOURCE_TYPE).filter((sourceType) =>
+      accessibleApps.has(SOURCE_TYPE_TO_APP[sourceType]),
+    );
   }
 
   async getInboxNotifications(
     username: string,
+    ldapGroups: string[],
     limit = 20,
     offset = 0,
   ): Promise<{ notifications: InboxNotificationDto[]; total: number }> {
+    const accessibleSourceTypes = await this.getAccessibleSourceTypes(ldapGroups);
     const result = await this.userNotificationModel.aggregate<{
       data: Array<{
         id: string;
@@ -369,7 +412,7 @@ class NotificationsService {
       }>;
       total: Array<{ count: number }>;
     }>([
-      ...this.buildUserNotificationPipeline(username),
+      ...this.buildUserNotificationPipeline(username, {}, {}, accessibleSourceTypes),
       {
         $addFields: {
           id: { $toString: '$_id' },
@@ -406,9 +449,10 @@ class NotificationsService {
     return { notifications, total };
   }
 
-  async getUnreadCount(username: string): Promise<number> {
+  async getUnreadCount(username: string, ldapGroups: string[]): Promise<number> {
+    const accessibleSourceTypes = await this.getAccessibleSourceTypes(ldapGroups);
     const result = await this.userNotificationModel.aggregate<{ total: number }>([
-      ...this.buildUserNotificationPipeline(username, { readAt: null }),
+      ...this.buildUserNotificationPipeline(username, { readAt: null }, {}, accessibleSourceTypes),
       { $count: 'total' },
     ]);
 

@@ -32,6 +32,7 @@ import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { NOTIFICATIONS_EDU_API_ENDPOINT } from '@libs/notification/constants/apiEndpoints';
 import { NOTIFICATION_FILTER_TYPE, NotificationFilterType } from '@libs/notification/types/notificationFilterType';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
+import GetCurrentUserGroups from '../common/decorators/getCurrentUserGroups.decorator';
 import NotificationsService from './notifications.service';
 
 @ApiTags(NOTIFICATIONS_EDU_API_ENDPOINT)
@@ -45,17 +46,18 @@ class NotificationsController {
   @ApiQuery({ name: 'offset', required: false, type: Number, example: 0 })
   async getInbox(
     @GetCurrentUsername() username: string,
+    @GetCurrentUserGroups() ldapGroups: string[],
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
   ) {
     const sanitizedLimit = Math.min(50, Math.max(1, limit));
     const sanitizedOffset = Math.max(0, offset);
-    return this.notificationsService.getInboxNotifications(username, sanitizedLimit, sanitizedOffset);
+    return this.notificationsService.getInboxNotifications(username, ldapGroups, sanitizedLimit, sanitizedOffset);
   }
 
   @Get('unread-count')
-  async getUnreadCount(@GetCurrentUsername() username: string) {
-    const count = await this.notificationsService.getUnreadCount(username);
+  async getUnreadCount(@GetCurrentUsername() username: string, @GetCurrentUserGroups() ldapGroups: string[]) {
+    const count = await this.notificationsService.getUnreadCount(username, ldapGroups);
     return { count };
   }
 

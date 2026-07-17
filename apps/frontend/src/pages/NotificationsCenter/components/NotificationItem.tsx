@@ -41,8 +41,10 @@ import NOTIFICATION_TYPE from '@libs/notification/constants/notificationType';
 import NOTIFICATION_SOURCE_TYPE from '@libs/notification/constants/notificationSourceType';
 import NotificationSourceType from '@libs/notification/types/notificationSourceType';
 import getNotificationSourceRoute from '@libs/notification/utils/getNotificationSourceRoute';
+import SOURCE_TYPE_TO_APP from '@libs/notification/constants/sourceTypeToApp';
 import { getElapsedTime } from '@/pages/FileSharing/utilities/filesharingUtilities';
 import useNotificationStore from '@/store/useNotificationStore';
+import useAppConfigsStore from '@/pages/Settings/AppConfig/useAppConfigsStore';
 
 interface NotificationItemProps {
   notification: InboxNotificationDto;
@@ -69,6 +71,7 @@ const NotificationItem = ({ notification }: NotificationItemProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { markAsRead, deleteNotification, setIsSheetOpen } = useNotificationStore();
+  const appConfigs = useAppConfigsStore((state) => state.appConfigs);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isUserNotification = notification.type === NOTIFICATION_TYPE.USER;
@@ -76,7 +79,11 @@ const NotificationItem = ({ notification }: NotificationItemProps) => {
   const hasContent = Boolean(notification.content);
   const sourceIcon = getSourceTypeIcon(notification.sourceType);
   const elapsedTime = getElapsedTime(notification.updatedAt);
-  const sourceRoute = getNotificationSourceRoute(notification.sourceType, notification.sourceId);
+  const sourceApp = notification.sourceType ? SOURCE_TYPE_TO_APP[notification.sourceType] : undefined;
+  const isSourceAppActive = sourceApp ? appConfigs.some((appConfig) => appConfig.name === sourceApp) : false;
+  const sourceRoute = isSourceAppActive
+    ? getNotificationSourceRoute(notification.sourceType, notification.sourceId)
+    : undefined;
 
   const handleClick = useCallback(() => {
     if (isUnread) {
