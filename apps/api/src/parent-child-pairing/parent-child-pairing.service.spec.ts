@@ -8,11 +8,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import GroupRoles from '@libs/groups/types/group-roles.enum';
+import { GROUP_WITH_MEMBERS_CACHE_KEY } from '@libs/groups/constants/cacheKeys';
 import PARENT_CHILD_PAIRING_STATUS from '@libs/parent-child-pairing/constants/parentChildPairingStatus';
 import PARENT_CHILD_PAIRING_LOG_ACTION from '@libs/parent-child-pairing/constants/parentChildPairingLogAction';
 import PARENT_CHILD_PAIRING_CACHE_CONFIG from '@libs/parent-child-pairing/constants/parentChildPairingCacheConfig';
+import PARENT_CHILD_PAIRING_GROUP_SUFFIX from '@libs/parent-child-pairing/constants/parentChildPairingGroupSuffix';
 import CustomHttpException from '../common/CustomHttpException';
 import LmnApiService from '../lmnApi/lmnApi.service';
+import UsersService from '../users/users.service';
 import { ParentChildPairing } from './parent-child-pairing.schema';
 import ParentChildPairingService from './parent-child-pairing.service';
 
@@ -29,6 +32,7 @@ const mockPairingModel = {
 };
 const mockCacheManager = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
 const mockLmnApiService = { addParentToStudent: jest.fn(), deleteParentFromStudent: jest.fn() };
+const mockUsersService = { findAllCachedUsers: jest.fn() };
 
 const buildPairingDoc = (overrides: Record<string, unknown> = {}) => ({
   id: 'pairing-1',
@@ -63,6 +67,7 @@ describe('ParentChildPairingService', () => {
         { provide: getModelToken(ParentChildPairing.name), useValue: mockPairingModel },
         { provide: CACHE_MANAGER, useValue: mockCacheManager },
         { provide: LmnApiService, useValue: mockLmnApiService },
+        { provide: UsersService, useValue: mockUsersService },
       ],
     }).compile();
 
@@ -198,6 +203,91 @@ describe('ParentChildPairingService', () => {
       );
 
       expect(mockLmnApiService.deleteParentFromStudent).toHaveBeenCalledWith('token', STUDENT_USER, PARENT_USER);
+    });
+  });
+
+  describe('getEnrichedRelationships', () => {
+    it('enriches a student active relationship from the group cache (isGroupActive + parent names)', async () => {
+      const groupKey = `${GROUP_WITH_MEMBERS_CACHE_KEY}-/${STUDENT_USER}${PARENT_CHILD_PAIRING_GROUP_SUFFIX}`;
+      mockUsersService.findAllCachedUsers.mockResolvedValue([
+        { username: STUDENT_USER, firstName: 'Stu', lastName: 'Dent' },
+        { username: PARENT_USER, firstName: 'Par', lastName: 'Ent' },
+      ]);
+      mockCacheManager.get.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === groupKey ? { members: [{ username: PARENT_USER, firstName: 'Par', lastName: 'Ent' }] } : null,
+        ),
+      );
+      mockPairingModel.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([]) });
+
+      const result = await service.getEnrichedRelationships(STUDENT_USER, [GroupRoles.STUDENT], SCHOOL);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          parent: PARENT_USER,
+          student: STUDENT_USER,
+          status: PARENT_CHILD_PAIRING_STATUS.ACCEPTED,
+          parentFirstName: 'Par',
+          isGroupActive: true,
+        }),
+      );
+    });
+
+    it('enriches a parent active relationship by extracting the student from the group suffix', async () => {
+      const childGroup = `/${STUDENT_USER}${PARENT_CHILD_PAIRING_GROUP_SUFFIX}`;
+      const groupKey = `${GROUP_WITH_MEMBERS_CACHE_KEY}-${childGroup}`;
+      mockUsersService.findAllCachedUsers.mockResolvedValue([
+        { username: STUDENT_USER, firstName: 'Stu', lastName: 'Dent' },
+        { username: PARENT_USER, firstName: 'Par', lastName: 'Ent' },
+      ]);
+      mockCacheManager.get.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === groupKey ? { members: [{ username: PARENT_USER, firstName: 'Par', lastName: 'Ent' }] } : null,
+        ),
+      );
+      mockPairingModel.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([]) });
+
+      const result = await service.getEnrichedRelationships(PARENT_USER, [GroupRoles.PARENT, childGroup], SCHOOL);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(
+        expect.objectContaining({ parent: PARENT_USER, student: STUDENT_USER, isGroupActive: true, studentFirstName: 'Stu' }),
+      );
+    });
+
+    it('adds non-active DB pairings and deduplicates them against active relationships', async () => {
+      const groupKey = `${GROUP_WITH_MEMBERS_CACHE_KEY}-/${STUDENT_USER}${PARENT_CHILD_PAIRING_GROUP_SUFFIX}`;
+      mockUsersService.findAllCachedUsers.mockResolvedValue([
+        { username: STUDENT_USER, firstName: 'Stu', lastName: 'Dent' },
+        { username: PARENT_USER, firstName: 'Par', lastName: 'Ent' },
+        { username: 'otherParent', firstName: 'Oth', lastName: 'Er' },
+      ]);
+      mockCacheManager.get.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === groupKey ? { members: [{ username: PARENT_USER, firstName: 'Par', lastName: 'Ent' }] } : null,
+        ),
+      );
+      mockPairingModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([
+          buildPairingDoc({ parent: PARENT_USER, student: STUDENT_USER, status: PARENT_CHILD_PAIRING_STATUS.PENDING }),
+          buildPairingDoc({
+            id: 'pairing-2',
+            parent: 'otherParent',
+            student: STUDENT_USER,
+            status: PARENT_CHILD_PAIRING_STATUS.PENDING,
+          }),
+        ]),
+      });
+
+      const result = await service.getEnrichedRelationships(STUDENT_USER, [GroupRoles.STUDENT], SCHOOL);
+
+      expect(result).toHaveLength(2);
+      const active = result.find((relationship) => relationship.isGroupActive);
+      const nonActive = result.find((relationship) => !relationship.isGroupActive);
+      expect(active?.parent).toBe(PARENT_USER);
+      expect(nonActive?.parent).toBe('otherParent');
+      expect(nonActive?.parentFirstName).toBe('Oth');
     });
   });
 });

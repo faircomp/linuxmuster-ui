@@ -18,8 +18,14 @@ import type ParentChildPairingCodeResponseDto from '@libs/parent-child-pairing/t
 import type ParentChildPairingStatusType from '@libs/parent-child-pairing/types/parentChildPairingStatusType';
 import GroupRoles from '@libs/groups/types/group-roles.enum';
 import getIsParent from '@libs/groups/utils/getIsParent';
+import { GROUP_WITH_MEMBERS_CACHE_KEY } from '@libs/groups/constants/cacheKeys';
+import type GroupWithMembers from '@libs/groups/types/groupWithMembers';
+import PARENT_CHILD_PAIRING_GROUP_SUFFIX from '@libs/parent-child-pairing/constants/parentChildPairingGroupSuffix';
+import type EnrichedRelationshipResponseDto from '@libs/parent-child-pairing/types/enrichedRelationshipResponseDto';
+import type CachedUser from '@libs/user/types/cachedUser';
 import CustomHttpException from '../common/CustomHttpException';
 import LmnApiService from '../lmnApi/lmnApi.service';
+import UsersService from '../users/users.service';
 import { ParentChildPairing, ParentChildPairingDocument } from './parent-child-pairing.schema';
 
 interface ParentChildPairingCodeData {
@@ -35,6 +41,7 @@ class ParentChildPairingService {
     @InjectModel(ParentChildPairing.name) private parentChildPairingModel: Model<ParentChildPairingDocument>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly lmnApiService: LmnApiService,
+    private readonly usersService: UsersService,
   ) {}
 
   async getOrCreateCode(
@@ -167,6 +174,28 @@ class ParentChildPairingService {
     return pairings.map((pairing) => ParentChildPairingService.toParentChildPairingDto(pairing));
   }
 
+  async getEnrichedRelationships(
+    username: string,
+    groups: string[],
+    school: string,
+  ): Promise<EnrichedRelationshipResponseDto[]> {
+    const cachedUsers = await this.usersService.findAllCachedUsers(school);
+    const isParent = getIsParent(groups);
+    const isStudent = groups.includes(GroupRoles.STUDENT);
+
+    let activeRelationships: EnrichedRelationshipResponseDto[] = [];
+
+    if (isStudent) {
+      activeRelationships = await this.getActiveRelationshipsForStudent(username, school, cachedUsers);
+    } else if (isParent) {
+      activeRelationships = await this.getActiveRelationshipsForParent(username, groups, school, cachedUsers);
+    }
+
+    const nonActivePairings = await this.getNonActivePairingsFromDb(username, groups, cachedUsers, activeRelationships);
+
+    return [...activeRelationships, ...nonActivePairings];
+  }
+
   async updateParentChildPairingStatus(
     pairingId: string,
     status: ParentChildPairingStatusType,
@@ -252,6 +281,141 @@ class ParentChildPairingService {
     Logger.log(`Parent-child pairing code generated for ${username}`, ParentChildPairingService.name);
 
     return { code, expiresAt };
+  }
+
+  private async getActiveRelationshipsForStudent(
+    studentUsername: string,
+    school: string,
+    cachedUsers: CachedUser[],
+  ): Promise<EnrichedRelationshipResponseDto[]> {
+    const groupKey = `${GROUP_WITH_MEMBERS_CACHE_KEY}-/${studentUsername}${PARENT_CHILD_PAIRING_GROUP_SUFFIX}`;
+    const group = await this.cacheManager.get<GroupWithMembers>(groupKey);
+
+    if (!group?.members) {
+      return [];
+    }
+
+    const studentUser = cachedUsers.find((user) => user.username === studentUsername);
+
+    return group.members.map((parentMember) => ({
+      id: `ldap-${parentMember.username}-${studentUsername}`,
+      parent: parentMember.username,
+      student: studentUsername,
+      school,
+      status: PARENT_CHILD_PAIRING_STATUS.ACCEPTED,
+      logs: [],
+      createdAt: '',
+      updatedAt: '',
+      studentFirstName: studentUser?.firstName ?? '',
+      studentLastName: studentUser?.lastName ?? '',
+      parentFirstName: parentMember.firstName,
+      parentLastName: parentMember.lastName,
+      isGroupActive: true,
+    }));
+  }
+
+  private async getActiveRelationshipsForParent(
+    parentUsername: string,
+    groups: string[],
+    school: string,
+    cachedUsers: CachedUser[],
+  ): Promise<EnrichedRelationshipResponseDto[]> {
+    const studentUsernames = ParentChildPairingService.extractStudentUsernamesFromGroups(groups);
+
+    if (studentUsernames.length === 0) {
+      return [];
+    }
+
+    const results = await Promise.all(
+      studentUsernames.map(async (studentUsername): Promise<EnrichedRelationshipResponseDto | null> => {
+        const groupKey = `${GROUP_WITH_MEMBERS_CACHE_KEY}-/${studentUsername}${PARENT_CHILD_PAIRING_GROUP_SUFFIX}`;
+        const group = await this.cacheManager.get<GroupWithMembers>(groupKey);
+
+        if (!group) {
+          return null;
+        }
+
+        const parentMember = group.members.find((member) => member.username === parentUsername);
+
+        if (!parentMember) {
+          return null;
+        }
+
+        const studentUser = cachedUsers.find((user) => user.username === studentUsername);
+
+        if (!studentUser) {
+          return null;
+        }
+
+        return {
+          id: `ldap-${parentUsername}-${studentUsername}`,
+          parent: parentUsername,
+          student: studentUsername,
+          school,
+          status: PARENT_CHILD_PAIRING_STATUS.ACCEPTED,
+          logs: [],
+          createdAt: '',
+          updatedAt: '',
+          studentFirstName: studentUser.firstName,
+          studentLastName: studentUser.lastName,
+          parentFirstName: parentMember.firstName,
+          parentLastName: parentMember.lastName,
+          isGroupActive: true,
+        };
+      }),
+    );
+
+    return results.filter((relationship): relationship is EnrichedRelationshipResponseDto => relationship !== null);
+  }
+
+  private async getNonActivePairingsFromDb(
+    username: string,
+    groups: string[],
+    cachedUsers: CachedUser[],
+    activeRelationships: EnrichedRelationshipResponseDto[],
+  ): Promise<EnrichedRelationshipResponseDto[]> {
+    const isParent = getIsParent(groups);
+    const isStudent = groups.includes(GroupRoles.STUDENT);
+    const filter: { status: object; parent?: string; student?: string } = {
+      status: { $in: [PARENT_CHILD_PAIRING_STATUS.PENDING, PARENT_CHILD_PAIRING_STATUS.REJECTED] },
+    };
+
+    if (isParent) {
+      filter.parent = username;
+    } else if (isStudent) {
+      filter.student = username;
+    } else {
+      return [];
+    }
+
+    const pairings = await this.parentChildPairingModel.find(filter).exec();
+    const activeKeys = new Set(activeRelationships.map((relationship) => `${relationship.parent}-${relationship.student}`));
+
+    return pairings
+      .map((pairing) => ParentChildPairingService.toParentChildPairingDto(pairing))
+      .filter((pairing) => !activeKeys.has(`${pairing.parent}-${pairing.student}`))
+      .map((pairing) => {
+        const studentUser = cachedUsers.find((user) => user.username === pairing.student);
+        const parentUser = cachedUsers.find((user) => user.username === pairing.parent);
+
+        return {
+          ...pairing,
+          studentFirstName: studentUser?.firstName ?? '',
+          studentLastName: studentUser?.lastName ?? '',
+          parentFirstName: parentUser?.firstName ?? '',
+          parentLastName: parentUser?.lastName ?? '',
+          isGroupActive: false,
+        };
+      });
+  }
+
+  private static extractStudentUsernamesFromGroups(groups: string[]): string[] {
+    return groups
+      .filter((group) => group.endsWith(PARENT_CHILD_PAIRING_GROUP_SUFFIX))
+      .map((group) => {
+        const name = group.startsWith('/') ? group.slice(1) : group;
+        return name.slice(0, -PARENT_CHILD_PAIRING_GROUP_SUFFIX.length);
+      });
   }
 
   private static toParentChildPairingDto(pairing: ParentChildPairingDocument): ParentChildPairingDto {
