@@ -2336,7 +2336,11 @@ i18n: keine (App-Titel via bestehende App-Name-Mechanik)
 Doku: keine (intern)
 Abhängt von: T13
 
-### T15 — libs+FE: WIKI_SHARE_VISIBILITY_TABLE ExtendedOption verdrahten  [ ]
+### T15 — libs+FE: WIKI_SHARE_VISIBILITY_TABLE ExtendedOption verdrahten  [?] human-gate: OF-5 (Section-Platzierung) + Tabellen-Scope
+> **GEPARKT (Produktentscheidung + nicht-rekonstruierbare FE):** `WIKI_SHARE_VISIBILITY_TABLE` steht in main.js NUR als Konstante (2098); die 2.0-FE-Verdrahtung (welche App/Spalten) liegt im **nicht rekonstruierbaren ui-Bundle**. Zwei offene Punkte, die Kevin entscheiden sollte, bevor ich baue:
+> 1. **OF-5 — Section-Platzierung:** (a) unter **FILE_SHARING** neben `WEBDAV_SHARE_TABLE` (die wiki-Felder liegen auf WebdavShares, werden über dieselbe webdav-shares-Route persistiert → **niedrigste Fläche, konsistent — meine Empfehlung**) ODER (b) **eigene WIKI-Section** in `APP_CONFIG_OPTIONS` (bräuchte neuen WIKI-Eintrag dort + Sidebar-Icon-Wiring; diskoverbarer, mehr Fläche). `APP_CONFIG_OPTIONS` hat aktuell KEINEN WIKI-Eintrag.
+> 2. **Tabellen-Scope:** Der Verify ("Toggle wikiDisabled/Set wikiAccessGroups landet im PUT-Payload") verlangt **mehr als die 3 gelisteten Dateien** — eine eigene `WikiShareVisibilityTableColumns`-Komponente + Store + `tableConfigMap`-Eintrag (die bestehende `WebdavShareTableColumns` zeigt Share-Management, NICHT wiki-Sichtbarkeit). Frage: dedizierte wiki-Visibility-Spalten (displayName + wikiDisabled-Toggle + wikiAccessGroups-Selector) neu bauen — ok als Scope?
+> **Blockiert nichts am Feature-Kern:** nur der finale box-gated Verify **T25** hängt an T15; der FE-Feature-Strang **T16–T24** (Wiki-Seite/Baum/Editor/Suche) läuft unabhängig weiter. Nach Kevins Entscheid ~1 Iteration Arbeit.
 Komponente: libs + apps/frontend · Dateien: libs/src/appconfig/constants/extendedOptionKeys.ts · libs/src/appconfig/constants/extendedOptions/wikiShareVisibilityExtendedOptions.ts · apps/frontend/src/pages/Settings/AppConfig/appConfigOptions.ts
 Soll: main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · Muster webdavShareTableExtendedOptions.ts (1.6)
 Änderung: `WIKI_SHARE_VISIBILITY_TABLE` in extendedOptionKeys ergänzen; ExtendedOption-Definition (type table) anlegen; in appConfigOptions der passenden Section zuordnen (OF-5: FileSharing- oder eigene WIKI-Section). Persistenz läuft über die bestehende webdav-shares-Update-Route (Felder aus T3).
