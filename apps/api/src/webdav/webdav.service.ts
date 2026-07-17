@@ -340,6 +340,40 @@ class WebdavService {
     }
   }
 
+  async probeFile(
+    username: string,
+    relativePath: string,
+    share: string,
+  ): Promise<{ etag: string; lastModified: string | undefined } | null> {
+    const client = await this.getClient(username, share);
+    const webdavShare = await this.webdavSharesService.getWebdavShareFromCache(share);
+    const pathWithoutWebdav = getPathWithoutWebdav(relativePath, webdavShare.pathname);
+    const url = WebdavService.safeJoinUrl(webdavShare.url, pathWithoutWebdav, false);
+
+    try {
+      const response = await client.request<string>({
+        method: HttpMethods.GET,
+        url,
+        headers: { [HTTP_HEADERS.Range]: 'bytes=0-0' },
+        responseType: ResponseType.TEXT,
+        transformResponse: [(data: unknown) => data],
+        validateStatus: isReadSuccessStatus,
+        timeout: WEBDAV_REQUEST_TIMEOUT_MS,
+      });
+      const responseHeaders = response.headers as unknown as Record<string, string | undefined>;
+      return {
+        etag: responseHeaders.etag ?? '',
+        lastModified: responseHeaders[HTTP_HEADERS.LastModified],
+      };
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      if (status === Number(HttpStatus.NOT_FOUND)) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async putFileWithEtag(
     username: string,
     relativePath: string,
