@@ -2013,6 +2013,13 @@
     "userManagement": "Benutzerverwaltung",
     "description": "Verwalte deine Schulserver-Einstellungen und Benutzer."
   },
+  "wiki": {
+    "description": "Kollaboratives Wiki für Ihre Freigaben",
+    "sidebar": "Wiki-Navigation",
+    "empty": {
+      "selectPageHint": "Wählen Sie links eine Seite aus, um sie anzuzeigen."
+    }
+  },
   "whiteboard": {
     "title": "WHITEBOARD",
     "sidebar": "Whiteboard",

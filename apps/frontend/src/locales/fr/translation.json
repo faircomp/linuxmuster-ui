@@ -2009,6 +2009,13 @@
     "userManagement": "Gestion des utilisateurs",
     "description": "Gérez les paramètres de votre serveur scolaire et les utilisateurs."
   },
+  "wiki": {
+    "description": "Wiki collaboratif pour vos partages",
+    "sidebar": "Navigation du wiki",
+    "empty": {
+      "selectPageHint": "Sélectionnez une page à gauche pour l'afficher."
+    }
+  },
   "whiteboard": {
     "title": "TABLEAU BLANC",
     "sidebar": "Tableau blanc",
