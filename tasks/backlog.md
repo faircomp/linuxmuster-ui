@@ -2316,7 +2316,8 @@ Verify: iter.sh → `npm run test:api -- throttle` (61. Anfrage in 60 s → 429)
 i18n: keine
 Doku: keine (intern)
 
-### T13 — BE: WikiController + WikiModule + Registrierung + Guards  [ ]
+### T13 — BE: WikiController + WikiModule + Registrierung + Guards  [x] OK (32a918d38)
+> **OK (32a918d38):** WikiController (main.js:71593 feldgenau, 5-Dep) mit **9 Routen** — GET shares/tree/page (getPage setzt ETag-Header aus page.etag), POST/PUT/DELETE page (updatePage fängt WebdavEtagConflictError→**WikiEtagConflictHttpException 409**, sonst rethrow; ifMatch??dto.etag), POST/DELETE folder, POST search. Klassen-Decorators `@ApiTags`+`@ApiBearerAuth()`+`@RequireAppAccess(APPS.WIKI)`+`@Controller('wiki')`; **Auth+App-Access laufen GLOBAL** (AuthGuard+AccessGuard als APP_GUARD — Fork-Muster, kein per-Route-Auth-Guard nötig; `@ApiAuth()` aus main.js = `@ApiBearerAuth()`). `search` zusätzlich `@Throttle(60,60000)`+`@UseGuards(ThrottleGuard)`. **WikiModule** (main.js:69628): HttpModule.register({httpsAgent rejectUnauthorized:false})+LmnApiModule, 5 Provider (4 Services+WikiFileproxyClient); WebdavService/WebdavSharesService/UsersService via @Global. In `apps/api/src/app/app.module.ts` registriert. **+APPS.WIKI** in apps.ts (nötig für RequireAppAccess; **T14 macht nur noch defaultAppConfig-Seed+Icon**). Controller-Spec 18 Fälle: Delegation aller 9 Routen (Positional-Args), ETag mit/ohne etag, updatePage-Konflikt→409+Rethrow, **Security-Contract** (kein Route @Public via controllerContractReflection, ThrottleGuard nur auf search) box-gated. eslint+isolierter tsc CLEAN. Swagger-Contract-Sync box-gated (swagger-spec.json = generiertes, nicht getracktes Artefakt). Review approve (kein Auth-Bypass, DI vollständig auflösbar, feldgetreu). **→ p3-wiki Backend-Strang KOMPLETT.**
 Komponente: apps/api · Dateien: apps/api/src/wiki/wiki.controller.ts · apps/api/src/wiki/wiki.module.ts · apps/api/src/app.module.ts (Registrierung) (+ controller *.spec.ts)
 Soll: main.js:71593 (Controller, 9 Routen) · 69628 (Module) · 846 (Registrierung) · Guards 71775/71776/71761
 Änderung: Controller mit 9 Routen exakt wie Tabelle (Spec), Base `wiki`. **Guards mit-portieren:** `@ApiAuth()` + `@RequireAppAccess(APPS.WIKI)` auf Controller, `@Throttle(...)`+ThrottleGuard nur auf `search`. getPage setzt ETag-Header; updatePage fängt WebdavEtagConflictError→WikiEtagConflictHttpException. WikiModule bündelt die vier Services + Client; im App-Modul registrieren.
@@ -2325,7 +2326,7 @@ i18n: keine
 Doku: docs/features/p3-wiki.md (Routen-Tabelle referenzieren) — intern
 Abhängt von: T2, T9, T10, T11, T12
 
-### T14 — BE: WIKI in apps.ts + defaultAppConfig-Seed + Icon  [ ]
+### T14 — BE: WIKI in apps.ts + defaultAppConfig-Seed + Icon  [ ]  (Teil: `APPS.WIKI` bereits in T13/32a918d38 ergänzt — hier NUR noch defaultAppConfig-Seed + edu_Wiki.svg)
 Komponente: libs + apps/api · Dateien: libs/src/appconfig/constants/apps.ts · apps/api/src/…/defaultAppConfig · apps/api/src/assets/edu_Wiki.svg
 Soll: main.js:218 (WIKI:'wiki') · 2456 (defaultAppConfig-Eintrag) · 2585 (SVG)
 Änderung: `WIKI: 'wiki'` in apps.ts ergänzen; WIKI-Eintrag im defaultAppConfig-Seed (`appType: NATIVE`, `isPinned: true`, `position: 7`, `displayLocations: ALL`, `options/extendedOptions/accessGroups` leer/[]); `edu_Wiki.svg` als Icon-Asset.
