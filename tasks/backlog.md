@@ -2295,7 +2295,9 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T7
 
-### T11 — BE: WikiFileproxyClient + WikiSearchService  [ ]
+### T11 — BE: WikiFileproxyClient + WikiSearchService  [ ] IN ARBEIT (Teil 1/2 ✓ — WikiFileproxyClient committet 74bce618b)
+> **Teil 1/2 OK (74bce618b): WikiFileproxyClient** (main.js:70322 feldgenau): search (POST /wiki/search, Hit-Normalisierung share_id→shareId, Fehler→WikiFileproxySearchError mit reason timeout/http_5xx/http_4xx/connection_error), listByPrefix (GET /wiki/list→Title-Cache-Map, soft→leere Map). **Header-Injection-Schutz** (buildGroupsHeader fail-closed gegen Komma/Control-Chars VOR Request), Basic-Auth via getPassword (kein Passwort-Log), degradiert graceful (OF-1=Deploy-Frage, kein Build-Blocker). +WikiFileproxySearchError, +WIKI_FILEPROXY_TIMEOUT_MS(8000), +HTTP_HEADERS.XEdulutionGroups. Spec 7 (empty/happy/timeout/5xx/injection-guard + listByPrefix Map/soft). eslint+isolierter tsc CLEAN, jest box-gated. Review approve. **→ entblockt auch T8-Title-Cache-Integration.**
+> **Teil 2/2 OFFEN: WikiSearchService** (main.js:71024) — findAllWikiShares→resolveAccessibleShares→searchInShare/searchAll, aggregiert über zugängliche Shares, mappt Hits auf Frontend-Pfade, sammelt unavailableShares. Braucht Helfer: groupSharesByFileproxy, fileproxyHitToFrontendPath, resolveOwningShare, resolveTemplatedShareSharePath, runWithConcurrencyCap + home-dir-Cache + lmnApiService. OF-1 (fileproxy im Stack?) box-gated klären.
 Komponente: apps/api · Dateien: apps/api/src/wiki/wiki-fileproxy.client.ts · apps/api/src/wiki/wiki-search.service.ts (+ *.spec.ts)
 Soll: main.js:70322 (Client: /wiki/search 70367, /wiki/list 70427, X-Edulution-Groups, Timeout 8000) · 71024 (SearchService: findAllWikiShares→resolveAccessibleShares→searchInShare/searchAll)
 Änderung: HTTP-Client zum externen fileproxy (pro Share `share.url`→fileproxyBase), Status ok/unavailable/degraded + reason (timeout/connection/http_5xx/http_4xx); SearchService aggregiert über zugängliche Shares, mappt Hits auf Frontend-Pfade, sammelt `unavailableShares`. Fehlender fileproxy → degradierte Antwort, kein Throw.
