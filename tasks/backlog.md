@@ -2211,7 +2211,7 @@ Verify: iter.sh → `npm run test:frontend -- libs/src/wiki` (Snapshot-Assertion
 i18n: keine
 Doku: keine (intern)
 
-### T2 — libs: Wiki-DTOs & Fehlermeldungen  [ ]
+### T2 — libs: Wiki-DTOs & Fehlermeldungen  [x] OK (67e5f7415) 11 DTO-Klassen (create/update-page, create-folder, page, tree-child, search-request/hit/response, unavailable-share, folder-created, success) feldgenau aus main.js:71876-72470 mit class-validator+@nestjs/swagger (libs-Muster, 18 Dateien) + WIKI_ERROR_MESSAGES (16 Keys, main.js:1205). Enum-Felder als derived Types aus T1; nested Hit/UnavailableShare eigene Dateien (max-classes-per-file). reason nutzt Object.values(UNAVAILABLE_SHARE_REASON) (=main.js' REASONS-Array, T1-Plural weggelassen). nullable(etag:string|null) vs optional korrekt. ApiProperty-Descriptions=Swagger-Contract (keine Code-Kommentare). eslint+isolierter tsc(experimentalDecorators) CLEAN, 0 Fehler. Kein libs-Spec (keine libs-Test-Infra). Review approve.
 Komponente: libs · Dateien: libs/src/wiki/types/{wikiPageDto,wikiTreeChildDto,createWikiPageDto,updateWikiPageDto,createWikiFolderDto,wikiFolderCreatedDto,wikiSuccessDto,wikiSearchRequestDto,wikiSearchResponseDto}.ts · libs/src/wiki/constants/wikiErrorMessages.ts
 Soll: main.js:71876/71932/71979/72025/72095/72170/72241/72432/72470 (DTOs) · 1205 (WIKI_ERROR_MESSAGES)
 Änderung: DTO-Klassen mit class-validator/swagger-Dekoratoren nachbauen (WikiPageDto: path/title/content/etag/mtime/isIndex; TreeChild: type/name/path/hasChildren/mtime/hasIndex; Search: query≤1024/scope/shareId/page/size; Response: hits/total/status/unavailableShares/truncated + Hit + UnavailableShare). Error-Message-Map als const object.
