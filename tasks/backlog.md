@@ -2419,8 +2419,8 @@ i18n: `wiki.titlePlaceholder` + Toolbar-Labels — DE+EN
 Doku: Nutzer-Doku Editor — DE+EN, knapp
 Abhängt von: T19
 
-### T22 — FE: Speichern mit ETag + Konflikt-/Merge-UI + Draft-Recovery + Save-Status  [ ]
-Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/components/{WikiConflictPanel,WikiDraftRecoveryBanner,WikiSaveStatus}.tsx (+ *.spec.tsx)
+### T22 — FE: Speichern mit ETag + Konflikt-/Merge-UI + Draft-Recovery + Save-Status  [blockiert] durch T21 (OF-4-Editor-Entscheidung)
+> **BLOCKIERT durch T21.** Speichern/Konflikt/Draft hängen am Editor-Content (WikiEditor, T21). Sobald Kevins OF-4-Entscheidung steht + T21 gebaut ist, folgt T22 direkt. (updatePage/If-Match-Store-Logik existiert bereits aus T17.)
 Soll: FE-Referenz (i18n wiki.conflict.*/draftRecovery.*/saveStatus.*) · BE 409/428-Contract (T9/T13)
 Änderung: Speichern via updatePage (If-Match); bei 409 Konflikt-Panel mit `{ currentEtag, serverContent }` → keepMine/keepTheirs/manualMerge (Seed-Hint); bei 428 etag nachladen; lokaler Draft in localStorage → Recovery-Banner (restore/discard); Save-Status (saving/savedAt/error/conflict) + retrySave.
 Verify: iter.sh → `npm run test:frontend -- WikiConflict` (409→Konflikt-Panel mit drei Optionen; keepTheirs übernimmt serverContent; Draft überlebt Reload). crabbox: paralleler Edit provoziert 409.
@@ -2438,8 +2438,8 @@ i18n: `wiki.search.*` (inkl. scope.*, empty.*, degraded.*, unavailable.* + reaso
 Doku: keine (intern)
 Abhängt von: T17, T21
 
-### T24 — FE: Bild-Upload im Editor nach WebDAV  [ ]
-Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/editor/imageUpload.ts · WikiEditor-Integration (+ *.spec.tsx)
+### T24 — FE: Bild-Upload im Editor nach WebDAV  [blockiert] durch T21 (OF-4-Editor-Entscheidung)
+> **BLOCKIERT durch T21.** Bild-Einfügen ist Editor-Integration (WikiEditor, T21). Nach OF-4 + T21 baubar.
 Soll: FE-Referenz (wiki.attachmentPreview.title) · bestehende FileSharing-Upload-Wege
 Änderung: Bild-Einfügen im Editor lädt die Datei über die bestehende WebDAV/FileSharing-Upload-Kette in den `.wiki`-Ordner der Seite hoch und fügt die Markdown-Bildreferenz ein; Vorschau `wiki.attachmentPreview.title`.
 Verify: iter.sh → `npm run test:frontend -- imageUpload` (Upload ruft WebDAV-Pfad; Markdown erhält Bild-Referenz). crabbox: Bild erscheint in gerenderter Seite.
