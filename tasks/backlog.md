@@ -2402,7 +2402,15 @@ i18n: `wiki.dialog.createPage.*`, `wiki.dialog.createFolder.*`, `wiki.dialog.del
 Doku: keine (intern)
 Abhängt von: T18
 
-### T21 — FE: TipTap-Editor (StarterKit + KaTeX + Toolbar)  [ ]
+### T21 — FE: TipTap-Editor (StarterKit + KaTeX + Toolbar)  [?] human-gate: OF-4 (Editor-Ansatz) + box-gated Deps
+> **GEPARKT — Produktentscheidung (OF-4) + box-gated Deps.** Die Seiten sind **`.md`-Dateien** (WikiPageDto.content = Markdown), der Editor braucht also einen **Markdown-Roundtrip**. Dep-Lage:
+> - **Vorhanden (transitiv via tldraw, im lockfile):** `@tiptap/react` 2.26.1 + StarterKit + Extensions (heading/bold/italic/code/code-block/blockquote/lists/link/highlight), `markdown-it` (MD→HTML), `lowlight`. **ABER Phantom-Deps** (nicht in package.json — hängen an tldraw; sauber wäre direkte Deklaration = lockfile-Update = box-gated).
+> - **FEHLEN (box-gated Install):** die **HTML→Markdown-Bridge** (`turndown`/`tiptap-markdown`) — **ohne sie kein Speichern als `.md`** → TipTap lokal NICHT funktional baubar; dazu `@tiptap/extension-table`, `@tiptap/extension-code-block-lowlight`, `katex` + Math-Extension.
+> **→ Ein funktionaler TipTap-Markdown-Editor ist lokal nicht baubar (Box down).**
+> **OF-4-Entscheidung für Kevin (Empfehlung zuerst):**
+> 1. **(EMPFOHLEN) Bestehenden `@uiw/react-md-editor` wiederverwenden** (der Fork hat ihn: `MarkdownRenderer editable={true}` = Markdown-Editor mit Toolbar+Live-Preview, **markdown-nativ**, **0 neue Deps, sofort baubar+testbar**, entspricht „StarterKit gut genug"/„Scope hart halten"). WikiEditor = dünner Wrapper (Titel-Input + MarkdownRenderer + Save-Wiring für T22). Kevin sagt „ok MDEditor" → ich baue es in 1 Iteration und **entblockt T22+T24**.
+> 2. **TipTap-WYSIWYG (wie 2.0)** — braucht die o.g. box-gated Deps (Bridge/Table/CodeBlock/KaTeX) + package.json-Deklaration von @tiptap; erst baubar wenn crabbox up. Näher am 2.0-Baseline, aber deutlich mehr Fläche + lossy MD↔HTML.
+> **Blockiert:** T22 (Speichern) + T24 (Bild-Upload) hängen an T21. **T23 (Suche) läuft unabhängig weiter** (editor-frei). Nach Kevins OF-4-„MDEditor" ~1 Iteration bis Editor+T22 stehen.
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/editor/WikiEditor.tsx · .../WikiEditorToolbar.tsx · package.json (@tiptap/*, prosemirror-*, katex) (+ *.spec.tsx)
 Soll: FE-Referenz wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Master-Plan §4.3 Zeile 224 (StarterKit „gut genug")
 Änderung: TipTap-Editor mit StarterKit (Überschriften/Listen/Fett/Kursiv/Code/Zitat), Tabellen-Extension, Codeblock-Highlight, KaTeX-Extension; Toolbar; Markdown-Serialisierung ↔ WikiPageDto.content. **Scope hart halten** (kein 1,35-MB-Nachbau, OF-4 via Baseline entscheiden).
