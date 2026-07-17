@@ -2238,7 +2238,8 @@ i18n: keine
 Doku: docs/features/p3-wiki.md + p0-migrations-inventory Eintrag (migration001) — intern, knapp
 Abhängt von: T3
 
-### T5 — BE: findAllWikiShares im WebdavSharesService  [ ]
+### T5 — BE: findAllWikiShares im WebdavSharesService  [x] OK (3d36199d3) findAllWikiShares (main.js:4992 feldgenau): wikiDisabled≠true + wikiAccessGroups-$or (fehlt/leer=public, sonst path∈userGroups) + Nicht-Admin zusätzlich accessGroups.path∈userGroups, **Admin-Bypass** via getIsAdmin/getAdminGroupsFromCache. **Abweichung:** kein aggregateShares-Helper (existiert im Fork nicht) → inline wie Sibling findAllWebdavShares (Projektion +wikiAccessGroups/wikiDisabled, korrektes `return share` im rootServer-Merge). Spec 3 Tests (wikiDisabled-Filter / Non-Admin→accessGroups.path / Admin→kein Filter) via direkter Instanziierung. eslint+isolierter tsc CLEAN, jest box-gated. Review approve (kein Auth-Leak).
+> **[!] Folge-Bug (nicht T5, geflaggt statt gefixt):** `webdav-shares.service.ts:166` im bestehenden **findAllWebdavShares** — else-Zweig der `.map()` macht `return this.webdavSharesModel.aggregate(basePipeline)` (Query-Objekt) statt `return share` (main.js:5011). Shares ohne rootServer → kaputtes Objekt in der Liste (User-Wirkung, kein Daten-Leak). Fix = One-Liner `return share` + Test; ideal zusammen mit `aggregateShares`-Helper-Extraktion (entdoppelt beide Methoden, zieht main.js:4954 nach). Surgical + box-gated → eigene Task, nicht in T5 geschmuggelt.
 Komponente: apps/api · Dateien: apps/api/src/webdav/shares/webdav-shares.service.ts
 Soll: main.js:4992 (findAllWikiShares)
 Änderung: Methode nachbauen: Filter `wikiDisabled != true` + `$or[wikiAccessGroups fehlt | leer | path in userGroups]`; Nicht-Admins zusätzlich auf `accessGroups.path in userGroups`; Admin-Bypass via `getAdminGroupsFromCache`. Über `aggregateShares` (bestehend).
