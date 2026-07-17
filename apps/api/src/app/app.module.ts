@@ -60,6 +60,7 @@ import LdapKeycloakSyncModule from '../ldap-keycloak-sync/ldap-keycloak-sync.mod
 import redisConnection from '../common/redis.connection';
 import NotificationsModule from '../notifications/notifications.module';
 import ChatModule from '../chat/chat.module';
+import ParentChildPairingModule from '../parent-child-pairing/parent-child-pairing.module';
 import MobileAppModule from '../mobileAppModule/mobileApp.module';
 import UserPreferencesModule from '../user-preferences/user-preferences.module';
 import DevCacheFlushService from '../common/cache/dev-cache-flush.service';
@@ -141,6 +142,7 @@ import WebhookClientsModule from '../webhook-clients/webhook-clients.module';
     BulletinBoardModule,
     NotificationsModule,
     ChatModule,
+    ParentChildPairingModule,
     MobileAppModule,
     SseModule,
     TLDrawSyncModule,
