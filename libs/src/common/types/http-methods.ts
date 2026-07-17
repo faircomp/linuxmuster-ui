@@ -74,6 +74,7 @@ export const HTTP_HEADERS = {
   IfMatch: 'If-Match',
   IfNoneMatch: 'If-None-Match',
   LastModified: 'Last-Modified',
+  XEdulutionGroups: 'X-Edulution-Groups',
 } as const;
 
 export enum WebdavRequestDepth {
