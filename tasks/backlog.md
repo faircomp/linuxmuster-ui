@@ -2048,7 +2048,7 @@ Doku: docs/ „Chat" (DE+EN, kurz) · CHANGELOG-Eintrag
 Abhängt von: T11, T12, T17
 
 ## p3-parent-child-pairing [P3] — ParentChildPairing
-_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 15
+_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ aktiv · _Tasks:_ 15
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-parent-child-pairing.md` · Soll: main.js:60108/60169/60806 (Modul/Service/Controller) · main.js:12624 (LMN) · main.js:60489/60525/60557/60589/60619/64074 (Konstanten/Helper/QR) · upstream/1717-add-pairing-administration-page · kein Baseline-Screenshot (Modul in 1.6 nicht vorhanden)
 
 > Kalibrierung (P3): geerdetes Rekonstruktions-Ledger. Zeilenanker/Signaturen gegen echtes 2.0 (`main.js`) verifiziert.
@@ -2057,7 +2057,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-parent-child-pairing.md` �
 
 ---
 
-### T1 — libs: Konstanten + getIsParent + QR-Type  [ ]
+### T1 — libs: Konstanten + getIsParent + QR-Type  [x] OK 11 Dateien: 7 Rescue-Konstanten (1717) byte-nah + RELATIONSHIPS-Drift (main.js:60944) + 2.0-only LogAction/GroupSuffix + getIsParent (GroupRoles PARENT/TEACHER/STAFF, spiegelt getIsAdmin) + EDULUTION_QR_TYPE (main.js:64072, alle 4 Member inkl. SATELLITE_APPLIANCE). eslint+isolierter tsc CLEAN; nx-typecheck box-gated. Review request_changes(SATELLITE_APPLIANCE fehlte)→fixed→approve (8ecfcf2b3)
 Komponente: libs/src/parent-child-pairing/constants + libs/src/groups/utils · Dateien: `libs/src/parent-child-pairing/constants/{parentChildPairingApiEndpoints,parentChildPairingCacheConfig,parentChildPairingErrorMessages,parentChildPairingStatus,parentChildPairingLogAction,parentChildPairingGroupSuffix,parentChildPairingQueryParams,parentChildPairingStatusFilterAll,parentChildPairingQrConfig}.ts`, `libs/src/groups/utils/getIsParent.ts`, QR-Type-Konstante (`EDULUTION_QR_TYPE.PARENT_CHILD_PAIRING`)
 Soll: main.js:60489 (errorMessages), :60525 (logAction), :60557 (cacheConfig: `CODE_LENGTH:8`, `CODE_TTL_MS:300000`, Key-Prefixes), :60589 (`GROUP_SUFFIX:'-parents'`), :60619 (`getIsParent` = PARENT||TEACHER||STAFF), :60944/:64074 (endpoints inkl. `RELATIONSHIPS`, QR-Type) · upstream/1717-add-pairing-administration-page:libs/src/parent-child-pairing/constants/*
 Änderung: Rescue-Konstanten portieren, `ApiEndpoints` um `RELATIONSHIPS:'relationships'` ergänzen, die 2.0-only-Konstanten (`LogAction`, `GroupSuffix`) + `getIsParent`-Util + QR-Type neu anlegen. `as const`-Objekte statt enums, SPDX-AGPL-Header.
