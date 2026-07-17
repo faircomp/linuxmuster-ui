@@ -1766,6 +1766,7 @@
     "never": "Nie",
     "errors": {
       "dbAccessFailed": "Datenbankzugriff fehlgeschlagen",
+      "rateLimitExceeded": "Zu viele Anfragen. Bitte versuche es später erneut.",
       "directoryNotCreated": "Erstellen des Verzeichnisses fehlgeschlagen",
       "fileNotCreated": "Erstellen der Datei fehlgeschlagen",
       "fileUploadFailed": "Die Datei konnte nicht hochgeladen werden",

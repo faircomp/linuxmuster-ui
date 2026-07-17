@@ -1766,6 +1766,7 @@
     "never": "Never",
     "errors": {
       "dbAccessFailed": "Database access failed",
+      "rateLimitExceeded": "Too many requests. Please try again later.",
       "directoryNotCreated": "Failed to create directory",
       "fileNotCreated": "Failed to create file",
       "fileUploadFailed": "Failed to upload the file",

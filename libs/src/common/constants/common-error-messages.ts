@@ -30,6 +30,7 @@ enum CommonErrorMessages {
   INVALID_FILE_TYPE = 'common.errors.invalidFileType',
   INVALID_REQUEST_DATA = 'common.errors.invalidRequestData',
   WRONG_SEVER_CONFIG = 'common.errors.wrongServerConfig',
+  RATE_LIMIT_EXCEEDED = 'common.errors.rateLimitExceeded',
 }
 
 export default CommonErrorMessages;
