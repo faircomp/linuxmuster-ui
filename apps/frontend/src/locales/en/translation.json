@@ -238,7 +238,9 @@
       "GetManagementListFailed": "Failed to get management list",
       "SaveManagementListFailed": "Failed to save management list",
       "SophomorixCheckFailed": "Sophomorix check failed",
-      "SophomorixApplyFailed": "Sophomorix apply failed"
+      "SophomorixApplyFailed": "Sophomorix apply failed",
+      "AddParentToStudentFailed": "Adding parent to student failed",
+      "DeleteParentFromStudentFailed": "Removing parent from student failed"
     }
   },
   "ticketsystem": {

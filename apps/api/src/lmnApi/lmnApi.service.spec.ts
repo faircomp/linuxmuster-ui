@@ -17,6 +17,7 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
+import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import PrintPasswordsFormat from '@libs/classManagement/types/printPasswordsFormat';
 import PrintPasswordsRequest from '@libs/classManagement/types/printPasswordsRequest';
@@ -659,6 +660,60 @@ describe('LmnApiService', () => {
         }),
         expect.any(Object),
       );
+    });
+  });
+
+  describe('addParentToStudent', () => {
+    it('POSTs the parent to users/<student>/parents with the x-api-key header', async () => {
+      requestSpy.mockResolvedValue(queueResponse(undefined));
+
+      await service.addParentToStudent(mockToken, 'student1', 'parent1');
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        HttpMethods.POST,
+        `${USERS_LMN_API_ENDPOINT}/student1/parents`,
+        { users: ['parent1'] },
+        { headers: { [HTTP_HEADERS.XApiKey]: mockToken } },
+      );
+    });
+
+    it('throws a BAD_GATEWAY CustomHttpException when the LMN request fails', async () => {
+      expect.assertions(2);
+      requestSpy.mockRejectedValue(new Error('LMN unreachable'));
+
+      try {
+        await service.addParentToStudent(mockToken, 'student1', 'parent1');
+      } catch (error) {
+        expect(error).toBeInstanceOf(CustomHttpException);
+        expect((error as CustomHttpException).getStatus()).toBe(HttpStatus.BAD_GATEWAY);
+      }
+    });
+  });
+
+  describe('deleteParentFromStudent', () => {
+    it('DELETEs the parent from users/<student>/parents with the x-api-key header', async () => {
+      requestSpy.mockResolvedValue(queueResponse(undefined));
+
+      await service.deleteParentFromStudent(mockToken, 'student1', 'parent1');
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        HttpMethods.DELETE,
+        `${USERS_LMN_API_ENDPOINT}/student1/parents`,
+        { users: ['parent1'] },
+        { headers: { [HTTP_HEADERS.XApiKey]: mockToken } },
+      );
+    });
+
+    it('throws a BAD_GATEWAY CustomHttpException when the LMN request fails', async () => {
+      expect.assertions(2);
+      requestSpy.mockRejectedValue(new Error('LMN unreachable'));
+
+      try {
+        await service.deleteParentFromStudent(mockToken, 'student1', 'parent1');
+      } catch (error) {
+        expect(error).toBeInstanceOf(CustomHttpException);
+        expect((error as CustomHttpException).getStatus()).toBe(HttpStatus.BAD_GATEWAY);
+      }
     });
   });
 

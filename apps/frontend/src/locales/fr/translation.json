@@ -228,6 +228,8 @@
       "GetUsersByRoleFailed": "Échec de la récupération des utilisateurs par rôle",
       "SaveManagementListFailed": "Échec de l'enregistrement de la liste de gestion",
       "SophomorixApplyFailed": "Échec de l'application Sophomorix",
+      "AddParentToStudentFailed": "Échec de l'ajout du parent à l'élève",
+      "DeleteParentFromStudentFailed": "Échec de la suppression du parent de l'élève",
       "SophomorixCheckFailed": "Échec de la vérification Sophomorix"
     }
   },

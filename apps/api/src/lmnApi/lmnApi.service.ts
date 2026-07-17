@@ -826,6 +826,50 @@ class LmnApiService {
     }
   }
 
+  public async addParentToStudent(
+    lmnApiToken: string,
+    studentUsername: string,
+    parentUsername: string,
+  ): Promise<void> {
+    try {
+      await this.request<unknown>(
+        HttpMethods.POST,
+        `${USERS_LMN_API_ENDPOINT}/${studentUsername}/parents`,
+        { users: [parentUsername] },
+        { headers: { [HTTP_HEADERS.XApiKey]: lmnApiToken } },
+      );
+    } catch (error) {
+      throw new CustomHttpException(
+        LmnApiErrorMessage.AddParentToStudentFailed,
+        HttpStatus.BAD_GATEWAY,
+        undefined,
+        LmnApiService.name,
+      );
+    }
+  }
+
+  public async deleteParentFromStudent(
+    lmnApiToken: string,
+    studentUsername: string,
+    parentUsername: string,
+  ): Promise<void> {
+    try {
+      await this.request<unknown>(
+        HttpMethods.DELETE,
+        `${USERS_LMN_API_ENDPOINT}/${studentUsername}/parents`,
+        { users: [parentUsername] },
+        { headers: { [HTTP_HEADERS.XApiKey]: lmnApiToken } },
+      );
+    } catch (error) {
+      throw new CustomHttpException(
+        LmnApiErrorMessage.DeleteParentFromStudentFailed,
+        HttpStatus.BAD_GATEWAY,
+        undefined,
+        LmnApiService.name,
+      );
+    }
+  }
+
   public async getSchools(lmnApiToken: string): Promise<string[]> {
     try {
       const response = await this.request<string[]>(HttpMethods.GET, 'schools', undefined, {

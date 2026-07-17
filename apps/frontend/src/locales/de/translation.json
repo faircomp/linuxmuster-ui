@@ -229,7 +229,9 @@
       "GetManagementListFailed": "Abrufen der Verwaltungsliste fehlgeschlagen",
       "SaveManagementListFailed": "Speichern der Verwaltungsliste fehlgeschlagen",
       "SophomorixCheckFailed": "Sophomorix-Check fehlgeschlagen",
-      "SophomorixApplyFailed": "Sophomorix-Apply fehlgeschlagen"
+      "SophomorixApplyFailed": "Sophomorix-Apply fehlgeschlagen",
+      "AddParentToStudentFailed": "Hinzufügen des Elternteils zum Schüler fehlgeschlagen",
+      "DeleteParentFromStudentFailed": "Entfernen des Elternteils vom Schüler fehlgeschlagen"
     }
   },
   "ticketsystem": {
