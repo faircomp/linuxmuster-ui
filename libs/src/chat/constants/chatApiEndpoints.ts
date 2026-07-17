@@ -9,4 +9,6 @@ export const CHAT_EDU_API_ENDPOINT = APPS.CHAT;
 
 export const CHAT_USER_GROUPS_ENDPOINT = `${CHAT_EDU_API_ENDPOINT}/groups`;
 
+export const CHAT_UNREAD_COUNTS_ENDPOINT = `${CHAT_EDU_API_ENDPOINT}/unread-counts`;
+
 export const CHAT_CONVERSATIONS_ENDPOINT = `${CHAT_EDU_API_ENDPOINT}/conversations`;

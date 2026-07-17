@@ -4,7 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CHAT_USER_GROUPS_ENDPOINT, CHAT_CONVERSATIONS_ENDPOINT } from '@libs/chat/constants/chatApiEndpoints';
+import {
+  CHAT_USER_GROUPS_ENDPOINT,
+  CHAT_UNREAD_COUNTS_ENDPOINT,
+  CHAT_CONVERSATIONS_ENDPOINT,
+} from '@libs/chat/constants/chatApiEndpoints';
 import CHAT_MESSAGES_DEFAULT_LIMIT from '@libs/chat/constants/chatMessagesDefaultLimit';
 import SOPHOMORIX_GROUP_TYPES from '@libs/lmnApi/constants/sophomorixGroupTypes';
 import CHAT_ROLES from '@libs/chat/constants/chatRoles';
@@ -43,6 +47,7 @@ describe('useChatStore', () => {
       currentGroupName: null,
       userGroups: null,
       isLoadingGroups: false,
+      unreadCounts: [],
     });
   });
 
@@ -55,6 +60,35 @@ describe('useChatStore', () => {
     expect(mockedEduApi.get).toHaveBeenCalledWith(CHAT_USER_GROUPS_ENDPOINT);
     expect(useChatStore.getState().userGroups).toEqual(userGroups);
     expect(useChatStore.getState().isLoadingGroups).toBe(false);
+  });
+
+  it('fetchUnreadCounts requests the unread-counts endpoint and stores the result', async () => {
+    const unreadCounts = [{ groupName: GROUP_NAME, conversationType: SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS, count: 3 }];
+    mockedEduApi.get.mockResolvedValue({ data: unreadCounts });
+
+    await useChatStore.getState().fetchUnreadCounts();
+
+    expect(mockedEduApi.get).toHaveBeenCalledWith(CHAT_UNREAD_COUNTS_ENDPOINT);
+    expect(useChatStore.getState().unreadCounts).toEqual(unreadCounts);
+  });
+
+  it('markConversationAsRead clears the matching unread count and posts to the read endpoint', async () => {
+    useChatStore.setState({
+      unreadCounts: [
+        { groupName: GROUP_NAME, conversationType: SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS, count: 3 },
+        { groupName: 'other', conversationType: SOPHOMORIX_GROUP_TYPES.PROJECT, count: 1 },
+      ],
+    });
+    mockedEduApi.post.mockResolvedValue({ data: undefined });
+
+    await useChatStore.getState().markConversationAsRead(SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS, GROUP_NAME);
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(
+      `${CHAT_CONVERSATIONS_ENDPOINT}/${SOPHOMORIX_GROUP_TYPES.ADMIN_CLASS}/${GROUP_NAME}/read`,
+    );
+    expect(useChatStore.getState().unreadCounts).toEqual([
+      { groupName: 'other', conversationType: SOPHOMORIX_GROUP_TYPES.PROJECT, count: 1 },
+    ]);
   });
 
   it('sendMessage posts to the conversation endpoint and appends the returned message', async () => {

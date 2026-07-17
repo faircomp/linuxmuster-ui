@@ -7,7 +7,12 @@ import { create } from 'zustand';
 import ChatMessage from '@libs/chat/types/chatMessage';
 import ConversationType from '@libs/chat/types/conversationType';
 import UserChatGroups from '@libs/chat/types/userChatGroups';
-import { CHAT_USER_GROUPS_ENDPOINT, CHAT_CONVERSATIONS_ENDPOINT } from '@libs/chat/constants/chatApiEndpoints';
+import ChatUnreadCount from '@libs/chat/types/chatUnreadCount';
+import {
+  CHAT_USER_GROUPS_ENDPOINT,
+  CHAT_UNREAD_COUNTS_ENDPOINT,
+  CHAT_CONVERSATIONS_ENDPOINT,
+} from '@libs/chat/constants/chatApiEndpoints';
 import CHAT_MESSAGES_DEFAULT_LIMIT from '@libs/chat/constants/chatMessagesDefaultLimit';
 import eduApi from '@/api/eduApi';
 import handleApiError from '@/utils/handleApiError';
@@ -21,8 +26,11 @@ interface ChatStore {
   currentGroupName: string | null;
   userGroups: UserChatGroups | null;
   isLoadingGroups: boolean;
+  unreadCounts: ChatUnreadCount[];
 
   fetchUserGroups: () => Promise<void>;
+  fetchUnreadCounts: () => Promise<void>;
+  markConversationAsRead: (conversationType: ConversationType, groupName: string) => Promise<void>;
   fetchMessages: (
     conversationType: ConversationType,
     groupName: string,
@@ -43,6 +51,7 @@ const initialState = {
   currentGroupName: null,
   userGroups: null,
   isLoadingGroups: false,
+  unreadCounts: [],
 };
 
 const useChatStore = create<ChatStore>((set, get) => ({
@@ -60,6 +69,30 @@ const useChatStore = create<ChatStore>((set, get) => ({
       handleApiError(error, set);
     } finally {
       set({ isLoadingGroups: false });
+    }
+  },
+
+  fetchUnreadCounts: async () => {
+    try {
+      const response = await eduApi.get<ChatUnreadCount[]>(CHAT_UNREAD_COUNTS_ENDPOINT);
+      set({ unreadCounts: response.data });
+    } catch (error) {
+      handleApiError(error, set);
+    }
+  },
+
+  markConversationAsRead: async (conversationType, groupName) => {
+    set((state) => ({
+      unreadCounts: state.unreadCounts.filter(
+        (unread) => !(unread.conversationType === conversationType && unread.groupName === groupName),
+      ),
+    }));
+
+    try {
+      const endpoint = `${CHAT_CONVERSATIONS_ENDPOINT}/${conversationType}/${encodeURIComponent(groupName)}/read`;
+      await eduApi.post(endpoint);
+    } catch (error) {
+      handleApiError(error, set);
     }
   },
 

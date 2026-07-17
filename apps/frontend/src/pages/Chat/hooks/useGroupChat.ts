@@ -24,8 +24,17 @@ const locationToConversationType: Record<GroupTypeLocation, ConversationType> = 
 
 const useGroupChat = (groupName: string, groupTypeLocation: GroupTypeLocation): ChatAdapter => {
   const [input, setInput] = useState('');
-  const { messages, isLoading, isSending, error, fetchMessages, sendMessage, setCurrentConversation, addMessage } =
-    useChatStore();
+  const {
+    messages,
+    isLoading,
+    isSending,
+    error,
+    fetchMessages,
+    sendMessage,
+    setCurrentConversation,
+    addMessage,
+    markConversationAsRead,
+  } = useChatStore();
   const { user } = useUserStore();
   const currentUsername = user?.username;
 
@@ -42,7 +51,8 @@ const useGroupChat = (groupName: string, groupTypeLocation: GroupTypeLocation): 
   useEffect(() => {
     setCurrentConversation(conversationType, groupName);
     void fetchMessages(conversationType, groupName);
-  }, [conversationType, groupName, setCurrentConversation, fetchMessages]);
+    void markConversationAsRead(conversationType, groupName);
+  }, [conversationType, groupName, setCurrentConversation, fetchMessages, markConversationAsRead]);
 
   const handleNewMessage = useCallback(
     (e: MessageEvent<string>) => {
