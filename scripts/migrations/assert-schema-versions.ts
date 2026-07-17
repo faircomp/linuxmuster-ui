@@ -14,7 +14,7 @@ const TERMINAL_SCHEMA_VERSIONS = {
   publicshares: 2,
   surveys: 2,
   users: 1,
-  webdavshares: 1,
+  webdavshares: 2,
   bulletincategories: 1,
   bulletins: 1,
 } as const;

@@ -81,7 +81,7 @@ class WebdavSharesService implements OnModuleInit {
         pathname,
         accessGroups,
         type: WEBDAV_SHARE_TYPE.LINUXMUSTER,
-        schemaVersion: 1,
+        schemaVersion: 2,
       });
     }
 

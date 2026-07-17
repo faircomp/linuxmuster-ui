@@ -126,6 +126,13 @@ Kein neues Datenmodell, keine neuen Routen, **kein Contract-Drift** in diesem Pa
 
 \* notifications-Migration setzt `newSchemaVersion=2` (prev=1/undefined), s. `main.js:21969`.
 
+**Fork-Delta (p3-wiki, `feat/2.0-backlog`):** `webdavShares` erhält **`001-add-wiki-visibility-to-webdav-shares`**
+(schemaVersion 1→2; setzt `wikiAccessGroups: []` / `wikiDisabled: false` auf Bestandsdokumenten, idempotent
+über `find({schemaVersion:1})`). 2.0.200 fügte diese zwei Felder **ohne** Migration hinzu (Terminal bleibt dort 1);
+der Fork migriert forward-only **und** bumpt (AGENTS.md-Guardrail „Migrationen erhöhen `schemaVersion`"). Voller
+Contract-Sync: Schema-`@Prop`-default `webdavShares.schemaVersion` 1→2 (Collection ist laufzeit-erstellt, nicht
+seed-at-init) **und** `scripts/migrations/assert-schema-versions.ts` `webdavshares: 2`. Terminal im Fork = **2**.
+
 **Idempotenz-Muster:** jede `execute` filtert `model.find({ schemaVersion: previousSchemaVersion })`
 (bzw. `$or: [{$exists:false}, {…prev}]`), transformiert, setzt `newSchemaVersion`. Leere Menge →
 No-Op. Daher gefahrlos wiederholbar. `appConfig/000` nutzt `previousSchemaVersion = undefined`

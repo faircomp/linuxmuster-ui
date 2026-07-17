@@ -74,7 +74,7 @@ export class WebdavShares {
   @Prop({ type: Boolean, default: false })
   wikiDisabled: boolean;
 
-  @Prop({ default: 1 })
+  @Prop({ default: 2 })
   schemaVersion: number;
 }
 
