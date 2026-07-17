@@ -55,6 +55,7 @@ const APPS = {
   APPSTORE: 'appstore',
   GENERAL_SETTINGS: 'generalsettings',
   WIREGUARD: 'wireguard',
+  WIKI: 'wiki',
 } as const;
 
 export default APPS;
