@@ -2359,7 +2359,8 @@ i18n: `wiki.description`, `wiki.empty.selectPageHint`, `wiki.sidebar` — DE+EN
 Doku: keine (intern)
 Abhängt von: T14
 
-### T17 — FE: useWikiStore (Zustand, eduApi) — Shares/Tree/Page/Folder  [ ]
+### T17 — FE: useWikiStore (Zustand, eduApi) — Shares/Tree/Page/Folder  [x] OK (0d5710328)
+> **OK (0d5710328):** Zustand-Store (Chat-Piloten-Muster) mit `eduApi` — 8 Aktionen: fetchShares/fetchTree(path)/fetchPage(path) (**ETag aus WikiPageDto.etag-Body → currentPageEtag**), createPage/updatePage (**If-Match-Header via HTTP_HEADERS.IfMatch + body.etag-Fallback, = Controller `ifMatch ?? dto.etag`**)/deletePage/createFolder/deleteFolder. Endpoint-Pfade aus `WIKI_ENDPOINTS`-Segmenten komponiert (wiki/shares|tree|page|folder), Query via axios `params`, `handleApiError`, Loading/Error-State wie Chat-Store. **Contract-Sync mit T13-WikiController vollständig** (Methode/Pfad/Params/Body je Route geprüft). vitest **10/10 lokal grün** (jede Aktion + If-Match present/absent + fetchPage-ETag-Übernahme + Fehlerpfad), eslint clean. Review approve (Nits: Stale-Response-Race optional/deferred an T18-T22, Store-Ort feature-lokal — beide ok). Kein Scope-Creep (keine Konflikt-/Merge-Logik aus T22).
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Wiki/store/useWikiStore.ts (+ *.spec.ts)
 Soll: BE-Routen (T13) · eduApi-Store-Muster (Chat-Pilot)
 Änderung: Zustand-Store mit `eduApi`: `fetchShares`, `fetchTree(path)`, `fetchPage(path)` (ETag mitführen), `createPage`, `updatePage` (If-Match), `deletePage`, `createFolder`, `deleteFolder`. `handleApiError`; Endpoint-Konstanten aus libs/wiki. Keine fetch-Aufrufe in Komponenten.
