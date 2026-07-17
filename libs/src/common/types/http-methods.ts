@@ -48,6 +48,7 @@ export enum RequestResponseContentType {
   APPLICATION_PDF = 'application/pdf',
   APPLICATION_X_WWW_FORM_URLENCODED = 'application/x-www-form-urlencoded',
   TEXT_PLAIN = 'text/plain',
+  TEXT_MARKDOWN = 'text/markdown',
   TEXT_CSV = 'text/csv',
   MULTIPART_FORM_DATA = 'multipart/form-data',
   APPLICATION_OCTET_STREAM = 'application/octet-stream',
@@ -69,6 +70,10 @@ export const HTTP_HEADERS = {
   CacheControl: 'Cache-Control',
   ETag: 'ETag',
   AssetSource: 'X-Asset-Source',
+  Range: 'Range',
+  IfMatch: 'If-Match',
+  IfNoneMatch: 'If-None-Match',
+  LastModified: 'Last-Modified',
 } as const;
 
 export enum WebdavRequestDepth {

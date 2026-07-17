@@ -18,7 +18,7 @@
  */
 
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { OnEvent } from '@nestjs/event-emitter';
 import FileSharingErrorMessage from '@libs/filesharing/types/fileSharingErrorMessage';
 import { DirectoryFileDTO } from '@libs/filesharing/types/directoryFileDTO';
@@ -28,6 +28,7 @@ import {
   HttpMethods,
   HttpMethodsWebDav,
   RequestResponseContentType,
+  ResponseType,
   WebdavRequestDepth,
 } from '@libs/common/types/http-methods';
 import ContentType from '@libs/filesharing/types/contentType';
@@ -50,6 +51,17 @@ import CustomHttpException from '../common/CustomHttpException';
 import WebdavClientFactory from './webdav.client.factory';
 import UsersService from '../users/users.service';
 import WebdavSharesService from './shares/webdav-shares.service';
+import WebdavEtagConflictError from './errors/WebdavEtagConflictError';
+import WebdavFileAlreadyExistsError from './errors/WebdavFileAlreadyExistsError';
+
+const WEBDAV_REQUEST_TIMEOUT_MS = 30_000;
+
+const isReadSuccessStatus = (status: number): boolean =>
+  status < Number(HttpStatus.BAD_REQUEST) ||
+  status === Number(HttpStatus.PARTIAL_CONTENT) ||
+  status === Number(HttpStatus.NOT_MODIFIED);
+
+const isWriteAcceptableStatus = (status: number): boolean => status < Number(HttpStatus.INTERNAL_SERVER_ERROR);
 
 @Injectable()
 class WebdavService {
@@ -160,13 +172,16 @@ class WebdavService {
     }
   }
 
-  static safeJoinUrl(base: string, path: string) {
+  static safeJoinUrl(base: string, path: string, trailingSlash = true) {
     try {
       const cleanedPath = (path || '').replace(/^\/+/, '').replace(/\/+$/, '');
 
       const encodedPath = cleanedPath.split('/').filter(Boolean).map(encodeURIComponent).join('/');
 
-      const finalPath = encodedPath ? `${encodedPath}/` : '';
+      let finalPath = '';
+      if (encodedPath) {
+        finalPath = trailingSlash ? `${encodedPath}/` : encodedPath;
+      }
 
       return new URL(finalPath, base).href;
     } catch (err) {
@@ -218,6 +233,190 @@ class WebdavService {
       )) as DirectoryFileDTO[];
     } catch (error) {
       return [];
+    }
+  }
+
+  static dropSelfReference(entries: DirectoryFileDTO[], requestUrl: string): DirectoryFileDTO[] {
+    const stripTrailing = (value: string): string => value.replace(/\/+$/, '');
+    let requestPathname: string;
+    try {
+      requestPathname = stripTrailing(decodeURIComponent(new URL(requestUrl).pathname));
+    } catch {
+      return entries;
+    }
+    return entries.filter((entry) => {
+      let entryPath = entry.filePath;
+      if (entryPath.startsWith('http://') || entryPath.startsWith('https://')) {
+        try {
+          entryPath = decodeURIComponent(new URL(entryPath).pathname);
+        } catch {
+          return true;
+        }
+      }
+      return stripTrailing(entryPath) !== requestPathname;
+    });
+  }
+
+  async probeFolder(username: string, path: string, share: string): Promise<DirectoryFileDTO[] | null> {
+    const client = await this.getClient(username, share);
+    const webdavShare = await this.webdavSharesService.getWebdavShareFromCache(share);
+    const pathWithoutWebdav = getPathWithoutWebdav(path, webdavShare.pathname);
+    const url = WebdavService.safeJoinUrl(webdavShare.url, pathWithoutWebdav);
+
+    try {
+      const response = await client.request<string>({
+        method: HttpMethodsWebDav.PROPFIND,
+        url,
+        data: DEFAULT_PROPFIND_XML,
+        headers: { [HTTP_HEADERS.Depth]: WebdavRequestDepth.ONE_LEVEL },
+        validateStatus: isReadSuccessStatus,
+        timeout: WEBDAV_REQUEST_TIMEOUT_MS,
+      });
+      const entries = mapToDirectoryFiles(response.data);
+      return WebdavService.dropSelfReference(entries, url);
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      if (status === Number(HttpStatus.NOT_FOUND)) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async getFileContentWithRange(
+    username: string,
+    relativePath: string,
+    share: string,
+    options: { rangeBytes?: [number, number] } = {},
+  ): Promise<{ content: string; etag: string; mtime: number; totalBytes: number | null; truncated: boolean }> {
+    const client = await this.getClient(username, share);
+    const webdavShare = await this.webdavSharesService.getWebdavShareFromCache(share);
+    const pathWithoutWebdav = getPathWithoutWebdav(relativePath, webdavShare.pathname);
+    const url = WebdavService.safeJoinUrl(webdavShare.url, pathWithoutWebdav, false);
+    const headers: Record<string, string> = {};
+    if (options.rangeBytes) {
+      const [from, to] = options.rangeBytes;
+      headers[HTTP_HEADERS.Range] = `bytes=${from}-${to}`;
+    }
+
+    try {
+      const response = await client.request<string>({
+        method: HttpMethods.GET,
+        url,
+        headers,
+        responseType: ResponseType.TEXT,
+        transformResponse: [(data: unknown) => (typeof data === 'string' ? data : String(data ?? ''))],
+        validateStatus: isReadSuccessStatus,
+        timeout: WEBDAV_REQUEST_TIMEOUT_MS,
+      });
+      const responseHeaders = response.headers as unknown as Record<string, string | undefined>;
+      const etag = responseHeaders.etag ?? '';
+      const lastModified = responseHeaders[HTTP_HEADERS.LastModified];
+      const parsedMtime = lastModified ? Date.parse(lastModified) : NaN;
+      const mtime = Number.isFinite(parsedMtime) ? parsedMtime : 0;
+      const content = typeof response.data === 'string' ? response.data : String(response.data ?? '');
+      const contentRange = responseHeaders['content-range'] ?? '';
+      const totalMatch = /\/(\d+)$/.exec(contentRange);
+      const totalBytes = totalMatch ? Number(totalMatch[1]) : null;
+      const requestedTo = options.rangeBytes ? options.rangeBytes[1] : null;
+      const truncated =
+        response.status === Number(HttpStatus.PARTIAL_CONTENT) &&
+        totalBytes !== null &&
+        requestedTo !== null &&
+        totalBytes > requestedTo + 1;
+      return { content, etag, mtime, totalBytes, truncated };
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      Logger.debug(
+        `WebDAV getFileContentWithRange failed: GET ${url} status=${status} error=${String(error)}`,
+        WebdavService.name,
+      );
+      throw new CustomHttpException(
+        FileSharingErrorMessage.FileNotFound,
+        status === Number(HttpStatus.NOT_FOUND) ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR,
+        `GET ${url} → status=${status}`,
+        WebdavService.name,
+      );
+    }
+  }
+
+  async putFileWithEtag(
+    username: string,
+    relativePath: string,
+    share: string,
+    content: string,
+    options: { ifMatch?: string; ifNoneMatch?: string } = {},
+  ): Promise<{ etag: string; mtime: number }> {
+    const client = await this.getClient(username, share);
+    const webdavShare = await this.webdavSharesService.getWebdavShareFromCache(share);
+    const pathWithoutWebdav = getPathWithoutWebdav(relativePath, webdavShare.pathname);
+    const url = WebdavService.safeJoinUrl(webdavShare.url, pathWithoutWebdav, false);
+    const headers: Record<string, string> = {
+      [HTTP_HEADERS.ContentType]: `${RequestResponseContentType.TEXT_MARKDOWN}; charset=utf-8`,
+    };
+    if (options.ifMatch) {
+      headers[HTTP_HEADERS.IfMatch] = options.ifMatch;
+    }
+    if (options.ifNoneMatch) {
+      headers[HTTP_HEADERS.IfNoneMatch] = options.ifNoneMatch;
+    }
+
+    try {
+      const response = await client.request<string>({
+        method: HttpMethods.PUT,
+        url,
+        data: content,
+        headers,
+        validateStatus: isWriteAcceptableStatus,
+        timeout: WEBDAV_REQUEST_TIMEOUT_MS,
+      });
+
+      if (response.status === Number(HttpStatus.PRECONDITION_FAILED)) {
+        if (options.ifNoneMatch) {
+          throw new WebdavFileAlreadyExistsError(relativePath);
+        }
+        const fresh = await this.getFileContentWithRange(username, relativePath, share, {});
+        Logger.warn(
+          `PUT ${url} 412: client If-Match=${options.ifMatch ?? '<none>'} server etag=${fresh.etag} content-bytes=${fresh.content.length}`,
+          WebdavService.name,
+        );
+        throw new WebdavEtagConflictError({ currentEtag: fresh.etag, serverContent: fresh.content });
+      }
+
+      if (response.status >= Number(HttpStatus.AMBIGUOUS)) {
+        throw new CustomHttpException(
+          FileSharingErrorMessage.UploadFailed,
+          response.status as HttpStatus,
+          `PUT ${url} → status=${response.status}`,
+          WebdavService.name,
+        );
+      }
+
+      const responseHeaders = response.headers as unknown as Record<string, string | undefined>;
+      const etag = responseHeaders.etag ?? '';
+      const lastModified = responseHeaders[HTTP_HEADERS.LastModified];
+      const parsedMtime = lastModified ? Date.parse(lastModified) : NaN;
+      const mtime = Number.isFinite(parsedMtime) ? parsedMtime : Date.now();
+      return { etag, mtime };
+    } catch (error) {
+      if (
+        error instanceof WebdavEtagConflictError ||
+        error instanceof WebdavFileAlreadyExistsError ||
+        error instanceof CustomHttpException
+      ) {
+        throw error;
+      }
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      Logger.debug(
+        `WebDAV putFileWithEtag failed: PUT ${url} status=${status} error=${String(error)}`,
+        WebdavService.name,
+      );
+      throw new CustomHttpException(
+        FileSharingErrorMessage.UploadFailed,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `PUT ${url} → status=${status}`,
+        WebdavService.name,
+      );
     }
   }
 
