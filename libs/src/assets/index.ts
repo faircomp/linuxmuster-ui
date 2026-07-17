@@ -27,3 +27,4 @@ export { default as ClassManagementIcon } from './edu_Klassenraum.svg';
 export { default as DesktopDeploymentIcon } from './edu_Desktop.svg';
 export { default as LinuxmusterIcon } from './edu_Linuxmuster.svg';
 export { default as WhiteboardIcon } from './edu_Whiteboard.svg';
+export { default as WikiIcon } from './edu_Wiki.svg';
