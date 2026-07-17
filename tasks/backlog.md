@@ -2048,7 +2048,7 @@ Doku: docs/ „Chat" (DE+EN, kurz) · CHANGELOG-Eintrag
 Abhängt von: T11, T12, T17
 
 ## p3-parent-child-pairing [P3] — ParentChildPairing
-_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ aktiv · _Tasks:_ 15
+_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ blockiert (14/15 [x], T15 box-gated [?]) · _Tasks:_ 15
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-parent-child-pairing.md` · Soll: main.js:60108/60169/60806 (Modul/Service/Controller) · main.js:12624 (LMN) · main.js:60489/60525/60557/60589/60619/64074 (Konstanten/Helper/QR) · upstream/1717-add-pairing-administration-page · kein Baseline-Screenshot (Modul in 1.6 nicht vorhanden)
 
 > Kalibrierung (P3): geerdetes Rekonstruktions-Ledger. Zeilenanker/Signaturen gegen echtes 2.0 (`main.js`) verifiziert.
@@ -2092,7 +2092,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1, T2
 
-### T5 — BE: Service — Code/Create/GetAll/UpdateStatus (Kern + LMN + logs)  [ ]
+### T5 — BE: Service — Code/Create/GetAll/UpdateStatus (Kern + LMN + logs)  [x] OK ParentChildPairingService (main.js:60174-60438): Code-Lifecycle (getOrCreateCode/refreshCode/resolveCode→GONE/generateAndStoreCode/deleteExistingCode), rollen-geprüftes createParentChildPairing (Self-Pair 400/INVALID_ROLE 403 caller+target/INCOMPATIBLE_ROLES 400/Duplicate 409 + PENDING+PAIRING_REQUESTED-Log), getAll(status/school), updateParentChildPairingStatus (404/ACCEPTED→addParentToStudent VOR Save/REJECTED-von-ACCEPTED→deleteParentFromStudent/STATUS_CHANGED-Log details=status). **3-Dep-Konstruktor** (usersService erst in T6, sonst unused). **Contract-Sync (T8 vorgezogen):** ParentChildPairingErrorMessagesType in ErrorMessage-Union (sonst typecheckt CustomHttpException nicht) + PAIRING_NOT_FOUND-Const (main.js:60494, im Rescue-Snapshot fehlend). Spec: self-pair/invalid-role/incompatible/duplicate/expiry-GONE/not-found/accept→LMN-add/reject→LMN-delete/log-push/getOrCreateCode(hit+generate). eslint+isolierter tsc CLEAN, jest box-gated. Review approve (e694d7735)
 Komponente: apps/api/src/parent-child-pairing · Dateien: `parent-child-pairing.service.ts`, `parent-child-pairing.service.spec.ts`
 Soll: main.js:60169 (DI `model,cache,lmnApiService,usersService`), :60181-60237 (getOrCreateCode/refreshCode/createParentChildPairing + Rollenvalidierung `getIsParent`/STUDENT + `PAIRING_REQUESTED`-Log + Unique-Check), :60347-60378 (getAll + updateParentChildPairingStatus: ACCEPTED→`addParentToStudent`, REJECTED-von-ACCEPTED→`deleteParentFromStudent`, `STATUS_CHANGED`-Log), :60413-60438 (generateAndStoreCode/resolveCode/deleteExistingCode)
 Änderung: Service 1:1 zur 2.0-Semantik. `toParentChildPairingDto` inkl. `logs`. `updateParentChildPairingStatus(id,status,performedBy,lmnApiToken)`. Spec: Self-Pair-/Rollen-/Duplicate-Fehler, Code-Expiry (GONE), Accept→LMN-Call gemockt, Reject→delete-Call, Log-Push.
@@ -2101,7 +2101,7 @@ i18n: keine (Fehlerkeys sind i18n-Referenzen, in T14 übersetzt)
 Doku: keine (intern)
 Abhängt von: T2, T3, T4
 
-### T6 — BE: Service — `getEnrichedRelationships` (Gruppencache-Anreicherung)  [ ]
+### T6 — BE: Service — `getEnrichedRelationships` (Gruppencache-Anreicherung)  [x] OK (1cf75fc72) getEnrichedRelationships + 3 private Helfer + static extractStudentUsernamesFromGroups (main.js:60239-60346 feldgenau): usersService (4. Dep) injiziert; Student liest eigene `-parents`-Gruppe (GROUP_WITH_MEMBERS_CACHE_KEY-/<student>-parents), Parent extrahiert Kinder aus Gruppen-Suffixen; aktive Beziehungen (isGroupActive:true, ldap-<parent>-<student>) aus LDAP-Cache + nicht-aktive PENDING/REJECTED aus DB, **Dedup via activeKeys-Set** (kein Doppel). **Kein IDOR** (Scoping strikt auf caller-username + eigener Cache; Review bestätigt). DI-safe: UsersModule @Global. Abweichungen (Review approve): `?? ''` weg wo Typ Präsenz garantiert (parentMember/geguardeter studentUser); explizite `Promise<...|null>`-Annotation im Parent-map (gegen TS2677) + Type-Guard-Filter. Spec +3 (Student-Kern isGroupActive+parentFirstName / Parent-Pfad / DB-Non-Active+Dedup) + UsersService-Mock-Provider. eslint+isolierter tsc CLEAN, jest box-gated.
 Komponente: apps/api/src/parent-child-pairing · Dateien: `parent-child-pairing.service.ts` (Erweiterung), `parent-child-pairing.service.spec.ts`
 Soll: main.js:60239-60346 (`getEnrichedRelationships`, `getActiveRelationshipsForStudent/Parent`, `getNonActivePairingsFromDb`, `extractStudentUsernamesFromGroups`; Gruppen-Cache-Key `${GROUP_WITH_MEMBERS_CACHE_KEY}-/<student>-parents`)
 Änderung: Anreicherungslogik ergänzen — aktive Beziehungen aus LDAP-Gruppencache (`isGroupActive:true`, `ldap-<parent>-<student>`-IDs) + nicht-aktive `PENDING/REJECTED` aus DB, mit `usersService.findAllCachedUsers(school)` verknüpft. Spec mit gemocktem `cacheManager`/`usersService`.
@@ -2110,7 +2110,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T5
 
-### T7 — BE: Controller + Modul + app.module-Registrierung (Guards)  [ ]
+### T7 — BE: Controller + Modul + app.module-Registrierung (Guards)  [x] OK (fd79454b1) Controller 6 Routen (main.js:60806-60918 delegations-treu): GET/PUT code, POST submit, GET relationships, GET all + PATCH :id/status. **@UseGuards(DynamicAppAccessGuard) EXAKT auf all+:id/status** (nicht auf den 4 user-facing), kein @Public (globaler JWT-Guard); LMN-Token aus @Headers(HTTP_HEADERS.XApiKey), performedBy/school aus JWT-Decorators (nie Body → kein Fälschen). Modul: MongooseModule.forFeature([pcp]) + LmnApiModule (nicht @Global); UsersService via @Global UsersModule (kein Import nötig). app.module: Import + imports-Array (nach ChatModule). Abweichungen (Review approve): @ApiBearerAuth statt @ApiAuth; ParseEnumPipe(PARENT_CHILD_PAIRING_STATUS) auf status-Body-Feld validiert+narrowt Interface-DTO-string→StatusType (treuer als main.js, verhindert ungültigen Status in DB); minimaler Swagger (Interface-DTOs nicht als @ApiBody-type). Controller-Spec: Delegation aller 6 + Auth-Contract (isRoutePublic===false ×6, Guard NUR bei all/:id/status). eslint+prettier+isolierter tsc CLEAN, jest/DI-Boot box-gated.
 Komponente: apps/api/src/parent-child-pairing + apps/api/src/app · Dateien: `parent-child-pairing.controller.ts`, `parent-child-pairing.module.ts`, `apps/api/src/app/app.module.ts`
 Soll: main.js:60806-60916 (Routen `code`GET/PUT, `` POST, `relationships`GET, `all`GET, `:id/status`PATCH; `@UseGuards(DynamicAppAccessGuard)` auf `all`+`:id/status`; `x-api-key`→lmnApiToken, `@GetCurrentUsername()`→performedBy) · main.js:60108 (Modul) · upstream/1717-…:apps/api/src/parent-child-pairing/parent-child-pairing.controller.ts (Struktur, Endpoint-Drift beachten: `relationships`)
 Änderung: Controller mit `@ApiBearerAuth()` (Fork-Konvention, nicht `ApiAuth()`), Guards mit-portieren, `Headers(HTTP_HEADERS.XApiKey)` für LMN-Token. Modul registriert Schema+Service+Controller, exportiert Service. Modul in `app.module.ts` `imports` eintragen (~Zeile 140, alphabetisch bei den anderen Modulen).
@@ -2119,7 +2119,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T6
 
-### T8 — libs/FE-Contract: Pfade + Endpoints + errorMessage-Union  [ ]
+### T8 — libs/FE-Contract: Pfade + Endpoints + errorMessage-Union  [x] OK (2cc9d5068) PARENT_ASSIGNMENT_LOCATION/PATH (userManagementPaths.ts) + PARENT_CHILD_PAIRING_PATH/USER_SETTINGS_PARENT_CHILD_PAIRING_PATH (user-settings-endpoints.ts) byte-nah aus origin/upstream/1717-add-pairing-administration-page. errorMessage-Union `| ParentChildPairingErrorMessagesType` **bereits in T5 gelandet** (dort reviewt, weil Service es zum Typecheck brauchte). eslint+isolierter tsc CLEAN, grep trifft. Rein additiver Konstanten-Port (byte-nah zum Rescue, per grep verifiziert) → direkt committet ohne separaten Review.
 Komponente: libs/src (Pfad-/Endpoint-Konstanten + Error-Union) · Dateien: `libs/src/…/constants/userManagementPaths.ts`, `libs/src/…/constants/user-settings-endpoints.ts`, `libs/src/error/errorMessage.ts`
 Soll: upstream/1717-add-pairing-administration-page (Diff): `PARENT_ASSIGNMENT_LOCATION='parent-assignment'`, `PARENT_ASSIGNMENT_PATH=${LINUXMUSTER_PATH}/…`, `PARENT_CHILD_PAIRING_PATH='parent-child-pairing'`, `USER_SETTINGS_PARENT_CHILD_PAIRING_PATH`; `errorMessage.ts`-Union `| ParentChildPairingErrorMessagesType`
 Änderung: Pfad-/Endpoint-Konstanten + Error-Union genau wie im Rescue-Diff ergänzen (Pfade an Fork-Konstanten-Datei angleichen).
@@ -2128,7 +2128,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1, T2
 
-### T9 — FE: Store UserSettings (`useParentChildPairingStore`)  [ ]
+### T9 — FE: Store UserSettings (`useParentChildPairingStore`)  [x] OK (a5bec5dad) Zustand-Store aus upstream/1717 portiert (eduApi/handleApiError/sonner/i18n rescue-treu). **Drift-Fix:** fetchRelationships ruft `${BASE}/${RELATIONSHIPS}` (Rescue rief BASE = im geshippten Controller die POST-Route, kein GET-Handler → wäre 404/405); matcht @Get(RELATIONSHIPS)→getEnrichedRelationships. Typ `ParentChildPairingDto[]` (Seite nutzt nur parent/student/status, Enriched=Superset zuweisbar). 410-Gone→codeExpired-Toast beibehalten. Spec 5 Tests (alle Endpoints/Payload/410/Drift-Fix). eslint+isolierter tsc CLEAN, **vitest 5/5 LOKAL grün**. Review approve.
 Komponente: apps/frontend/src/pages/UserSettings/ParentChildPairing · Dateien: `useParentChildPairingStore.ts`
 Soll: upstream/1717-…:apps/frontend/src/pages/UserSettings/ParentChildPairing/useParentChildPairingStore.ts — **Drift-Fix:** `fetchRelationships` muss `${BASE}/${RELATIONSHIPS}` rufen (Rescue ruft `BASE`; geshipptes BE hat den Enriched-Endpoint unter `relationships`, main.js:60821)
 Änderung: Zustand-Store portieren (`eduApi` in Store, `handleApiError`, `toast`, `i18n`), `fetchRelationships` auf `RELATIONSHIPS`-Endpoint umstellen. `HttpStatusCode.Gone`→`codeExpired`-Toast beibehalten. SPDX-AGPL-Header.
@@ -2137,7 +2137,7 @@ i18n: nutzt Keys aus T14
 Doku: keine (intern)
 Abhängt von: T1, T2
 
-### T10 — FE: UserSettings-Seite + FloatingButtons + Badge  [ ]
+### T10 — FE: UserSettings-Seite + FloatingButtons + Badge  [x] OK (faba97b90) ParentChildPairingPage (QR+Code via QRCodeDisplay/parentChildPairingQrPayload, enter-code, eigene Beziehungen) + FloatingButtons (ReloadButton→refreshPairingCode) + ParentChildPairingStatusBadge (BadgeSH+cn) aus upstream/1717 portiert, 1:1 + nur Header-Swap. **Ledger-„Import-Drift-Fix" bewusst NICHT gemacht (falsche Annahme):** `@edulution-io/ui-kit` ist lokaler tsconfig-Alias (libs/ui-kit, 162 Fork-Nutzer), `@/components/shared/Button` existiert NICHT → Rescue-Imports (cn/Button aus ui-kit, BadgeSH aus @/components/ui/BadgeSH) sind bereits fork-nativ, unverändert = build-korrekt (Review bestätigt). Alle ~13 Component-Imports auflösbar, Prop-Kontrakte passen. StatusBadge-Spec 4 Tests (PENDING/ACCEPTED/REJECTED + unknown-Fallback) via renderToStaticMarkup. eslint+isolierter tsc(jsx:react) CLEAN, **vitest 4/4 LOKAL grün**. Nit: isParent in useMemo-Deps ungenutzt (rescue-treu, harmlos). Review approve.
 Komponente: apps/frontend/src/pages/UserSettings/ParentChildPairing + components/shared · Dateien: `ParentChildPairingPage.tsx`, `ParentChildPairingFloatingButtons.tsx`, `apps/frontend/src/components/shared/ParentChildPairingStatusBadge.tsx`
 Soll: upstream/1717-…:{ParentChildPairingPage.tsx, ParentChildPairingFloatingButtons.tsx, components/shared/ParentChildPairingStatusBadge.tsx} — **Import-Drift-Fix:** `cn`/`Button` **nicht** aus `@edulution-io/ui-kit`, sondern Fork: `cn()` aus `@/lib/utils`, `BadgeSH` aus `@/components/ui/BadgeSH`, Button aus `@/components/shared/Button`
 Änderung: Seite (Code/QR via `QRCodeDisplay` + `parentChildPairingQrPayload`, eigene Beziehungen), FloatingButtons (`ReloadButton`→`refreshPairingCode`), StatusBadge (BadgeSH + `cn`) portieren, alle Imports auf Fork-Pfade. SPDX-AGPL-Header.
@@ -2146,7 +2146,7 @@ i18n: nutzt `usersettings.parentChildPairing.*` (T14)
 Doku: keine (intern)
 Abhängt von: T9
 
-### T11 — FE: Admin-Store (`useParentAssignmentStore`)  [ ]
+### T11 — FE: Admin-Store (`useParentAssignmentStore`)  [x] OK (a97fa1496) Admin-Store aus upstream/1717 rescue-treu: fetchPairings (GET `${BASE}/${ALL}` via axios `{params}`, status nur wenn ≠ STATUS_FILTER_ALL='', school optional), updateStatus (PATCH `${BASE}/${id}/${STATUS}` + statusUpdated-Toast + Refetch), setStatusFilter/setSelectedSchool. Matcht T7-Controller (@Get('all')/@Patch(':id/status')+ParseEnumPipe). Abweichung: `params[QUERY_PARAMS.STATUS]` statt Magic `params.status` (School-Zeile nutzte Konstante schon; AGENTS.md). Spec 4 Tests (default/FILTER_ALL/school-Param/PATCH+Refetch). eslint+isolierter tsc CLEAN, **vitest 4/4 LOKAL grün**. Review approve. **Merke:** `parentChildPairing.statusUpdated`-Key erst in T14 → T14 muss vor Modul-Ship landen.
 Komponente: apps/frontend/src/pages/LinuxmusterPage/ParentAssignment · Dateien: `useParentAssignmentStore.ts`
 Soll: upstream/1717-…:apps/frontend/src/pages/LinuxmusterPage/ParentAssignment/useParentAssignmentStore.ts (`fetchPairings` → `${BASE}/${ALL}` mit `status`/`school`-Params; `updateStatus` → `PATCH ${BASE}/:id/${STATUS}`)
 Änderung: Zustand-Admin-Store portieren, `statusFilter`/`selectedSchool`, `PARENT_CHILD_PAIRING_STATUS_FILTER_ALL`. `eduApi` in Store. SPDX-AGPL-Header.
@@ -2155,7 +2155,7 @@ i18n: nutzt `parentChildPairing.*` (T14)
 Doku: keine (intern)
 Abhängt von: T1, T2
 
-### T12 — FE: Admin-Seite + Spalten (`ParentAssignmentPage`)  [ ]
+### T12 — FE: Admin-Seite + Spalten (`ParentAssignmentPage`)  [x] OK (2f8f2063b) ParentAssignmentPage (ScrollableTable + Status/Schul-Filter, SuperAdmin-School-Dropdown) + getParentAssignmentColumns (parent/student/school/status/createdAt + Accept/Reject-Aktionen) aus upstream/1717 byte-identisch (nur Header-Swap). **Kein Contract-Mismatch:** Tabelle nutzt `ParentChildPairingDto` (Usernames, keine enriched-Namen) — matcht plain `getAllParentChildPairings` (T5) + T11-Store. cn aus @edulution-io/ui-kit (fork-nativer Alias). meta.translationId valide (tanstack-table.d.ts). Accept nur wenn ≠ACCEPTED / Reject nur wenn ≠REJECTED (kein Doppel). **Kein Auth-Bypass** (echtes Gate = T7 DynamicAppAccessGuard; FE-isSuperAdmin nur School-Dropdown-UX). Alle ~15 Fork-Imports auflösbar. eslint CLEAN, isolierter FE-tsc: meine 2 Dateien **0 Fehler** (18 andere = umgebungsbedingt vorbestehend). Kein Unit-Test (Verify=Typecheck; Accept/Reject-Wirkung=T15). Review approve.
 Komponente: apps/frontend/src/pages/LinuxmusterPage/ParentAssignment · Dateien: `ParentAssignmentPage.tsx`, `getParentAssignmentColumns.tsx`
 Soll: upstream/1717-…:{ParentAssignmentPage.tsx, getParentAssignmentColumns.tsx} (Tabelle über `enrichedRelationshipResponseDto`: Eltern/Kind-Namen, Status-Badge, Accept/Reject-Aktionen, Status-/Schul-Filter) — Import-Drift wie T10 beachten
 Änderung: Admin-Seite + Spaltendefinition portieren, StatusBadge (T10) einbinden, Filter-Controls. SPDX-AGPL-Header.
@@ -2164,7 +2164,7 @@ i18n: nutzt `parentChildPairing.*` (T14)
 Doku: keine (intern)
 Abhängt von: T11
 
-### T13 — FE: Route-Registrierung (Private + Linuxmuster)  [ ]
+### T13 — FE: Route-Registrierung (Private + Linuxmuster)  [x] OK (6ad3a92f7) getPrivateRoutes: `<Route PARENT_CHILD_PAIRING_PATH → ParentChildPairingPage>` im USER_SETTINGS-Outlet-Block; getLinuxmusterRoutes: `<Route PARENT_ASSIGNMENT_LOCATION → ParentAssignmentPage>` im LINUXMUSTER-Block. Konstanten aus T8. Keine Menü-Einträge im Rescue-Diff → keine (nur die 2 Routen). Bestehende Dateien → kein Header-Swap (surgical). eslint+isolierter tsc CLEAN. Mechanischer rescue-matchender Change → direkt committet (wie T8).
 Komponente: apps/frontend/src/router/routes · Dateien: `getPrivateRoutes.tsx`, `getLinuxmusterRoutes.tsx`
 Soll: upstream/1717-… (Diff): `getPrivateRoutes` Route `PARENT_CHILD_PAIRING_PATH`→`ParentChildPairingPage`; `getLinuxmusterRoutes` Route `PARENT_ASSIGNMENT_LOCATION`→`ParentAssignmentPage`
 Änderung: beide Routen wie im Rescue-Diff registrieren (Imports + `<Route>`), Menü-/Navigations-Einträge nur falls im Rescue-Diff vorhanden.
@@ -2173,7 +2173,7 @@ i18n: ggf. Menü-Label (T14)
 Doku: keine (intern)
 Abhängt von: T10, T12, T8
 
-### T14 — i18n: DE+EN Keys `parentChildPairing.*` + `usersettings.parentChildPairing.*`  [ ]
+### T14 — i18n: DE+EN Keys `parentChildPairing.*` + `usersettings.parentChildPairing.*`  [x] OK (8dabef1d9) top-level `parentChildPairing` (Labels/Status/Admin/errors) + `usersettings.parentChildPairing` byte-nah aus upstream/1717 in **DE+EN+FR** (nicht nur best-effort — Rescue hatte fr komplett) via textueller Injection am usersettings-Anker (kein Reformatieren: 55+/0- je Datei). **`pairingNotFound`-Error-Key ergänzt** (T5/main.js:60494, im Rescue fehlend) DE+EN+FR. `check-translations` grün; **alle 38 von T5/T9-T12 referenzierten Keys lösen auf** (inkl. dynamische status${Capitalize}); Parität 2005 Keys/Sprache. i18n-Daten + konkrete Verifikation → direkt committet (wie T8/T13). **→ pcp buildbar komplett (14/15); nur T15 box-gated offen.**
 Komponente: apps/frontend/src/locales · Dateien: `locales/de/translation.json`, `locales/en/translation.json` (+ `fr` best-effort)
 Soll: main.js:60489 (Fehler-Keys) + Rescue-FE-`t(...)`-Aufrufe (`statusPending/Accepted/Rejected`, `statusUpdated`, `myParents`, `myChildren`, `description`, `codeRefreshed`, `pairingSuccess`, `codeExpired`)
 Änderung: alle referenzierten Keys DE+EN ergänzen; `fr` mit englischem Fallback nur wenn nötig.
@@ -2182,7 +2182,7 @@ i18n: **das ist** die i18n-Task (DE+EN Pflicht)
 Doku: keine (intern)
 Abhängt von: T10, T12
 
-### T15 — Voll-Stack-Verify gegen echten LMN (Accept→Gruppe, Reject→Entfernung)  [ ]
+### T15 — Voll-Stack-Verify gegen echten LMN (Accept→Gruppe, Reject→Entfernung)  [?] human-gate: box-gated (crabbox down den ganzen Loop). Braucht warme Box: eigene Images bauen → 7-Service-Stack + linuxmuster-api7 gegen echten LMN, synthetische Eltern/Schüler-Fixtures: Code(Schüler)→einlösen(Eltern)=PENDING → Admin akzeptiert → Eltern in LMN-Gruppe `<student>-parents` (GET users/<student> zeigt parents) → Reject entfernt. + Playwright-Shot UserSettings-/ParentAssignment-Seite. **Offene Frage 2:** trägt Eltern das `/role-parent`-Claim? LMN-verändernd = ask-first. Doku „ParentChildPairing"-Abschnitt DE+EN im selben Commit. Abhängt: T7/T13/T14 (alle [x]) → nur noch Box nötig.
 Komponente: scripts/crabbox (Voll-Stack) · Dateien: — (nur Verifikation, ggf. Playwright-Shot)
 Soll: main.js:12624/12634 (LMN `users/<student>/parents`), :60358-60378 (Statuswechsel-Wirkung)
 Änderung: keine Code-Änderung. Auf warmer crabbox mit **synthetischen** Eltern-/Schüler-Fixtures: Code erzeugen (Schüler), einlösen (Eltern) → `PENDING`; Admin akzeptiert → Eltern in LMN-Gruppe `<student>-parents`; ablehnen → Entfernung. Prüfen, dass Eltern das `/role-parent`-Claim tragen (offene Frage 2 der Spec).
