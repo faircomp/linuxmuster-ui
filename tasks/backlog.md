@@ -2530,8 +2530,8 @@ Erster **realer** Zusatznutzen von „BEIDES": SOGo-Webmail (Default) **plus** n
 das, was SOGo **nicht** kann. Komplett unabhängig vom Selektor und von Phase 3; jederzeit lieferbar. Alle
 Admin-Routen hinter `AdminGuard`. Keine Migration.
 
-### T5 — libs: MAIL_ENDPOINT_PATHS + MAIL_DEFAULT_PORTS + sync-jobs-Drift  [ ]
-Komponente: libs/src/mail/constants · Dateien: `libs/src/mail/constants/mailEndpointPaths.ts` (neu), `libs/src/mail/constants/mailDefaultPorts.ts` (neu), `libs/src/mail/constants/mail-endpoint.ts`
+### T5 — libs: MAIL_ENDPOINT_PATHS + MAIL_DEFAULT_PORTS + sync-jobs-Drift  [x] OK (cb3a25804)
+> **OK (cb3a25804):** Zwei `as const`-Objekte feldgenau aus main.js:23899 (`MAIL_ENDPOINT_PATHS`, 17 Werte) + 4183 (`MAIL_DEFAULT_PORTS`: IMAP_SSL 993/SMTP_SUBMISSION 587/SMTPS_IMPLICIT_TLS 465). **`SYNC_JOBS: 'sync-jobs'`** (Plural, 2.0-treu) = bewusste Drift zum Fork-Controller `@Get('sync-job')` (Singular, mails.controller:82/87/95) → **T14/T18 gleicht den Fork-Endpunkt an**. `mail-endpoint.ts` (Base `'mails'`) unberührt (nur Kontext). AGPL-SPDX, kein Spec (reine Daten-Konstanten, libs ohne Test-Infra). isolierter tsc + eslint CLEAN, grep 17 Werte + SYNC_JOBS + 3 Ports bestätigt. Review approve (feldgenau, keine Findings).
 Soll: main.js:23896 (`MAIL_ENDPOINT_PATHS`: MAILBOXES/MESSAGES/OUTBOX/DRAFTS/STATUS/DESTINATION/ATTACHMENTS/SYNC_JOBS/PROVIDER_CONFIG/PUBLIC/MAILCOW_MAILBOXES/ACL/DELEGATES/FOLDERS/DOMAINS/RECIPIENTS/SEARCH) · main.js:2158 (`MAIL_DEFAULT_PORTS`: IMAP_SSL 993, SMTP_SUBMISSION 587, SMTPS_IMPLICIT_TLS 465)
 Änderung: Beide `as const`-Objekte neu anlegen (SPDX-AGPL). `SYNC_JOBS: 'sync-jobs'` (Plural) — Contract-Drift zum Fork-`sync-job`; Fork-Endpunkt in T14/T18 angleichen.
 Verify: `npx nx run libs:typecheck` (remote) grün; `grep -c "'" libs/src/mail/constants/mailEndpointPaths.ts` == 17 Werte; `grep SYNC_JOBS libs/src/mail/constants/mailEndpointPaths.ts` findet `'sync-jobs'`.
