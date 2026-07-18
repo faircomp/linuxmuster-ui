@@ -41,6 +41,7 @@ import WebhookErrorMessages from '@libs/webhook/types/webhookErrorMessages';
 import ChatErrorMessages from '@libs/chat/types/chatErrorMessages';
 import ParentChildPairingErrorMessagesType from '@libs/parent-child-pairing/types/parentChildPairingErrorMessagesType';
 import WikiErrorMessagesType from '@libs/wiki/types/wikiErrorMessagesType';
+import CalendarErrorMessages from '@libs/calendar/constants/calendar-error-messages';
 
 type ErrorMessage =
   | CommonErrorMessages
@@ -66,6 +67,7 @@ type ErrorMessage =
   | WebhookErrorMessages
   | ChatErrorMessages
   | ParentChildPairingErrorMessagesType
-  | WikiErrorMessagesType;
+  | WikiErrorMessagesType
+  | CalendarErrorMessages;
 
 export default ErrorMessage;
