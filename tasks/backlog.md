@@ -2504,8 +2504,8 @@ i18n: `mail.emptyState.nativePlaceholder` DE+EN+FR
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — i18n: Selektor-Gerüst DE+EN+FR  [ ]
-Komponente: apps/frontend/src/locales · Dateien: `apps/frontend/src/locales/{de,en,fr}/translation.json`
+### T3 — i18n: Selektor-Gerüst DE+EN+FR  [x] OK (73bd3e753)
+> **OK (73bd3e753):** Trilinguales Key-Gerüst für den Mail-Client-Selektor (vor Phase-4-UI). `appExtendedOptions.activeMailClientTitle/Description`, `activeMailClient.{native,sogo}`, `activeMailClientWarning` (SOGo-Filter/Abwesenheit nicht im nativen Client), `mail.tabs.{native,sogo}`, `mail.openInSogo.{label,tooltip}`. **check-translations exit 0** (exakte Parität), alle 3 JSON valide, `activeMailClient`-Count identisch (4) DE/EN/FR. Reiner i18n-Scaffold, kein Consumer (Phase 4). Self-Review (Parität maschinell verifiziert, Übersetzungen korrekt).
 Soll: Feature-Gefälle native↔SOGo (Warnhinweis), Tab-/Deep-Link-Labels (Phase 4 vorbereitet). FR-Locale existiert bereits (`i18n.ts:35`).
 Änderung: Key-Gerüst anlegen: `appExtendedOptions.activeMailClientTitle`/`…Description`, `appExtendedOptions.activeMailClient.native`/`…sogo`, `appExtendedOptions.activeMailClientWarning` („SOGo-Filter/Abwesenheit sind im nativen Client nicht enthalten"), `mail.tabs.native`/`mail.tabs.sogo`, `mail.openInSogo.label`/`…tooltip`. **DE+EN+FR** gleichzeitig, konsistente Key-Menge in allen drei Dateien (pre-commit-Translation-Check).
 Verify: iter.sh → `npm run test:frontend`-Translation-Konsistenzcheck grün (gleiche Keys in de/en/fr); `grep -c activeMailClient` in jeder der drei Dateien identisch.
