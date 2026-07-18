@@ -239,6 +239,9 @@
     "sidebar": "Tickets"
   },
   "mail": {
+    "emptyState": {
+      "nativePlaceholder": "Der native Mail-Client ist noch in Vorbereitung."
+    },
     "title": "E-MAILS",
     "sidebar": "E-Mails",
     "configName": "Name der Konfiguration",

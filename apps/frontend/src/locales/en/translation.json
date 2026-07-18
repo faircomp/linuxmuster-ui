@@ -248,6 +248,9 @@
     "sidebar": "Tickets"
   },
   "mail": {
+    "emptyState": {
+      "nativePlaceholder": "The native mail client is not ready yet."
+    },
     "title": "E-MAILS",
     "sidebar": "E-Mails",
     "configName": "Configuration name",

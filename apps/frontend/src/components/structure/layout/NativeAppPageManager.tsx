@@ -27,6 +27,7 @@ import BulletinBoardPage from '@/pages/BulletinBoard/BulletinBoardPage';
 import Whiteboard from '@/pages/Whiteboard/Whiteboard';
 import { DashboardPage } from '@/pages/Dashboard';
 import WikiPage from '@/pages/Wiki/WikiPage';
+import MailPage from '@/pages/Mail/MailPage';
 
 const nativeAppPages: Partial<Record<TApps, JSX.Element>> = {
   [APPS.DASHBOARD]: <DashboardPage />,
@@ -37,6 +38,7 @@ const nativeAppPages: Partial<Record<TApps, JSX.Element>> = {
   [APPS.BULLETIN_BOARD]: <BulletinBoardPage />,
   [APPS.LINUXMUSTER]: <Outlet />,
   [APPS.WIKI]: <WikiPage />,
+  [APPS.MAIL]: <MailPage />,
 };
 
 type NativeAppPageManagerProps = {

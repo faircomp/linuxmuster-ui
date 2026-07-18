@@ -238,6 +238,9 @@
     "sidebar": "Système de tickets"
   },
   "mail": {
+    "emptyState": {
+      "nativePlaceholder": "Le client de messagerie natif n'est pas encore prêt."
+    },
     "title": "E-mail",
     "sidebar": "E-mail",
     "configName": "Nom de la configuration",
