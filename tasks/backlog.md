@@ -2968,7 +2968,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2, T3, T6
 
-### T8 — BE: DockerController Contract-Parität (@ApiAuth + Swagger-Response-DTOs)  [ ]
+### T8 — BE: DockerController Contract-Parität (@ApiAuth + Swagger-Response-DTOs)  [x]
+> Erledigt (ed3cb4400): `@ApiTags(EDU_API_DOCKER_ENDPOINT)` + `@ApiBearerAuth()` auf DockerController-Klassenebene ergänzt — die **etablierte Fork-Swagger-Konvention** (mails.controller u.a.; main.ts registriert global .addBearerAuth()). **Bewusste Divergenz vom 2.0-Soll:** der 2.0-Custom-`@ApiAuth`-Decorator (bündelt ApiBearerAuth + ApiUnauthorized/ForbiddenResponse mit ErrorResponseDto) + per-Route-`@ApiResponse`/Response-DTO-Klassen wurden NICHT nachgebaut — der Fork hat weder `@ApiAuth` noch `ErrorResponseDto` noch `check-swagger`, und KEIN Controller trägt per-Route-Response-DTOs → Nachbau wäre inkonsistente Über-Technik für reine Swagger-Doku (AGENTS.md „passe dich dem bestehenden Code an"). Divergenz im Feature-Doc dokumentiert. **Guards byte-identisch unverändert** (AdminGuard Klasse + @Public/IP-Check Agent-Route) — nur additive Annotation, kein Auth-Bypass. `check-swagger` nicht vorhanden → Verify-Teil entfällt. Verify: docker.controller.spec 3/3 grün (Auth-Contract-Reflection unverändert), eslint + isolierter tsc clean. Review approve.
 Komponente: apps/api · Dateien: apps/api/src/docker/docker.controller.ts (+ ggf. libs/src/docker/types/*response.dto.ts neu)
 Soll: main.js:32846 (@ApiAuth + @UseGuards(AdminGuard)) · main.js:32835 (@Public auf Agent-Route) · main.js:32757ff (ApiResponse-DTOs)
 Änderung: `@ApiAuth()` auf Klassenebene ergänzen (AdminGuard + Public bleiben unverändert!); Swagger `@ApiResponse`/`@ApiBody`-DTOs (ContainerResponse/CreateContainerRequest/UpdateContainerResponse) mitführen. **Guards nicht anfassen außer Ergänzung** — Auth-Bypass-Risiko.
