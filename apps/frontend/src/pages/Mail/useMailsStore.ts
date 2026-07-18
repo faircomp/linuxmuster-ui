@@ -156,46 +156,52 @@ const useMailsStore = create<MailsStore>((set) => ({
     }
   },
 
-  createMailcowMailbox: async (createMailboxDto: CreateMailboxDto) => {
+  createMailcowMailbox: async (createMailboxDto: CreateMailboxDto): Promise<boolean> => {
     set({ isMailcowLoading: true });
     try {
       const { data } = await eduApi.post<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, createMailboxDto);
       set({ mailcowMailboxes: data });
       toast.success(i18n.t('mailcowAdmin.notifications.mailboxCreated'));
+      return true;
     } catch (error) {
       handleApiError(error, set);
+      return false;
     } finally {
       set({ isMailcowLoading: false });
     }
   },
 
-  updateMailcowMailbox: async (updateMailboxDto: UpdateMailboxDto) => {
+  updateMailcowMailbox: async (updateMailboxDto: UpdateMailboxDto): Promise<boolean> => {
     set({ isMailcowLoading: true });
     try {
       const { data } = await eduApi.patch<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, updateMailboxDto);
       set({ mailcowMailboxes: data });
       toast.success(i18n.t('mailcowAdmin.notifications.mailboxUpdated'));
+      return true;
     } catch (error) {
       handleApiError(error, set);
+      return false;
     } finally {
       set({ isMailcowLoading: false });
     }
   },
 
-  deleteMailcowMailboxes: async (mailboxes: string[]) => {
+  deleteMailcowMailboxes: async (mailboxes: string[]): Promise<boolean> => {
     set({ isMailcowLoading: true });
     try {
       const { data } = await eduApi.delete<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, { data: { items: mailboxes } });
       set({ mailcowMailboxes: data });
       toast.success(i18n.t('mailcowAdmin.notifications.mailboxDeleted'));
+      return true;
     } catch (error) {
       handleApiError(error, set);
+      return false;
     } finally {
       set({ isMailcowLoading: false });
     }
   },
 
-  updateMailboxAcl: async (mailboxAclDto: MailboxAclDto) => {
+  updateMailboxAcl: async (mailboxAclDto: MailboxAclDto): Promise<boolean> => {
     set({ isMailcowLoading: true });
     try {
       const { data } = await eduApi.post<MailcowMailboxDto[]>(
@@ -204,8 +210,10 @@ const useMailsStore = create<MailsStore>((set) => ({
       );
       set({ mailcowMailboxes: data });
       toast.success(i18n.t('mailcowAdmin.notifications.aclUpdated'));
+      return true;
     } catch (error) {
       handleApiError(error, set);
+      return false;
     } finally {
       set({ isMailcowLoading: false });
     }

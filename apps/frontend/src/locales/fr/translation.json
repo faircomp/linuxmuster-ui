@@ -16,6 +16,21 @@
       "inactive": "Inactif",
       "incomingOnly": "Entrant uniquement"
     },
+    "newMailbox": "Nouvelle boîte aux lettres",
+    "dialog": {
+      "createTitle": "Créer une boîte aux lettres",
+      "localPart": "Partie locale",
+      "localPartHint": "Seuls les lettres, chiffres et . _ + - sont autorisés",
+      "domain": "Domaine",
+      "domainPlaceholder": "Sélectionner un domaine",
+      "name": "Nom d'affichage",
+      "quota": "Stockage (Mo)",
+      "password": "Mot de passe",
+      "passwordHint": "Au moins 8 caractères avec un chiffre et un caractère spécial",
+      "passwordConfirmation": "Confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "active": "Actif"
+    },
     "notifications": {
       "mailboxCreated": "Boîte aux lettres créée",
       "mailboxUpdated": "Boîte aux lettres mise à jour",

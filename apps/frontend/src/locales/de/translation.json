@@ -16,6 +16,21 @@
       "inactive": "Inaktiv",
       "incomingOnly": "Nur eingehend"
     },
+    "newMailbox": "Neues Postfach",
+    "dialog": {
+      "createTitle": "Postfach anlegen",
+      "localPart": "Lokaler Teil",
+      "localPartHint": "Nur Buchstaben, Ziffern, . _ + - erlaubt",
+      "domain": "Domain",
+      "domainPlaceholder": "Domain wählen",
+      "name": "Anzeigename",
+      "quota": "Speicher (MB)",
+      "password": "Passwort",
+      "passwordHint": "Mindestens 8 Zeichen mit Ziffer und Sonderzeichen",
+      "passwordConfirmation": "Passwort bestätigen",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein",
+      "active": "Aktiv"
+    },
     "notifications": {
       "mailboxCreated": "Postfach erstellt",
       "mailboxUpdated": "Postfach aktualisiert",

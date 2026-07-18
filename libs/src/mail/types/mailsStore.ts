@@ -50,10 +50,10 @@ interface MailsStore {
   isMailcowLoading: boolean;
   getMailcowDomains: () => Promise<void>;
   getMailcowMailboxes: () => Promise<void>;
-  createMailcowMailbox: (createMailboxDto: CreateMailboxDto) => Promise<void>;
-  updateMailcowMailbox: (updateMailboxDto: UpdateMailboxDto) => Promise<void>;
-  deleteMailcowMailboxes: (mailboxes: string[]) => Promise<void>;
-  updateMailboxAcl: (mailboxAclDto: MailboxAclDto) => Promise<void>;
+  createMailcowMailbox: (createMailboxDto: CreateMailboxDto) => Promise<boolean>;
+  updateMailcowMailbox: (updateMailboxDto: UpdateMailboxDto) => Promise<boolean>;
+  deleteMailcowMailboxes: (mailboxes: string[]) => Promise<boolean>;
+  updateMailboxAcl: (mailboxAclDto: MailboxAclDto) => Promise<boolean>;
 }
 
 export default MailsStore;

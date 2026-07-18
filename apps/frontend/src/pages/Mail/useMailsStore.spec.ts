@@ -68,11 +68,22 @@ describe('useMailsStore mailcow admin actions', () => {
     const refreshed = [{ username: 'jane@example.com' }];
     mockedEduApi.post.mockResolvedValueOnce({ data: refreshed });
 
-    await useMailsStore.getState().createMailcowMailbox(createDto);
+    const result = await useMailsStore.getState().createMailcowMailbox(createDto);
 
+    expect(result).toBe(true);
     expect(mockedEduApi.post).toHaveBeenCalledWith(MAILCOW_PATH, createDto);
     expect(useMailsStore.getState().mailcowMailboxes).toEqual(refreshed);
     expect(mockedToast.success).toHaveBeenCalledWith('mailcowAdmin.notifications.mailboxCreated');
+  });
+
+  it('returns false and does not toast success when a mutation fails', async () => {
+    mockedEduApi.post.mockRejectedValueOnce(new Error('boom'));
+
+    const result = await useMailsStore.getState().createMailcowMailbox(createDto);
+
+    expect(result).toBe(false);
+    expect(mockedToast.success).not.toHaveBeenCalled();
+    expect(useMailsStore.getState().isMailcowLoading).toBe(false);
   });
 
   it('updateMailcowMailbox patches the dto and toasts success', async () => {

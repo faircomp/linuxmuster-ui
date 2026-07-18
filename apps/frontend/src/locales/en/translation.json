@@ -16,6 +16,21 @@
       "inactive": "Inactive",
       "incomingOnly": "Incoming only"
     },
+    "newMailbox": "New mailbox",
+    "dialog": {
+      "createTitle": "Create mailbox",
+      "localPart": "Local part",
+      "localPartHint": "Only letters, digits and . _ + - are allowed",
+      "domain": "Domain",
+      "domainPlaceholder": "Select a domain",
+      "name": "Display name",
+      "quota": "Storage (MB)",
+      "password": "Password",
+      "passwordHint": "At least 8 characters with a digit and a special character",
+      "passwordConfirmation": "Confirm password",
+      "passwordMismatch": "The passwords do not match",
+      "active": "Active"
+    },
     "notifications": {
       "mailboxCreated": "Mailbox created",
       "mailboxUpdated": "Mailbox updated",
