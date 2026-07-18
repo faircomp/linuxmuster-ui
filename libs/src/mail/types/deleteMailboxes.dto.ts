@@ -3,10 +3,13 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import { IsArray, IsString } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsString } from 'class-validator';
+import MAILCOW_VALIDATION from '@libs/mail/constants/mailcowValidation';
 
 class DeleteMailboxesDto {
   @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(MAILCOW_VALIDATION.MAX_ITEMS_PER_REQUEST)
   @IsString({ each: true })
   items: string[];
 }

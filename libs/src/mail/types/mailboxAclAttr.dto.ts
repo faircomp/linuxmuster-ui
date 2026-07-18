@@ -3,10 +3,12 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import { IsArray, IsString } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsString } from 'class-validator';
+import MAILCOW_VALIDATION from '@libs/mail/constants/mailcowValidation';
 
 class MailboxAclAttrDto {
   @IsArray()
+  @ArrayMaxSize(MAILCOW_VALIDATION.USER_ACL_VALUES.length)
   @IsString({ each: true })
   user_acl: string[];
 }

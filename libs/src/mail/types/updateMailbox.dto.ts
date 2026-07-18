@@ -4,14 +4,18 @@
  */
 
 import { Type } from 'class-transformer';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsObject, IsString, ValidateNested } from 'class-validator';
+import MAILCOW_VALIDATION from '@libs/mail/constants/mailcowValidation';
 import UpdateMailboxAttrDto from './updateMailboxAttr.dto';
 
 class UpdateMailboxDto {
   @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(MAILCOW_VALIDATION.MAX_ITEMS_PER_REQUEST)
   @IsString({ each: true })
   items: string[];
 
+  @IsObject()
   @ValidateNested()
   @Type(() => UpdateMailboxAttrDto)
   attr: UpdateMailboxAttrDto;

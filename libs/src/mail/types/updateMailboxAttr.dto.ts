@@ -3,7 +3,8 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import { IsArray, IsInt, IsOptional, IsString } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsInt, IsOptional, IsString } from 'class-validator';
+import MAILCOW_VALIDATION from '@libs/mail/constants/mailcowValidation';
 
 class UpdateMailboxAttrDto {
   @IsOptional()
@@ -56,6 +57,7 @@ class UpdateMailboxAttrDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(MAILCOW_VALIDATION.MAX_TAGS)
   @IsString({ each: true })
   tags?: string[];
 }

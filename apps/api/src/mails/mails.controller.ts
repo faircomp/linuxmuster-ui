@@ -17,19 +17,31 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import MAIL_ENDPOINT from '@libs/mail/constants/mail-endpoint';
+import MAIL_ENDPOINT_PATHS from '@libs/mail/constants/mailEndpointPaths';
 import { CreateSyncJobDto, MailDto, MailProviderConfigDto, SogoThemeVersionDto, SyncJobDto } from '@libs/mail/types';
+import CreateMailboxDto from '@libs/mail/types/createMailbox.dto';
+import UpdateMailboxDto from '@libs/mail/types/updateMailbox.dto';
+import DeleteMailboxesDto from '@libs/mail/types/deleteMailboxes.dto';
+import MailboxAclDto from '@libs/mail/types/mailboxAcl.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import SOGO_THEME from '@libs/mail/constants/sogoTheme';
 import APPS from '@libs/appconfig/constants/apps';
 import GetUsersEmailAddress from '../common/decorators/getUsersEmailAddress.decorator';
 import MailsService from './mails.service';
 import MailIdleService from './mail-idle.service';
+import MailcowAdminService from './mailcow-admin.service';
 import UsersService from '../users/users.service';
 import AdminGuard from '../common/guards/admin.guard';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import RequireAppAccess from '../common/decorators/requireAppAccess.decorator';
+
+const MAILS_VALIDATION_PIPE = new ValidationPipe({
+  whitelist: true,
+  transform: true,
+  disableErrorMessages: process.env.NODE_ENV === 'production',
+});
 
 @ApiTags(MAIL_ENDPOINT)
 @ApiBearerAuth()
@@ -40,6 +52,7 @@ class MailsController {
     private readonly userService: UsersService,
     private readonly mailsService: MailsService,
     private readonly mailIdleService: MailIdleService,
+    private readonly mailcowAdminService: MailcowAdminService,
   ) {}
 
   @Get()
@@ -116,6 +129,46 @@ class MailsController {
   @Get('connection-stats')
   getConnectionStats(): { current: number; max: number } {
     return this.mailIdleService.getConnectionStats();
+  }
+
+  @Get(`${MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES}/${MAIL_ENDPOINT_PATHS.DOMAINS}`)
+  @UseGuards(AdminGuard)
+  getMailcowDomains(): Promise<string[]> {
+    return this.mailcowAdminService.getMailcowDomains();
+  }
+
+  @Get(MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES)
+  @UseGuards(AdminGuard)
+  getMailcowMailboxes(): Promise<unknown[]> {
+    return this.mailcowAdminService.getMailcowMailboxes();
+  }
+
+  @Post(MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES)
+  @UseGuards(AdminGuard)
+  @UsePipes(MAILS_VALIDATION_PIPE)
+  createMailcowMailbox(@Body() createMailboxDto: CreateMailboxDto): Promise<unknown[]> {
+    return this.mailcowAdminService.createMailcowMailbox(createMailboxDto);
+  }
+
+  @Patch(MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES)
+  @UseGuards(AdminGuard)
+  @UsePipes(MAILS_VALIDATION_PIPE)
+  updateMailcowMailbox(@Body() updateMailboxDto: UpdateMailboxDto): Promise<unknown[]> {
+    return this.mailcowAdminService.updateMailcowMailbox(updateMailboxDto);
+  }
+
+  @Delete(MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES)
+  @UseGuards(AdminGuard)
+  @UsePipes(MAILS_VALIDATION_PIPE)
+  deleteMailcowMailboxes(@Body() deleteMailboxesDto: DeleteMailboxesDto): Promise<unknown[]> {
+    return this.mailcowAdminService.deleteMailcowMailboxes(deleteMailboxesDto.items);
+  }
+
+  @Post(`${MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES}/${MAIL_ENDPOINT_PATHS.ACL}`)
+  @UseGuards(AdminGuard)
+  @UsePipes(MAILS_VALIDATION_PIPE)
+  updateMailboxAcl(@Body() mailboxAclDto: MailboxAclDto): Promise<unknown[]> {
+    return this.mailcowAdminService.updateMailboxAcl(mailboxAclDto);
   }
 }
 

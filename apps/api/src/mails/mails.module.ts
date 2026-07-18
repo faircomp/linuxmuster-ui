@@ -22,13 +22,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import MailsController from './mails.controller';
 import MailsService from './mails.service';
 import MailIdleService from './mail-idle.service';
+import MailcowAdminService from './mailcow-admin.service';
 import { MailProvider, MailProviderSchema } from './mail-provider.schema';
 import DockerModule from '../docker/docker.module';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: MailProvider.name, schema: MailProviderSchema }]), DockerModule],
   controllers: [MailsController],
-  providers: [MailsService, MailIdleService],
+  providers: [MailsService, MailIdleService, MailcowAdminService],
   exports: [MailIdleService],
 })
 export default class MailsModule {}
