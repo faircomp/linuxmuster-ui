@@ -51,6 +51,7 @@ import AppConfigFloatingButtons from './AppConfigFloatingButtonsBar';
 import DeleteAppConfigDialog from './DeleteAppConfigDialog';
 import EditAppConfigIconDialog from './EditAppConfigIconDialog';
 import MailImporterConfig from './mails/MailImporterConfig';
+import MailcowAdminPanel from './mails/MailcowAdminPanel';
 import getAppConfigFormSchema from './schemas/getAppConfigFormSchema';
 import ProxyConfigForm from './components/ProxyConfigForm';
 import DeleteWebdavServerWarningDialog from './filesharing/DeleteWebdavServerWarningDialog';
@@ -288,12 +289,20 @@ const AppConfigPage: React.FC<AppConfigPageProps> = ({ settingLocation }) => {
             )}
 
             {settingLocation === APPS.MAIL && (
-              <SectionAccordionItem
-                id="mailImporter"
-                label={t('mail.importer.title')}
-              >
-                <MailImporterConfig form={form as UseFormReturn<MailProviderConfig>} />
-              </SectionAccordionItem>
+              <>
+                <SectionAccordionItem
+                  id="mailImporter"
+                  label={t('mail.importer.title')}
+                >
+                  <MailImporterConfig form={form as UseFormReturn<MailProviderConfig>} />
+                </SectionAccordionItem>
+                <SectionAccordionItem
+                  id="mailcowAdmin"
+                  label={t('mailcowAdmin.title')}
+                >
+                  <MailcowAdminPanel />
+                </SectionAccordionItem>
+              </>
             )}
           </SectionAccordion>
         )}

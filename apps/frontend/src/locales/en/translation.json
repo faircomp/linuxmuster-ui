@@ -1,5 +1,21 @@
 {
   "mailcowAdmin": {
+    "title": "Mailcow administration",
+    "domains": "Domains",
+    "noDomains": "No domains found",
+    "searchPlaceholder": "Search mailboxes",
+    "columns": {
+      "username": "Address",
+      "name": "Name",
+      "domain": "Domain",
+      "quota": "Storage",
+      "active": "Status"
+    },
+    "activeStates": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "incomingOnly": "Incoming only"
+    },
     "notifications": {
       "mailboxCreated": "Mailbox created",
       "mailboxUpdated": "Mailbox updated",

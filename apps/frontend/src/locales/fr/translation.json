@@ -1,5 +1,21 @@
 {
   "mailcowAdmin": {
+    "title": "Administration Mailcow",
+    "domains": "Domaines",
+    "noDomains": "Aucun domaine trouvé",
+    "searchPlaceholder": "Rechercher des boîtes aux lettres",
+    "columns": {
+      "username": "Adresse",
+      "name": "Nom",
+      "domain": "Domaine",
+      "quota": "Stockage",
+      "active": "Statut"
+    },
+    "activeStates": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "incomingOnly": "Entrant uniquement"
+    },
     "notifications": {
       "mailboxCreated": "Boîte aux lettres créée",
       "mailboxUpdated": "Boîte aux lettres mise à jour",

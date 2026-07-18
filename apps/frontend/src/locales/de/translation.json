@@ -1,5 +1,21 @@
 {
   "mailcowAdmin": {
+    "title": "Mailcow-Verwaltung",
+    "domains": "Domains",
+    "noDomains": "Keine Domains gefunden",
+    "searchPlaceholder": "Postfächer durchsuchen",
+    "columns": {
+      "username": "Adresse",
+      "name": "Name",
+      "domain": "Domain",
+      "quota": "Speicher",
+      "active": "Status"
+    },
+    "activeStates": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "incomingOnly": "Nur eingehend"
+    },
     "notifications": {
       "mailboxCreated": "Postfach erstellt",
       "mailboxUpdated": "Postfach aktualisiert",
