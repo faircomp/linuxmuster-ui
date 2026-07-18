@@ -2765,7 +2765,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-filesharing-wopi.md` · So
 
 ---
 
-### T1 — libs: neue ExtendedOptionKeys COLLABORA_URL / COLLABORA_WOPI_SECRET / ACTIVE_DOCUMENT_EDITOR  [ ]
+### T1 — libs: neue ExtendedOptionKeys COLLABORA_URL / COLLABORA_WOPI_SECRET / ACTIVE_DOCUMENT_EDITOR  [x] OK (a38a78b9c) 3 Keys angehängt (String==Name, main.js:2112-2114)
 Komponente: libs · Dateien: libs/src/appconfig/constants/extendedOptionKeys.ts
 Soll: main.js:2112–2114
 Änderung: Die drei Keys ans `ExtendedOptionKeys`-const-Objekt anhängen (String == Name, wie im Original). Kein neuer Typ nötig (`ExtendedOptionKeysType` leitet ab).
@@ -2773,7 +2773,7 @@ Verify: `npm run build` (tsc über libs) grün; grep zeigt alle 3 Keys; `npm run
 i18n: keine
 Doku: keine (intern)
 
-### T2 — libs: ACTIVE_DOCUMENT_EDITOR-const + FILESHARING_DOCKER_CONTAINERS-Map  [ ]
+### T2 — libs: ACTIVE_DOCUMENT_EDITOR-const + FILESHARING_DOCKER_CONTAINERS-Map  [x] OK (a38a78b9c) const-Objekt (onlyoffice/collabora) + Container-Map (computed keys, tsc-synchron)
 Komponente: libs · Dateien: libs/src/filesharing/constants/activeDocumentEditor.ts (neu), libs/src/docker/constants/filesharingDockerContainers.ts (neu)
 Soll: main.js:27180–27184 (`ACTIVE_DOCUMENT_EDITOR = { ONLY_OFFICE:'onlyoffice', COLLABORA:'collabora' }`), main.js:27148–27151 (Map → `edulution-onlyoffice`/`edulution-collabora`)
 Änderung: const-Objekt `ACTIVE_DOCUMENT_EDITOR` (kein enum) + Map `FILESHARING_DOCKER_CONTAINERS` keyed über die Editor-Werte. Beide Dateien mit AGPL-SPDX-Header (Kevin Stenzel).
@@ -2781,7 +2781,7 @@ Verify: `npm run build` grün; Map-Keys == `ACTIVE_DOCUMENT_EDITOR`-Werte (tsc-T
 i18n: keine
 Doku: keine (intern)
 
-### T3 — libs: WOPI-Konstanten + COLLABORA_TOKEN-Endpoint + FILE_PREVIEW_TYPE.COLLABORA  [ ]
+### T3 — libs: WOPI-Konstanten + COLLABORA_TOKEN-Endpoint + FILE_PREVIEW_TYPE.COLLABORA  [x] OK (a38a78b9c) wopi.ts (WOPI const-Objekt: TOKEN_EXPIRY/TTL_MS/BASE_PATH) + COLLABORA_TOKEN ins bestehende enum (surgical) + FILE_PREVIEW_TYPE.COLLABORA. **Abweichung:** Endpoints-Datei liegt in `types/fileSharingApiEndpoints.ts` (nicht `constants/`, Ledger-Pfad daneben); WOPI als const-Objekt statt 3 Einzel-Exports (Fork-Konvention, Werte byte-genau)
 Komponente: libs · Dateien: libs/src/filesharing/constants/wopi.ts (neu), libs/src/filesharing/constants/fileSharingApiEndpoints.ts, libs/src/filesharing/types/filePreviewType.ts
 Soll: main.js:40457–40462 (`WOPI_TOKEN_EXPIRY='24h'`, `WOPI_TOKEN_TTL_MS=86400000`, `WOPI_BASE_PATH='wopi/files'`), main.js:37726 (`COLLABORA_TOKEN='collabora-token'`), main.js:27180 (`COLLABORA:'collabora'`)
 Änderung: `wopi.ts` neu (AGPL-SPDX); `COLLABORA_TOKEN`-Eintrag ins Endpoint-Enum; `COLLABORA:'collabora'` in `FILE_PREVIEW_TYPE`.
@@ -2789,7 +2789,7 @@ Verify: `npm run build` grün; grep bestätigt die 3 neuen Werte.
 i18n: keine
 Doku: keine (intern)
 
-### T4 — libs: Collabora-/WOPI-DTOs & Typen  [ ]
+### T4 — libs: Collabora-/WOPI-DTOs & Typen  [x] OK (a38a78b9c) 4 Dateien: CollaboraTokenBodyDto (class, @IsString filePath/share — **Body hat 2.0-getreu KEIN canWrite**, Ledger-Notiz war spekulativ; @IsString = Fork-Härtung), CollaboraTokenResponseDto (interface accessToken/accessTokenTTL), WopiTokenPayload (interface), WopiFileInfo (interface, 10 PascalCase-WOPI-Felder). eslint+isolierte tsc CLEAN. Review approve
 Komponente: libs · Dateien: libs/src/filesharing/types/collaboraTokenBodyDto.ts (neu), collaboraTokenResponseDto.ts (neu), wopiTokenPayload.ts (neu), wopiFileInfo.ts (neu)
 Soll: main.js:42259–42271 (Response: accessToken, accessTokenTTL), main.js:42468–42475 (Body: filePath, share, canWrite?), main.js:43208–43223 (WopiFileInfo-Felder), main.js:40376–40385 (Payload: username, filePath, share, canWrite, origin, jti)
 Änderung: 4 Typ-/DTO-Dateien mit AGPL-SPDX. Body-DTO mit class-validator (`@IsString` filePath/share) analog bestehender Filesharing-DTOs.
