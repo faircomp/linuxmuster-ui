@@ -21,7 +21,7 @@ import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@
 import Docker from 'dockerode';
 import { fromEvent, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { ensureDirSync, writeFileSync } from 'fs-extra';
+import { ensureDirSync, existsSync, moveSync, writeFileSync } from 'fs-extra';
 import { join } from 'path';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import getErrorMessage from '@libs/common/utils/getErrorMessage';
@@ -62,7 +62,8 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
     private readonly appConfigService: AppConfigService,
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
+    await this.migrateDockerComposeFiles();
     this.listenToDockerEvents();
   }
 
@@ -80,6 +81,27 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
       return FILESHARING_DOCKER_CONTAINERS[activeEditor];
     }
     return (DOCKER_APPLICATION_LIST as Record<string, string | undefined>)[applicationName] ?? applicationName;
+  }
+
+  async migrateDockerComposeFiles() {
+    const applicationNames = Object.keys(DOCKER_APPLICATION_LIST);
+    await Promise.all(
+      applicationNames.map(async (applicationName) => {
+        const oldFilePath = join(APPS_FILES_PATH, applicationName, 'docker-compose.yml');
+        if (!existsSync(oldFilePath)) {
+          return;
+        }
+        const containerName = await this.resolveContainerName(applicationName);
+        const newDir = join(APPS_FILES_PATH, applicationName, containerName);
+        const newFilePath = join(newDir, 'docker-compose.yml');
+        if (existsSync(newFilePath)) {
+          return;
+        }
+        ensureDirSync(newDir);
+        moveSync(oldFilePath, newFilePath);
+        Logger.log(`Migrated docker-compose.yml: ${oldFilePath} -> ${newFilePath}`, DockerService.name);
+      }),
+    );
   }
 
   private listenToDockerEvents() {
