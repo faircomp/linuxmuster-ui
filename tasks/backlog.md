@@ -2755,7 +2755,8 @@ Doku: Webmail-Nutzer-Doku: „SOGo als Erweitert-Tab / In SOGo öffnen" DE+EN+FR
 Abhängt von: T19, T24
 
 ## p4-filesharing-wopi [P4] — Filesharing / WOPI / Collabora-Editing + ACTIVE_DOCUMENT_EDITOR
-_Ziel:_ Filesharing/WOPI/Collabora + ACTIVE_DOCUMENT_EDITOR-Selektor · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 14
+_Ziel:_ Filesharing/WOPI/Collabora + ACTIVE_DOCUMENT_EDITOR-Selektor · _Abhängt-von:_ p2-chat · _Status:_ **erledigt (T1–T14 alle [x])** — BE (CollaboraService/JWT, öffentlicher WopiController, collabora-token-Route, resolveContainerName, Non-Admin-Secret-Maskierung) + FE (COLLABORA_EXTENDED_OPTIONS+documentEditor-Sektion, useCollabora/Store/Preview, FileRenderer-Dispatch) + Doku · _Tasks:_ 14
+> **[?] human-gate: p4-filesharing-wopi Abschluss.** (a) **Voll-Stack/Remote-Verify box-gated** (crabbox down): `iter.sh all` + path-gated Deploy/Shots — bisher pro Commit lokal (eslint + isolierter tsc + vitest/jest); steht für CI-Parität aus. (b) **App-Store-Rollout `edulution-collabora`** (Compose-Fetch + Image-Policy) = Voraussetzung fürs echte End-to-End (Iframe-Form-POST/WOPI-Callbacks/getFileStat-Streaming alle box-gated) — Spec-OF3/OF4, deploy-/LMN-nah. (c) **PR-Gate (prompt-pflichtig):** Push `feat/2.0-backlog` + Draft-PR (`faircomp/linuxmuster-ui`). Alles Kevin/beaufsichtigt.
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-filesharing-wopi.md` · Soll: main.js:2114/27180 · main.js:26538/27148 · main.js:40352/43199 · main.js:37560/37726 · main.js:42259/42468 · main.js:1726 (== appconfig.service.ts:258) · 1.6-Source apps/api/src/filesharing/onlyoffice.service.ts, apps/frontend/.../FilePreview/OnlyOffice · .reference/2.0.200/baselines/*
 
 > Kalibrierung (P4): geerdetes Rekonstruktions-Ledger. Granularität schärft sich nach P0-Basis-Drift
@@ -2879,7 +2880,7 @@ i18n: alle o. g. Keys, DE+EN (Pflicht)
 Doku: keine (intern)
 Abhängt von: T3, T12
 
-### T14 — Doku: Dokumenteneditor wählen (OnlyOffice/Collabora)  [ ]
+### T14 — Doku: Dokumenteneditor wählen (OnlyOffice/Collabora)  [x] OK (f1342b0e5) `docs/document-editor.{de,en,fr}.md` (Prosa, kein SPDX): Editor-Umschalter, COLLABORA_URL/WOPI_SECRET, Container-Secret-Contract (App-Store), kein neuer Env-Default. Review request_changes(1: UI-Pfad-Label „Dateiablage/File sharing" ≠ echtes App-Label) → gefixt auf reales `filesharing.sidebar`-Label (Dateien/Files/Partage de fichiers). check-translations unberührt (Prosa).
 Komponente: docs · Dateien: docs/ (DE+EN, passender Admin-Abschnitt)
 Soll: Spec „Doku-Impact"
 Änderung: Kurzer Admin-Abschnitt: Editor-Umschalter, `COLLABORA_URL`/`COLLABORA_WOPI_SECRET` setzen, Contract zum Collabora-Container-Secret (App-Store-Rollout). Kein neuer Env-Default.
