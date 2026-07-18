@@ -7,8 +7,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import MailsController from './mails.controller';
 import MailsService from './mails.service';
 import MailIdleService from './mail-idle.service';
+import MailcowAdminService from './mailcow-admin.service';
 import UsersService from '../users/users.service';
 import AdminGuard from '../common/guards/admin.guard';
+import GlobalSettingsService from '../global-settings/global-settings.service';
 import controllerContractReflection from '../common/controllerContractReflection';
 
 const mockUsersService = { getPassword: jest.fn() };
@@ -28,6 +30,15 @@ const mockMailIdleService = {
   startIdle: jest.fn(),
   getConnectionStats: jest.fn(),
 };
+const mockMailcowAdminService = {
+  getMailcowDomains: jest.fn(),
+  getMailcowMailboxes: jest.fn(),
+  createMailcowMailbox: jest.fn(),
+  updateMailcowMailbox: jest.fn(),
+  deleteMailcowMailboxes: jest.fn(),
+  updateMailboxAcl: jest.fn(),
+};
+const mockGlobalSettingsService = { getAdminGroupsFromCache: jest.fn() };
 
 const ADMIN_GUARDED_ROUTES = [
   'postExternalMailProviderConfig',
@@ -35,6 +46,12 @@ const ADMIN_GUARDED_ROUTES = [
   'checkSogoThemeVersion',
   'updateSogoThemeManually',
   'getConnectionStats',
+  'getMailcowDomains',
+  'getMailcowMailboxes',
+  'createMailcowMailbox',
+  'updateMailcowMailbox',
+  'deleteMailcowMailboxes',
+  'updateMailboxAcl',
 ];
 const NON_ADMIN_ROUTES = ['getMails', 'getExternalMailProviderConfig', 'getSyncJob', 'postSyncJob', 'deleteSyncJobs'];
 
@@ -48,6 +65,8 @@ describe(MailsController.name, () => {
         { provide: UsersService, useValue: mockUsersService },
         { provide: MailsService, useValue: mockMailsService },
         { provide: MailIdleService, useValue: mockMailIdleService },
+        { provide: MailcowAdminService, useValue: mockMailcowAdminService },
+        { provide: GlobalSettingsService, useValue: mockGlobalSettingsService },
       ],
     }).compile();
 
