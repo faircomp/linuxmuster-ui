@@ -2420,7 +2420,23 @@
       "MailProviderNotFound": "E-Mail provider not found",
       "MailcowApiGetSyncJobsFailed": "Not able to get sync jobs",
       "MailcowApiCreateSyncJobFailed": "Not able to create sync job",
-      "MailcowApiDeleteSyncJobsFailed": "Not able to delete sync jobs"
+      "MailcowApiDeleteSyncJobsFailed": "Not able to delete sync jobs",
+      "MailcowApiGetDomainsFailed": "Not able to load domains",
+      "MailcowApiGetMailboxesFailed": "Not able to load mailboxes",
+      "MailcowApiCreateMailboxFailed": "Not able to create the mailbox",
+      "MailcowApiUpdateMailboxFailed": "Not able to update the mailbox",
+      "MailcowApiDeleteMailboxFailed": "Not able to delete the mailbox",
+      "MailcowApiUpdateMailboxAclFailed": "Not able to update the mailbox permissions",
+      "MailcowPasswordComplexity": "The password does not meet the complexity requirements",
+      "MailcowPasswordMismatch": "The passwords do not match",
+      "MailcowPasswordEmpty": "The password must not be empty",
+      "MailcowUsernameInvalid": "The username is invalid",
+      "MailcowDomainInvalid": "The domain is invalid",
+      "MailcowDomainNotFound": "The domain was not found",
+      "MailcowObjectExists": "The object already exists",
+      "MailcowMaxMailboxesExceeded": "The maximum number of mailboxes has been reached",
+      "MailcowQuotaExceeded": "The storage quota was exceeded",
+      "MailcowAccessDenied": "Access denied"
     }
   },
   "licensing": {

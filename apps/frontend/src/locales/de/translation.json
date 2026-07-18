@@ -2370,7 +2370,23 @@
       "MailProviderNotFound": "E-Mail-Provider nicht gefunden",
       "MailcowApiGetSyncJobsFailed": "Sync-Jobs konnten nicht abgerufen werden",
       "MailcowApiCreateSyncJobFailed": "Sync-Job konnte nicht erstellt werden",
-      "MailcowApiDeleteSyncJobsFailed": "Sync-Jobs konnten nicht gelöscht werden"
+      "MailcowApiDeleteSyncJobsFailed": "Sync-Jobs konnten nicht gelöscht werden",
+      "MailcowApiGetDomainsFailed": "Domains konnten nicht geladen werden",
+      "MailcowApiGetMailboxesFailed": "Postfächer konnten nicht geladen werden",
+      "MailcowApiCreateMailboxFailed": "Postfach konnte nicht angelegt werden",
+      "MailcowApiUpdateMailboxFailed": "Postfach konnte nicht aktualisiert werden",
+      "MailcowApiDeleteMailboxFailed": "Postfach konnte nicht gelöscht werden",
+      "MailcowApiUpdateMailboxAclFailed": "Postfach-Berechtigungen konnten nicht aktualisiert werden",
+      "MailcowPasswordComplexity": "Das Passwort erfüllt die Komplexitätsanforderungen nicht",
+      "MailcowPasswordMismatch": "Die Passwörter stimmen nicht überein",
+      "MailcowPasswordEmpty": "Das Passwort darf nicht leer sein",
+      "MailcowUsernameInvalid": "Der Benutzername ist ungültig",
+      "MailcowDomainInvalid": "Die Domain ist ungültig",
+      "MailcowDomainNotFound": "Die Domain wurde nicht gefunden",
+      "MailcowObjectExists": "Das Objekt existiert bereits",
+      "MailcowMaxMailboxesExceeded": "Die maximale Anzahl an Postfächern ist erreicht",
+      "MailcowQuotaExceeded": "Das Speicherkontingent wurde überschritten",
+      "MailcowAccessDenied": "Zugriff verweigert"
     }
   },
   "licensing": {

@@ -2345,7 +2345,23 @@
       "MailProviderNotFound": "Fournisseur email non trouvé",
       "MailcowApiGetSyncJobsFailed": "Les tâches de synchronisation ne pouvaient pas être appelés",
       "MailcowApiCreateSyncJobFailed": "Le tâche de synchronisation n'a pas pu être créé",
-      "MailcowApiDeleteSyncJobsFailed": "Les tâches de synchronisation n'ont pas pu être supprimés"
+      "MailcowApiDeleteSyncJobsFailed": "Les tâches de synchronisation n'ont pas pu être supprimés",
+      "MailcowApiGetDomainsFailed": "Impossible de charger les domaines",
+      "MailcowApiGetMailboxesFailed": "Impossible de charger les boîtes aux lettres",
+      "MailcowApiCreateMailboxFailed": "Impossible de créer la boîte aux lettres",
+      "MailcowApiUpdateMailboxFailed": "Impossible de mettre à jour la boîte aux lettres",
+      "MailcowApiDeleteMailboxFailed": "Impossible de supprimer la boîte aux lettres",
+      "MailcowApiUpdateMailboxAclFailed": "Impossible de mettre à jour les autorisations de la boîte aux lettres",
+      "MailcowPasswordComplexity": "Le mot de passe ne respecte pas les exigences de complexité",
+      "MailcowPasswordMismatch": "Les mots de passe ne correspondent pas",
+      "MailcowPasswordEmpty": "Le mot de passe ne doit pas être vide",
+      "MailcowUsernameInvalid": "Le nom d'utilisateur est invalide",
+      "MailcowDomainInvalid": "Le domaine est invalide",
+      "MailcowDomainNotFound": "Le domaine est introuvable",
+      "MailcowObjectExists": "L'objet existe déjà",
+      "MailcowMaxMailboxesExceeded": "Le nombre maximal de boîtes aux lettres est atteint",
+      "MailcowQuotaExceeded": "Le quota de stockage a été dépassé",
+      "MailcowAccessDenied": "Accès refusé"
     }
   },
   "licensing": {
