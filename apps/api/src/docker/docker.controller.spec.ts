@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import DockerController from './docker.controller';
 import DockerService from './docker.service';
 import AdminGuard from '../common/guards/admin.guard';
+import GlobalSettingsService from '../global-settings/global-settings.service';
 import controllerContractReflection from '../common/controllerContractReflection';
 
 const mockDockerService = {
@@ -17,6 +18,8 @@ const mockDockerService = {
   updateContainer: jest.fn(),
   updateEduManagerAgentContainer: jest.fn(),
 };
+
+const mockGlobalSettingsService = { getAdminGroupsFromCache: jest.fn() };
 
 const ADMIN_ONLY_ROUTES = [
   'getContainers',
@@ -32,7 +35,10 @@ describe(DockerController.name, () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DockerController],
-      providers: [{ provide: DockerService, useValue: mockDockerService }],
+      providers: [
+        { provide: DockerService, useValue: mockDockerService },
+        { provide: GlobalSettingsService, useValue: mockGlobalSettingsService },
+      ],
     }).compile();
 
     controller = module.get<DockerController>(DockerController);

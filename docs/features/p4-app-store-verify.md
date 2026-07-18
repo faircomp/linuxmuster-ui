@@ -142,8 +142,16 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
   - `PATCH docker/container/:id` (update)
   - `PATCH docker/edu-manager-agent/container` (`@Public`, IP-restricted)
 - **Contract-Drift (Pflicht-Sync):** `CreateContainerDto` (BE) ↔ `create-container.dto` (libs) ↔
-  `createAndRunContainer`-Payload (FE-Store) müssen das neue `containerName` gemeinsam führen. Ohne
-  BE-`@IsString() containerName` wirft die Validation bei jedem 2.0-FE-POST.
+  `createAndRunContainer`-Payload (FE-Store) müssen das neue `containerName` gemeinsam führen.
+  **Wichtig:** Die 2.0-Route `POST docker/container` trägt **keine** `ValidationPipe`
+  (`main.js:32771–32785` — kein `@UsePipes`, und es gibt keine globale Pipe); ein fehlendes
+  `containerName` wirft dort also **nicht** 400 — das Feld ist reiner Typ-/Contract-Vertrag, die
+  Container-Namensauflösung geschieht ohnehin serverseitig via `resolveContainerName` (T5).
+- **Inkrementeller Landeweg (T4→T9/T10):** T4 führt das Feld in `create-container.dto` (libs)
+  vorerst als **`@IsOptional() @IsString() containerName?: string`** ein — 2.0 hat es `required`,
+  aber der geerbte 1.6-FE sendet es noch nicht; `optional` hält den FE-Compile grün, bis die
+  Producer (T9 Store-Payload, T10 Dialog mit filesharing-Editor-Resolver) den Wandel nachziehen.
+  Sobald der FE den Namen zuverlässig sendet, kann das Feld auf `required` verschärft werden.
 
 ## Auth / Guards (welche mit-portieren)
 

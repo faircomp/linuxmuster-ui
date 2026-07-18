@@ -18,12 +18,16 @@
  */
 
 import { Type } from 'class-transformer';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { type ContainerCreateOptions } from 'dockerode';
 
 class CreateContainerDto {
   @IsString()
   applicationName: string;
+
+  @IsOptional()
+  @IsString()
+  containerName?: string;
 
   @IsArray()
   @ValidateNested({ each: true })
