@@ -62,6 +62,7 @@ import NotificationsModule from '../notifications/notifications.module';
 import ChatModule from '../chat/chat.module';
 import ParentChildPairingModule from '../parent-child-pairing/parent-child-pairing.module';
 import WikiModule from '../wiki/wiki.module';
+import CalendarModule from '../calendar/calendar.module';
 import MobileAppModule from '../mobileAppModule/mobileApp.module';
 import UserPreferencesModule from '../user-preferences/user-preferences.module';
 import DevCacheFlushService from '../common/cache/dev-cache-flush.service';
@@ -145,6 +146,7 @@ import WebhookClientsModule from '../webhook-clients/webhook-clients.module';
     ChatModule,
     ParentChildPairingModule,
     WikiModule,
+    CalendarModule,
     MobileAppModule,
     SseModule,
     TLDrawSyncModule,
