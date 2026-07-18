@@ -34,11 +34,16 @@ import extractEnvPlaceholders from '@libs/docker/utils/extractEnvPlaceholders';
 import { type ExtendedOptionKeysType } from '@libs/appconfig/types/extendedOptionKeysType';
 import updateContainerConfig from '@libs/docker/utils/updateContainerConfig';
 import DialogFooterButtons from '@/components/ui/DialogFooterButtons';
-import DOCKER_APPLICATION_LIST from '@libs/docker/constants/dockerApplicationList';
+import APPS from '@libs/appconfig/constants/apps';
+import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
+import getExtendedOptionsValue from '@libs/appconfig/utils/getExtendedOptionsValue';
+import type ActiveDocumentEditor from '@libs/filesharing/constants/activeDocumentEditor';
 import HorizontalLoader from '@/components/ui/Loading/HorizontalLoader';
+import useAppConfigsStore from '@/pages/Settings/AppConfig/useAppConfigsStore';
 import useDockerApplicationStore from './useDockerApplicationStore';
 import useAppConfigTableDialogStore from '../components/table/useAppConfigTableDialogStore';
 import getCreateContainerFormSchema from './getCreateContainerFormSchema';
+import buildCreateContainerPayload from './buildCreateContainerPayload';
 
 interface CreateDockerContainerDialogProps {
   settingLocation: TApps;
@@ -62,6 +67,7 @@ const CreateDockerContainerDialog: React.FC<CreateDockerContainerDialogProps> = 
   } = useDockerApplicationStore();
   const { eventSource } = useSseStore();
   const { isDialogOpen, setDialogOpen } = useAppConfigTableDialogStore();
+  const { appConfigs } = useAppConfigsStore();
   const isOpen = isDialogOpen === tableId;
 
   useEffect(() => {
@@ -116,16 +122,17 @@ const CreateDockerContainerDialog: React.FC<CreateDockerContainerDialogProps> = 
     if (createContainerConfig && dockerContainerConfig) {
       const formValues = form.getValues();
       const updatedConfig = updateContainerConfig(createContainerConfig, formValues);
-      const containerName = DOCKER_APPLICATION_LIST[settingLocation] || '';
+      const activeEditor = getExtendedOptionsValue<ActiveDocumentEditor>(
+        appConfigs,
+        APPS.FILE_SHARING,
+        ExtendedOptionKeys.ACTIVE_DOCUMENT_EDITOR,
+      );
+      const payload = buildCreateContainerPayload(settingLocation, activeEditor, updatedConfig, dockerComposeFiles);
 
-      await createAndRunContainer({
-        applicationName: settingLocation,
-        containers: updatedConfig,
-        originalComposeConfig: dockerComposeFiles[containerName] || '',
-      });
+      await createAndRunContainer(payload);
       await fetchTableContent(settingLocation);
 
-      await getTraefikConfig(settingLocation, containerName);
+      await getTraefikConfig(settingLocation, payload.containerName);
     }
   };
 
