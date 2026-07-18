@@ -2824,7 +2824,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T5
 
-### T8 — BE: DockerService.resolveContainerName — Editor-Container-Auflösung  [ ]
+### T8 — BE: DockerService.resolveContainerName — Editor-Container-Auflösung  [x] OK (e770ce596) Methode 1:1 zu main.js:26538-26545 (FILE_SHARING→extendedOptions[ACTIVE_DOCUMENT_EDITOR]??ONLY_OFFICE→FILESHARING_DOCKER_CONTAINERS; sonst DOCKER_APPLICATION_LIST[app]??app). **FORK-DIVERGENZ:** kein 2.0-Aufrufer im Fork (migrateDockerComposeFiles fehlt; createContainer nutzt Client-Compose+applicationName-Dirs) → „Aufrufer umstellen" läuft ins Leere; Methode ist Editor-Container-Primitive für Selektor/App-Store (T10-T13). dockerApplicationList.filesharing als Fallback behalten (OF6). **Korrektur:** DOCKER_APPLICATION_LIST wird von 2 FE-Stores importiert (nicht „niemand"), aber kein BE-Aufrufer → Reroute korrekt vertagt. jest **5/5** (collabora/default-onlyoffice/explizit-onlyoffice/Nicht-FS-ohne-Config-Read/unmapped-passthrough), eslint+isolierte tsc CLEAN. Review approve
 Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.ts, libs/src/docker/constants/dockerApplicationList.ts
 Soll: main.js:26538–26545 (FILE_SHARING → `FILESHARING_DOCKER_CONTAINERS[activeEditor]`, Default `ONLY_OFFICE`; sonst `dockerApplicationList[app] ?? app`)
 Änderung: `resolveContainerName(applicationName)`: bei `APPS.FILE_SHARING` `activeEditor` aus Filesharing-appconfig `extendedOptions[ACTIVE_DOCUMENT_EDITOR]` (Default `ONLY_OFFICE`) → `FILESHARING_DOCKER_CONTAINERS[activeEditor]`; sonst bisherige Auflösung. Aufrufer im DockerService auf `resolveContainerName` umstellen. `dockerApplicationList.filesharing`-Eintrag als Fallback belassen (siehe Spec-Offene-Frage 6).
