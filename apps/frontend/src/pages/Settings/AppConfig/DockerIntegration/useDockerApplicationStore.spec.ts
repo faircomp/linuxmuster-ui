@@ -12,6 +12,12 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EDU_PLUGINS_GITHUB_URL } from '@libs/common/constants';
+import axios from 'axios';
+import eduApi from '@/api/eduApi';
+import APPS from '@libs/appconfig/constants/apps';
+import { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocumentEditor';
+import useDockerApplicationStore from './useDockerApplicationStore';
+import resolveDockerContainerName from './resolveDockerContainerName';
 
 vi.mock('axios', () => ({
   default: {
@@ -21,11 +27,13 @@ vi.mock('axios', () => ({
   },
 }));
 
-import axios from 'axios';
-import useDockerApplicationStore from './useDockerApplicationStore';
+vi.mock('@/api/eduApi', () => ({
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+}));
 
 const SAMPLE_COMPOSE = 'services:\n  web:\n    image: nginx:latest\n';
-const mockedGet = axios.get as unknown as ReturnType<typeof vi.fn>;
+const mockedGet = (axios as unknown as { get: ReturnType<typeof vi.fn> }).get;
+const mockedPost = (eduApi as unknown as { post: ReturnType<typeof vi.fn> }).post;
 
 describe('useDockerApplicationStore — plugin mirror fetch contract', () => {
   beforeEach(() => {
@@ -50,5 +58,28 @@ describe('useDockerApplicationStore — plugin mirror fetch contract', () => {
 
     const calledUrl = mockedGet.mock.calls[0][0] as string;
     expect(calledUrl).toBe(`${EDU_PLUGINS_GITHUB_URL}/nextcloud/app/nextcloud.yml`);
+  });
+});
+
+describe('useDockerApplicationStore — createAndRunContainer payload', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sends the resolved containerName in the POST body', async () => {
+    mockedPost.mockResolvedValue({ data: {} });
+    const containerName = resolveDockerContainerName(APPS.FILE_SHARING, ACTIVE_DOCUMENT_EDITOR.COLLABORA);
+
+    await useDockerApplicationStore.getState().createAndRunContainer({
+      applicationName: APPS.FILE_SHARING,
+      containerName,
+      containers: [],
+      originalComposeConfig: 'services: {}',
+    });
+
+    expect(mockedPost).toHaveBeenCalledTimes(1);
+    expect(mockedPost.mock.calls[0][1]).toEqual(
+      expect.objectContaining({ applicationName: APPS.FILE_SHARING, containerName: 'edulution-collabora' }),
+    );
   });
 });

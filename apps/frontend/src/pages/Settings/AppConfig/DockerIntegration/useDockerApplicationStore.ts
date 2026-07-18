@@ -102,11 +102,12 @@ const useDockerApplicationStore = create<DockerContainerTableStore>((set, get) =
     }
   },
 
-  createAndRunContainer: async ({ applicationName, containers, originalComposeConfig }) => {
+  createAndRunContainer: async ({ applicationName, containerName, containers, originalComposeConfig }) => {
     set({ isLoading: true, error: null });
     try {
       await eduApi.post(`${EDU_API_DOCKER_ENDPOINT}/${EDU_API_DOCKER_CONTAINER_ENDPOINT}`, {
         applicationName,
+        containerName,
         containers,
         originalComposeConfig,
       });
