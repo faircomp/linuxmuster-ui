@@ -3101,7 +3101,8 @@ Verify: `npm run lint`; Assert APPS.CALENDAR==='calendar'.
 i18n: keine
 Doku: keine (intern)
 
-### T4 — Root-Dependencies: tsdav, ical.js, undici, rrule  [ ]
+### T4 — Root-Dependencies: tsdav, ical.js, undici, rrule  [x]
+> Erledigt (4e9f1ec47): tsdav ^2.1.0, ical.js ^2.1.0, undici ^6.21.0, rrule ^2.8.1 in dependencies (byte-exakt zur 2.0 main.js:59729). **npm-Registry lokal erreichbar** → `npm install` LOKAL erfolgreich (frühere box-gated-Annahme trifft hier NICHT zu; entblockt die ganze p5-BE-Kette T5+). Installiert semver-kompatibel latest-in-major (ical@2.2.1/tsdav@2.3.1/undici@6.27.0/rrule@2.8.1), Ranges auf 2.0-Werte gepinnt. Alle 4 importierbar (require: rrule.RRule/ICAL.parse/undici.request/tsdav.createDAVClient), `npm ls` sauber, package.json↔lock konsistent. Nebenwirkung: npm normalisierte vite-plugin-dts-Position (net-neutral, Review-approve als Artefakt). Review approve.
 Komponente: root · Dateien: package.json (ggf. package-lock.json)
 Soll: main.js:59729 (2.0-Root-pkg: tsdav ^2.1.0, ical.js ^2.1.0, undici ^6.21.0, rrule ^2.8.1) — alle in 1.6 MISSING
 Änderung: `tsdav`, `ical.js`, `undici` (BE) + `rrule` (FE) in dependencies aufnehmen, Versionen an 2.0 angelehnt; `npm install` remote. Supply-Chain/Contract-Task (Security-Track: neue Dep-Fläche, s. Plan §5.1).
