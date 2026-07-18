@@ -3110,7 +3110,9 @@ Verify: `npm install` remote erfolgreich; `npm run build:api` (importierbar) gr�
 i18n: keine
 Doku: keine (intern)
 
-### T5 — api/calendar: DTOs (Kalender)  [ ]
+### T5 — api/calendar: DTOs (Kalender)  [x]
+> Erledigt (e11206f5a): 4 DTOs in apps/api/src/calendar/dto (kebab .dto.ts, wie users/dto) dekoratorgenau aus main.js:35267/35364/35835/35911 — CalendarResponseDto (nur @ApiProperty, Response), CalendarShareBodyDto (@IsString/@IsNotEmpty/@IsIn), CreateCalendarBodyDto (shares PFLICHT via @IsArray/@ValidateNested/@Type; color @IsHexColor; tags @IsIn each), CalendarTagsBodyDto. Nutzt T2-Shared-Types (TCalendarSharePermission/TCalendarShareSubjectType) + IsIn(Object.values(T1-const)). Verify: jest 9/9 (gültige+ungültige Payloads: leerer subjectId/displayName, unbekannte permission/subjectType/tag, non-hex color, ungültige nested Share), eslint + isolierter tsc clean, prettier. Review approve.
+> **MERKE für Controller-Task:** Fork hat KEINE globale ValidationPipe → Calendar-Controller MUSS `@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))` mit **transform:true** setzen, sonst greift die nested `@Type`/`@ValidateNested`-Prüfung von `shares` zur Laufzeit nicht.
 Komponente: apps/api · Dateien: apps/api/src/calendar/dto/{calendar-response.dto,create-calendar-body.dto,calendar-share-body.dto,calendar-tags-body.dto}.ts
 Soll: main.js:35267 (CalendarResponseDto), 35835 (CreateCalendarBodyDto), 35364 (CalendarShareBodyDto), 35911 (CalendarTagsBodyDto)
 Änderung: Vier DTOs mit exakten class-validator-Dekoratoren (IsString/IsNotEmpty/IsOptional/IsHexColor/IsArray/ValidateNested/IsIn gegen SHARE_PERMISSIONS/SHARE_SUBJECT_TYPES/CALENDAR_TAG_VALUES) und ApiProperty aus main.js. Shared Types aus T2 verwenden. Neue Dateien ⇒ SPDX.
