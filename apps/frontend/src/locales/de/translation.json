@@ -242,6 +242,14 @@
     "emptyState": {
       "nativePlaceholder": "Der native Mail-Client ist noch in Vorbereitung."
     },
+    "tabs": {
+      "native": "Nativ",
+      "sogo": "SOGo"
+    },
+    "openInSogo": {
+      "label": "In SOGo öffnen",
+      "tooltip": "Öffnet das SOGo-Webmail in einem neuen Tab"
+    },
     "title": "E-MAILS",
     "sidebar": "E-Mails",
     "configName": "Name der Konfiguration",
@@ -2372,6 +2380,13 @@
     }
   },
   "appExtendedOptions": {
+    "activeMailClientTitle": "Mail-Client",
+    "activeMailClientDescription": "Wähle die Mail-Oberfläche für Endnutzer (SOGo-Webmail oder nativer Client).",
+    "activeMailClient": {
+      "native": "Nativer Client",
+      "sogo": "SOGo-Webmail"
+    },
+    "activeMailClientWarning": "SOGo-Filter und Abwesenheitsnotizen sind im nativen Client nicht enthalten.",
     "title": "Erweiterungen",
     "onlyOfficeUrl": "Gib hier die OnlyOffice-URL an",
     "onlyOfficeUrlTitle": "OnlyOffice-URL",

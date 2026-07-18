@@ -251,6 +251,14 @@
     "emptyState": {
       "nativePlaceholder": "The native mail client is not ready yet."
     },
+    "tabs": {
+      "native": "Native",
+      "sogo": "SOGo"
+    },
+    "openInSogo": {
+      "label": "Open in SOGo",
+      "tooltip": "Opens SOGo webmail in a new tab"
+    },
     "title": "E-MAILS",
     "sidebar": "E-Mails",
     "configName": "Configuration name",
@@ -2353,6 +2361,13 @@
     "selectGroupsDescription": "Select the user groups that should have access to the app."
   },
   "appExtendedOptions": {
+    "activeMailClientTitle": "Mail client",
+    "activeMailClientDescription": "Choose the end-user mail interface (SOGo webmail or the native client).",
+    "activeMailClient": {
+      "native": "Native client",
+      "sogo": "SOGo webmail"
+    },
+    "activeMailClientWarning": "SOGo filters and out-of-office replies are not available in the native client.",
     "title": "Extensions",
     "onlyOfficeUrl": "Enter the OnlyOffice URL",
     "onlyOfficeUrlTitle": "OnlyOffice URL",

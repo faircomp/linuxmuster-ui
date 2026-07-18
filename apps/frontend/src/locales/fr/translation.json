@@ -241,6 +241,14 @@
     "emptyState": {
       "nativePlaceholder": "Le client de messagerie natif n'est pas encore prêt."
     },
+    "tabs": {
+      "native": "Natif",
+      "sogo": "SOGo"
+    },
+    "openInSogo": {
+      "label": "Ouvrir dans SOGo",
+      "tooltip": "Ouvre le webmail SOGo dans un nouvel onglet"
+    },
     "title": "E-mail",
     "sidebar": "E-mail",
     "configName": "Nom de la configuration",
@@ -2347,6 +2355,13 @@
     }
   },
   "appExtendedOptions": {
+    "activeMailClientTitle": "Client de messagerie",
+    "activeMailClientDescription": "Choisissez l'interface de messagerie pour les utilisateurs (webmail SOGo ou client natif).",
+    "activeMailClient": {
+      "native": "Client natif",
+      "sogo": "Webmail SOGo"
+    },
+    "activeMailClientWarning": "Les filtres SOGo et les réponses d'absence ne sont pas disponibles dans le client natif.",
     "title": "Extensions",
     "onlyOfficeUrl": "Entrez l'URL d'OnlyOffice ici",
     "onlyOfficeUrlTitle": "URL OnlyOffice",
