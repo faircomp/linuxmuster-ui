@@ -15,6 +15,7 @@ import EVENT_EMITTER_EVENTS from '@libs/appconfig/constants/eventEmitterEvents';
 import APPS from '@libs/appconfig/constants/apps';
 import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import CalDavAuthMode from '@libs/calendar/constants/calDavAuthMode';
+import RecurrenceEditScope from '@libs/calendar/constants/recurrenceEditScope';
 import CalendarErrorMessages from '@libs/calendar/constants/calendar-error-messages';
 import isCalendarTag from '@libs/calendar/utils/isCalendarTag';
 import type Calendar from '@libs/calendar/types/calendar';
@@ -24,6 +25,10 @@ import CustomHttpException from '../common/CustomHttpException';
 import AppConfigService from '../appconfig/appconfig.service';
 import { CalendarMetadata, CalendarMetadataDocument } from './calendar-metadata.schema';
 import CreateCalendarBodyDto from './dto/create-calendar-body.dto';
+import IcalMapper from './ical.mapper';
+import type { MappedCalendarEvent, ParsedCalendarEvent } from './ical.mapper';
+import type CalendarEventBodyDto from './dto/calendar-event-body.dto';
+import type RecurrenceEditDto from './dto/recurrence-edit.dto';
 
 type TCalDavAuthMode = (typeof CalDavAuthMode)[keyof typeof CalDavAuthMode];
 
@@ -35,7 +40,18 @@ type CalendarBackendConfig = {
 
 type MappedCalendar = Omit<Calendar, 'shares' | 'tags'>;
 
+type ListEventsQuery = {
+  calendarIds?: string[];
+  from: Date;
+  to: Date;
+};
+
+type EtagResponse = { headers?: { get?: (name: string) => string | null } };
+
+type CalendarObject = { url: string; etag?: string; data?: string };
+
 const encodeCalendarId = (url: string): string => Buffer.from(url, 'utf-8').toString('base64url');
+const decodeCalendarId = (id: string): string => Buffer.from(id, 'base64url').toString('utf-8');
 
 const VEVENT_COMPONENT = 'VEVENT';
 const DEFAULT_ACCOUNT_TYPE = 'caldav';
@@ -409,6 +425,316 @@ class CalendarService implements OnModuleInit {
           url: targetUrl,
         };
     return { ...base, shares: shareEntries, tags };
+  }
+
+  async listEvents(emailAddress: string, password: string, query: ListEventsQuery): Promise<ParsedCalendarEvent[]> {
+    this.assertBackendConfigured();
+    CalendarService.assertAuthenticated(emailAddress, password);
+    const client = await this.buildClient(emailAddress, password);
+    const calendars = await client.fetchCalendars();
+    const eventCalendars = calendars.filter((c) => CalendarService.hasVeventComponent(c));
+    const requestedIds = query.calendarIds;
+    const selected =
+      requestedIds && requestedIds.length > 0
+        ? eventCalendars.filter((c) => requestedIds.includes(encodeCalendarId(c.url)))
+        : eventCalendars;
+    const results = await Promise.all(
+      selected.map(async (calendar) => {
+        try {
+          const objects = (await client.fetchCalendarObjects({
+            calendar,
+            timeRange: { start: query.from.toISOString(), end: query.to.toISOString() },
+          })) as CalendarObject[];
+          return objects.flatMap((obj) => CalendarService.mapObjectToEvents(obj, calendar));
+        } catch (error) {
+          Logger.warn(`Failed to fetch events from ${calendar.url}: ${getErrorMessage(error)}`, CalendarService.name);
+          return [];
+        }
+      }),
+    );
+    return results.flat();
+  }
+
+  private static mapObjectToEvents(obj: CalendarObject, calendar: DAVCalendar): ParsedCalendarEvent[] {
+    const { data } = obj;
+    if (!data) {
+      return [];
+    }
+    const event = IcalMapper.parseIcsToEvent(data, encodeCalendarId(calendar.url), obj.etag ?? undefined);
+    return event ? [event] : [];
+  }
+
+  private static async findCalendar(client: DAVClient, calendarId: string): Promise<DAVCalendar> {
+    const targetUrl = decodeCalendarId(calendarId);
+    const calendars = await client.fetchCalendars();
+    const calendar = calendars.find((c) => c.url === targetUrl);
+    if (!calendar) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.CalendarNotFound,
+        HttpStatus.NOT_FOUND,
+        { calendarId },
+        CalendarService.name,
+      );
+    }
+    return calendar;
+  }
+
+  private static async findObject(client: DAVClient, calendar: DAVCalendar, uid: string): Promise<CalendarObject> {
+    const objects = (await client.fetchCalendarObjects({ calendar })) as CalendarObject[];
+    const object = objects.find((obj) => !!obj.data && IcalMapper.extractUid(obj.data) === uid);
+    if (!object) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.EventNotFound,
+        HttpStatus.NOT_FOUND,
+        { uid },
+        CalendarService.name,
+      );
+    }
+    return object;
+  }
+
+  private static extractEtagFromResponse(response: EtagResponse): string | undefined {
+    const etag = response.headers?.get?.('etag');
+    return etag ?? undefined;
+  }
+
+  private static buildCanonicalEvent(
+    ics: string,
+    calendarId: string,
+    etag: string | undefined,
+    fallback: MappedCalendarEvent,
+  ): ParsedCalendarEvent {
+    const parsed = IcalMapper.parseIcsToEvent(ics, calendarId, etag);
+    if (parsed) {
+      return parsed;
+    }
+    return { ...fallback, calendarId, etag };
+  }
+
+  async createEvent(emailAddress: string, password: string, event: CalendarEventBodyDto): Promise<ParsedCalendarEvent> {
+    this.assertBackendConfigured();
+    CalendarService.assertAuthenticated(emailAddress, password);
+    const client = await this.buildClient(emailAddress, password);
+    const calendar = await CalendarService.findCalendar(client, event.calendarId);
+    const uid = event.uid || randomUUID();
+    const ics = IcalMapper.serializeEventToIcs({ ...event, uid });
+    try {
+      const response = await client.createCalendarObject({ calendar, filename: `${uid}.ics`, iCalString: ics });
+      const etag = CalendarService.extractEtagFromResponse(response as EtagResponse);
+      return CalendarService.buildCanonicalEvent(ics, event.calendarId, etag, { ...event, uid });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.CreateEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
+  }
+
+  async updateEvent(
+    emailAddress: string,
+    password: string,
+    eventUid: string,
+    event: CalendarEventBodyDto,
+  ): Promise<ParsedCalendarEvent> {
+    this.assertBackendConfigured();
+    CalendarService.assertAuthenticated(emailAddress, password);
+    const client = await this.buildClient(emailAddress, password);
+    const calendar = await CalendarService.findCalendar(client, event.calendarId);
+    const existing = await CalendarService.findObject(client, calendar, eventUid);
+    const scope = event.recurrenceEdit?.scope;
+    if (scope === RecurrenceEditScope.THIS && event.recurrenceEdit) {
+      return CalendarService.updateOccurrenceOverride(client, existing, eventUid, event, event.recurrenceEdit);
+    }
+    if (scope === RecurrenceEditScope.THIS_AND_FOLLOWING && event.recurrenceEdit) {
+      return CalendarService.splitSeriesAtOccurrence(client, calendar, existing, eventUid, event, event.recurrenceEdit);
+    }
+    const ics = IcalMapper.applyFullSeriesEdit(existing.data ?? '', { ...event, uid: eventUid });
+    try {
+      const response = await client.updateCalendarObject({
+        calendarObject: { url: existing.url, etag: existing.etag, data: ics },
+      });
+      const etag = CalendarService.extractEtagFromResponse(response as EtagResponse);
+      return CalendarService.buildCanonicalEvent(ics, event.calendarId, etag, { ...event, uid: eventUid });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.UpdateEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
+  }
+
+  private static async updateOccurrenceOverride(
+    client: DAVClient,
+    existing: CalendarObject,
+    eventUid: string,
+    event: CalendarEventBodyDto,
+    recurrenceEdit: RecurrenceEditDto,
+  ): Promise<ParsedCalendarEvent> {
+    const existingIcs = existing.data;
+    if (!existingIcs) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.EventNotFound,
+        HttpStatus.NOT_FOUND,
+        { uid: eventUid },
+        CalendarService.name,
+      );
+    }
+    const ics = IcalMapper.upsertOccurrenceOverride(existingIcs, recurrenceEdit.occurrenceStart, {
+      ...event,
+      uid: eventUid,
+    });
+    try {
+      const response = await client.updateCalendarObject({
+        calendarObject: { url: existing.url, etag: existing.etag, data: ics },
+      });
+      const etag = CalendarService.extractEtagFromResponse(response as EtagResponse);
+      return CalendarService.buildCanonicalEvent(ics, event.calendarId, etag, { ...event, uid: eventUid });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.UpdateEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
+  }
+
+  private static async splitSeriesAtOccurrence(
+    client: DAVClient,
+    calendar: DAVCalendar,
+    existing: CalendarObject,
+    eventUid: string,
+    event: CalendarEventBodyDto,
+    recurrenceEdit: RecurrenceEditDto,
+  ): Promise<ParsedCalendarEvent> {
+    const existingIcs = existing.data;
+    if (!existingIcs) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.EventNotFound,
+        HttpStatus.NOT_FOUND,
+        { uid: eventUid },
+        CalendarService.name,
+      );
+    }
+    const splitInstantMs = new Date(recurrenceEdit.occurrenceStart).getTime();
+    const untilIso = IcalMapper.occurrenceBeforeIso(recurrenceEdit.occurrenceStart);
+    const clippedIcs = IcalMapper.clipRrule(existingIcs, untilIso, splitInstantMs);
+    const parsedOriginal = IcalMapper.parseIcsToEvent(existingIcs, event.calendarId);
+    const originalRrule = parsedOriginal?.rrule;
+    const newUid = randomUUID();
+    const newSeriesIcs = IcalMapper.buildForkedSeriesIcs(existingIcs, splitInstantMs, newUid, {
+      ...event,
+      uid: newUid,
+      rrule: event.rrule ?? originalRrule,
+    });
+    try {
+      await client.updateCalendarObject({
+        calendarObject: { url: existing.url, etag: existing.etag, data: clippedIcs },
+      });
+      const response = await client.createCalendarObject({
+        calendar,
+        filename: `${newUid}.ics`,
+        iCalString: newSeriesIcs,
+      });
+      const etag = CalendarService.extractEtagFromResponse(response as EtagResponse);
+      return CalendarService.buildCanonicalEvent(newSeriesIcs, event.calendarId, etag, { ...event, uid: newUid });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.UpdateEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
+  }
+
+  async deleteEvent(
+    emailAddress: string,
+    password: string,
+    calendarId: string,
+    eventUid: string,
+    recurrenceEdit?: RecurrenceEditDto,
+  ): Promise<void> {
+    this.assertBackendConfigured();
+    CalendarService.assertAuthenticated(emailAddress, password);
+    const client = await this.buildClient(emailAddress, password);
+    const calendar = await CalendarService.findCalendar(client, calendarId);
+    const existing = await CalendarService.findObject(client, calendar, eventUid);
+    const scope = recurrenceEdit?.scope;
+    if (scope === RecurrenceEditScope.THIS && recurrenceEdit) {
+      await CalendarService.deleteOccurrence(client, existing, recurrenceEdit);
+      return;
+    }
+    if (scope === RecurrenceEditScope.THIS_AND_FOLLOWING && recurrenceEdit) {
+      await CalendarService.clipSeriesBeforeOccurrence(client, existing, recurrenceEdit);
+      return;
+    }
+    try {
+      await client.deleteCalendarObject({
+        calendarObject: { url: existing.url, etag: existing.etag, data: existing.data ?? '' },
+      });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.DeleteEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
+  }
+
+  private static async deleteOccurrence(
+    client: DAVClient,
+    existing: CalendarObject,
+    recurrenceEdit: RecurrenceEditDto,
+  ): Promise<void> {
+    const existingIcs = existing.data;
+    if (!existingIcs) {
+      return;
+    }
+    const updatedIcs = IcalMapper.addExdate(existingIcs, recurrenceEdit.occurrenceStart);
+    try {
+      await client.updateCalendarObject({
+        calendarObject: { url: existing.url, etag: existing.etag, data: updatedIcs },
+      });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.DeleteEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
+  }
+
+  private static async clipSeriesBeforeOccurrence(
+    client: DAVClient,
+    existing: CalendarObject,
+    recurrenceEdit: RecurrenceEditDto,
+  ): Promise<void> {
+    const existingIcs = existing.data;
+    if (!existingIcs) {
+      return;
+    }
+    const splitInstantMs = new Date(recurrenceEdit.occurrenceStart).getTime();
+    const untilIso = IcalMapper.occurrenceBeforeIso(recurrenceEdit.occurrenceStart);
+    const clippedIcs = IcalMapper.clipRrule(existingIcs, untilIso, splitInstantMs);
+    try {
+      await client.updateCalendarObject({
+        calendarObject: { url: existing.url, etag: existing.etag, data: clippedIcs },
+      });
+    } catch (error) {
+      throw new CustomHttpException(
+        CalendarErrorMessages.DeleteEventFailed,
+        HttpStatus.BAD_GATEWAY,
+        getErrorMessage(error),
+        CalendarService.name,
+      );
+    }
   }
 }
 

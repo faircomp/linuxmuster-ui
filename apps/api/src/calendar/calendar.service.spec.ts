@@ -7,6 +7,7 @@ import { HttpStatus } from '@nestjs/common';
 import { DAVClient } from 'tsdav';
 import CustomHttpException from '../common/CustomHttpException';
 import CalendarService from './calendar.service';
+import IcalMapper from './ical.mapper';
 
 jest.mock('tsdav', () => ({
   DAVClient: jest.fn(),
@@ -22,10 +23,33 @@ const buildClientMock = () => ({
   propfind: jest.fn().mockResolvedValue([]),
   makeCalendar: jest.fn().mockResolvedValue(undefined),
   deleteObject: jest.fn().mockResolvedValue(undefined),
+  fetchCalendarObjects: jest.fn().mockResolvedValue([]),
+  createCalendarObject: jest.fn().mockResolvedValue({ headers: { get: () => 'etag-new' } }),
+  updateCalendarObject: jest.fn().mockResolvedValue({ headers: { get: () => 'etag-updated' } }),
+  deleteCalendarObject: jest.fn().mockResolvedValue({ headers: { get: () => null } }),
   account: { homeUrl: 'https://dav.example/home/', principalUrl: 'https://dav.example/principal/' },
 });
 
 const configuredAppConfig = { extendedOptions: { CALENDAR_CALDAV_BASE_URL: 'https://dav.example/' } };
+
+const CAL_URL = 'https://dav.example/cal/';
+const CAL_ID = Buffer.from(CAL_URL, 'utf-8').toString('base64url');
+const calendarWithVevent = { url: CAL_URL, components: ['VEVENT'], displayName: 'Cal' };
+
+const baseSeriesIcs = () =>
+  IcalMapper.serializeEventToIcs({
+    uid: 'evt-1',
+    calendarId: CAL_ID,
+    summary: 'Weekly Math',
+    start: '2026-04-20T08:00:00.000Z',
+    end: '2026-04-20T08:45:00.000Z',
+    allDay: false,
+    rrule: 'FREQ=WEEKLY;BYDAY=MO',
+  });
+
+const seriesObject = () => [{ url: `${CAL_URL}evt-1.ics`, etag: 'e1', data: baseSeriesIcs() }];
+
+const dataOf = (call: unknown): string => (call as { calendarObject: { data: string } }).calendarObject.data;
 
 describe('CalendarService', () => {
   let model: { find: jest.Mock; findOneAndUpdate: jest.Mock };
@@ -113,6 +137,75 @@ describe('CalendarService', () => {
       expect(clientMock.deleteObject).not.toHaveBeenCalled();
       expect(result.displayName).toBe('Klasse 10a');
       expect(result.tags).toEqual(['timetable']);
+    });
+  });
+
+  describe('event operations', () => {
+    let clientMock: ReturnType<typeof buildClientMock>;
+
+    beforeEach(async () => {
+      await service.updateBackendConfig();
+      clientMock = buildClientMock();
+      clientMock.fetchCalendars.mockResolvedValue([calendarWithVevent]);
+      clientMock.fetchCalendarObjects.mockResolvedValue(seriesObject());
+      MockedDAVClient.mockImplementation(() => clientMock);
+    });
+
+    it('listEvents returns the raw rrule string without expanding occurrences', async () => {
+      const events = await service.listEvents('user@example.com', 'pw', {
+        from: new Date('2026-04-01T00:00:00.000Z'),
+        to: new Date('2026-05-01T00:00:00.000Z'),
+      });
+
+      expect(events).toHaveLength(1);
+      expect(events[0].uid).toBe('evt-1');
+      expect(events[0].rrule).toContain('FREQ=WEEKLY');
+    });
+
+    it('deleteEvent THIS excludes the occurrence via addExdate instead of deleting the object', async () => {
+      await service.deleteEvent('user@example.com', 'pw', CAL_ID, 'evt-1', {
+        scope: 'THIS',
+        occurrenceStart: '2026-04-27T08:00:00.000Z',
+      } as never);
+
+      expect(clientMock.updateCalendarObject).toHaveBeenCalled();
+      expect(clientMock.deleteCalendarObject).not.toHaveBeenCalled();
+      expect(dataOf((clientMock.updateCalendarObject.mock.calls as unknown[][])[0][0])).toContain('EXDATE');
+    });
+
+    it('deleteEvent THIS_AND_FOLLOWING clips the series with UNTIL instead of deleting the object', async () => {
+      await service.deleteEvent('user@example.com', 'pw', CAL_ID, 'evt-1', {
+        scope: 'THIS_AND_FOLLOWING',
+        occurrenceStart: '2026-05-04T08:00:00.000Z',
+      } as never);
+
+      expect(clientMock.updateCalendarObject).toHaveBeenCalled();
+      expect(clientMock.deleteCalendarObject).not.toHaveBeenCalled();
+      expect(dataOf((clientMock.updateCalendarObject.mock.calls as unknown[][])[0][0])).toContain('UNTIL=');
+    });
+
+    it('deleteEvent without a recurrence scope deletes the whole object', async () => {
+      await service.deleteEvent('user@example.com', 'pw', CAL_ID, 'evt-1');
+
+      expect(clientMock.deleteCalendarObject).toHaveBeenCalled();
+      expect(clientMock.updateCalendarObject).not.toHaveBeenCalled();
+    });
+
+    it('updateEvent THIS_AND_FOLLOWING clips the original series and creates a forked new series', async () => {
+      const result = await service.updateEvent('user@example.com', 'pw', 'evt-1', {
+        calendarId: CAL_ID,
+        uid: 'evt-1',
+        summary: 'Changed Series',
+        start: '2026-05-04T08:00:00.000Z',
+        end: '2026-05-04T08:45:00.000Z',
+        allDay: false,
+        recurrenceEdit: { scope: 'THIS_AND_FOLLOWING', occurrenceStart: '2026-05-04T08:00:00.000Z' },
+      } as never);
+
+      expect(clientMock.updateCalendarObject).toHaveBeenCalledTimes(1);
+      expect(dataOf((clientMock.updateCalendarObject.mock.calls as unknown[][])[0][0])).toContain('UNTIL=');
+      expect(clientMock.createCalendarObject).toHaveBeenCalledTimes(1);
+      expect(result.summary).toBe('Changed Series');
     });
   });
 });
