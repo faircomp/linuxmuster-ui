@@ -34,6 +34,7 @@ const AppConfigSectionsKeys = {
   urlHandling: 'urlHandling',
   appLogo: 'appLogo',
   wireguard: 'wireguard',
+  calendar: 'calendar',
 } as const;
 
 export default AppConfigSectionsKeys;
