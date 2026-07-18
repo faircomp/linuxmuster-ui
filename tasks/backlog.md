@@ -1871,7 +1871,7 @@ Doku: README (dieses Task IST die Doku)
 Abhängt von: T15
 
 ## p2-chat [P2] ⭐ — Chat (nativer Gruppen-Chat)
-_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ aktiv (5/19: T1-T5 fertig — Contract + SSE/Notif-Konstanten + 3 Schemas) · _Tasks:_ 19
+_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ Code fertig (T1–T18 [x]/[~]) — nur T19 (Pilot-Abschluss: crabbox-Deploy + Visual-Diff) box-gated offen; Rezept code-seitig validiert → Folge-Phasen entblockt · _Tasks:_ 19
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · .reference/2.0.200/baselines/11-chat.png
 
 > Hinweis Rekonstruktion: `1851` ist diverged (datiert vor 1.6→2.0-Merge) und kennt **kein**
