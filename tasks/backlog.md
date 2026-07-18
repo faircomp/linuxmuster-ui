@@ -3121,7 +3121,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1, T2
 
-### T6 — api/calendar: DTOs (Events)  [ ]
+### T6 — api/calendar: DTOs (Events)  [x]
+> Erledigt (43d4e1dd1): 4 Event-DTOs dekoratorgenau aus main.js:35420/35517/35772/35728 — CalendarEventResponseDto (nur @ApiProperty), CalendarEventBodyDto (@IsISO8601 start/end, @IsBoolean allDay, @IsHexColor color, classification/transparency @IsIn+T2-Typen, nested attendees[@ValidateNested each]/organizer[Einzelobjekt]/recurrenceEdit via @Type, exdate @IsISO8601 each), CalendarEventAttendeeDto, RecurrenceEditDto (@IsIn RecurrenceEditScope + @IsISO8601). Nutzt T1-const + T2-Shared-Types. Verify: jest 8/8 (gültige minimal+voll + hostile: non-ISO start, non-bool allDay, bad classification/color/exdate, nested invalid attendee+recurrenceEdit), eslint + isolierter tsc clean, prettier. Review approve — jedes Feld/Dekorator gegen Soll geprüft.
 Komponente: apps/api · Dateien: apps/api/src/calendar/dto/{calendar-event-response.dto,calendar-event-body.dto,calendar-event-attendee.dto,recurrence-edit.dto}.ts
 Soll: main.js:35420 (EventResponse), 35517 (EventBody), 35772 (Attendee), 35728 (RecurrenceEdit)
 Änderung: Event-DTOs 1:1: EventBody mit IsISO8601 (start/end/exdate[]), IsBoolean allDay, IsOptional rrule, IsIn classification/transparency, IsHexColor color, ValidateNested attendees[]/organizer/recurrenceEdit + Type()-Transform. RecurrenceEditDto (scope IsIn, occurrenceStart IsISO8601). Neue Dateien ⇒ SPDX.
