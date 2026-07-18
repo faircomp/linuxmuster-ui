@@ -2843,7 +2843,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T10 — libs: COLLABORA_EXTENDED_OPTIONS + Editor-Selektor + Sektions-Key  [ ]
+### T10 — libs: COLLABORA_EXTENDED_OPTIONS + Editor-Selektor + Sektions-Key  [x] OK (4a571f309) `collabora.ts` (onlyOffice-Template): ACTIVE_DOCUMENT_EDITOR-dropdown (Optionen aus T2-Konstante, Default ONLY_OFFICE) + COLLABORA_URL-input + COLLABORA_WOPI_SECRET-password; i18n-Keys `appExtendedOptions.*` (in T13 angelegt). Sektions-Key **`documentEditor`** (OF2-Empfehlung: eigene Sektion; Ledger nannte collabora/documentEditor — documentEditor semantisch für den Selektor). eslint+isolierte tsc CLEAN. Review approve. Wiring in T11.
 Komponente: libs · Dateien: libs/src/appconfig/constants/extendedOptions/collabora.ts (neu), libs/src/appconfig/constants/appConfigSectionsKeys.ts
 Soll: Analogie libs/src/appconfig/constants/extendedOptions/onlyOffice.ts; Keys main.js:2112–2114
 Änderung: `COLLABORA_EXTENDED_OPTIONS: AppConfigExtendedOption[]` mit `COLLABORA_URL` (input) + `COLLABORA_WOPI_SECRET` (password) + `ACTIVE_DOCUMENT_EDITOR` (`ExtendedOptionField.dropdown`, Optionen onlyoffice/collabora, Default onlyoffice), i18n-Title/Description-Keys. Sektions-Key `collabora` (bzw. `documentEditor`, siehe Spec-Offene-Frage 2) in `appConfigSectionsKeys.ts`. AGPL-SPDX für die neue Datei.
