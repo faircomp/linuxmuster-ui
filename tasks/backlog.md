@@ -2806,7 +2806,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1, T3, T4
 
-### T6 — BE: WopiController (@Public, Token-Auth) + Modul-Registrierung  [ ]
+### T6 — BE: WopiController (@Public, Token-Auth) + Modul-Registrierung  [x] OK (7bc126649) `@Controller('wopi/files')`, 3 Routen ALLE `@Public` (Auth nur via access_token→validateWopiToken zuerst; putFile canWrite→403; kein IDOR, Pfad aus signiertem Token). getFile streamt WebDAV→res (fork-treu ohne normalizeFilePath). CollaboraService (war unregistriert) + WopiController in filesharing.module. jest **5/5** (@Public-Metadata-Contract alle 3, gültig→JSON, ungültig→401, read-only→403 ohne Upload, schreibbar→Upload+200), eslint+isolierte tsc CLEAN. Review approve (NIT: per-Route-Swagger weggelassen — Maschinen-Endpunkt). getFile-Streaming-Laufzeit box-gated
 Komponente: apps/api · Dateien: apps/api/src/filesharing/wopi.controller.ts (neu), apps/api/src/filesharing/wopi.controller.spec.ts (neu), apps/api/src/filesharing/filesharing.module.ts
 Soll: main.js:43199–43328 (`@Controller('wopi/files')`; `checkFileInfo` `GET :fileId`, `getFile` `GET :fileId/contents`, `putFile` `POST :fileId/contents`; alle `@Public`), main.js:37232 (Controller-Liste)
 Änderung: Controller mit **allen drei Methoden `@Public()`** (Guard-Bypass beabsichtigt, Auth ausschließlich über `access_token`→`validateWopiToken`); `putFile` prüft `tokenData.canWrite` (403) und streamt `req` an `WebDavService.uploadFile`; `getFile` streamt WebDAV→`res` (octet-stream). `WopiController` in `filesharing.module.ts` als Controller registrieren. AGPL-SPDX.
