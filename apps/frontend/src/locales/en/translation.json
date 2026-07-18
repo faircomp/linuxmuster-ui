@@ -521,6 +521,7 @@
       "SaveFailed": "Save failed",
       "DuplicateFailed": "Duplicate failed",
       "AppNotProperlyConfigured": "OnlyOffice is not properly configured, contact your system administrator.",
+      "WopiTokenInvalid": "The WOPI access token is invalid or has expired.",
       "CollectingFailed": "Collecting files failed",
       "MissingCallbackURL": "Missing callback URL",
       "SharingFailed": "Sharing files failed",
