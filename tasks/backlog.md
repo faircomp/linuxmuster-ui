@@ -2890,7 +2890,7 @@ Doku: docs/ DE+EN
 Abhängt von: T13
 
 ## p4-app-store-verify [P4] — App-Store-/DockerService-Engine (Verify + 2.0-Drift)
-_Ziel:_ DockerService-App-Store auf 2.0-Parität + Store-Fetch-Contract · _Abhängt-von:_ p1-installer-repoint · _Status:_ geplant · _Tasks:_ 17
+_Ziel:_ DockerService-App-Store auf 2.0-Parität + Store-Fetch-Contract · _Abhängt-von:_ p1-installer-repoint · _Status:_ Rekonstruktion erledigt (T1–T10 + T12 [x]) — Voll-Stack-Verify + Draft-PR box-gated/[?] (crabbox down den ganzen Loop): T11 CSP-Entscheidung, T13/T14/T16/T17 UI-Rollouts, T15 Moodle-Rollout. Weiter mit p5. · _Tasks:_ 17
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-app-store-verify.md` · Soll: main.js:26371–26787 (DockerService) · main.js:32732–32853 (DockerController) · main.js:27112–27336 (Listen/Helper) · main.js:33073–33101 (DTO) · kein dedizierter upstream/-Rescue-Branch (Bestandscode seit 1.6) · .reference/2.0.200/baselines/18-settings.png
 
 > Kalibrierung P4: T1–T11 = 2.0-Drift-Close (Rekonstruktion aus main.js), **provisorisch hier
@@ -3007,7 +3007,8 @@ i18n: keine
 Doku: docs/features/p4-app-store-verify.md Offene Frage 1 auflösen (Entscheidung dokumentieren).
 Abhängt von: p1-installer-repoint (Paket)
 
-### T12 — BE-Unit-Tests DockerService (Kernpfade)  [ ]
+### T12 — BE-Unit-Tests DockerService (Kernpfade)  [x]
+> Erledigt (0664d0a72): Die T12-Kernpfade wurden großteils schon inkrementell test-getrieben (T5: resolveContainerName 5 Fälle + migrate 3; T6: readSavedEnvValues 3 + saveDockerCompose; T7: replaceEnvVariables `:-`-Default + deep-resolve + Moodle). Dieser Task ergänzt die namentlich noch offenen Lücken: **WireGuard-Case** (replaceEnvVariables löst EDU_WG_API_KEY aus appConfig) + **checkProtectedContainer** (403 CustomHttpException für geschützten Container, kein Throw sonst — try/catch-Muster wie mailcow-admin.service.spec). Gesamt docker.service.spec 18/18 grün, dockerode/SSE/AppConfig/Keycloak/fs-extra gemockt. Verify: jest grün, eslint + isolierter tsc clean, prettier. Review approve — alle T12-Ledger-Assertions (Bestand + neu) vollständig abgedeckt.
 Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.spec.ts (neu/erweitert)
 Soll: main.js:26485/26538/26547 (readSavedEnvValues/resolveContainerName/replaceEnvVariables)
 Änderung: Jest-Specs mit gemocktem dockerode/SSE/AppConfig/Keycloak: resolveContainerName (Editor-Split + Default), readSavedEnvValues (persistierte Keys), replaceEnvVariables (`:-`-Default, Moodle-Secret-Persistenz, WireGuard-Key), checkProtectedContainer (403).
@@ -3016,7 +3017,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T5, T6, T7
 
-### T13 — Voll-Stack: OnlyOffice über die UI ausrollen  [ ]
+### T13 — Voll-Stack: OnlyOffice über die UI ausrollen  [?] box-gated: crabbox down den ganzen Loop. Braucht warme Box (`iter.sh deploy`/`shots`): eigene Images bauen → App-Store-Rollout über die UI + Playwright-Login/Modul-Visual-Diff. Rekonstruktions-Voraussetzungen (T1–T10) alle [x] → nur noch Box nötig.
 Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
 Soll: DOCKER_APPLICATION_LIST/filesharing + FILESHARING_DOCKER_CONTAINERS.ONLY_OFFICE (main.js:27149)
 Änderung: keine Code-Änderung — End-to-End-Rollout: als Global-Admin `filesharing` mit Editor=ONLY_OFFICE über App-Store/DockerIntegration ausrollen.
@@ -3025,7 +3026,7 @@ i18n: keine
 Doku: keine (Verify-Log)
 Abhängt von: T7, T9, T11
 
-### T14 — Voll-Stack: Collabora über die UI ausrollen (Editor-Umschaltung)  [ ]
+### T14 — Voll-Stack: Collabora über die UI ausrollen (Editor-Umschaltung)  [?] box-gated: crabbox down. Braucht warme Box: Editor auf Collabora umschalten + ausrollen + WOPI-Callback prüfen. Rekonstruktion (T1–T10, inkl. Editor-Resolver T9/T10) alle [x] → nur noch Box.
 Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
 Soll: FILESHARING_DOCKER_CONTAINERS.COLLABORA='edulution-collabora' (main.js:27150) · resolveContainerName (main.js:26538)
 Änderung: keine Code-Änderung — `filesharing`-AppConfig `extendedOptions.ACTIVE_DOCUMENT_EDITOR=collabora` setzen, ausrollen; prüft den Editor-Split-Resolver end-to-end.
@@ -3043,7 +3044,7 @@ i18n: neue Keys nur falls Moodle-Provisioning-Feedback ergänzt (dann DE+EN)
 Doku: Betriebsnotiz „Moodle braucht KC-Admin + persistierte Secrets" (DE+EN, knapp)
 Abhängt von: T7, T15-Blocker: KC-Admin-Creds auf crabbox (Spec Offene Frage 3)
 
-### T16 — Voll-Stack: Guacamole (desktopdeployment) über die UI ausrollen  [ ]
+### T16 — Voll-Stack: Guacamole (desktopdeployment) über die UI ausrollen  [?] box-gated: crabbox down. Braucht warme Box: desktopdeployment-Rollout über die UI. Engine-Rekonstruktion (T1–T10) [x] → nur noch Box.
 Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
 Soll: desktopdeployment→edulution-guacamole (main.js:27115) · EDULUTION_GUACAMOLE_ADMIN_* (Plan §2.6/main.js:36013)
 Änderung: keine Code-Änderung — `desktopdeployment` ausrollen; validiert generischen Rollout ohne Sonderpfad + Guacamole-Admin-Env-Auflösung.
@@ -3052,7 +3053,7 @@ i18n: keine
 Doku: keine (Verify-Log)
 Abhängt von: T7, T9, T11
 
-### T17 — Voll-Stack: Container-Lifecycle + Protected-Guard + SSE-Update  [ ]
+### T17 — Voll-Stack: Container-Lifecycle + Protected-Guard + SSE-Update  [?] box-gated: crabbox down. Braucht warme Box: start/stop/restart/delete-Lifecycle über die UI + Protected-Guard-403 (checkProtectedContainer unit-getestet T12) + SSE-Live-Update. Rekonstruktion [x] → nur noch Box.
 Komponente: crabbox (Voll-Stack) · Dateien: — (Verify-Only)
 Soll: executeContainerCommand/checkProtectedContainer (main.js:26647) · SSE CONTAINER_UPDATE (main.js:26411) · deleteContainer (main.js:26690)
 Änderung: keine Code-Änderung — an einem ausgerollten Container start/stop/restart/kill/delete über die UI; geschützten Container (z. B. edulution-manager) zu killen/löschen versuchen → 403; SSE-Update-Event beobachten.
