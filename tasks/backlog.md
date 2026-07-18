@@ -3063,7 +3063,7 @@ Doku: keine (Verify-Log)
 Abhängt von: T13
 
 ## p5-calendar [P5] — Calendar
-_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 18
+_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat (Pilot code-fertig) · _Status:_ aktiv · _Tasks:_ 18
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main.js:33176-33381 (Module/Controller) · 33439-34752 (Enums/Schemas/Service/IcalMapper) · 35267-35925 (DTOs) · 2085-2087 (appconfig-Keys) · kein Rescue-Branch · kein .reference/2.0.200/baselines/*calendar* (FE = laufende 2.0-crabbox als Live-Referenz)
 
 > P5-Kalibrierungs-Notiz: Geerdetes Rekonstruktions-Ledger. BE-Anker sind aus main.js
@@ -3073,7 +3073,8 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main
 
 ---
 
-### T1 — libs/calendar: Konstanten & Enums  [ ]
+### T1 — libs/calendar: Konstanten & Enums  [x]
+> Erledigt (757d7d423): 9 libs-Dateien 1:1 aus main.js — calendar-endpoint (CALENDAR_ENDPOINT='calendar' default + CALENDAR_TAGS_PATH_SEGMENT='tags' + CALENDAR_TIMETABLE_PATH_SEGMENT='timetable'), calendar-error-messages (enum, 9 Keys `calendar.errors.*` — Fork-Error-Konvention), + 7 Status-const-Objekte (RecurrenceEditScope/CalendarEventClassification/CalendarEventTransparency/CalendarTag/CalendarSharePermission/CalendarShareSubjectType/CalDavAuthMode) als `const {...} as const; export default`. Alle SPDX-AGPL. Verify: eslint + isolierter tsc clean, tsx-Wert-Assertions grün (CALENDAR_ENDPOINT==='calendar', RecurrenceEditScope-len===3, SharePermission-len===5, CalendarTag.TIMETABLE==='timetable', ErrorMessage-Key). Review approve — jeder Wert byte-exakt gegen main.js geprüft.
 Komponente: libs · Dateien: libs/src/calendar/constants/{calendar-endpoint,calendar-error-messages,recurrenceEditScope,calendarEventClassification,calendarEventTransparency,calendarTag,calendarSharePermission,calendarShareSubjectType,calDavAuthMode}.ts
 Soll: main.js:33409-33412 (Endpoint) · 34086-34096 (Errors) · 33439-33443, 35661, 35693, 34154, 34779, 34813, 34055 (Enums)
 Änderung: Shared Endpoint-/Error-Message-Konstanten + sieben const-Objekte (keine enums, AGENTS.md) 1:1 aus main.js anlegen; Werte exakt (z. B. CalendarTag.TIMETABLE='timetable', RecurrenceEditScope THIS/THIS_AND_FOLLOWING/ALL). Neue Dateien ⇒ SPDX AGPL-3.0-or-later, Copyright Kevin Stenzel.
