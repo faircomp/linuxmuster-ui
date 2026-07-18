@@ -2797,7 +2797,7 @@ Verify: `npm run build` grün; `npm run lint` sauber.
 i18n: keine
 Doku: keine (intern)
 
-### T5 — BE: CollaboraService (WOPI-Token, FileStat, Validierung)  [ ]
+### T5 — BE: CollaboraService (WOPI-Token, FileStat, Validierung)  [x] OK (57ae8fcdb) 4 Methoden (main.js:40352-40447): getWopiSecret/generateWopiToken(Path-Traversal-Guard+JWT-sign+TTL)/getFileStat(depth-0 PROPFIND, fork-treu ohne normalizeFilePath)/validateWopiToken(→401). +WopiTokenInvalid-enum+i18n DE/EN/FR. jest **4/4** (echter sign→verify-Roundtrip, ..→400, kein-Secret→500, Tamper→401), eslint+isolierte tsc CLEAN. Review approve. WebDAV-getFileStat-Laufzeit box-gated
 Komponente: apps/api · Dateien: apps/api/src/filesharing/collabora.service.ts (neu), apps/api/src/filesharing/collabora.service.spec.ts (neu)
 Soll: main.js:40352–40447
 Änderung: `CollaboraService` (Injectable) mit `getWopiSecret` (aus `extendedOptions[COLLABORA_WOPI_SECRET]`, sonst `AppNotProperlyConfigured`), `generateWopiToken` (JWT sign mit Secret, `expiresIn=WOPI_TOKEN_EXPIRY`, Payload inkl. `origin` aus `EDULUTION_BASE_DOMAIN`, `jti=randomUUID`, Path-Traversal-Guard `filePath.includes('..')`), `getFileStat` (PROPFIND via WebDavService), `validateWopiToken` (JWT verify → 401 `WopiTokenInvalid`). AGPL-SPDX. Deps: AppConfigService, JwtService, WebDavService, WebdavSharesService (wie main.js-Konstruktor).
