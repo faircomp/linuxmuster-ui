@@ -21,7 +21,8 @@ import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@
 import Docker from 'dockerode';
 import { fromEvent, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { ensureDirSync, existsSync, moveSync, writeFileSync } from 'fs-extra';
+import { ensureDirSync, existsSync, moveSync, readFileSync, writeFileSync } from 'fs-extra';
+import { parse } from 'yaml';
 import { join } from 'path';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import getErrorMessage from '@libs/common/utils/getErrorMessage';
@@ -37,7 +38,12 @@ import CONTAINER from '@libs/docker/constants/container';
 import type PullEvent from '@libs/docker/types/pullEvent';
 import APPS_FILES_PATH from '@libs/common/constants/appsFilesPath';
 import type CreateContainerDto from '@libs/docker/types/create-container.dto';
-import { injectEnvIntoCompose, parseDockerEnv } from '@libs/docker/utils/createComposeFile';
+import {
+  injectEnvIntoCompose,
+  normalizeEnvironment,
+  parseDockerEnv,
+  type ComposeFile,
+} from '@libs/docker/utils/createComposeFile';
 import { EDULUTION_MANAGER_CONTAINER_NAME } from '@libs/docker/constants/edulution-manager';
 import DOCKER_APPLICATION_LIST from '@libs/docker/constants/dockerApplicationList';
 import FILESHARING_DOCKER_CONTAINERS from '@libs/docker/constants/filesharingDockerContainers';
@@ -250,6 +256,36 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  static readSavedEnvValues(applicationName: string, containerName: string, keys: string[]): Record<string, string> {
+    const filePath = join(APPS_FILES_PATH, applicationName, containerName, 'docker-compose.yml');
+    if (!existsSync(filePath)) {
+      return {};
+    }
+    try {
+      const content = readFileSync(filePath, 'utf-8');
+      const doc = parse(content) as ComposeFile;
+      if (!doc.services) {
+        return {};
+      }
+      const allEnvs = Object.values(doc.services).reduce<Record<string, string>>(
+        (acc, service) => ({ ...acc, ...normalizeEnvironment(service.environment) }),
+        {},
+      );
+      return keys.reduce<Record<string, string>>((acc, key) => {
+        if (key in allEnvs) {
+          acc[key] = allEnvs[key];
+        }
+        return acc;
+      }, {});
+    } catch (error) {
+      Logger.debug(
+        `Failed to read saved env values for ${applicationName}: ${getErrorMessage(error)}`,
+        DockerService.name,
+      );
+      return {};
+    }
+  }
+
   async replaceEnvVariables(
     createContainersDto: Docker.ContainerCreateOptions[],
     applicationName: string,
@@ -285,6 +321,7 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
 
   private static saveDockerCompose(
     applicationName: string,
+    containerName: string,
     containers: Docker.ContainerCreateOptions[],
     originalComposeConfig: string,
   ): void {
@@ -293,7 +330,7 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
     const finalComposeConfig = injectEnvIntoCompose(originalComposeConfig, mergedEnvs);
 
     try {
-      const fileDir = join(APPS_FILES_PATH, applicationName);
+      const fileDir = join(APPS_FILES_PATH, applicationName, containerName);
       ensureDirSync(fileDir);
 
       const filePath = join(fileDir, 'docker-compose.yml');
@@ -308,6 +345,7 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
 
   async createContainer(createContainerDto: CreateContainerDto) {
     const { applicationName, containers, originalComposeConfig } = createContainerDto;
+    const containerName = createContainerDto.containerName ?? (await this.resolveContainerName(applicationName));
 
     const newContainers = await this.replaceEnvVariables(containers, applicationName);
 
@@ -321,21 +359,20 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
         }),
       );
 
-      await Promise.all(
-        newContainers.map(async (containerDto) => {
-          this.sseService.sendEventToUsers(
-            [SPECIAL_USERS.GLOBAL_ADMIN],
-            { progress: 'docker.events.creatingContainer', from: `${containerDto.name}` } as DockerEvent,
-            SSE_MESSAGE_TYPE.CONTAINER_PROGRESS,
-          );
-          const container = await this.docker.createContainer(containerDto);
-          await container.start();
-          Logger.log(`Container ${containerDto.name} created and started.`, DockerService.name);
-        }),
-      );
+      await newContainers.reduce(async (prev, containerDto) => {
+        await prev;
+        this.sseService.sendEventToUsers(
+          [SPECIAL_USERS.GLOBAL_ADMIN],
+          { progress: 'docker.events.creatingContainer', from: `${containerDto.name}` } as DockerEvent,
+          SSE_MESSAGE_TYPE.CONTAINER_PROGRESS,
+        );
+        const container = await this.docker.createContainer(containerDto);
+        await container.start();
+        Logger.log(`Container ${containerDto.name} created and started.`, DockerService.name);
+      }, Promise.resolve());
 
       if (applicationName && newContainers && originalComposeConfig) {
-        DockerService.saveDockerCompose(applicationName, newContainers, originalComposeConfig);
+        DockerService.saveDockerCompose(applicationName, containerName, newContainers, originalComposeConfig);
       }
 
       this.sseService.sendEventToUsers(

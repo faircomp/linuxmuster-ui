@@ -4,7 +4,7 @@
  */
 
 import { join } from 'path';
-import { ensureDirSync, existsSync, moveSync } from 'fs-extra';
+import { ensureDirSync, existsSync, moveSync, readFileSync, writeFileSync } from 'fs-extra';
 import APPS from '@libs/appconfig/constants/apps';
 import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocumentEditor';
@@ -16,6 +16,8 @@ jest.mock('fs-extra');
 const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>;
 const mockMoveSync = moveSync as jest.MockedFunction<typeof moveSync>;
 const mockEnsureDirSync = ensureDirSync as jest.MockedFunction<typeof ensureDirSync>;
+const mockReadFileSync = readFileSync as unknown as jest.MockedFunction<(path: string, encoding: string) => string>;
+const mockWriteFileSync = writeFileSync as jest.MockedFunction<typeof writeFileSync>;
 
 const buildFileSharingConfig = (editor?: string) => ({
   extendedOptions: editor ? { [ExtendedOptionKeys.ACTIVE_DOCUMENT_EDITOR]: editor } : {},
@@ -100,5 +102,69 @@ describe('DockerService.migrateDockerComposeFiles', () => {
 
     expect(mockEnsureDirSync).not.toHaveBeenCalled();
     expect(mockMoveSync).not.toHaveBeenCalled();
+  });
+});
+
+describe('DockerService.readSavedEnvValues', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns only the requested keys from a persisted compose file', () => {
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(
+      [
+        'services:',
+        '  moodle:',
+        '    environment:',
+        '      - MOODLE_DB_PASSWORD=super-secret',
+        '      - MOODLE_DB_ROOT_PASSWORD=root-secret',
+      ].join('\n'),
+    );
+
+    const result = DockerService.readSavedEnvValues('learningmanagement', 'edulution-moodle', [
+      'MOODLE_DB_PASSWORD',
+      'MISSING_KEY',
+    ]);
+
+    expect(result).toEqual({ MOODLE_DB_PASSWORD: 'super-secret' });
+  });
+
+  it('reads object-form environment blocks', () => {
+    mockExistsSync.mockReturnValue(true);
+    mockReadFileSync.mockReturnValue(['services:', '  app:', '    environment:', '      FOO: bar'].join('\n'));
+
+    expect(DockerService.readSavedEnvValues('mail', 'edulution-mail', ['FOO'])).toEqual({ FOO: 'bar' });
+  });
+
+  it('returns an empty object when the compose file does not exist', () => {
+    mockExistsSync.mockReturnValue(false);
+
+    expect(DockerService.readSavedEnvValues('mail', 'edulution-mail', ['FOO'])).toEqual({});
+    expect(mockReadFileSync).not.toHaveBeenCalled();
+  });
+});
+
+describe('DockerService.saveDockerCompose', () => {
+  type SaveDockerCompose = (
+    applicationName: string,
+    containerName: string,
+    containers: unknown[],
+    originalComposeConfig: string,
+  ) => void;
+  const { saveDockerCompose } = DockerService as unknown as { saveDockerCompose: SaveDockerCompose };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('writes the resolved compose file into the container subdirectory', () => {
+    const composeYaml = ['services:', '  mail:', '    image: edulution-mail'].join('\n');
+
+    saveDockerCompose('mail', 'edulution-mail', [{ Env: ['FOO=bar'] }], composeYaml);
+
+    const expectedDir = join(APPS_FILES_PATH, 'mail', 'edulution-mail');
+    expect(mockEnsureDirSync).toHaveBeenCalledWith(expectedDir);
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      join(expectedDir, 'docker-compose.yml'),
+      expect.any(String),
+      'utf-8',
+    );
   });
 });
