@@ -2917,7 +2917,8 @@ Verify: `iter.sh lint` + Import in einem bestehenden Spec smoke-getestet; Assert
 i18n: keine
 Doku: keine (intern)
 
-### T3 — BE: ensureKeycloakClient-Util (Moodle-Provisionierung)  [ ]
+### T3 — BE: ensureKeycloakClient-Util (Moodle-Provisionierung)  [x]
+> Erledigt (7a6aa9a0a): apps/api/src/docker/utils/ensureKeycloakClient.ts (+ .spec.ts) — main.js:27276–27336 1:1 auf die Fork-KC-Helfer (getKeycloakToken/createKeycloakAxiosClient) portiert, typisierte Axios-Responses statt any. Idempotent: existing→assignRoles→get-secret; missing→create(mit übergebenem Secret)→re-fetch→assignRoles→get-secret. Rollen: SERVICE_ACCOUNT_ROLES→realm-management, ACCOUNT_ROLES→account. Secret wird NIE geloggt. jest 4/4 grün (existing→kein Create; missing→Create mit Secret; 2 Role-Mappings; Fehler-Rethrow+Logger.error), eslint+isolierter tsc clean, Review approve.
 Komponente: apps/api · Dateien: apps/api/src/docker/utils/ensureKeycloakClient.ts (neu)
 Soll: main.js:27299–27336 (ensureKeycloakClient) · main.js:27214 (KEYCLOAK_MOODLE_CLIENT_SECRET)
 Änderung: Util, das den Keycloak-Client `edulution-moodle` idempotent anlegt (oder bestehenden nutzt) und das Client-Secret zurückgibt; bestehende KC-Admin-Helfer/Env (`KEYCLOAK_*`) wiederverwenden (vor Neuanlage im Code nach vorhandenem KC-Admin-Client suchen). Realm-Management-/Account-Rollen zuweisen wie Soll.
