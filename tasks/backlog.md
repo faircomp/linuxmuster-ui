@@ -2870,7 +2870,7 @@ i18n: siehe T13
 Doku: keine (intern)
 Abhängt von: T3, T7, T11
 
-### T13 — FE: FileRenderer-Editor-Auswahl (OnlyOffice ↔ Collabora) + i18n  [ ]
+### T13 — FE: FileRenderer-Editor-Auswahl (OnlyOffice ↔ Collabora) + i18n  [x] OK (5b009d2b7) Pure `resolveOfficeEditorPreviewType` (collabora+konfiguriert→COLLABORA / sonst onlyOfficeConfigured→ONLY_OFFICE / sonst null) + FileRenderer liest ACTIVE_DOCUMENT_EDITOR+COLLABORA_URL aus appConfigs, neuer FILE_PREVIEW_TYPE.COLLABORA-Case rendert `<Collabora>`. **Verhaltens-erhaltend** (OnlyOffice-Pfad intakt; collabora-ohne-URL→Fallback OnlyOffice). i18n `appExtendedOptions.{activeDocumentEditor*,collaboraUrl*,collaboraWopiSecret*}` + Dropdown-Labels + `sections.documentEditor` — **DE+EN+FR** (Ledger sagte DE+EN, aber check-translations erzwingt FR-Parität). vitest **4/4**, eslint+isolierte FE-tsc+check-translations CLEAN. Review approve. Echtes Collabora-Rendering box-gated.
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/FileSharing/FilePreview/FileRenderer.tsx, apps/frontend/src/locales/de/translation.json, apps/frontend/src/locales/en/translation.json
 Soll: bestehende Auswahl FileRenderer.tsx:126–127 (`isOnlyOfficeDocument && isOnlyOfficeConfigured → FILE_PREVIEW_TYPE.ONLY_OFFICE`); Selektor-Wert aus appconfig `extendedOptions[ACTIVE_DOCUMENT_EDITOR]`
 Änderung: Bei Office-Dokument den aktiven Editor aus der Filesharing-appconfig lesen: `collabora` (+ konfiguriert) → `FILE_PREVIEW_TYPE.COLLABORA` (rendert `Collabora`), sonst bisher `ONLY_OFFICE`. Alle neuen i18n-Keys DE+EN pflegen: `appExtendedOptions.collaboraUrl(Title)`, `collaboraWopiSecret(Title|Description)`, `activeDocumentEditor(Title|Description)`, Editor-Option-Labels, Sektionstitel `collabora`, Filesharing-`WopiTokenInvalid`.
