@@ -46,6 +46,7 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 ## Ziel & Nicht-Ziele (YAGNI)
 
 **Ziel**
+
 1. Die im Repo vorhandene Docker-Engine auf **2.0-Funktionsparität** heben (BE + Contract + FE),
    soweit für den App-Store-Rollout der vier Ziel-Apps nötig.
 2. Den **Store-Fetch-Contract** gegen den (in `p1-installer-repoint` umgebogenen) eigenen Endpoint
@@ -55,6 +56,7 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
    funktionieren.
 
 **Nicht-Ziele (bewusst raus)**
+
 - **Kein** Repoint von `EDU_PLUGINS_GITHUB_URL` selbst — das ist `p1-installer-repoint` T? (Ziel 5);
   hier nur **Konsum + Contract-Verify + CSP-Entscheidung**.
 - **Kein** Bauen/Mirrorn der Companion-Images (`edulution-{onlyoffice,collabora,moodle,guacamole}`) —
@@ -72,6 +74,7 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 ## Betroffene Komponenten & Dateien (konkrete Pfade)
 
 **libs (Konstanten/Typen — neue Dateien AGPL-SPDX)**
+
 - `libs/src/docker/constants/dockerApplicationList.ts` (Update: `learningmanagement: 'edulution-moodle'`)
 - `libs/src/docker/constants/filesharingDockerContainers.ts` (**neu**)
 - `libs/src/docker/constants/activeDocumentEditor.ts` (**neu**, `ACTIVE_DOCUMENT_EDITOR`-Const-Objekt)
@@ -81,20 +84,24 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 - `libs/src/appconfig/constants/extendedOptionKeys.ts` (ggf. `ACTIVE_DOCUMENT_EDITOR`-Key, s. Schwester-Paket)
 
 **apps/api (BE)**
+
 - `apps/api/src/docker/docker.service.ts` (Ausbau: onModuleInit, migrate/resolve/readSavedEnv/replaceEnv/saveCompose/createContainer)
 - `apps/api/src/docker/docker.controller.ts` (Contract-Parität: `@ApiAuth()` + Swagger-Response-DTOs)
 - `apps/api/src/docker/utils/ensureKeycloakClient.ts` (**neu**, Keycloak-Client-Provisionierung für Moodle)
 - `apps/api/src/docker/docker.service.spec.ts` (**neu/erweitert**, Unit-Tests)
 
 **apps/frontend (FE)**
+
 - `apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/useDockerApplicationStore.ts` (`containerName` im Payload; Editor-Resolver für filesharing)
 - `apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/CreateDockerContainerDialog.tsx` (`containerName` durchreichen)
 - `apps/frontend/src/pages/Settings/AppConfig/appStore/AppStorePage.tsx` (nur falls Rollout-Auslöser betroffen)
 
 **i18n**
+
 - `apps/frontend/src/locales/{de,en}/translation.json` (Sektion `docker.events`/`docker.error` — bereits vorhanden, ggf. Moodle-Provisioning-Keys ergänzen)
 
 **Verify-Infra**
+
 - `scripts/crabbox/iter.sh` (`deploy`, `shots`, `cmd`) — bereits vorhanden.
 
 ## Quelle des Solls
@@ -157,8 +164,14 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 
 - **`@UseGuards(AdminGuard)`** auf Controller-Klassenebene — **Pflicht mit-portieren** (existiert in
   1.6 bereits). Der gesamte Docker-Controller ist Global-Admin-only.
-- **`@ApiAuth()`** (`api_auth_decorator`, `main.js:32846`) — in 2.0 zusätzlich auf Klassenebene
-  (Swagger-Bearer-Security). Contract-Parität, mit-portieren.
+- **Swagger-Bearer-Security** (2.0: `@ApiAuth()`, `api_auth_decorator`, `main.js:32846`) — im Fork als
+  `@ApiTags(EDU_API_DOCKER_ENDPOINT)` + `@ApiBearerAuth()` auf Klassenebene umgesetzt (T8), die
+  **etablierte Fork-Konvention** (vgl. `mails.controller`). Der 2.0-Custom-Decorator `@ApiAuth`
+  (bündelt `ApiBearerAuth` + `ApiUnauthorizedResponse`/`ApiForbiddenResponse` mit `ErrorResponseDto`)
+  wird **nicht** nachgebaut — der Fork hat weder diesen Decorator noch ein `ErrorResponseDto`, und
+  **keine** per-Route-`@ApiResponse`/Response-DTO-Klassen (die Fork-Swagger-Konvention ist
+  klassenweit-only). Die `containerName`-Request-Body-Contract wird über den `CreateContainerDto`-Typ
+  am `@Body()` geführt. Guards bleiben unverändert (nur additive Swagger-Annotation).
 - **`@Public()`** auf `updateEduManagerAgentContainer` (`main.js:32835`) — **Pflicht mit-portieren**
   (existiert in 1.6). Der Bypass ist bewusst und durch **IP-Whitelist im Service** abgesichert
   (`getContainerNameByIp` == `EDULUTION_MANAGER_CONTAINER_NAME`, sonst 403). Beim Nachziehen der
@@ -198,10 +211,10 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 ## Trade-offs & Alternativen (mit Empfehlung)
 
 1. **Store-Fetch: eigener Raw-Endpoint vs. BE-Proxy durch die API.**
-   - *Raw-Endpoint (Mirror):* minimal (nur `EDU_PLUGINS_GITHUB_URL` umbiegen), aber Browser →
+   - _Raw-Endpoint (Mirror):_ minimal (nur `EDU_PLUGINS_GITHUB_URL` umbiegen), aber Browser →
      externer Host bleibt CSP-/Erreichbarkeits-abhängig, und der Client muss GitHub-Raw-Header
      sprechen.
-   - *BE-Proxy (`GET docker/app-store/:app/compose`):* API holt das YAML serverseitig, FE ruft nur
+   - _BE-Proxy (`GET docker/app-store/:app/compose`):_ API holt das YAML serverseitig, FE ruft nur
      die eigene API → löst CSP **und** die Tot-Risiko-Kopplung an einem Punkt, kostet aber eine neue
      Route/DTO/Store-Änderung.
    - **Empfehlung:** In P4 **zunächst Raw-Mirror** (aus `p1-installer-repoint`) verifizieren; **falls
@@ -219,15 +232,15 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 ## Risiken & Rollback
 
 - **R1 — `edulution-plugins`-Mirror nicht bereit.** Ohne den umgebogenen Endpoint (Dependency
-  `p1-installer-repoint`) rollt keine App aus → gesamte Verifikation blockiert. *Mitigation:* T11
+  `p1-installer-repoint`) rollt keine App aus → gesamte Verifikation blockiert. _Mitigation:_ T11
   hängt hart an `p1-installer-repoint`; bis dahin Rollout gegen den Original-Upstream nur als
   Zwischen-Smoke.
-- **R2 — CSP blockt Browser→Mirror.** *Mitigation:* T11 misst `connect-src`; Fallback BE-Proxy
+- **R2 — CSP blockt Browser→Mirror.** _Mitigation:_ T11 misst `connect-src`; Fallback BE-Proxy
   (Trade-off 1).
 - **R3 — Keycloak-Admin-Zugang fehlt/anders auf crabbox.** Moodle-Rollout schlägt fehl, andere drei
-  laufen. *Mitigation:* T15 isoliert den KC-Pfad; `ensureKeycloakClient` loggt und wirft gezielt.
+  laufen. _Mitigation:_ T15 isoliert den KC-Pfad; `ensureKeycloakClient` loggt und wirft gezielt.
 - **R4 — Compose-Migration verschiebt Dateien falsch.** `migrateDockerComposeFiles` ist idempotent
-  (nur wenn Ziel fehlt) und nur ein `moveSync`. *Rollback:* Datei zurückschieben; keine DB-Wirkung.
+  (nur wenn Ziel fehlt) und nur ein `moveSync`. _Rollback:_ Datei zurückschieben; keine DB-Wirkung.
 - **Rollback gesamt:** Branch `feat/p4-app-store-verify` verwerfen. Kein DB-Schema, kein
   `schemaVersion` — reiner Code-/Dateisystem-Effekt. Auf crabbox ausgerollte Container per
   `docker rm -f` + `./data/apps/<app>` löschen.
@@ -251,7 +264,7 @@ Pfad (kein Upgrade-sauberer Zustand gegenüber 2.0).
 ## Offene Fragen
 
 1. **BE-Proxy vs. Raw-Mirror für den Store-Fetch** — Entscheidung an T11 (CSP-Messung). Trade-off 1.
-   *Design-Entscheidung, gehört nicht in eine einzelne Task.*
+   _Design-Entscheidung, gehört nicht in eine einzelne Task._
 2. **`ACTIVE_DOCUMENT_EDITOR`-extendedOptionKey** — liefert das Schwester-Paket „Filesharing/Collabora
    -Toggle" den Key/das UI-Feld, oder legen wir die bare Konstante hier ab? (T5 hängt daran.)
 3. **Keycloak-Admin-Creds auf crabbox** — sind die im Voll-Stack-Deploy vorhanden/ausreichend für
