@@ -2450,6 +2450,16 @@
     "collaboraUrlDescription": "Enter the URL of your Collabora Online instance.",
     "collaboraWopiSecretTitle": "Collabora WOPI secret",
     "collaboraWopiSecretDescription": "Enter the WOPI secret for Collabora.",
+    "calendarCaldavBaseUrlTitle": "CalDAV base URL",
+    "calendarCaldavBaseUrlDescription": "Enter the base URL of the CalDAV server (e.g. 'https://sogo.example.com/SOGo/dav/').",
+    "calendarCaldavAuthModeTitle": "Authentication scheme",
+    "calendarCaldavAuthModeDescription": "Choose how the server authenticates against the CalDAV service.",
+    "calendarCaldavAuthMode": {
+      "basic": "Basic",
+      "digest": "Digest"
+    },
+    "calendarCaldavRejectUnauthorizedTitle": "Reject unauthorized connections",
+    "calendarCaldavRejectUnauthorizedDescription": "Should a certificate check be carried out for the connection to the CalDAV server?",
     "drawioUrlTitle": "Draw.io URL",
     "drawioUrlDescription": "Enter the URL of your self-hosted Draw.io instance",
     "overrideDocumentVendorMSWithOOTitle": "Use OpenDocument as the standard document format",

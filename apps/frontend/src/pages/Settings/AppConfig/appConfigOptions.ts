@@ -26,6 +26,7 @@ import {
   FrameIcon,
   FileSharingIcon,
   ForwardIcon,
+  CalendarIcon,
   LinuxmusterIcon,
   MailIcon,
   EmbeddedIcon,
@@ -56,6 +57,7 @@ import URL_SYNC_EXTENDED_OPTIONS, {
 import APP_LOGO_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/appLogoExtendedOptions';
 import { ALL_DISPLAY_LOCATIONS } from '@libs/appconfig/constants/appDisplayLocations';
 import WIREGUARD_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/wireguardExtendedOptions';
+import CALENDAR_CALDAV_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/calendarCaldavExtendedOptions';
 
 const APP_CONFIG_OPTIONS: AppConfigOption[] = [
   {
@@ -149,6 +151,15 @@ const APP_CONFIG_OPTIONS: AppConfigOption[] = [
     id: APPS.WHITEBOARD,
     icon: WhiteBoardIcon,
     isNativeApp: true,
+    defaultDisplayLocations: [...ALL_DISPLAY_LOCATIONS],
+  },
+  {
+    id: APPS.CALENDAR,
+    icon: CalendarIcon,
+    isNativeApp: true,
+    extendedOptions: {
+      [AppConfigSectionsKeys.calendar]: CALENDAR_CALDAV_EXTENDED_OPTIONS,
+    },
     defaultDisplayLocations: [...ALL_DISPLAY_LOCATIONS],
   },
   {

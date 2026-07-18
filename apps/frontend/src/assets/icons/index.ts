@@ -38,6 +38,7 @@ export { default as LinuxmusterIcon } from '@/assets/icons/edulution/edu_Linuxmu
 export { default as InfoBoardIcon } from '@/assets/icons/edulution/edu_Infoboard.svg';
 export { default as SecurityIcon } from '@/assets/icons/edulution/edu_Sicherheit.svg';
 export { default as WhiteBoardIcon } from '@/assets/icons/edulution/edu_Whiteboard.svg';
+export { default as CalendarIcon } from '@/assets/icons/fontawsome-solid/calendar.svg';
 export { default as EnrolIcon } from '@/assets/icons/edulution/edu_Klassenraum-Einschreiben.svg';
 export { default as PrintIcon } from '@/assets/icons/edulution/edu_Klassenraum-Drucken.svg';
 export { default as CreateProjectIcon } from '@/assets/icons/edulution/edu_Klassenraum-Projekte.svg';
