@@ -2978,7 +2978,8 @@ i18n: keine
 Doku: Swagger-Notiz (containerName) — knapp.
 Abhängt von: T4
 
-### T9 — FE: containerName im createAndRunContainer-Payload  [ ]
+### T9 — FE: containerName im createAndRunContainer-Payload  [x]
+> Erledigt (5447fb523): Neuer pure FE-Resolver `resolveDockerContainerName.ts` (in DockerIntegration/, analog resolveOfficeEditorPreviewType — libs-Ort scheidet aus, da FE-vitest `include: src/**` keine libs-Specs erfasst) — filesharing→FILESHARING_DOCKER_CONTAINERS[editor ?? ONLY_OFFICE], sonst DOCKER_APPLICATION_LIST[app] ?? app, **verhaltensgleich zum BE resolveContainerName** (bewusste 2-Schichten-Spiegelung: FE sync/param, BE async/Config). `createAndRunContainer` destrukturiert + sendet `containerName` im POST-Body. **Schnitt:** Store forwardet, Dialog resolvt (T10); DTO-Feld bleibt optional (BE löst serverseitig auf, T6) → kein red bis T10, kein DTO-Tightening nötig. Verify: vitest 8/8 grün (Resolver 5 Fälle: collabora/onlyoffice/default/mapped/unmapped; Store: POST-Body enthält 'edulution-collabora'), eslint (bestehenden Store-Spec lint-nötig umgestellt: Imports vor vi.mock, Objekt-Cast; 2 Bestandstests intakt) + isolierter FE-tsc clean, prettier. Review approve.
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/useDockerApplicationStore.ts
 Soll: main.js:26617 (Service erwartet containerName) · 1.6-Store useDockerApplicationStore.ts:105–118
 Änderung: `createAndRunContainer` nimmt/sendet `containerName` im Body; für `filesharing` den Containernamen über `FILESHARING_DOCKER_CONTAINERS[activeEditor]` auflösen (Default ONLY_OFFICE), sonst `DOCKER_APPLICATION_LIST[app]`. Store-Typ (`DockerContainerTableStore`) entsprechend erweitern.
