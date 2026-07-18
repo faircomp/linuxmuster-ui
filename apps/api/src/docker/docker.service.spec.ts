@@ -4,6 +4,7 @@
  */
 
 import { join } from 'path';
+import { HttpStatus } from '@nestjs/common';
 import { ensureDirSync, existsSync, moveSync, readFileSync, writeFileSync } from 'fs-extra';
 import APPS from '@libs/appconfig/constants/apps';
 import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
@@ -11,6 +12,7 @@ import { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocume
 import APPS_FILES_PATH from '@libs/common/constants/appsFilesPath';
 import DockerService from './docker.service';
 import ensureKeycloakClient from './utils/ensureKeycloakClient';
+import CustomHttpException from '../common/CustomHttpException';
 
 jest.mock('fs-extra');
 jest.mock('./utils/ensureKeycloakClient');
@@ -232,5 +234,34 @@ describe('DockerService.replaceEnvVariables', () => {
     ]);
 
     readSpy.mockRestore();
+  });
+
+  it('injects the wireguard api key from the app config', async () => {
+    mockAppConfigService.getAppConfigByName.mockResolvedValue({ options: { apiKey: 'wg-secret-key' } });
+
+    const result = await buildService().replaceEnvVariables(
+      [{ Env: [`WG=${envRef('EDU_WG_API_KEY')}`] }],
+      APPS.WIREGUARD,
+      'edulution-wireguard',
+    );
+
+    expect(mockAppConfigService.getAppConfigByName).toHaveBeenCalledWith(APPS.WIREGUARD);
+    expect(result[0].Env).toEqual(['WG=wg-secret-key']);
+  });
+});
+
+describe('DockerService.checkProtectedContainer', () => {
+  it('throws a forbidden error for a protected container', () => {
+    try {
+      DockerService.checkProtectedContainer('edulution-api');
+      throw new Error('expected checkProtectedContainer to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(CustomHttpException);
+      expect((error as CustomHttpException).getStatus()).toBe(HttpStatus.FORBIDDEN);
+    }
+  });
+
+  it('does not throw for an unprotected container', () => {
+    expect(() => DockerService.checkProtectedContainer('my-user-app')).not.toThrow();
   });
 });
