@@ -2513,8 +2513,8 @@ i18n: die Keys selbst (DE+EN+FR)
 Doku: keine (intern)
 Abhängt von: T1
 
-### T4 — Doku: ADR `ACTIVE_MAIL_CLIENT` (Fork-Divergenz + Kill-Switch)  [ ]
-Komponente: docs/adr · Dateien: `docs/adr/0001-active-mail-client-selector.md` (neu; Verzeichnis neu)
+### T4 — Doku: ADR `ACTIVE_MAIL_CLIENT` (Fork-Divergenz + Kill-Switch)  [x] OK (35d92eb2d)
+> **OK (35d92eb2d):** ADR `docs/adr/0001-active-mail-client-selector.md` (neues Verzeichnis) — Status/Context/Decision/Consequences/Kill-switch. Deckt alle Ledger-Punkte: (a) bewusste Fork-Divergenz (2.0 löschte SOGo, Fork behält beides), (b) Selektor schaltet nur FE-Oberfläche, keine Container → kein 403-Guard (YAGNI, ein Mailcow-Stack), (c) `sogo`-Default = Kill-Switch/Rollback-Anker, (d) ungeschönte „BEIDES"-Kosten (SOGo-Theme-Supply-Chain, zweiter Iframe, State-Drift, Token-Rotation, Wartungslast), (e) Per-User-Selektor = expliziter Zukunfts-Hook (user-preferences). Kein SPDX (Doku). Self-Review gegen Spec §9.10. **→ p4-mail Phase 1 (Selektor-Harness) KOMPLETT (T1–T4).**
 Soll: Spec §9.10 (Entscheidung „BEIDES, selektor-gegated"). Präzedenz `ACTIVE_DOCUMENT_EDITOR` (main.js:2114/26541/27148-27152/27180).
 Änderung: ADR festhalten: (a) `ACTIVE_MAIL_CLIENT` = **bewusste Fork-Divergenz** (2.0 hat SOGo gelöscht, ging voll-nativ; Fork erhält beides). (b) Selektor schaltet **nur die FE-Oberfläche**, **keine** Container (Asymmetrie zu `ACTIVE_DOCUMENT_EDITOR`) → **kein** 403-Route-Guard (YAGNI). (c) `ACTIVE_MAIL_CLIENT = sogo` = dokumentierter Kill-Switch/Rollback-Anker (Ops-Runbook). (d) Ungeschönte Kosten von „BEIDES": SOGo-Theme-Supply-Chain (main.js:25091-25092) bleibt, zweiter Iframe im Speicher, State-Drift native↔SOGo, Token-Rotations-Kante, permanente Wartungslast „jede 2.0-Mail-Änderung gegen SOGo-Pfad prüfen". (e) Per-User-Selektor = Zukunfts-Hook (`apps/api/src/user-preferences/`), nicht im Kern. Markdown, kein SPDX-Header nötig (Doku).
 Verify: `ls docs/adr/0001-active-mail-client-selector.md`; enthält Abschnitte Entscheidung/Kontext/Konsequenzen/Kill-Switch; Review-Gegencheck gegen Spec §9.10.
