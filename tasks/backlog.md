@@ -2833,7 +2833,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T2
 
-### T9 — BE: Non-Admin-Maskierung auf COLLABORA_WOPI_SECRET ausweiten (Fork-Härtung)  [ ]
+### T9 — BE: Non-Admin-Maskierung auf COLLABORA_WOPI_SECRET ausweiten (Fork-Härtung)  [x] OK (4d12dcd9f) `delete extendedOptions.COLLABORA_WOPI_SECRET` im Non-Admin-Zweig von getAppConfigs (nach ONLY_OFFICE_JWT_SECRET; Admin behält beide). Mock-Fixture +COLLABORA_WOPI_SECRET, Spec-Non-Admin strippt beide + Admin behält beide. jest **9/9** (ohne den Fix rot), eslint+isolierte tsc CLEAN. Review approve.
+> **[?] DISCOVERED-DEFECT (bei T9-Review gefunden, PRE-EXISTING, nicht T9-Scope):** Die 2 `@Public`-Endpunkte `AppConfigService.getPublicAppConfigs`/`getPublicAppConfigByName` (controller `:69`/`:75`) geben `extendedOptions` **unmaskiert** an anonyme Aufrufer zurück (filtern nur auf `EMBEDDED_PAGE_IS_PUBLIC=true`) — maskieren WEDER ONLY_OFFICE_JWT_SECRET NOCH COLLABORA_WOPI_SECRET. Betrifft beide Secrets gleich, **nicht** durch diesen Diff verursacht (T9 fügt nur Maskierung hinzu), geringe reale Exposition (ein Editor-Config müsste zugleich EMBEDDED_PAGE_IS_PUBLIC tragen). **Folge-Ticket:** Secrets auch auf der Public-Projektion maskieren (repo-weit, eigener Härtungs-Fix; nicht Teil von p4-filesharing).
 Komponente: apps/api · Dateien: apps/api/src/appconfig/appconfig.service.ts, apps/api/src/appconfig/appconfig.service.spec.ts
 Soll: main.js:1726 (== bestehende Zeile appconfig.service.ts:258 `delete extendedOptions.ONLY_OFFICE_JWT_SECRET`) — Fork-Erweiterung, nicht im Original
 Änderung: In `getAppConfigs` Non-Admin-Zweig zusätzlich `delete extendedOptions.COLLABORA_WOPI_SECRET`. (Keine Migration — rein Response-Maskierung.) Siehe Spec-Offene-Frage 1: am Gate freigegeben.
