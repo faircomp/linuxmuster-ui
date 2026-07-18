@@ -19,6 +19,10 @@
     "newMailbox": "New mailbox",
     "dialog": {
       "createTitle": "Create mailbox",
+      "editTitle": "Edit mailbox",
+      "deleteTitle": "Delete mailbox",
+      "deleteMessage": "Do you really want to delete this mailbox?",
+      "passwordKeepCurrent": "Leave empty to keep the current password",
       "localPart": "Local part",
       "localPartHint": "Only letters, digits and . _ + - are allowed",
       "domain": "Domain",

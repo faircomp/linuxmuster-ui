@@ -6,9 +6,17 @@
 import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'react-i18next';
+import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import type MailcowMailboxDto from '@libs/mail/types/mailcowMailbox.dto';
+import type TableAction from '@libs/common/types/tableAction';
 import sortString from '@libs/common/utils/sortString';
 import SortableHeader from '@/components/ui/Table/SortableHeader';
+import TableActionCell from '@/components/ui/Table/TableActionCell';
+
+interface MailcowMailboxColumnsProps {
+  onEdit: (mailbox: MailcowMailboxDto) => void;
+  onDelete: (mailbox: MailcowMailboxDto) => void;
+}
 
 const COLUMN_IDS = {
   USERNAME: 'username',
@@ -16,6 +24,7 @@ const COLUMN_IDS = {
   DOMAIN: 'domain',
   QUOTA: 'quota',
   ACTIVE: 'active',
+  ACTIONS: 'actions',
 } as const;
 
 const BYTES_PER_MEBIBYTE = 1024 * 1024;
@@ -38,7 +47,7 @@ const MailcowMailboxActiveCell: React.FC<{ active: number }> = ({ active }) => {
   return <span>{t(`mailcowAdmin.activeStates.${labelKey}`)}</span>;
 };
 
-const getMailcowMailboxColumns = (): ColumnDef<MailcowMailboxDto>[] => [
+const getMailcowMailboxColumns = ({ onEdit, onDelete }: MailcowMailboxColumnsProps): ColumnDef<MailcowMailboxDto>[] => [
   {
     id: COLUMN_IDS.USERNAME,
     meta: { translationId: 'mailcowAdmin.columns.username' },
@@ -85,6 +94,32 @@ const getMailcowMailboxColumns = (): ColumnDef<MailcowMailboxDto>[] => [
     cell: ({ row }) => <MailcowMailboxActiveCell active={row.original.active} />,
     enableSorting: true,
     sortingFn: (rowA, rowB) => rowA.original.active - rowB.original.active,
+  },
+  {
+    id: COLUMN_IDS.ACTIONS,
+    header: () => null,
+    enableSorting: false,
+    size: 80,
+    cell: ({ row }) => {
+      const actions: TableAction<MailcowMailboxDto>[] = [
+        {
+          icon: faPen,
+          translationId: 'common.edit',
+          onClick: () => onEdit(row.original),
+        },
+        {
+          icon: faTrash,
+          translationId: 'common.delete',
+          onClick: () => onDelete(row.original),
+        },
+      ];
+      return (
+        <TableActionCell
+          actions={actions}
+          row={row}
+        />
+      );
+    },
   },
 ];
 

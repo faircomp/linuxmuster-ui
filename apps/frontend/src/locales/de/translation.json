@@ -19,6 +19,10 @@
     "newMailbox": "Neues Postfach",
     "dialog": {
       "createTitle": "Postfach anlegen",
+      "editTitle": "Postfach bearbeiten",
+      "deleteTitle": "Postfach löschen",
+      "deleteMessage": "Möchten Sie dieses Postfach wirklich löschen?",
+      "passwordKeepCurrent": "Leer lassen, um das aktuelle Passwort beizubehalten",
       "localPart": "Lokaler Teil",
       "localPartHint": "Nur Buchstaben, Ziffern, . _ + - erlaubt",
       "domain": "Domain",

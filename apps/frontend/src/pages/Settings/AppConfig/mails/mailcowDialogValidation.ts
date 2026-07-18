@@ -37,3 +37,23 @@ export const canSubmitCreateMailbox = (values: CreateMailboxFormValues, isSaving
   isValidQuota(values.quota) &&
   isValidPassword(values.password) &&
   passwordsMatch(values.password, values.passwordConfirmation);
+
+export interface EditMailboxFormValues {
+  name: string;
+  quota: number;
+  password: string;
+  passwordConfirmation: string;
+}
+
+export const isPasswordChangeRequested = (password: string, passwordConfirmation: string): boolean =>
+  password !== '' || passwordConfirmation !== '';
+
+export const isValidPasswordChange = (password: string, passwordConfirmation: string): boolean =>
+  !isPasswordChangeRequested(password, passwordConfirmation) ||
+  (isValidPassword(password) && passwordsMatch(password, passwordConfirmation));
+
+export const canSubmitEditMailbox = (values: EditMailboxFormValues, isSaving: boolean): boolean =>
+  !isSaving &&
+  values.name.trim() !== '' &&
+  isValidQuota(values.quota) &&
+  isValidPasswordChange(values.password, values.passwordConfirmation);

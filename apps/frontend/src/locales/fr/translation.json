@@ -19,6 +19,10 @@
     "newMailbox": "Nouvelle boîte aux lettres",
     "dialog": {
       "createTitle": "Créer une boîte aux lettres",
+      "editTitle": "Modifier la boîte aux lettres",
+      "deleteTitle": "Supprimer la boîte aux lettres",
+      "deleteMessage": "Voulez-vous vraiment supprimer cette boîte aux lettres ?",
+      "passwordKeepCurrent": "Laisser vide pour conserver le mot de passe actuel",
       "localPart": "Partie locale",
       "localPartHint": "Seuls les lettres, chiffres et . _ + - sont autorisés",
       "domain": "Domaine",

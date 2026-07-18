@@ -6,11 +6,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   canSubmitCreateMailbox,
+  canSubmitEditMailbox,
   isValidLocalPart,
   isValidPassword,
+  isValidPasswordChange,
   isValidQuota,
   passwordsMatch,
   type CreateMailboxFormValues,
+  type EditMailboxFormValues,
 } from './mailcowDialogValidation';
 
 const validValues: CreateMailboxFormValues = {
@@ -82,6 +85,39 @@ describe('mailcowDialogValidation', () => {
 
     it('is false with an out-of-range quota', () => {
       expect(canSubmitCreateMailbox({ ...validValues, quota: 0 }, false)).toBe(false);
+    });
+  });
+
+  describe('isValidPasswordChange', () => {
+    it('is valid when no password change is requested', () => {
+      expect(isValidPasswordChange('', '')).toBe(true);
+    });
+
+    it('requires a valid, matching password when a change is requested', () => {
+      expect(isValidPasswordChange('secret1!', 'secret1!')).toBe(true);
+      expect(isValidPasswordChange('secret1!', 'other1!')).toBe(false);
+      expect(isValidPasswordChange('weak', 'weak')).toBe(false);
+      expect(isValidPasswordChange('secret1!', '')).toBe(false);
+    });
+  });
+
+  describe('canSubmitEditMailbox', () => {
+    const validEdit: EditMailboxFormValues = { name: 'Jane', quota: 1024, password: '', passwordConfirmation: '' };
+
+    it('is true for valid values without a password change', () => {
+      expect(canSubmitEditMailbox(validEdit, false)).toBe(true);
+    });
+
+    it('is false while saving, with an empty name or an invalid quota', () => {
+      expect(canSubmitEditMailbox(validEdit, true)).toBe(false);
+      expect(canSubmitEditMailbox({ ...validEdit, name: '  ' }, false)).toBe(false);
+      expect(canSubmitEditMailbox({ ...validEdit, quota: 0 }, false)).toBe(false);
+    });
+
+    it('is false when a requested password change is invalid', () => {
+      expect(
+        canSubmitEditMailbox({ ...validEdit, password: 'secret1!', passwordConfirmation: 'other1!' }, false),
+      ).toBe(false);
     });
   });
 });
