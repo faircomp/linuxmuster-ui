@@ -2901,7 +2901,7 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-app-store-verify.md` · So
 
 ---
 
-### T1 — libs: Docker-Konstanten für Editor-Split + Moodle  [ ]
+### T1 — libs: Docker-Konstanten für Editor-Split + Moodle  [x] OK (e3f4212b4) Editor-Split (ACTIVE_DOCUMENT_EDITOR + FILESHARING_DOCKER_CONTAINERS) war schon p4-filesharing-wopi T2 (a38a78b9c); hier nur `learningmanagement:'edulution-moodle'` in DOCKER_APPLICATION_LIST (main.js:27118). eslint+isolierte tsc CLEAN, Editor-Split-Assertion (COLLABORA→edulution-collabora) erfüllt. Review approve
 Komponente: libs · Dateien: libs/src/docker/constants/{filesharingDockerContainers.ts (neu), activeDocumentEditor.ts (neu), dockerApplicationList.ts}
 Soll: main.js:27147 (FILESHARING_DOCKER_CONTAINERS) · main.js:27180 (ACTIVE_DOCUMENT_EDITOR) · main.js:27118 (learningmanagement:'edulution-moodle')
 Änderung: `ACTIVE_DOCUMENT_EDITOR` als const-Objekt (`{ONLY_OFFICE:'onlyoffice', COLLABORA:'collabora'}`) + abgeleiteter Typ; `FILESHARING_DOCKER_CONTAINERS` mappt Editor→Containername (`edulution-onlyoffice`/`edulution-collabora`); `learningmanagement:'edulution-moodle'` in DOCKER_APPLICATION_LIST ergänzen.
@@ -2909,7 +2909,7 @@ Verify: `scripts/crabbox/iter.sh cmd 'npx nx test frontend -- docker'` grün + `
 i18n: keine
 Doku: keine (intern)
 
-### T2 — libs: Env-Var-Pattern + Moodle-Secret-Liste  [ ]
+### T2 — libs: Env-Var-Pattern + Moodle-Secret-Liste  [x] OK (e3f4212b4) `DOCKER_COMPOSE_ENV_VAR_PATTERN=/\${([^}]+)}/g` (main.js:27243) + `MOODLE_GENERATE_SECRETS` (3 Namen, main.js:27212). eslint+isolierte tsc CLEAN; inline-node: `${FOO:-bar}`→Gruppe `FOO:-bar`. Review approve. **Hinweis:** resolveContainerName (T5) war schon p4-filesharing-wopi T8 (e770ce596) — dort nur die Methode; migrateDockerComposeFiles bleibt T5-Rest.
 Komponente: libs · Dateien: libs/src/docker/constants/{dockerComposeEnvVarPattern.ts (neu), moodleGenerateSecrets.ts (neu)}
 Soll: main.js:27243 (`/\${([^}]+)}/g`) · main.js:27212 (MOODLE_GENERATE_SECRETS)
 Änderung: `DOCKER_COMPOSE_ENV_VAR_PATTERN = /\${([^}]+)}/g` als Default-Export; `MOODLE_GENERATE_SECRETS = ['MOODLE_DB_PASSWORD','MOODLE_DB_ROOT_PASSWORD','KEYCLOAK_MOODLE_CLIENT_SECRET']` als const-Array.
