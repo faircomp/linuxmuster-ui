@@ -27,6 +27,9 @@ const MailStoreInitialState = {
   reset: () => {},
   syncJobs: [],
   selectedSyncJob: {},
+  mailcowDomains: [],
+  mailcowMailboxes: [],
+  isMailcowLoading: false,
 };
 
 export default MailStoreInitialState;

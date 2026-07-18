@@ -22,6 +22,10 @@ import MailDto from '@libs/mail/types/mail.dto';
 import MailProviderConfigDto from './mailProviderConfig.dto';
 import CreateSyncJobDto from './mailcow-create-sync-job.dto';
 import SyncJobDto from './mailcow-sync-job.dto';
+import MailcowMailboxDto from './mailcowMailbox.dto';
+import CreateMailboxDto from './createMailbox.dto';
+import UpdateMailboxDto from './updateMailbox.dto';
+import MailboxAclDto from './mailboxAcl.dto';
 
 interface MailsStore {
   mails: MailDto[];
@@ -41,6 +45,15 @@ interface MailsStore {
   getSyncJob: () => Promise<void>;
   postSyncJob: (createSyncJobDto: CreateSyncJobDto) => Promise<void>;
   deleteSyncJobs: (syncJobIds: string[]) => Promise<void>;
+  mailcowDomains: string[];
+  mailcowMailboxes: MailcowMailboxDto[];
+  isMailcowLoading: boolean;
+  getMailcowDomains: () => Promise<void>;
+  getMailcowMailboxes: () => Promise<void>;
+  createMailcowMailbox: (createMailboxDto: CreateMailboxDto) => Promise<void>;
+  updateMailcowMailbox: (updateMailboxDto: UpdateMailboxDto) => Promise<void>;
+  deleteMailcowMailboxes: (mailboxes: string[]) => Promise<void>;
+  updateMailboxAcl: (mailboxAclDto: MailboxAclDto) => Promise<void>;
 }
 
 export default MailsStore;

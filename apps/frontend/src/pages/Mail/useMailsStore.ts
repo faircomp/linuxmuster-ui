@@ -21,12 +21,25 @@ import { create } from 'zustand';
 import { RowSelectionState } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
-import type { MailDto, MailsStore, MailProviderConfigDto, CreateSyncJobDto, SyncJobDto } from '@libs/mail/types';
+import type {
+  MailDto,
+  MailsStore,
+  MailProviderConfigDto,
+  CreateSyncJobDto,
+  SyncJobDto,
+  MailcowMailboxDto,
+} from '@libs/mail/types';
+import type CreateMailboxDto from '@libs/mail/types/createMailbox.dto';
+import type UpdateMailboxDto from '@libs/mail/types/updateMailbox.dto';
+import type MailboxAclDto from '@libs/mail/types/mailboxAcl.dto';
 import MAIL_ENDPOINT from '@libs/mail/constants/mail-endpoint';
+import MAIL_ENDPOINT_PATHS from '@libs/mail/constants/mailEndpointPaths';
 import eduApi from '@/api/eduApi';
 import handleApiError from '@/utils/handleApiError';
 import MailStoreInitialState from '@libs/mail/constants/mailsStoreInitialState';
 import { MAILS_PATH } from '@libs/userSettings/constants/user-settings-endpoints';
+
+const MAILCOW_MAILBOXES_PATH = `${MAILS_PATH}/${MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES}`;
 
 const useMailsStore = create<MailsStore>((set) => ({
   ...MailStoreInitialState,
@@ -116,6 +129,85 @@ const useMailsStore = create<MailsStore>((set) => ({
       handleApiError(error, set, 'mailProviderConfigError');
     } finally {
       set({ isEditSyncJobLoading: false });
+    }
+  },
+
+  getMailcowDomains: async () => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.get<string[]>(`${MAILCOW_MAILBOXES_PATH}/${MAIL_ENDPOINT_PATHS.DOMAINS}`);
+      set({ mailcowDomains: data });
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  getMailcowMailboxes: async () => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.get<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH);
+      set({ mailcowMailboxes: data });
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  createMailcowMailbox: async (createMailboxDto: CreateMailboxDto) => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.post<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, createMailboxDto);
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.mailboxCreated'));
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  updateMailcowMailbox: async (updateMailboxDto: UpdateMailboxDto) => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.patch<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, updateMailboxDto);
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.mailboxUpdated'));
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  deleteMailcowMailboxes: async (mailboxes: string[]) => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.delete<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, { data: { items: mailboxes } });
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.mailboxDeleted'));
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  updateMailboxAcl: async (mailboxAclDto: MailboxAclDto) => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.post<MailcowMailboxDto[]>(
+        `${MAILCOW_MAILBOXES_PATH}/${MAIL_ENDPOINT_PATHS.ACL}`,
+        mailboxAclDto,
+      );
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.aclUpdated'));
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
     }
   },
 }));

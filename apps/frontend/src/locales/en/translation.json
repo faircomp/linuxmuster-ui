@@ -1,4 +1,12 @@
 {
+  "mailcowAdmin": {
+    "notifications": {
+      "mailboxCreated": "Mailbox created",
+      "mailboxUpdated": "Mailbox updated",
+      "mailboxDeleted": "Mailbox deleted",
+      "aclUpdated": "Mailbox permissions updated"
+    }
+  },
   "welcome": "Welcome to the application",
   "changeLang": "Change Language",
   "heading": "Welcome {{givenName}} {{familyName}}",

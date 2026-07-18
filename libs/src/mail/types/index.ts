@@ -27,3 +27,4 @@ export { default as SyncJobDto } from './mailcow-sync-job.dto';
 export { default as SogoThemeVersionDto } from './sogo-theme-version.dto';
 export { default as MailNewMailNotificationDto } from './mailNewMailNotification.dto';
 export { default as MailFlagsChangedNotificationDto } from './mailFlagsChangedNotification.dto';
+export { default as MailcowMailboxDto } from './mailcowMailbox.dto';

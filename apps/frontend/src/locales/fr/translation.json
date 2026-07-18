@@ -1,4 +1,12 @@
 {
+  "mailcowAdmin": {
+    "notifications": {
+      "mailboxCreated": "Boîte aux lettres créée",
+      "mailboxUpdated": "Boîte aux lettres mise à jour",
+      "mailboxDeleted": "Boîte aux lettres supprimée",
+      "aclUpdated": "Autorisations de la boîte aux lettres mises à jour"
+    }
+  },
   "welcome": "Bienvenue dans l'application",
   "changeLang": "changer la langue",
   "heading": "Bienvenue {{givenName}} {{familyName}}",

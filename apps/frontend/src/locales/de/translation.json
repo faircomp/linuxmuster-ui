@@ -1,4 +1,12 @@
 {
+  "mailcowAdmin": {
+    "notifications": {
+      "mailboxCreated": "Postfach erstellt",
+      "mailboxUpdated": "Postfach aktualisiert",
+      "mailboxDeleted": "Postfach gelöscht",
+      "aclUpdated": "Postfach-Berechtigungen aktualisiert"
+    }
+  },
   "welcome": "Willkommen in der Anwendung",
   "changeLang": "Sprache ändern",
   "heading": "Herzlich Willkommen {{givenName}} {{familyName}}",
