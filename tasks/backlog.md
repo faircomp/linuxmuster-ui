@@ -3092,7 +3092,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1
 
-### T3 — libs/appconfig: CALENDAR registrieren  [ ]
+### T3 — libs/appconfig: CALENDAR registrieren  [x]
+> Erledigt (391cf146f): 3 bestehende const-Objekte additiv erweitert — APPS.CALENDAR='calendar' (nach MAIL, 2.0-konsistent main.js:194), ExtendedOptionKeys.CALENDAR_CALDAV_BASE_URL/_AUTH_MODE/_REJECT_UNAUTHORIZED (Wert===Key, main.js:2085–2087), AppConfigSectionsKeys.calendar='calendar'. Additiv-bruchsicher: KEIN erschöpfender TApps/ExtendedOptionKeys-Consumer (nur Partial-Records) → wie CHAT/WIKI-Präzedenz. defaultAppConfig-Seed/Icon/Sidebar = spätere Tasks. Verify: eslint clean, tsx-Wert-Assertions grün (APPS.CALENDAR + 3 CALDAV-Keys + section), prettier. Review approve — byte-exakt gegen main.js.
 Komponente: libs · Dateien: libs/src/appconfig/constants/apps.ts, extendedOptionKeys.ts, appConfigSectionsKeys.ts
 Soll: main.js:2085-2087 (CALENDAR_CALDAV_*) · apps.ts-Pattern (bestehende Einträge) · 33531 (getAppConfigByName(APPS.CALENDAR))
 Änderung: `APPS.CALENDAR='calendar'`; `ExtendedOptionKeys.CALENDAR_CALDAV_BASE_URL/_AUTH_MODE/_REJECT_UNAUTHORIZED`; `AppConfigSectionsKeys.calendar='calendar'`. Nur bestehende const-Objekte erweitern (kein neues File).
