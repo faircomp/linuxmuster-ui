@@ -2852,7 +2852,7 @@ i18n: siehe T13 (Titel/Beschreibungen)
 Doku: keine (intern)
 Abhängt von: T1
 
-### T11 — FE Settings: Collabora-Optionen + Editor-Selektor an FILE_SHARING registrieren  [ ]
+### T11 — FE Settings: Collabora-Optionen + Editor-Selektor an FILE_SHARING registrieren  [x] OK (d8462be27) `[AppConfigSectionsKeys.documentEditor]: COLLABORA_EXTENDED_OPTIONS` additiv unter APPS.FILE_SHARING (neben onlyOffice; bestehende 5 Sektionen unberührt). **Key `documentEditor`** (nicht Ledger-Altname `collabora` — konsistent zu T10). vitest **3/3** (FILE_SHARING existiert, documentEditor===COLLABORA_EXTENDED_OPTIONS via Referenz, onlyOffice bleibt), eslint+isolierte FE-tsc CLEAN. Review approve
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/appConfigOptions.ts
 Soll: bestehende `APPS.FILE_SHARING`-Registrierung (appConfigOptions.ts:106–112, Sektionen fileSharing + onlyOffice)
 Änderung: unter `APPS.FILE_SHARING` die neue Sektion `[AppConfigSectionsKeys.collabora]: COLLABORA_EXTENDED_OPTIONS` ergänzen (Import + Eintrag). Kein Umbau der bestehenden onlyOffice-Sektion.
