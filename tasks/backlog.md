@@ -2958,7 +2958,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4, T5
 
-### T7 — BE: replaceEnvVariables-Ausbau (Moodle + :- -Defaults + deep resolve)  [ ]
+### T7 — BE: replaceEnvVariables-Ausbau (Moodle + :- -Defaults + deep resolve)  [x]
+> Erledigt (7f8b37510): `replaceEnvVariables` 1:1 aus Soll main.js:26547–26600 nachgebaut — 3. Param `containerName` (createContainer reicht ihn jetzt durch, der in T6 aufgeschobene Teil); LEARNING_MANAGEMENT-Case (Moodle-Secrets aus `readSavedEnvValues` ∪ `generateSecureToken`, `KEYCLOAK_MOODLE_CLIENT_ID` aus DOCKER_APPLICATION_LIST + Guard, `KEYCLOAK_MOODLE_CLIENT_SECRET` via `ensureKeycloakClient`); WireGuard-Case unverändert; Env-Auflösung auf `DOCKER_COMPOSE_ENV_VAR_PATTERN` + `${VAR:-default}`-Syntax (appConfigValues→process.env→default→match) mit rekursivem `resolveVarsInValue` über strings/arrays/objects. **Neue Dep:** `generateSecureToken` (libs/src/common/utils, krypto-sicher via crypto.randomBytes(16), SPDX) — der vorhandene `generateRandomString` nutzt Math.random und ist für Secrets UNSICHER, daher bewusst NICHT wiederverwendet. Secrets werden nirgends geloggt. Verify: docker.service.spec 15/15 grün (:-default→default; deep-resolve in Nicht-Env-Feld + unaufgelöst-bleibt; Moodle: ensureKeycloakClient mit persistiertem Secret + Reuse statt Neugenerierung), eslint + isolierter tsc clean, prettier-geformt. Review approve.
 Komponente: apps/api · Dateien: apps/api/src/docker/docker.service.ts
 Soll: main.js:26547–26600 (replaceEnvVariables) · main.js:26550 (Moodle-Case) · main.js:26576 (resolveVar/:- + resolveVarsInValue)
 Änderung: `replaceEnvVariables(dto, app, container)`: LEARNING_MANAGEMENT-Case (Moodle-Secrets aus `readSavedEnvValues` ∪ `generateSecureToken`, `KEYCLOAK_MOODLE_CLIENT_ID/SECRET` via `ensureKeycloakClient`); WireGuard-Case behalten; Env-Auflösung auf `DOCKER_COMPOSE_ENV_VAR_PATTERN` + `:-`-Default-Syntax umstellen; `resolveVarsInValue` rekursiv über Strings/Arrays/Objekte (nicht nur `Env`).
