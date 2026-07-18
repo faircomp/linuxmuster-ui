@@ -1352,6 +1352,8 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-port-api-specs-ci.md` · S
 > `@Public()` (PUBLIC_ROUTE_KEY) opt-tet aus. Neue Dateien tragen AGPL-3.0-or-later-SPDX
 > (setzt p1-rebrand/`addLicenseHeader→AGPL` voraus; bis dahin Header manuell setzen — NICHT den
 > Netzint-Dual-Header der Bestands-Specs anfassen).
+>
+> **[?] DISCOVERED-DEFECT (2026-07-18, bei p4-mail T8-Vorarbeit gefunden): die AdminGuard-Smoke-Specs laufen jest-rot.** Diese Specs wurden `[x]` nur per eslint+tsc+route-grep markiert (jest box-gated, nie real gelaufen). NestJS instanziiert klassenbasierte `@UseGuards`-Guards beim `TestingModule.compile()` → `AdminGuard` scheitert an unaufgelöstem `GlobalSettingsService` (`Nest can't resolve dependencies of the AdminGuard (?, Reflector)`). **Lokal reproduziert an `metrics.controller.spec` (rot) und `mails.controller.spec` (rot).** Betroffen: alle Smoke-Specs mit AdminGuard-Routen — **metrics, license, bulletin-category, docker, webdav-shares, webhook-clients** (+ evtl. filesharing). **Fix-Muster** (in `mails.controller.spec` bereits angewandt, 1bc9f450d): `{ provide: GlobalSettingsService, useValue: { getAdminGroupsFromCache: jest.fn() } }` als Provider ergänzen → `compile()` löst auf, Metadaten-Assertions laufen grün. **Repo-weite Reparatur = eigener p0/p1-Fix** (surgical: nicht Teil von p4-mail); Kevin/Loop: die ~6 Geschwister-Specs analog nachziehen, sonst ist das `test:api:ci`-Green-Gate von Anfang an rot.
 
 ---
 
