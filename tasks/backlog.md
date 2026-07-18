@@ -2539,7 +2539,9 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: —
 
-### T6 — libs: Mailcow-Admin-DTOs  [ ]
+### T6 — libs: Mailcow-Admin-DTOs  [x] OK (aa7ce832d)
+> **OK (aa7ce832d):** 6 Mailcow-Admin-DTOs (+ 2 nested Attr-DTOs, wegen `max-classes-per-file`=1 gesplittet) als class-validator-Klassen feldgenau aus main.js: `CreateMailboxDto` (31810: local_part/domain/name IsString, quota/active/force_pw_update/tls_enforce_* IsInt, password/password2 IsString, tags? IsArray), `UpdateMailboxDto`+`UpdateMailboxAttrDto` (32055/32105: {items, attr} ValidateNested+@Type; 13 IsOptional-Felder), `DeleteMailboxesDto` ({items}), `MailboxAclDto`+`MailboxAclAttrDto` ({items, attr:{user_acl}}), `MailboxDelegatesDto` (24941: mailbox IsEmail, delegates IsEmail[], …), `MailcowDomainDto` (minimal domain_name — Route liefert string[]). Mailcow-int-Flags korrekt `@IsInt number`. snake_case OK (Mailcow-API, airbnb camelcase properties:'never'). AGPL-SPDX, kein Spec (libs, tsc-only). isolierter tsc + eslint (8 Dateien) CLEAN, ls-grep 4 Treffer. Review approve.
+> **⚠️ WICHTIG für T7:** Die 2.0-**Härtungs-Validatoren** (password2 `@Match('password')`, password MinLength+Komplexität-Regex, local_part/domain MaxLength+Matches, items ArrayNotEmpty+ArrayMaxSize, nested IsObject) sind hier bewusst weggelassen (hängen an nicht-portiertem `mailcowValidation`-Modul + custom `@Match`-Decorator). **Beim Verdrahten der DTOs an den Controller in T7 MITPORTIEREN**, sonst validieren die Endpunkte schwächer als 2.0.
 Komponente: libs/src/mail/types · Dateien: `mailcowDomain.dto.ts`, `createMailbox.dto.ts`, `updateMailbox.dto.ts`, `deleteMailboxes.dto.ts`, `mailboxAcl.dto.ts`, `mailboxDelegates.dto.ts` (neu)
 Soll: main.js:23665-23842 (getMailcowDomains/getMailcowMailboxes/createMailcowMailbox/updateMailcowMailbox/deleteMailcowMailboxes/updateMailboxAcl/listMailboxFolders/getSharedMailboxes/getMailboxDelegates/setMailboxDelegates/deleteSharedMailbox)
 Änderung: Mailcow-Admin-DTOs aus den Route-Signaturen rekonstruieren (class-validator), SPDX-AGPL.
