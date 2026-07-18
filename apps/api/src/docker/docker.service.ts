@@ -39,7 +39,11 @@ import APPS_FILES_PATH from '@libs/common/constants/appsFilesPath';
 import type CreateContainerDto from '@libs/docker/types/create-container.dto';
 import { injectEnvIntoCompose, parseDockerEnv } from '@libs/docker/utils/createComposeFile';
 import { EDULUTION_MANAGER_CONTAINER_NAME } from '@libs/docker/constants/edulution-manager';
+import DOCKER_APPLICATION_LIST from '@libs/docker/constants/dockerApplicationList';
+import FILESHARING_DOCKER_CONTAINERS from '@libs/docker/constants/filesharingDockerContainers';
+import ActiveDocumentEditor, { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocumentEditor';
 import APPS from '@libs/appconfig/constants/apps';
+import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import CustomHttpException from '../common/CustomHttpException';
 import SseService from '../sse/sse.service';
 import AppConfigService from '../appconfig/appconfig.service';
@@ -64,6 +68,18 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {
     this.closeEventStream();
+  }
+
+  async resolveContainerName(applicationName: string): Promise<string> {
+    if (applicationName === APPS.FILE_SHARING) {
+      const fileSharingConfig = await this.appConfigService.getAppConfigByName(APPS.FILE_SHARING);
+      const activeEditor =
+        (fileSharingConfig?.extendedOptions?.[ExtendedOptionKeys.ACTIVE_DOCUMENT_EDITOR] as
+          | ActiveDocumentEditor
+          | undefined) ?? ACTIVE_DOCUMENT_EDITOR.ONLY_OFFICE;
+      return FILESHARING_DOCKER_CONTAINERS[activeEditor];
+    }
+    return (DOCKER_APPLICATION_LIST as Record<string, string | undefined>)[applicationName] ?? applicationName;
   }
 
   private listenToDockerEvents() {
