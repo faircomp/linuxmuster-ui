@@ -2927,7 +2927,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: —
 
-### T4 — Contract: containerName in CreateContainerDto  [ ]
+### T4 — Contract: containerName in CreateContainerDto  [x]
+> Erledigt (ce5745d6c): `containerName` in create-container.dto (libs) ergänzt, Reihenfolge wie 2.0 (nach applicationName). **Divergenz (bewusst, dokumentiert):** als `@IsOptional() @IsString() containerName?` statt 2.0-`required` — der geerbte 1.6-FE (Dialog-Call-Site) sendet es noch nicht; optional = additiv/nicht-brechend, hält FE-Compile grün bis T9/T10 die Producer nachziehen; danach auf `required` verschärfbar. **Keine ValidationPipe** ergänzt (2.0-Route main.js:32771–32785 hat keine → 400-Verify nicht Soll-treu; Feld ist Typ-Contract, Namensauflösung serverseitig via resolveContainerName/T5). Verify: eslint clean, isolierter BE-tsc (DTO+service+controller) grün, docker.controller.spec 3/3 grün. **Nebenbei:** GlobalSettingsService-Provider in docker.controller.spec ergänzt (behebt eine Instanz des vorbestehenden systemischen AdminGuard-Spec-Defekts; Muster wie mails/lmnApi). Review approve. **Merke für T9:** DTO nach FE-Producer auf required verschärfen erwägen.
 Komponente: libs · Dateien: libs/src/docker/types/create-container.dto.ts
 Soll: main.js:33073–33101 (CreateContainerRequestDto mit containerName) · main.js:26617 (Service-Destructuring)
 Änderung: Feld `@IsString() containerName: string;` zur DTO ergänzen (zwischen applicationName und containers). Contract-Drift schließen (BE↔libs↔FE).
