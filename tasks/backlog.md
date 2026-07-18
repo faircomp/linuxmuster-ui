@@ -3131,7 +3131,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T1, T2
 
-### T7 — api/calendar: Mongoose-Schema CalendarMetadata  [ ]
+### T7 — api/calendar: Mongoose-Schema CalendarMetadata  [x]
+> Erledigt (5562033d4): 2 Schemas aus main.js:34666–34692/34726–34752 — CalendarMetadata (@Schema({timestamps:true}); calendarId required+unique+index, ownerUsername optional, shares [CalendarShareEntrySchema] default:[], tags [String] default:[]; + CalendarMetadataDocument-Typ) + eingebettetes CalendarShareEntry (@Schema({_id:false}); subjectId required, subjectType/permission default USER/VIEW aus T1-const, label default ''). Nutzt T2-Shared-Types (TCalendarShareSubjectType/TCalendarSharePermission), Fork-Muster wie parent-child-pairing.schema. **Kein schemaVersion-Bump/Migration** (neue Collection, kein Fremd-Schema berührt — Ledger-offene-Frage-1 bestätigt). Verify: jest 6/6 (SchemaFactory kompiliert + timestamps, calendarId required/unique/index, embedded _id:false, Defaults USER/VIEW/''), eslint + isolierter tsc clean, prettier. Review approve (empirisch gegen Mongoose 8.16 verifiziert, kein Index-Doppel).
 Komponente: apps/api · Dateien: apps/api/src/calendar/{calendar-metadata.schema.ts,calendar-share-entry.schema.ts}
 Soll: main.js:34666-34692 (CalendarMetadata) · 34726-34752 (CalendarShareEntry)
 Änderung: `CalendarMetadata` (`@Schema({timestamps:true})`: calendarId required+unique+index, ownerUsername optional, shares [CalendarShareEntry] default [], tags [String] default []); eingebettetes `CalendarShareEntry` (`@Schema({_id:false})`: subjectId, subjectType default USER, label default '', permission default VIEW). Neue Dateien ⇒ SPDX. **Keine** Änderung an Fremd-Schemas → kein schemaVersion-Bump (s. Spec offene Frage 1).
