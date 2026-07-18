@@ -3082,7 +3082,8 @@ Verify: `npm run lint` sauber; Node-Assert `require`/`import` liefert CALENDAR_E
 i18n: keine
 Doku: keine (intern)
 
-### T2 — libs/calendar: Shared Types  [ ]
+### T2 — libs/calendar: Shared Types  [x]
+> Erledigt (c5cd23025): 5 Shared-Interfaces + index-Barrel, feldgenau aus den 2.0-DTOs — Calendar (CalendarResponseDto: id/displayName/color?/description?/ctag?/readOnly/isSubscribed/url/shares?/tags?), CalendarEvent (Superset ResponseDto+BodyDto-Event-Felder OHNE recurrenceEdit: uid/calendarId/etag?/summary/description?/location?/start/end/allDay(bool)/rrule?/classification?/transparency?/color?/attendees?/organizer?(Einzelobjekt)/exdate?), CalendarShare (subjectId/subjectType/label/permission), CalendarEventAttendee (email/displayName?/role?/status?), RecurrenceEdit (scope/occurrenceStart). Enum-Feldtypen (T*) via `(typeof Const)[keyof typeof Const]` aus T1 abgeleitet, Namen 2.0-konsistent (TCalendarSharePermission etc.). recurrenceEdit bewusst separat (Edit-Control, nie in Responses) → T5-BodyDto komponiert Event+recurrenceEdit?. Verify: eslint + isolierter tsc clean + strukturelle Typ-Usability-Assertion grün, prettier. Review approve — jedes Feld gegen Soll-DTO geprüft.
 Komponente: libs · Dateien: libs/src/calendar/types/*.ts (calendar, calendarEvent, calendarShare, calendarEventAttendee, recurrenceEdit) + index.ts
 Soll: main.js:35267-35925 (DTO-Felder als Interface-Vorlage) · 34666-34752 (Metadata/ShareEntry-Felder)
 Änderung: TypeScript-Interfaces für Calendar/Event/Share/Attendee/RecurrenceEdit anlegen, die DTO (BE) und Store (FE) gemeinsam nutzen; Feldnamen exakt zu den DTOs (uid/calendarId/summary/start/end/allDay/rrule/… bzw. subjectId/subjectType/label/permission). Neue Dateien ⇒ SPDX.
