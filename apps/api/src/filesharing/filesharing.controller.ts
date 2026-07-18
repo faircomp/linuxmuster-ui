@@ -32,6 +32,8 @@ import {
   Req,
   Res,
   StreamableFile,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { HTTP_HEADERS, RequestResponseContentType } from '@libs/common/types/http-methods';
 import ContentType from '@libs/filesharing/types/contentType';
@@ -44,6 +46,7 @@ import CollectFileRequestDTO from '@libs/filesharing/types/CollectFileRequestDTO
 import { LmnApiCollectOperationsType } from '@libs/lmnApi/types/lmnApiCollectOperationsType';
 import PUBLIC_DOWNLOADS_PATH from '@libs/common/constants/publicDownloadsPath';
 import DuplicateFileRequestDto from '@libs/filesharing/types/DuplicateFileRequestDto';
+import CollaboraTokenBodyDto from '@libs/filesharing/types/collaboraTokenBodyDto';
 import PathChangeOrCreateDto from '@libs/filesharing/types/pathChangeOrCreateProps';
 import CreateOrEditPublicShareDto from '@libs/filesharing/types/createOrEditPublicShareDto';
 import PublicShareDto from '@libs/filesharing/types/publicShareDto';
@@ -186,6 +189,12 @@ class FilesharingController {
   @Post(FileSharingApiEndpoints.ONLY_OFFICE_TOKEN)
   getOnlyofficeToken(@Body() payload: string) {
     return this.filesharingService.getOnlyOfficeToken(payload);
+  }
+
+  @Post(FileSharingApiEndpoints.COLLABORA_TOKEN)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  getCollaboraToken(@Body() body: CollaboraTokenBodyDto, @GetCurrentUsername() username: string) {
+    return this.filesharingService.getCollaboraToken(username, body.filePath, body.share);
   }
 
   @Post(FileSharingApiEndpoints.DUPLICATE)

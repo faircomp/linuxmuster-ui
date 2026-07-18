@@ -45,6 +45,7 @@ import { PublicShare, PublicShareDocument } from './publicFileShare.schema';
 import UsersService from '../users/users.service';
 import WebdavService from '../webdav/webdav.service';
 import OnlyofficeService from './onlyoffice.service';
+import CollaboraService from './collabora.service';
 import FilesystemService from '../filesystem/filesystem.service';
 import QueueService from '../queue/queue.service';
 import CustomHttpException from '../common/CustomHttpException';
@@ -61,7 +62,12 @@ class FilesharingService {
     private readonly webDavService: WebdavService,
     private readonly userService: UsersService,
     private readonly webdavSharesService: WebdavSharesService,
+    private readonly collaboraService: CollaboraService,
   ) {}
+
+  async getCollaboraToken(username: string, filePath: string, share: string, canWrite = true) {
+    return this.collaboraService.generateWopiToken(username, filePath, share, canWrite);
+  }
 
   private static resolveFileSize(req: Request, fileSize: number): number | undefined {
     const incomingLen = Number(req.headers[HTTP_HEADERS.ContentLength] || 0);

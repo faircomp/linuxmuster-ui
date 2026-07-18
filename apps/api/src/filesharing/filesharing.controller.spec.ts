@@ -23,6 +23,7 @@ const NON_PUBLIC_ROUTES = [
   'getThumbnail',
   'getDownloadLink',
   'getOnlyofficeToken',
+  'getCollaboraToken',
   'duplicateFile',
   'copyFile',
   'collectFiles',
