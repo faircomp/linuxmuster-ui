@@ -2815,7 +2815,7 @@ i18n: neue Keys `WopiTokenInvalid` (falls in T5 noch nicht) DE+EN — siehe T13
 Doku: keine (intern)
 Abhängt von: T5
 
-### T7 — BE: filesharing.service.getCollaboraToken + collabora-token-Route  [ ]
+### T7 — BE: filesharing.service.getCollaboraToken + collabora-token-Route  [x] OK (67f9ffa0c) FilesharingService.getCollaboraToken (delegiert an CollaboraService, canWrite-Default true; CollaboraService als 8. Konstruktor-Dep, keine Zirkulär-Dep) + `POST collabora-token`-Route (NICHT @Public → globaler AuthGuard; username aus @GetCurrentUsername/JWT, kein Spoofing). **+per-Route `@UsePipes(ValidationPipe)`** (macht T4-@IsString-Härtung live → malformer Body 400 statt 500-Crash; Deviation von 2.0 bewusst, fork-chat.controller-Muster). Modul-Provider war schon T6. jest **5/5** (Delegation canWrite-Default/explizit + Controller-NON_PUBLIC-Contract), eslint+isolierte tsc CLEAN. Review approve. Ohne-Session-401+echter WOPI-Flow box-gated
 Komponente: apps/api · Dateien: apps/api/src/filesharing/filesharing.service.ts, apps/api/src/filesharing/filesharing.controller.ts, apps/api/src/filesharing/filesharing.module.ts
 Soll: main.js:38597–38598 (`getCollaboraToken(username, filePath, share)` → `collaboraService.generateWopiToken`), main.js:37560–37572 (`POST collabora-token`, Body + `@GetCurrentUsername`), main.js:37236 (Provider-Liste)
 Änderung: `CollaboraService` als Provider in `filesharing.module.ts`; `getCollaboraToken` in `filesharing.service.ts` (delegiert an CollaboraService); `POST collabora-token`-Route (kein `@Public`, normale eingeloggte Route) in `filesharing.controller.ts` mit `CollaboraTokenBodyDto`.
