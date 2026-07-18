@@ -6,7 +6,7 @@
 import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'react-i18next';
-import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPen, faTrash, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import type MailcowMailboxDto from '@libs/mail/types/mailcowMailbox.dto';
 import type TableAction from '@libs/common/types/tableAction';
 import sortString from '@libs/common/utils/sortString';
@@ -16,6 +16,7 @@ import TableActionCell from '@/components/ui/Table/TableActionCell';
 interface MailcowMailboxColumnsProps {
   onEdit: (mailbox: MailcowMailboxDto) => void;
   onDelete: (mailbox: MailcowMailboxDto) => void;
+  onManageAcl: (mailbox: MailcowMailboxDto) => void;
 }
 
 const COLUMN_IDS = {
@@ -47,7 +48,11 @@ const MailcowMailboxActiveCell: React.FC<{ active: number }> = ({ active }) => {
   return <span>{t(`mailcowAdmin.activeStates.${labelKey}`)}</span>;
 };
 
-const getMailcowMailboxColumns = ({ onEdit, onDelete }: MailcowMailboxColumnsProps): ColumnDef<MailcowMailboxDto>[] => [
+const getMailcowMailboxColumns = ({
+  onEdit,
+  onDelete,
+  onManageAcl,
+}: MailcowMailboxColumnsProps): ColumnDef<MailcowMailboxDto>[] => [
   {
     id: COLUMN_IDS.USERNAME,
     meta: { translationId: 'mailcowAdmin.columns.username' },
@@ -106,6 +111,11 @@ const getMailcowMailboxColumns = ({ onEdit, onDelete }: MailcowMailboxColumnsPro
           icon: faPen,
           translationId: 'common.edit',
           onClick: () => onEdit(row.original),
+        },
+        {
+          icon: faUserShield,
+          translationId: 'mailcowAdmin.manageAcl',
+          onClick: () => onManageAcl(row.original),
         },
         {
           icon: faTrash,

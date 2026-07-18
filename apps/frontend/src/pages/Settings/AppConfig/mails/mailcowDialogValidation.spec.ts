@@ -12,6 +12,7 @@ import {
   isValidPasswordChange,
   isValidQuota,
   passwordsMatch,
+  toggleAclValue,
   type CreateMailboxFormValues,
   type EditMailboxFormValues,
 } from './mailcowDialogValidation';
@@ -118,6 +119,16 @@ describe('mailcowDialogValidation', () => {
       expect(
         canSubmitEditMailbox({ ...validEdit, password: 'secret1!', passwordConfirmation: 'other1!' }, false),
       ).toBe(false);
+    });
+  });
+
+  describe('toggleAclValue', () => {
+    it('adds a value that is not selected yet', () => {
+      expect(toggleAclValue(['spam_alias'], 'tls_policy')).toEqual(['spam_alias', 'tls_policy']);
+    });
+
+    it('removes a value that is already selected', () => {
+      expect(toggleAclValue(['spam_alias', 'tls_policy'], 'spam_alias')).toEqual(['tls_policy']);
     });
   });
 });

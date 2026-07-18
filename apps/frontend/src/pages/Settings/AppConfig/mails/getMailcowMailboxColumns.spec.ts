@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import getMailcowMailboxColumns from './getMailcowMailboxColumns';
 
-const callbacks = { onEdit: vi.fn(), onDelete: vi.fn() };
+const callbacks = { onEdit: vi.fn(), onDelete: vi.fn(), onManageAcl: vi.fn() };
 
 describe('getMailcowMailboxColumns', () => {
   it('defines the mailbox columns in order including the actions column', () => {

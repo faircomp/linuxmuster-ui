@@ -57,3 +57,6 @@ export const canSubmitEditMailbox = (values: EditMailboxFormValues, isSaving: bo
   values.name.trim() !== '' &&
   isValidQuota(values.quota) &&
   isValidPasswordChange(values.password, values.passwordConfirmation);
+
+export const toggleAclValue = (selected: string[], value: string): string[] =>
+  selected.includes(value) ? selected.filter((entry) => entry !== value) : [...selected, value];

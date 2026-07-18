@@ -14,6 +14,7 @@ import DeleteConfirmationDialog from '@/components/ui/DeleteConfirmationDialog';
 import getMailcowMailboxColumns from './getMailcowMailboxColumns';
 import CreateMailboxDialog from './CreateMailboxDialog';
 import EditMailboxDialog from './EditMailboxDialog';
+import ManageMailboxAclDialog from './ManageMailboxAclDialog';
 
 const MAILCOW_MAILBOX_FILTER_KEY = 'username';
 
@@ -30,6 +31,7 @@ const MailcowAdminPanel: React.FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [mailboxToEdit, setMailboxToEdit] = useState<MailcowMailboxDto | null>(null);
   const [mailboxToDelete, setMailboxToDelete] = useState<MailcowMailboxDto | null>(null);
+  const [mailboxToManageAcl, setMailboxToManageAcl] = useState<MailcowMailboxDto | null>(null);
 
   useEffect(() => {
     void getMailcowDomains();
@@ -37,7 +39,12 @@ const MailcowAdminPanel: React.FC = () => {
   }, [getMailcowDomains, getMailcowMailboxes]);
 
   const columns = useMemo(
-    () => getMailcowMailboxColumns({ onEdit: setMailboxToEdit, onDelete: setMailboxToDelete }),
+    () =>
+      getMailcowMailboxColumns({
+        onEdit: setMailboxToEdit,
+        onDelete: setMailboxToDelete,
+        onManageAcl: setMailboxToManageAcl,
+      }),
     [],
   );
 
@@ -96,6 +103,13 @@ const MailcowAdminPanel: React.FC = () => {
           isOpen
           mailbox={mailboxToEdit}
           onClose={() => setMailboxToEdit(null)}
+        />
+      )}
+      {mailboxToManageAcl && (
+        <ManageMailboxAclDialog
+          isOpen
+          mailbox={mailboxToManageAcl}
+          onClose={() => setMailboxToManageAcl(null)}
         />
       )}
       <DeleteConfirmationDialog
