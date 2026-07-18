@@ -10,14 +10,17 @@ import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocumentEditor';
 import APPS_FILES_PATH from '@libs/common/constants/appsFilesPath';
 import DockerService from './docker.service';
+import ensureKeycloakClient from './utils/ensureKeycloakClient';
 
 jest.mock('fs-extra');
+jest.mock('./utils/ensureKeycloakClient');
 
 const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>;
 const mockMoveSync = moveSync as jest.MockedFunction<typeof moveSync>;
 const mockEnsureDirSync = ensureDirSync as jest.MockedFunction<typeof ensureDirSync>;
 const mockReadFileSync = readFileSync as unknown as jest.MockedFunction<(path: string, encoding: string) => string>;
 const mockWriteFileSync = writeFileSync as jest.MockedFunction<typeof writeFileSync>;
+const mockEnsureKeycloakClient = ensureKeycloakClient as jest.MockedFunction<typeof ensureKeycloakClient>;
 
 const buildFileSharingConfig = (editor?: string) => ({
   extendedOptions: editor ? { [ExtendedOptionKeys.ACTIVE_DOCUMENT_EDITOR]: editor } : {},
@@ -166,5 +169,68 @@ describe('DockerService.saveDockerCompose', () => {
       expect.any(String),
       'utf-8',
     );
+  });
+});
+
+describe('DockerService.replaceEnvVariables', () => {
+  const mockAppConfigService = { getAppConfigByName: jest.fn() };
+  const mockSseService = {};
+  const buildService = () => new DockerService(mockSseService as never, mockAppConfigService as never);
+  const envRef = (expression: string) => `\${${expression}}`;
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('resolves the :- default syntax when the variable is unset', async () => {
+    const result = await buildService().replaceEnvVariables(
+      [{ Env: [`A=${envRef('MISSING_A:-fallback')}`] }],
+      'someapp',
+      'somecontainer',
+    );
+
+    expect(result[0].Env).toEqual(['A=fallback']);
+  });
+
+  it('recurses into non-Env fields and leaves fully unresolved variables untouched', async () => {
+    const result = await buildService().replaceEnvVariables(
+      [{ name: envRef('NAME_VAR:-resolved-name'), Env: [`C=${envRef('TRULY_UNSET_XYZ')}`] }],
+      'someapp',
+      'somecontainer',
+    );
+
+    expect(result[0].name).toBe('resolved-name');
+    expect(result[0].Env).toEqual([`C=${envRef('TRULY_UNSET_XYZ')}`]);
+  });
+
+  it('provisions moodle: reuses persisted secrets and calls ensureKeycloakClient', async () => {
+    const persisted = {
+      MOODLE_DB_PASSWORD: 'persisted-db-pw',
+      MOODLE_DB_ROOT_PASSWORD: 'persisted-root-pw',
+      KEYCLOAK_MOODLE_CLIENT_SECRET: 'persisted-kc-secret',
+    };
+    const readSpy = jest.spyOn(DockerService, 'readSavedEnvValues').mockReturnValue(persisted);
+    mockEnsureKeycloakClient.mockResolvedValue('kc-secret-from-keycloak');
+
+    const result = await buildService().replaceEnvVariables(
+      [
+        {
+          Env: [
+            `DB=${envRef('MOODLE_DB_PASSWORD')}`,
+            `CLIENT_ID=${envRef('KEYCLOAK_MOODLE_CLIENT_ID')}`,
+            `CLIENT_SECRET=${envRef('KEYCLOAK_MOODLE_CLIENT_SECRET')}`,
+          ],
+        },
+      ],
+      APPS.LEARNING_MANAGEMENT,
+      'edulution-moodle',
+    );
+
+    expect(mockEnsureKeycloakClient).toHaveBeenCalledWith('edulution-moodle', 'persisted-kc-secret');
+    expect(result[0].Env).toEqual([
+      'DB=persisted-db-pw',
+      'CLIENT_ID=edulution-moodle',
+      'CLIENT_SECRET=kc-secret-from-keycloak',
+    ]);
+
+    readSpy.mockRestore();
   });
 });
