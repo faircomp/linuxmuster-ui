@@ -256,6 +256,7 @@ class AppConfigService implements OnModuleInit {
         appConfigDto = appConfigObjects.map((config) => {
           const extendedOptions = { ...(config.extendedOptions ?? {}) };
           delete extendedOptions.ONLY_OFFICE_JWT_SECRET;
+          delete extendedOptions.COLLABORA_WOPI_SECRET;
 
           return {
             name: config.name,
