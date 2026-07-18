@@ -2988,7 +2988,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4, T1
 
-### T10 — FE: CreateDockerContainerDialog reicht containerName durch  [ ]
+### T10 — FE: CreateDockerContainerDialog reicht containerName durch  [x]
+> Erledigt (173c21d70): Dialog liest den aktiven Editor via `getExtendedOptionsValue<ActiveDocumentEditor>(appConfigs, FILE_SHARING, ACTIVE_DOCUMENT_EDITOR)` (Muster wie FileRenderer) + baut das Payload via neuer pure Helper `buildCreateContainerPayload` (nutzt T9-`resolveDockerContainerName`); sendet den aufgelösten `containerName` an den Store UND nutzt ihn für `getTraefikConfig` + den `dockerComposeFiles[containerName]`-Lookup — ersetzt das harte `DOCKER_APPLICATION_LIST[settingLocation]` (war falsch für collabora). Ungenutzter DOCKER_APPLICATION_LIST-Import entfernt. Kein Regress für Nicht-filesharing-Apps (Resolver liefert dort denselben Namen). **Render-Interaktionstest box-gated** (kein @testing-library) → die „Submit mit korrektem containerName"-Assertion über buildCreateContainerPayload.spec abgedeckt (filesharing collabora/default + non-fs/unknown-compose). Verify: vitest 3/3 grün, eslint clean, isolierter FE-tsc auf meinen Dateien fehlerfrei (nur transitive ui-kit-jsx-Runtime-Artefakte), prettier. Review approve.
 Komponente: apps/frontend · Dateien: apps/frontend/src/pages/Settings/AppConfig/DockerIntegration/CreateDockerContainerDialog.tsx
 Soll: 1.6 CreateDockerContainerDialog.tsx:119–128 (containerName lokal berechnet, aber nicht gesendet)
 Änderung: den bereits berechneten `containerName` an `createAndRunContainer` übergeben; für `filesharing` den Editor-Resolver aus T9 nutzen statt hart `DOCKER_APPLICATION_LIST[settingLocation]`.
