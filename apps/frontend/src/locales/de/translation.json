@@ -370,6 +370,24 @@
       "color": "Farbe",
       "description": "Beschreibung",
       "attendees": "Teilnehmer"
+    },
+    "recurrence": {
+      "none": "Keine Wiederholung",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "repeats": "Wiederholung",
+      "interval": "Alle",
+      "byday": "An Wochentagen",
+      "never": "Nie",
+      "until": "Bis",
+      "count": "Anzahl"
+    },
+    "scope": {
+      "title": "Serie bearbeiten",
+      "this": "Nur diesen Termin",
+      "thisAndFollowing": "Diesen und folgende",
+      "all": "Alle Termine"
     }
   },
   "chat": {

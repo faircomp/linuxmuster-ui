@@ -19,6 +19,7 @@ export interface EventFormValues {
   color?: string;
   calendarId: string;
   attendees?: string;
+  rrule?: string;
 }
 
 const parseAttendees = (raw?: string): CalendarEventAttendee[] =>
@@ -41,6 +42,7 @@ export const buildFormValuesFromEvent = (event?: CalendarEvent, defaultStart?: s
     color: event?.color ?? '',
     calendarId: event?.calendarId ?? '',
     attendees: (event?.attendees ?? []).map((attendee) => attendee.email).join(', '),
+    rrule: event?.rrule ?? '',
   };
 };
 
@@ -55,6 +57,7 @@ const buildEventFromForm = (values: EventFormValues, existingEvent?: CalendarEve
   end: dayjs(values.end).toISOString(),
   allDay: values.allDay,
   color: values.color || undefined,
+  rrule: values.rrule || undefined,
   attendees: parseAttendees(values.attendees),
 });
 

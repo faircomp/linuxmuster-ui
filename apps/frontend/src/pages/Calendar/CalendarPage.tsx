@@ -3,7 +3,7 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -13,6 +13,7 @@ import type { CalendarEvent } from '@libs/calendar/types';
 import CalendarView, { TCalendarView } from '@libs/calendar/constants/calendarView';
 import buildCalendarMonthGrid, { DAYS_PER_WEEK } from '@libs/calendar/utils/buildCalendarMonthGrid';
 import getWeekStart from '@libs/calendar/utils/getWeekStart';
+import expandEventOccurrences from '@libs/calendar/utils/expandEventOccurrences';
 import PageLayout from '@/components/structure/layout/PageLayout';
 import { CalendarIcon } from '@/assets/icons';
 import useCalendarStore from '@/pages/Calendar/useCalendarStore';
@@ -43,6 +44,12 @@ const CalendarPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | undefined>(undefined);
   const [defaultStart, setDefaultStart] = useState<string | undefined>(undefined);
+  const [occurrenceStart, setOccurrenceStart] = useState<string | undefined>(undefined);
+
+  const visibleEvents = useMemo(() => {
+    const { from, to } = getFetchRange(view, anchorDate);
+    return expandEventOccurrences(events, from.toDate(), to.toDate());
+  }, [events, view, anchorDate]);
 
   const refetchEvents = useCallback(() => {
     const { from, to } = getFetchRange(view, anchorDate);
@@ -60,12 +67,14 @@ const CalendarPage = () => {
   const openCreateDialog = (day?: Dayjs) => {
     setEditingEvent(undefined);
     setDefaultStart((day ?? anchorDate).startOf('day').toISOString());
+    setOccurrenceStart(undefined);
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (event: CalendarEvent) => {
     setEditingEvent(event);
     setDefaultStart(undefined);
+    setOccurrenceStart(event.start);
     setIsDialogOpen(true);
   };
 
@@ -139,11 +148,13 @@ const CalendarPage = () => {
           />
         </div>
       </div>
-      {!isLoading && events.length === 0 ? <p className="py-2 text-sm text-ciGrey">{t('calendar.noEvents')}</p> : null}
+      {!isLoading && visibleEvents.length === 0 ? (
+        <p className="py-2 text-sm text-ciGrey">{t('calendar.noEvents')}</p>
+      ) : null}
       {view === CalendarView.MONTH ? (
         <MonthGrid
           month={anchorDate}
-          events={events}
+          events={visibleEvents}
           onSelectDay={openCreateDialog}
           onSelectEvent={openEditDialog}
         />
@@ -151,14 +162,14 @@ const CalendarPage = () => {
       {view === CalendarView.WEEK ? (
         <WeekGrid
           anchorDate={anchorDate}
-          events={events}
+          events={visibleEvents}
           onSelectEvent={openEditDialog}
         />
       ) : null}
       {view === CalendarView.DAY ? (
         <DayGrid
           day={anchorDate}
-          events={events}
+          events={visibleEvents}
           onSelectEvent={openEditDialog}
         />
       ) : null}
@@ -168,6 +179,7 @@ const CalendarPage = () => {
         calendars={calendars}
         event={editingEvent}
         defaultStart={defaultStart}
+        occurrenceStart={occurrenceStart}
         onSaved={refetchEvents}
       />
     </PageLayout>

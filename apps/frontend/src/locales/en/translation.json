@@ -379,6 +379,24 @@
       "color": "Color",
       "description": "Description",
       "attendees": "Attendees"
+    },
+    "recurrence": {
+      "none": "No repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "repeats": "Repeat",
+      "interval": "Every",
+      "byday": "On weekdays",
+      "never": "Never",
+      "until": "Until",
+      "count": "Count"
+    },
+    "scope": {
+      "title": "Edit series",
+      "this": "This event only",
+      "thisAndFollowing": "This and following",
+      "all": "All events"
     }
   },
   "chat": {

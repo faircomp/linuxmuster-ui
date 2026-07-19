@@ -369,6 +369,24 @@
       "color": "Couleur",
       "description": "Description",
       "attendees": "Participants"
+    },
+    "recurrence": {
+      "none": "Aucune répétition",
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "repeats": "Répétition",
+      "interval": "Tous les",
+      "byday": "Les jours de la semaine",
+      "never": "Jamais",
+      "until": "Jusqu'au",
+      "count": "Nombre"
+    },
+    "scope": {
+      "title": "Modifier la série",
+      "this": "Cet événement uniquement",
+      "thisAndFollowing": "Celui-ci et les suivants",
+      "all": "Tous les événements"
     }
   },
   "chat": {
