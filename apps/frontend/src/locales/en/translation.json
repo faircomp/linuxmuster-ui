@@ -360,10 +360,12 @@
     "title": "Calendar",
     "today": "Today",
     "month": "Month",
+    "week": "Week",
+    "day": "Day",
     "allDay": "All day",
     "noEvents": "No events in this period.",
-    "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "previous": "Previous",
+    "next": "Next"
   },
   "chat": {
     "title": "CHAT",

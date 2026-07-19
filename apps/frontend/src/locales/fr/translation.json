@@ -350,10 +350,12 @@
     "title": "Calendrier",
     "today": "Aujourd'hui",
     "month": "Mois",
+    "week": "Semaine",
+    "day": "Jour",
     "allDay": "Toute la journée",
     "noEvents": "Aucun événement dans cette période.",
-    "previousMonth": "Mois précédent",
-    "nextMonth": "Mois suivant"
+    "previous": "Précédent",
+    "next": "Suivant"
   },
   "chat": {
     "title": "Chat",

@@ -351,10 +351,12 @@
     "title": "Kalender",
     "today": "Heute",
     "month": "Monat",
+    "week": "Woche",
+    "day": "Tag",
     "allDay": "Ganztägig",
     "noEvents": "Keine Termine in diesem Zeitraum.",
-    "previousMonth": "Vorheriger Monat",
-    "nextMonth": "Nächster Monat"
+    "previous": "Zurück",
+    "next": "Weiter"
   },
   "chat": {
     "title": "CHAT",
