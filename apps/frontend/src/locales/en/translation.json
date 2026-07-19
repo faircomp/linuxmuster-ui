@@ -365,7 +365,21 @@
     "allDay": "All day",
     "noEvents": "No events in this period.",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "newEvent": "New event",
+    "editEvent": "Edit event",
+    "endBeforeStart": "The end must be after the start.",
+    "fields": {
+      "summary": "Title",
+      "calendar": "Calendar",
+      "start": "Start",
+      "end": "End",
+      "allDay": "All day",
+      "location": "Location",
+      "color": "Color",
+      "description": "Description",
+      "attendees": "Attendees"
+    }
   },
   "chat": {
     "title": "CHAT",

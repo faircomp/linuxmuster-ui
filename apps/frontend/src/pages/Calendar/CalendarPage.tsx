@@ -3,12 +3,13 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@edulution-io/ui-kit';
+import type { CalendarEvent } from '@libs/calendar/types';
 import CalendarView, { TCalendarView } from '@libs/calendar/constants/calendarView';
 import buildCalendarMonthGrid, { DAYS_PER_WEEK } from '@libs/calendar/utils/buildCalendarMonthGrid';
 import getWeekStart from '@libs/calendar/utils/getWeekStart';
@@ -19,6 +20,7 @@ import MonthGrid from '@/pages/Calendar/MonthGrid';
 import WeekGrid from '@/pages/Calendar/WeekGrid';
 import DayGrid from '@/pages/Calendar/DayGrid';
 import ViewSwitcher from '@/pages/Calendar/ViewSwitcher';
+import EventDialog from '@/pages/Calendar/EventDialog';
 
 const getFetchRange = (view: TCalendarView, anchorDate: Dayjs): { from: Dayjs; to: Dayjs } => {
   if (view === CalendarView.MONTH) {
@@ -35,14 +37,37 @@ const getFetchRange = (view: TCalendarView, anchorDate: Dayjs): { from: Dayjs; t
 
 const CalendarPage = () => {
   const { t, i18n } = useTranslation();
-  const { events, isLoading, fetchEvents } = useCalendarStore();
+  const { events, calendars, isLoading, fetchEvents, fetchCalendars } = useCalendarStore();
   const [view, setView] = useState<TCalendarView>(CalendarView.MONTH);
   const [anchorDate, setAnchorDate] = useState<Dayjs>(() => dayjs());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | undefined>(undefined);
+  const [defaultStart, setDefaultStart] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
+  const refetchEvents = useCallback(() => {
     const { from, to } = getFetchRange(view, anchorDate);
     void fetchEvents(from.toISOString(), to.toISOString());
   }, [view, anchorDate, fetchEvents]);
+
+  useEffect(() => {
+    refetchEvents();
+  }, [refetchEvents]);
+
+  useEffect(() => {
+    void fetchCalendars();
+  }, [fetchCalendars]);
+
+  const openCreateDialog = (day?: Dayjs) => {
+    setEditingEvent(undefined);
+    setDefaultStart((day ?? anchorDate).startOf('day').toISOString());
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    setDefaultStart(undefined);
+    setIsDialogOpen(true);
+  };
 
   const goToPrevious = () => setAnchorDate((date) => date.subtract(1, view));
   const goToNext = () => setAnchorDate((date) => date.add(1, view));
@@ -99,30 +124,52 @@ const CalendarPage = () => {
           </button>
           <h2 className="text-lg font-semibold">{headerLabel}</h2>
         </div>
-        <ViewSwitcher
-          value={view}
-          onChange={setView}
-        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openCreateDialog()}
+            className={cn('flex items-center gap-1 rounded bg-primary px-3 py-1 text-sm')}
+          >
+            <FontAwesomeIcon icon={faPlus} />
+            {t('calendar.newEvent')}
+          </button>
+          <ViewSwitcher
+            value={view}
+            onChange={setView}
+          />
+        </div>
       </div>
       {!isLoading && events.length === 0 ? <p className="py-2 text-sm text-ciGrey">{t('calendar.noEvents')}</p> : null}
       {view === CalendarView.MONTH ? (
         <MonthGrid
           month={anchorDate}
           events={events}
+          onSelectDay={openCreateDialog}
+          onSelectEvent={openEditDialog}
         />
       ) : null}
       {view === CalendarView.WEEK ? (
         <WeekGrid
           anchorDate={anchorDate}
           events={events}
+          onSelectEvent={openEditDialog}
         />
       ) : null}
       {view === CalendarView.DAY ? (
         <DayGrid
           day={anchorDate}
           events={events}
+          onSelectEvent={openEditDialog}
         />
       ) : null}
+      <EventDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        calendars={calendars}
+        event={editingEvent}
+        defaultStart={defaultStart}
+        onSaved={refetchEvents}
+      />
     </PageLayout>
   );
 };

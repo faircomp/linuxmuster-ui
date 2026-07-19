@@ -18,9 +18,11 @@ const getEventsForDay = (events: CalendarEvent[], day: Dayjs): CalendarEvent[] =
 interface MonthGridProps {
   month: Dayjs;
   events: CalendarEvent[];
+  onSelectDay?: (day: Dayjs) => void;
+  onSelectEvent?: (event: CalendarEvent) => void;
 }
 
-const MonthGrid: React.FC<MonthGridProps> = ({ month, events }) => {
+const MonthGrid: React.FC<MonthGridProps> = ({ month, events, onSelectDay, onSelectEvent }) => {
   const { t, i18n } = useTranslation();
   const cells = buildCalendarMonthGrid(month);
   const weeks = Array.from({ length: DAYS_IN_MONTH_GRID / DAYS_PER_WEEK }, (_, index) =>
@@ -66,16 +68,24 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, events }) => {
                   !isCurrentMonth && 'opacity-40',
                 )}
               >
-                <div className="text-right text-xs">{day.date()}</div>
+                <button
+                  type="button"
+                  onClick={() => onSelectDay?.(day)}
+                  className="self-end text-xs hover:underline"
+                >
+                  {day.date()}
+                </button>
                 {dayEvents.map((event) => (
-                  <div
+                  <button
                     key={event.uid}
-                    className={cn('truncate rounded px-1 text-xs', event.allDay && 'font-medium')}
+                    type="button"
+                    onClick={() => onSelectEvent?.(event)}
+                    className={cn('truncate rounded px-1 text-left text-xs', event.allDay && 'font-medium')}
                     style={event.color ? { backgroundColor: event.color } : undefined}
                     title={event.allDay ? `${t('calendar.allDay')}: ${event.summary}` : event.summary}
                   >
                     {event.allDay ? event.summary : `${dayjs(event.start).format('HH:mm')} ${event.summary}`}
-                  </div>
+                  </button>
                 ))}
               </div>
             );

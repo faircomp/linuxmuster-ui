@@ -355,7 +355,21 @@
     "allDay": "Toute la journée",
     "noEvents": "Aucun événement dans cette période.",
     "previous": "Précédent",
-    "next": "Suivant"
+    "next": "Suivant",
+    "newEvent": "Nouvel événement",
+    "editEvent": "Modifier l'événement",
+    "endBeforeStart": "La fin doit être postérieure au début.",
+    "fields": {
+      "summary": "Titre",
+      "calendar": "Calendrier",
+      "start": "Début",
+      "end": "Fin",
+      "allDay": "Toute la journée",
+      "location": "Lieu",
+      "color": "Couleur",
+      "description": "Description",
+      "attendees": "Participants"
+    }
   },
   "chat": {
     "title": "Chat",

@@ -18,9 +18,10 @@ const HOURS = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
 interface TimeGridProps {
   days: Dayjs[];
   events: CalendarEvent[];
+  onSelectEvent?: (event: CalendarEvent) => void;
 }
 
-const TimeGrid: React.FC<TimeGridProps> = ({ days, events }) => {
+const TimeGrid: React.FC<TimeGridProps> = ({ days, events, onSelectEvent }) => {
   const { t, i18n } = useTranslation();
   const columnHeight = `${HOURS_PER_DAY * HOUR_ROW_HEIGHT_REM}rem`;
 
@@ -57,14 +58,16 @@ const TimeGrid: React.FC<TimeGridProps> = ({ days, events }) => {
             className="flex flex-1 flex-col gap-0.5 p-1"
           >
             {getDayEventLayout(events, day).allDayEvents.map((event) => (
-              <div
+              <button
                 key={event.uid}
-                className="truncate rounded px-1 text-xs font-medium"
+                type="button"
+                onClick={() => onSelectEvent?.(event)}
+                className="truncate rounded px-1 text-left text-xs font-medium"
                 style={event.color ? { backgroundColor: event.color } : undefined}
                 title={event.summary}
               >
                 {event.summary}
-              </div>
+              </button>
             ))}
           </div>
         ))}
@@ -98,9 +101,11 @@ const TimeGrid: React.FC<TimeGridProps> = ({ days, events }) => {
                 />
               ))}
               {positionedEvents.map((positioned) => (
-                <div
+                <button
                   key={positioned.event.uid}
-                  className={cn('absolute overflow-hidden rounded px-1 text-xs text-white')}
+                  type="button"
+                  onClick={() => onSelectEvent?.(positioned.event)}
+                  className={cn('absolute overflow-hidden rounded px-1 text-left text-xs text-white')}
                   style={{
                     top: `${positioned.topPercent}%`,
                     height: `${positioned.heightPercent}%`,
@@ -111,7 +116,7 @@ const TimeGrid: React.FC<TimeGridProps> = ({ days, events }) => {
                   title={positioned.event.summary}
                 >
                   {`${dayjs(positioned.event.start).format('HH:mm')} ${positioned.event.summary}`}
-                </div>
+                </button>
               ))}
             </div>
           );

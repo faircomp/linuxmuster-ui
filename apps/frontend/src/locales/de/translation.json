@@ -356,7 +356,21 @@
     "allDay": "Ganztägig",
     "noEvents": "Keine Termine in diesem Zeitraum.",
     "previous": "Zurück",
-    "next": "Weiter"
+    "next": "Weiter",
+    "newEvent": "Neuer Termin",
+    "editEvent": "Termin bearbeiten",
+    "endBeforeStart": "Das Ende muss nach dem Beginn liegen.",
+    "fields": {
+      "summary": "Titel",
+      "calendar": "Kalender",
+      "start": "Beginn",
+      "end": "Ende",
+      "allDay": "Ganztägig",
+      "location": "Ort",
+      "color": "Farbe",
+      "description": "Beschreibung",
+      "attendees": "Teilnehmer"
+    }
   },
   "chat": {
     "title": "CHAT",

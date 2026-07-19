@@ -11,12 +11,14 @@ import TimeGrid from '@/pages/Calendar/TimeGrid';
 interface DayGridProps {
   day: Dayjs;
   events: CalendarEvent[];
+  onSelectEvent?: (event: CalendarEvent) => void;
 }
 
-const DayGrid: React.FC<DayGridProps> = ({ day, events }) => (
+const DayGrid: React.FC<DayGridProps> = ({ day, events, onSelectEvent }) => (
   <TimeGrid
     days={[day.startOf('day')]}
     events={events}
+    onSelectEvent={onSelectEvent}
   />
 );
 

@@ -13,9 +13,10 @@ import TimeGrid from '@/pages/Calendar/TimeGrid';
 interface WeekGridProps {
   anchorDate: Dayjs;
   events: CalendarEvent[];
+  onSelectEvent?: (event: CalendarEvent) => void;
 }
 
-const WeekGrid: React.FC<WeekGridProps> = ({ anchorDate, events }) => {
+const WeekGrid: React.FC<WeekGridProps> = ({ anchorDate, events, onSelectEvent }) => {
   const weekStart = getWeekStart(anchorDate);
   const days = Array.from({ length: DAYS_PER_WEEK }, (_, index) => weekStart.add(index, 'day'));
 
@@ -23,6 +24,7 @@ const WeekGrid: React.FC<WeekGridProps> = ({ anchorDate, events }) => {
     <TimeGrid
       days={days}
       events={events}
+      onSelectEvent={onSelectEvent}
     />
   );
 };
