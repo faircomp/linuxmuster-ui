@@ -17,7 +17,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 const { mockStore } = vi.hoisted(() => ({ mockStore: vi.fn() }));
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-vi.mock('@/pages/UserSettings/Info/useCommunityLicenseStore', () => ({ default: () => mockStore() }));
+vi.mock('@/pages/UserSettings/Info/useCommunityLicenseStore', () => ({ default: () => mockStore() as unknown }));
 vi.mock('@edulution-io/ui-kit', () => ({
   Button: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
 }));
