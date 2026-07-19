@@ -3252,7 +3252,7 @@ Doku: keine (intern)
 Abhängt von: T13
 
 ## p5-linbo [P5] — Linbo (Imaging)
-_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ aktiv · _Tasks:_ 13
+_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ code-complete (T1–T12 [x] · T13 [?] box-gated Voll-Stack-Verify, crabbox down) · _Tasks:_ 13
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js:16922-18603 (Controller/Service/DTOs/Pipe), main.js:14172-14370 (Queue-Delta+UpstreamError), main.js:634-671 (Endpoints), main.js:12903/12980-12989 (Konstanten/Fehler) · kein upstream/<rescue-branch> vorhanden · keine .reference/2.0.200/baselines/*.png (BE-only)
 
 > Kalibrierungs-Notiz (P5): Geerdetes Rekonstruktions-Ledger. Reihenfolge/Bündelung schärfen sich
@@ -3355,7 +3355,8 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4, T9
 
-### T11 — Registrierung in LmnApiModule  [ ]
+### T11 — Registrierung in LmnApiModule  [x]
+> Erledigt (d42eb4962): LinboController zu controllers, LinboService zu providers ergänzt (main.js:14784-14786); LmnApiRequestQueue-Provider war bereits vorhanden (LinboService-Dep aufgelöst). Controller jetzt unter /edu-api/lmn-api/linbo geroutet (vorher toter Code). Bestandsdatei (Netzint-Header bleibt), rein additiv. Verify: eslint + isolierter tsc (Modul+Controller+Service auflösbar) + prettier clean; Controller DI-compiliert (linbo.controller-Spec 25/25 grün → TestingModule mit LinboController+LinboService baut). Trivial-Wiring, kein Sub-Agent-Review (4 Zeilen, tsc+jest-verifiziert). api:build/Bootstrap-Smoke box-gated→T13.
 Komponente: apps/api · Dateien: apps/api/src/lmnApi/lmnApi.module.ts
 Soll: main.js:14784-14786 (`providers: […, LinboService]`, `controllers: […, LinboController]`)
 Änderung: `LinboController` zu `controllers`, `LinboService` zu `providers` ergänzen (Imports oben). `LmnApiRequestQueue` bleibt Provider (bereits vorhanden).
@@ -3364,7 +3365,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T10
 
-### T12 — Env-Defaults + interne Modul-Doku  [ ]
+### T12 — Env-Defaults + interne Modul-Doku  [x] OK (55e9f83b0) `.env.default`: `LMN_API_TIMEOUT_MS=15000`, `LMN_API_BINARY_TIMEOUT_MS=600000`, `LINBO_MAX_UPLOAD_BYTES=107374182400` (kommentiert, unter `LMN_API_BASE_URL`) — Werte == In-Code-Defaults (contract-sync verifiziert: `lmnApi.service.ts`/`lmn-api-request.queue.ts` ?? 15000; `linbo.service.ts` ?? 600000; `linbo.controller.ts` ?? 100 GiB). Doku-Abschnitt „Betrieb & Env-Vars" (BE-only Zwei-Transport-Proxy, Env-Tabelle) in `docs/features/p5-linbo.md`. Verify (`grep -q LINBO_MAX_UPLOAD_BYTES`) grün. Docs+Config-only, kein TS berührt → wie T3/T11 direkt committet.
 Komponente: apps/api + docs · Dateien: apps/api/.env.default, docs/ (interner Modul-Abschnitt)
 Soll: main.js:16953-16956 (`LINBO_MAX_UPLOAD_BYTES` Default 100 GiB), main.js:17278 (`LMN_API_BINARY_TIMEOUT_MS ?? 600000`), 1.6-Queue (`LMN_API_TIMEOUT_MS ?? 15000`)
 Änderung: In `.env.default` (kommentiert, mit Defaults) `LMN_API_TIMEOUT_MS=15000`, `LMN_API_BINARY_TIMEOUT_MS=600000`, `LINBO_MAX_UPLOAD_BYTES=107374182400` unter dem bestehenden `LMN_API_BASE_URL` ergänzen. Kurzer Doku-Absatz „Linbo = BE-only lmn-api-Imaging-Proxy, Zwei-Transport (Queue/binaryClient), kein FE".
@@ -3372,7 +3373,7 @@ Verify: `grep -q "LINBO_MAX_UPLOAD_BYTES" apps/api/.env.default`.
 i18n: keine
 Doku: interner Modul-Abschnitt (DE; EN nur falls Modul-Doku zweisprachig)
 
-### T13 — Voll-Stack-Verify gegen echten LMN (ggf. degradiert)  [?]
+### T13 — Voll-Stack-Verify gegen echten LMN (ggf. degradiert)  [?] human-gate: box-gated Voll-Stack-Verify — crabbox war den ganzen Loop down, keine Code-Änderung möglich/nötig. Braucht warme Box + echtes `linuxmuster-api7` (`iter.sh deploy`/`/test`): JSON-Routen (health/server-info/grub-configs/startconfs?id repeated-Param/changes?since=0), `hosts/query` mit synthetischen MACs (keine PII), `images/upload`+`download` gegen realen LINBO-Store (sonst „degraded" dokumentieren) + Queue-Regression (T5) an ≥1 bestehender lmn-api-Route. Kevin arbeitet dies am P5-Phasenende ab. Rekonstruktion T1–T12 vollständig [x].
 Komponente: — (Verifikation) · Dateien: — (nutzt scripts/crabbox + /test)
 Soll: PLAN §6 „Linbo: Imaging am echten linuxmuster-api7"; Spec „Externe Integrationen/Risiken"
 Änderung: keine Code-Änderung. Voll-Stack /test: JSON-Routen gegen echtes `linuxmuster-api7` (`GET linbo/health`, `server-info`, `grub-configs`, `startconfs?id=…` (repeated-Param-Serialisierung!), `changes?since=0`) verifizieren; `hosts/query` mit synthetischen MACs (keine echte PII); `images/upload`+`download` gegen realen LINBO-Store — falls Store nicht bestückt: **degradiert** dokumentieren (nur Route-Wiring/Pipe/Validierung + Mock). Regression der Queue-Änderung (T5) an ≥1 bestehender lmn-api-Route mitprüfen.
