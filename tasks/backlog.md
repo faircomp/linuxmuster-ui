@@ -3262,7 +3262,8 @@ Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js
 
 ---
 
-### T1 — LINBO-Endpoint-Konstanten (shared libs)  [ ]
+### T1 — LINBO-Endpoint-Konstanten (shared libs)  [x]
+> Erledigt (b560de767): `LINBO_LMN_API_ENDPOINT = 'linbo'` (Upstream-Pfad, main.js:12903) in lmnApiEndpoints.ts + 12 granulare LINBO-Keys ins LMN_API_EDU_API_ENDPOINTS-Objekt (main.js:660-671: LINBO/HEALTH/CHANGES/SERVER_INFO/HOSTS_QUERY/GRUB_CONFIGS/START_CONFS/IMAGES_MANIFEST/IMAGES_DOWNLOAD/DHCP_EXPORT_ISC/DHCP_EXPORT_DNSMASQ/IMAGES_UPLOAD), zeichengenau. Nur Linbo-Keys (DEVICES/STUDENTS_LIST bewusst ausgelassen — eigene Module). Bestandsdateien (Netzint-Header bleibt), rein additiv, `as const` intakt. Verify: eslint + isolierter tsc + prettier clean; grep-Checks PASS (LINBO_LMN_API_ENDPOINT + LINBO_IMAGES_UPLOAD, 12 Keys); api:build box-gated (crabbox down) → lokal-tsc-verifiziert. Review approve — alle 12 Pfade char-exakt gegen main.js (startconfs/dnsmasq-proxy/isc-dhcp/server-info kein Tippfehler), Ledger-Constraint erfüllt.
 Komponente: libs · Dateien: libs/src/lmnApi/constants/lmnApiEndpoints.ts, libs/src/lmnApi/constants/lmnApiEduApiEndpoints.ts
 Soll: main.js:12903 (`LINBO_LMN_API_ENDPOINT = 'linbo'`), main.js:660-671 (`LINBO` + granulare `LINBO_*`)
 Änderung: In `lmnApiEndpoints.ts` `export const LINBO_LMN_API_ENDPOINT = 'linbo';` ergänzen (Upstream-Pfad). In `lmnApiEduApiEndpoints.ts` `LINBO: \`${LMN_API_EDU_API_ENDPOINT}/linbo\`` (vom Controller genutzt) plus die granularen `LINBO_HEALTH…LINBO_IMAGES_UPLOAD`-Keys für Contract-Parität ergänzen. Nur Linbo-Keys, keine `DEVICES`/`STUDENTS_LIST`.
