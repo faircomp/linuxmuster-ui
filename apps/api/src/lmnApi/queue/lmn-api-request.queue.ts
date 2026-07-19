@@ -17,8 +17,8 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Job, Queue, QueueEvents, Worker } from 'bullmq';
+import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Job, Queue, QueueEvents, UnrecoverableError, Worker } from 'bullmq';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Agent as HttpsAgent } from 'https';
 import { HttpMethods } from '@libs/common/types/http-methods';
@@ -26,6 +26,7 @@ import QUEUE_CONSTANTS from '@libs/queue/constants/queueConstants';
 import LmnApiJobData from '@libs/lmnApi/types/lmnApiJobData';
 import LmnApiJobResult from '@libs/lmnApi/types/lmn-api-job.result';
 import redisConnection from '../../common/redis.connection';
+import LmnApiQueueUpstreamError from './lmn-api-queue-upstream.error';
 
 @Injectable()
 class LmnApiRequestQueue implements OnModuleInit, OnModuleDestroy {
@@ -53,6 +54,7 @@ class LmnApiRequestQueue implements OnModuleInit, OnModuleDestroy {
       baseURL: process.env.LMN_API_BASE_URL,
       httpsAgent,
       timeout: this.timeoutMs,
+      paramsSerializer: { indexes: null },
     });
 
     this.worker = new Worker<LmnApiJobData, unknown>(
@@ -78,15 +80,93 @@ class LmnApiRequestQueue implements OnModuleInit, OnModuleDestroy {
       requestConfig.data = payload;
     }
 
-    const response = await this.axiosClient.request<T>(requestConfig);
-    const responseData =
-      response.data instanceof ArrayBuffer ? Buffer.from(response.data) : (response.data as unknown as T);
+    try {
+      const response = await this.axiosClient.request<T>(requestConfig);
+      const responseData =
+        response.data instanceof ArrayBuffer ? Buffer.from(response.data) : (response.data as unknown as T);
 
-    return {
-      data: responseData as T,
-      headers: response.headers ?? {},
-      status: response.status,
-    };
+      return {
+        data: responseData as T,
+        headers: response.headers ?? {},
+        status: response.status,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const formatted = LmnApiRequestQueue.formatErrorDataForLog(error.response?.data);
+        const dataPart = formatted ? ` data=${formatted}` : '';
+        Logger.debug(
+          `LMN API request failed: ${method} ${endpoint} status=${error.response?.status}${dataPart}`,
+          LmnApiRequestQueue.name,
+        );
+      } else {
+        Logger.debug(`LMN API request failed: ${method} ${endpoint} error=${String(error)}`, LmnApiRequestQueue.name);
+      }
+
+      if (axios.isAxiosError(error) && error.response) {
+        const detail = LmnApiRequestQueue.extractUpstreamDetail(error.response.data);
+        const message = detail ? `${error.message}: ${detail}` : error.message;
+        if (error.response.status < Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
+          const encoded = LmnApiQueueUpstreamError.encode({
+            status: error.response.status,
+            data: error.response.data,
+            message,
+          });
+          throw new UnrecoverableError(encoded);
+        }
+        throw new Error(message);
+      }
+
+      throw error;
+    }
+  }
+
+  private static readonly LOG_DATA_MAX_LENGTH = 500;
+
+  private static truncateForLog(value: string): string {
+    return value.length > LmnApiRequestQueue.LOG_DATA_MAX_LENGTH
+      ? `${value.slice(0, LmnApiRequestQueue.LOG_DATA_MAX_LENGTH)}...`
+      : value;
+  }
+
+  private static formatErrorDataForLog(data: unknown): string | undefined {
+    if (data === undefined || data === null) {
+      return undefined;
+    }
+    if (ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
+      return undefined;
+    }
+    if (typeof data === 'string') {
+      return LmnApiRequestQueue.truncateForLog(data);
+    }
+    try {
+      return LmnApiRequestQueue.truncateForLog(JSON.stringify(data));
+    } catch {
+      return String(data);
+    }
+  }
+
+  private static extractUpstreamDetail(data: unknown): string | undefined {
+    if (!data) {
+      return undefined;
+    }
+    let raw: string | undefined;
+    if (typeof data === 'string') {
+      raw = data;
+    } else if (ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
+      raw = new TextDecoder().decode(data);
+    } else if (typeof data === 'object') {
+      const { detail } = data as { detail?: unknown };
+      return typeof detail === 'string' ? detail : undefined;
+    }
+    if (!raw) {
+      return undefined;
+    }
+    try {
+      const { detail } = JSON.parse(raw) as { detail?: unknown };
+      return typeof detail === 'string' ? detail : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   public async enqueue<T>(
@@ -106,9 +186,17 @@ class LmnApiRequestQueue implements OnModuleInit, OnModuleDestroy {
       },
     );
 
-    const result = (await job.waitUntilFinished(this.queueEvents)) as LmnApiJobResult<T>;
-
-    return result;
+    try {
+      const result = (await job.waitUntilFinished(this.queueEvents)) as LmnApiJobResult<T>;
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const upstream = LmnApiQueueUpstreamError.tryParse(message);
+      if (upstream) {
+        throw upstream;
+      }
+      throw error;
+    }
   }
 
   async onModuleDestroy() {
