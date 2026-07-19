@@ -3063,7 +3063,7 @@ Doku: keine (Verify-Log)
 Abhängt von: T13
 
 ## p5-calendar [P5] — Calendar
-_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat (Pilot code-fertig) · _Status:_ aktiv · _Tasks:_ 18
+_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat (Pilot code-fertig) · _Status:_ **code-complete (T1-T18 [x]; Voll-Stack-Verify + PR box-/human-gated)** · _Tasks:_ 18
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main.js:33176-33381 (Module/Controller) · 33439-34752 (Enums/Schemas/Service/IcalMapper) · 35267-35925 (DTOs) · 2085-2087 (appconfig-Keys) · kein Rescue-Branch · kein .reference/2.0.200/baselines/*calendar* (FE = laufende 2.0-crabbox als Live-Referenz)
 
 > P5-Kalibrierungs-Notiz: Geerdetes Rekonstruktions-Ledger. BE-Anker sind aus main.js
