@@ -3326,7 +3326,8 @@ Verify: `npx nx run api:build` (remote) grün; `grep -rl "LinboImageManifestEntr
 i18n: keine
 Doku: keine (intern)
 
-### T8 — Linbo-DTOs Teil 3: request/body (batch-macs, upload)  [ ]
+### T8 — Linbo-DTOs Teil 3: request/body (batch-macs, upload)  [x]
+> Erledigt (8c96553de): 3 Request/Body-DTOs dekoratorgenau aus main.js:17529-18510 — LinboBatchMacsDto (macs[string[]]: @ApiProperty desc/type:[String]/example + @IsArray/@ArrayNotEmpty/@ArrayMaxSize(**500**)/@IsString({each:true})), LinboUploadImageBodyDto (imageName/filename: @ApiProperty + @IsString/@IsNotEmpty/@MaxLength(200)/@Matches(SAFE_PATH_SEGMENT_PATTERN, feldspez. message)), LinboUploadImageResponseDto (ok[bool]/bytesUploaded[number]/upstream?[@ApiPropertyOptional, unknown]). **Contract-Sync:** upload-body reused SAFE_PATH_SEGMENT_PATTERN aus T4 (@libs/common/constants, gleiche Regex wie SafePathSegmentPipe). SPDX-AGPL, Default-Export, kebab-.dto.ts, unknown statt any. Verify: eslint + isolierter tsc + prettier clean; **17 DTO-Dateien gesamt (T6+T7+T8 komplett)**. Review approve — dekoratorgenau, ArrayMaxSize(500)/MaxLength(200)/Matches-messages exakt, Pattern-Reuse korrekt, kein Bug. (Validierungs-Verhalten in T10-Controller-Spec getestet.)
 Komponente: apps/api · Dateien: apps/api/src/lmnApi/linbo/dto/{linbo-batch-macs,linbo-upload-image-body,linbo-upload-image-response}.dto.ts
 Soll: main.js:17529-17572 (LinboBatchMacsDto: `macs` mit `@IsArray/@ArrayNotEmpty/@ArrayMaxSize(500)/@IsString({each:true})`), main.js:18405-18531 (LinboUploadImageBodyDto: `imageName`/`filename`; LinboUploadImageResponseDto: `ok`/`bytesUploaded`/`upstream`)
 Änderung: Die drei DTOs inkl. `class-validator`-Dekoratoren (max 500 MACs) und Swagger-`@ApiProperty`. SPDX AGPL, Default-Export.
