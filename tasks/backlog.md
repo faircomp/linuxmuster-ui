@@ -3280,7 +3280,8 @@ Verify: `node -e "const d=require('./apps/frontend/src/locales/de/translation.js
 i18n: 10 neue Keys unter `lmnApi.errors.*` — DE+EN (FR mitgeführt)
 Doku: keine (intern)
 
-### T3 — HTTP_HEADERS.ContentRange ergänzen  [ ]
+### T3 — HTTP_HEADERS.ContentRange ergänzen  [x]
+> Erledigt (2b882963b): `ContentRange: 'Content-Range'` in HTTP_HEADERS (nach ContentLength). Vom LINBO-Upload als `bytes 0-…/…` genutzt; fehlte in 1.6. Verify: grep PASS, eslint+prettier clean. Trivial-1-Zeiler, kein Sub-Agent-Review (byte-offensichtlich).
 Komponente: libs · Dateien: libs/src/common/types/http-methods.ts
 Soll: main.js — Upload nutzt `HTTP_HEADERS.ContentRange` (`bytes 0-…/…`); Header fehlt in 1.6 (grep = 0)
 Änderung: `ContentRange: 'Content-Range'` in das `HTTP_HEADERS`-Objekt aufnehmen.
