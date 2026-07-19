@@ -2194,7 +2194,7 @@ Doku: kurzer Modul-Abschnitt „ParentChildPairing" (DE+EN) im selben Commit
 Abhängt von: T7, T13, T14
 
 ## p3-wiki [P3] — Wiki
-_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ aktiv · _Tasks:_ 25
+_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ code-complete (Code fertig, 20 [x]; T25 [?] box-gated Voll-Stack-Smoke, crabbox down; 2 weitere [?] parkiert) · _Tasks:_ 25
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · .reference/2.0.200/ui/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
 
 > Kalibrierungs-Notiz (P3): BE-Tasks sind aus main.js hart verankert und ausführbar. Die FE-Tasks
