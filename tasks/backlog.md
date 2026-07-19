@@ -3271,7 +3271,8 @@ Verify: `npx nx run api:build` (remote via iter.sh) kompiliert; `grep -q "LINBO_
 i18n: keine
 Doku: keine (intern)
 
-### T2 — LmnApiErrorMessage-Linbo-Keys + i18n DE+EN  [ ]
+### T2 — LmnApiErrorMessage-Linbo-Keys + i18n DE+EN  [x]
+> Erledigt (7ddeedb65): 10 LINBO-Enum-Einträge (GetLinboHealthFailed…GetLinboDhcpExportFailed, Wert lmnApi.errors.<Key>) an LmnApiErrorMessage angehängt, zeichengenau aus main.js:12980-12989; + je 10 Keys unter lmnApi.errors in de/en/fr (echtes FR statt EN-Fallback). i18n-Key↔Enum-Match über alle 3 Locales verifiziert (handleApiError toastet i18n.t(enumWert)). FR-Order-Subtilität beachtet (DeleteParentFromStudentFailed war DE/EN letzter Key, FR mitten im Block). Verify: check-translations (Parität) grün, checkErrorMessages.ts „EN/FR is awesome!", node-Verify de+en PASS, eslint+prettier clean. Review approve — alle 10 Enum-Keys+Werte char-exakt, i18n-Match bestätigt, Upload/Download in allen Sprachen korrekt unterschieden, kein Nit.
 Komponente: libs + apps/frontend · Dateien: libs/src/lmnApi/types/lmnApiErrorMessage.ts, apps/frontend/src/locales/{de,en,fr}/translation.json
 Soll: main.js:12980-12989 (10 `LmnApiErrorMessage`-Einträge)
 Änderung: 10 Enum-Einträge (`GetLinboHealthFailed`…`GetLinboDhcpExportFailed`) mit Wert `lmnApi.errors.<Key>` anhängen (bestehende Enum-Struktur beibehalten). In den drei `translation.json` je 10 Keys unter `lmnApi.errors` ergänzen (DE+EN inhaltlich, FR = EN-Fallback). DE-Werte z. B. „Abrufen des LINBO-Systemstatus fehlgeschlagen", „Hochladen des LINBO-Images fehlgeschlagen".
