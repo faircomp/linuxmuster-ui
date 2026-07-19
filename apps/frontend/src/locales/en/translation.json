@@ -302,7 +302,17 @@
       "SophomorixCheckFailed": "Sophomorix check failed",
       "SophomorixApplyFailed": "Sophomorix apply failed",
       "AddParentToStudentFailed": "Adding parent to student failed",
-      "DeleteParentFromStudentFailed": "Removing parent from student failed"
+      "DeleteParentFromStudentFailed": "Removing parent from student failed",
+      "GetLinboHealthFailed": "Failed to fetch the LINBO system status.",
+      "GetLinboServerInfoFailed": "Failed to fetch the LINBO server information.",
+      "GetLinboHostsFailed": "Failed to fetch the LINBO hosts.",
+      "GetLinboGrubConfigsFailed": "Failed to fetch the LINBO GRUB configurations.",
+      "GetLinboStartConfsFailed": "Failed to fetch the LINBO start configurations.",
+      "GetLinboImagesManifestFailed": "Failed to fetch the LINBO image manifest.",
+      "GetLinboChangesFailed": "Failed to fetch the LINBO changes.",
+      "UploadLinboImageFailed": "Failed to upload the LINBO image.",
+      "DownloadLinboImageFailed": "Failed to download the LINBO image.",
+      "GetLinboDhcpExportFailed": "Failed to fetch the LINBO DHCP export."
     }
   },
   "ticketsystem": {

@@ -292,6 +292,16 @@
       "SophomorixApplyFailed": "Échec de l'application Sophomorix",
       "AddParentToStudentFailed": "Échec de l'ajout du parent à l'élève",
       "DeleteParentFromStudentFailed": "Échec de la suppression du parent de l'élève",
+      "GetLinboHealthFailed": "Échec de la récupération de l'état du système LINBO.",
+      "GetLinboServerInfoFailed": "Échec de la récupération des informations du serveur LINBO.",
+      "GetLinboHostsFailed": "Échec de la récupération des hôtes LINBO.",
+      "GetLinboGrubConfigsFailed": "Échec de la récupération des configurations GRUB de LINBO.",
+      "GetLinboStartConfsFailed": "Échec de la récupération des configurations de démarrage LINBO.",
+      "GetLinboImagesManifestFailed": "Échec de la récupération du manifeste d'images LINBO.",
+      "GetLinboChangesFailed": "Échec de la récupération des modifications LINBO.",
+      "UploadLinboImageFailed": "Échec du téléversement de l'image LINBO.",
+      "DownloadLinboImageFailed": "Échec du téléchargement de l'image LINBO.",
+      "GetLinboDhcpExportFailed": "Échec de la récupération de l'export DHCP de LINBO.",
       "SophomorixCheckFailed": "Échec de la vérification Sophomorix"
     }
   },

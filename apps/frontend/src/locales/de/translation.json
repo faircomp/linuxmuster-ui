@@ -293,7 +293,17 @@
       "SophomorixCheckFailed": "Sophomorix-Check fehlgeschlagen",
       "SophomorixApplyFailed": "Sophomorix-Apply fehlgeschlagen",
       "AddParentToStudentFailed": "Hinzufügen des Elternteils zum Schüler fehlgeschlagen",
-      "DeleteParentFromStudentFailed": "Entfernen des Elternteils vom Schüler fehlgeschlagen"
+      "DeleteParentFromStudentFailed": "Entfernen des Elternteils vom Schüler fehlgeschlagen",
+      "GetLinboHealthFailed": "Abrufen des LINBO-Systemstatus fehlgeschlagen.",
+      "GetLinboServerInfoFailed": "Abrufen der LINBO-Server-Informationen fehlgeschlagen.",
+      "GetLinboHostsFailed": "Abrufen der LINBO-Hosts fehlgeschlagen.",
+      "GetLinboGrubConfigsFailed": "Abrufen der LINBO-GRUB-Konfigurationen fehlgeschlagen.",
+      "GetLinboStartConfsFailed": "Abrufen der LINBO-Startkonfigurationen fehlgeschlagen.",
+      "GetLinboImagesManifestFailed": "Abrufen des LINBO-Image-Manifests fehlgeschlagen.",
+      "GetLinboChangesFailed": "Abrufen der LINBO-Änderungen fehlgeschlagen.",
+      "UploadLinboImageFailed": "Hochladen des LINBO-Images fehlgeschlagen.",
+      "DownloadLinboImageFailed": "Herunterladen des LINBO-Images fehlgeschlagen.",
+      "GetLinboDhcpExportFailed": "Abrufen des LINBO-DHCP-Exports fehlgeschlagen."
     }
   },
   "ticketsystem": {

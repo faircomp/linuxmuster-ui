@@ -55,6 +55,16 @@ enum LmnApiErrorMessage {
   SophomorixApplyFailed = 'lmnApi.errors.SophomorixApplyFailed',
   AddParentToStudentFailed = 'lmnApi.errors.AddParentToStudentFailed',
   DeleteParentFromStudentFailed = 'lmnApi.errors.DeleteParentFromStudentFailed',
+  GetLinboHealthFailed = 'lmnApi.errors.GetLinboHealthFailed',
+  GetLinboServerInfoFailed = 'lmnApi.errors.GetLinboServerInfoFailed',
+  GetLinboHostsFailed = 'lmnApi.errors.GetLinboHostsFailed',
+  GetLinboGrubConfigsFailed = 'lmnApi.errors.GetLinboGrubConfigsFailed',
+  GetLinboStartConfsFailed = 'lmnApi.errors.GetLinboStartConfsFailed',
+  GetLinboImagesManifestFailed = 'lmnApi.errors.GetLinboImagesManifestFailed',
+  GetLinboChangesFailed = 'lmnApi.errors.GetLinboChangesFailed',
+  UploadLinboImageFailed = 'lmnApi.errors.UploadLinboImageFailed',
+  DownloadLinboImageFailed = 'lmnApi.errors.DownloadLinboImageFailed',
+  GetLinboDhcpExportFailed = 'lmnApi.errors.GetLinboDhcpExportFailed',
 }
 
 export default LmnApiErrorMessage;
