@@ -19,7 +19,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import APPS from '@libs/appconfig/constants/apps';
-import CALENDAR_ENDPOINT, { CALENDAR_TAGS_PATH_SEGMENT } from '@libs/calendar/constants/calendar-endpoint';
+import CALENDAR_ENDPOINT, {
+  CALENDAR_CALENDARS_PATH_SEGMENT,
+  CALENDAR_EVENTS_PATH_SEGMENT,
+  CALENDAR_TAGS_PATH_SEGMENT,
+} from '@libs/calendar/constants/calendar-endpoint';
 import RecurrenceEditScope from '@libs/calendar/constants/recurrenceEditScope';
 import type { TRecurrenceEditScope } from '@libs/calendar/types';
 import type Calendar from '@libs/calendar/types/calendar';
@@ -46,7 +50,7 @@ class CalendarController {
     private readonly usersService: UsersService,
   ) {}
 
-  @Get('calendars')
+  @Get(CALENDAR_CALENDARS_PATH_SEGMENT)
   @ApiOperation({ summary: 'List all calendars accessible to the current user' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Calendars', type: [CalendarResponseDto] })
   async listCalendars(
@@ -57,7 +61,7 @@ class CalendarController {
     return this.calendarService.listCalendars(emailAddress, password);
   }
 
-  @Post('calendars')
+  @Post(CALENDAR_CALENDARS_PATH_SEGMENT)
   @ApiOperation({ summary: 'Create a new calendar' })
   @ApiBody({ type: CreateCalendarBodyDto })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Created calendar', type: CalendarResponseDto })
@@ -70,7 +74,7 @@ class CalendarController {
     return this.calendarService.createCalendar(emailAddress, password, username, body);
   }
 
-  @Put(`calendars/:id/${CALENDAR_TAGS_PATH_SEGMENT}`)
+  @Put(`${CALENDAR_CALENDARS_PATH_SEGMENT}/:id/${CALENDAR_TAGS_PATH_SEGMENT}`)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Replace the metadata tags of a calendar' })
   @ApiParam({ name: 'id', description: 'Encoded calendar id' })
@@ -80,7 +84,7 @@ class CalendarController {
     await this.calendarService.setCalendarTags(calendarId, body.tags);
   }
 
-  @Get('events')
+  @Get(CALENDAR_EVENTS_PATH_SEGMENT)
   @ApiOperation({ summary: 'List events within a time range' })
   @ApiQuery({ name: 'from', example: '2026-04-01T00:00:00.000Z' })
   @ApiQuery({ name: 'to', example: '2026-05-01T00:00:00.000Z' })
@@ -101,7 +105,7 @@ class CalendarController {
     });
   }
 
-  @Post('events')
+  @Post(CALENDAR_EVENTS_PATH_SEGMENT)
   @ApiOperation({ summary: 'Create a new event' })
   @ApiBody({ type: CalendarEventBodyDto })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Created event', type: CalendarEventResponseDto })
@@ -114,7 +118,7 @@ class CalendarController {
     return this.calendarService.createEvent(emailAddress, password, event);
   }
 
-  @Put('events/:uid')
+  @Put(`${CALENDAR_EVENTS_PATH_SEGMENT}/:uid`)
   @ApiOperation({ summary: 'Update an existing event' })
   @ApiParam({ name: 'uid', description: 'Event UID' })
   @ApiBody({ type: CalendarEventBodyDto })
@@ -129,7 +133,7 @@ class CalendarController {
     return this.calendarService.updateEvent(emailAddress, password, uid, event);
   }
 
-  @Delete('events/:uid')
+  @Delete(`${CALENDAR_EVENTS_PATH_SEGMENT}/:uid`)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an event' })
   @ApiParam({ name: 'uid', description: 'Event UID' })

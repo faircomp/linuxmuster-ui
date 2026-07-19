@@ -4,6 +4,7 @@
  */
 
 export { default as Calendar } from './calendar';
+export { default as CalendarCreateBody } from './calendarCreateBody';
 export { default as CalendarEvent } from './calendarEvent';
 export type { TCalendarEventClassification, TCalendarEventTransparency } from './calendarEvent';
 export { default as CalendarShare } from './calendarShare';
