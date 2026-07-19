@@ -347,6 +347,15 @@
       "deleteProviderConfig": "E-Mail-Provider-Konfiguration löschen"
     }
   },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Heute",
+    "month": "Monat",
+    "allDay": "Ganztägig",
+    "noEvents": "Keine Termine in diesem Zeitraum.",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Nächster Monat"
+  },
   "chat": {
     "title": "CHAT",
     "sidebar": "Chat",

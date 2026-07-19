@@ -356,6 +356,15 @@
       "deleteProviderConfig": "Delete Mail Provider Configuration"
     }
   },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "month": "Month",
+    "allDay": "All day",
+    "noEvents": "No events in this period.",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
   "chat": {
     "title": "CHAT",
     "sidebar": "Chat",

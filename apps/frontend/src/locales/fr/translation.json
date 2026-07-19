@@ -346,6 +346,15 @@
       "deleteProviderConfig": "Supprimer la configuration du fournisseur de messagerie"
     }
   },
+  "calendar": {
+    "title": "Calendrier",
+    "today": "Aujourd'hui",
+    "month": "Mois",
+    "allDay": "Toute la journée",
+    "noEvents": "Aucun événement dans cette période.",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant"
+  },
   "chat": {
     "title": "Chat",
     "sidebar": "Chat",
