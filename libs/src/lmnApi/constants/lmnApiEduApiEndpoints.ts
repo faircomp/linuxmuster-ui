@@ -39,6 +39,18 @@ const LMN_API_EDU_API_ENDPOINTS = {
   USERS_QUOTA: 'quotas',
   SCHOOLS: `${LMN_API_EDU_API_ENDPOINT}/schools`,
   LIST_MANAGEMENT: `${LMN_API_EDU_API_ENDPOINT}/listmanagement`,
+  LINBO: `${LMN_API_EDU_API_ENDPOINT}/linbo`,
+  LINBO_HEALTH: `${LMN_API_EDU_API_ENDPOINT}/linbo/health`,
+  LINBO_CHANGES: `${LMN_API_EDU_API_ENDPOINT}/linbo/changes`,
+  LINBO_SERVER_INFO: `${LMN_API_EDU_API_ENDPOINT}/linbo/server-info`,
+  LINBO_HOSTS_QUERY: `${LMN_API_EDU_API_ENDPOINT}/linbo/hosts/query`,
+  LINBO_GRUB_CONFIGS: `${LMN_API_EDU_API_ENDPOINT}/linbo/grub-configs`,
+  LINBO_START_CONFS: `${LMN_API_EDU_API_ENDPOINT}/linbo/startconfs`,
+  LINBO_IMAGES_MANIFEST: `${LMN_API_EDU_API_ENDPOINT}/linbo/images/manifest`,
+  LINBO_IMAGES_DOWNLOAD: `${LMN_API_EDU_API_ENDPOINT}/linbo/images/download`,
+  LINBO_DHCP_EXPORT_ISC: `${LMN_API_EDU_API_ENDPOINT}/linbo/dhcp/export/isc-dhcp`,
+  LINBO_DHCP_EXPORT_DNSMASQ: `${LMN_API_EDU_API_ENDPOINT}/linbo/dhcp/export/dnsmasq-proxy`,
+  LINBO_IMAGES_UPLOAD: `${LMN_API_EDU_API_ENDPOINT}/linbo/images/upload`,
 } as const;
 
 export default LMN_API_EDU_API_ENDPOINTS;
