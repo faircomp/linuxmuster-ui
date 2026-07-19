@@ -243,7 +243,7 @@ class LinboService {
     lmnApiToken: string,
     imageName: string,
     filename: string,
-    file: Express.Multer.File,
+    file?: { path: string; size: number },
   ): Promise<LinboUploadImageResponseDto> {
     if (!imageName || !filename || !file || !file.path || file.size === 0) {
       throw new CustomHttpException(
