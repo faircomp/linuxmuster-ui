@@ -233,3 +233,21 @@ existiert, sind sie primär Contract-/Konsistenz-Keys — trotzdem DE+EN gemäß
    verifiziert werden (siehe /test).
 5. **Queue-Delta ggf. schon anderweitig eingeführt** (z. B. durch ein Devices-/Pairing-Paket)? Dann
    T5 = No-op; Reihenfolge mit dem tatsächlich zuerst gemergten Paket abstimmen.
+
+## Betrieb & Env-Vars
+
+Linbo ist ein **BE-only lmn-api-Imaging-Proxy** (kein Frontend-Consumer): `LinboController`/
+`LinboService` unter `apps/api/src/lmnApi/linbo/`, modulweit in `LmnApiModule` registriert und
+über den globalen `AuthGuard` JWT-geschützt. Der Service nutzt **zwei Transporte** — die geteilte
+`LmnApiRequestQueue` für JSON-Metadaten (Health, Changes, Manifest, Start-Confs, DHCP-Exports) und
+einen eigenen `binaryClient` (axios, Streams) für Image-Upload/-Download.
+
+Konfiguration über `apps/api/.env` (Defaults in `apps/api/.env.default`):
+
+| Env-Var | Default | Wirkung |
+|---|---|---|
+| `LMN_API_TIMEOUT_MS` | `15000` | Timeout der Queue-JSON-Requests (ms). |
+| `LMN_API_BINARY_TIMEOUT_MS` | `600000` | Timeout des `binaryClient` für Upload/Download (ms, 10 min). |
+| `LINBO_MAX_UPLOAD_BYTES` | `107374182400` | Obergrenze eines Image-Uploads (Bytes, 100 GiB); darüber `400`. |
+
+Alle drei sind optional — fehlt die Var, greift der jeweilige Default aus dem Code.
