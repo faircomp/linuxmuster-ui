@@ -3252,7 +3252,7 @@ Doku: keine (intern)
 Abhängt von: T13
 
 ## p5-linbo [P5] — Linbo (Imaging)
-_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ geplant · _Tasks:_ 13
+_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ aktiv · _Tasks:_ 13
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js:16922-18603 (Controller/Service/DTOs/Pipe), main.js:14172-14370 (Queue-Delta+UpstreamError), main.js:634-671 (Endpoints), main.js:12903/12980-12989 (Konstanten/Fehler) · kein upstream/<rescue-branch> vorhanden · keine .reference/2.0.200/baselines/*.png (BE-only)
 
 > Kalibrierungs-Notiz (P5): Geerdetes Rekonstruktions-Ledger. Reihenfolge/Bündelung schärfen sich
