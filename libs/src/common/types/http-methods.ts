@@ -61,6 +61,7 @@ export const HTTP_HEADERS = {
   ContentDisposition: 'Content-Disposition',
   ContentType: 'Content-Type',
   ContentLength: 'Content-Length',
+  ContentRange: 'Content-Range',
   Authorization: 'Authorization',
   XApiKey: 'x-api-key',
   CONNECTION_UID: 'Connection-Uid',
