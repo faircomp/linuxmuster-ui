@@ -362,6 +362,7 @@
     "endBeforeStart": "Das Ende muss nach dem Beginn liegen.",
     "fields": {
       "summary": "Titel",
+      "name": "Name",
       "calendar": "Kalender",
       "start": "Beginn",
       "end": "Ende",
@@ -388,6 +389,35 @@
       "this": "Nur diesen Termin",
       "thisAndFollowing": "Diesen und folgende",
       "all": "Alle Termine"
+    },
+    "newCalendar": "Neuer Kalender",
+    "timetableTag": "Stundenplan-Kalender",
+    "share": {
+      "title": "Freigaben",
+      "add": "Freigabe hinzufügen",
+      "subject": "Benutzer oder Gruppe",
+      "subjectType": {
+        "user": "Benutzer",
+        "group": "Gruppe"
+      },
+      "permission": {
+        "none": "Keine",
+        "free_busy": "Frei/Belegt",
+        "view": "Ansehen",
+        "modify": "Bearbeiten",
+        "admin": "Administrator"
+      }
+    },
+    "errors": {
+      "CalDavConnectionFailed": "Verbindung zum CalDAV-Server fehlgeschlagen.",
+      "CalendarNotFound": "Kalender nicht gefunden.",
+      "EventNotFound": "Termin nicht gefunden.",
+      "CreateEventFailed": "Termin konnte nicht angelegt werden.",
+      "UpdateEventFailed": "Termin konnte nicht geändert werden.",
+      "DeleteEventFailed": "Termin konnte nicht gelöscht werden.",
+      "CreateCalendarFailed": "Kalender konnte nicht angelegt werden.",
+      "CalendarBackendNotConfigured": "Der Kalenderdienst ist nicht konfiguriert.",
+      "SetTagsFailed": "Kategorien konnten nicht gespeichert werden."
     }
   },
   "chat": {

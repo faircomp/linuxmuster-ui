@@ -361,6 +361,7 @@
     "endBeforeStart": "La fin doit être postérieure au début.",
     "fields": {
       "summary": "Titre",
+      "name": "Nom",
       "calendar": "Calendrier",
       "start": "Début",
       "end": "Fin",
@@ -387,6 +388,35 @@
       "this": "Cet événement uniquement",
       "thisAndFollowing": "Celui-ci et les suivants",
       "all": "Tous les événements"
+    },
+    "newCalendar": "Nouveau calendrier",
+    "timetableTag": "Calendrier d'emploi du temps",
+    "share": {
+      "title": "Partages",
+      "add": "Ajouter un partage",
+      "subject": "Utilisateur ou groupe",
+      "subjectType": {
+        "user": "Utilisateur",
+        "group": "Groupe"
+      },
+      "permission": {
+        "none": "Aucune",
+        "free_busy": "Libre/occupé",
+        "view": "Voir",
+        "modify": "Modifier",
+        "admin": "Administrateur"
+      }
+    },
+    "errors": {
+      "CalDavConnectionFailed": "Échec de la connexion au serveur CalDAV.",
+      "CalendarNotFound": "Calendrier introuvable.",
+      "EventNotFound": "Événement introuvable.",
+      "CreateEventFailed": "L'événement n'a pas pu être créé.",
+      "UpdateEventFailed": "L'événement n'a pas pu être modifié.",
+      "DeleteEventFailed": "L'événement n'a pas pu être supprimé.",
+      "CreateCalendarFailed": "Le calendrier n'a pas pu être créé.",
+      "CalendarBackendNotConfigured": "Le service de calendrier n'est pas configuré.",
+      "SetTagsFailed": "Les catégories n'ont pas pu être enregistrées."
     }
   },
   "chat": {

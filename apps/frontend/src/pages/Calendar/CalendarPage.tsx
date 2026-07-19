@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarPlus, faChevronLeft, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '@edulution-io/ui-kit';
 import type { CalendarEvent } from '@libs/calendar/types';
 import CalendarView, { TCalendarView } from '@libs/calendar/constants/calendarView';
@@ -22,6 +22,7 @@ import WeekGrid from '@/pages/Calendar/WeekGrid';
 import DayGrid from '@/pages/Calendar/DayGrid';
 import ViewSwitcher from '@/pages/Calendar/ViewSwitcher';
 import EventDialog from '@/pages/Calendar/EventDialog';
+import CalendarManagementDialog from '@/pages/Calendar/CalendarManagementDialog';
 
 const getFetchRange = (view: TCalendarView, anchorDate: Dayjs): { from: Dayjs; to: Dayjs } => {
   if (view === CalendarView.MONTH) {
@@ -45,6 +46,7 @@ const CalendarPage = () => {
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | undefined>(undefined);
   const [defaultStart, setDefaultStart] = useState<string | undefined>(undefined);
   const [occurrenceStart, setOccurrenceStart] = useState<string | undefined>(undefined);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
 
   const visibleEvents = useMemo(() => {
     const { from, to } = getFetchRange(view, anchorDate);
@@ -136,6 +138,14 @@ const CalendarPage = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setIsCalendarDialogOpen(true)}
+            className={cn('flex items-center gap-1 rounded px-3 py-1 text-sm hover:bg-ciDarkGrey')}
+          >
+            <FontAwesomeIcon icon={faCalendarPlus} />
+            {t('calendar.newCalendar')}
+          </button>
+          <button
+            type="button"
             onClick={() => openCreateDialog()}
             className={cn('flex items-center gap-1 rounded bg-primary px-3 py-1 text-sm')}
           >
@@ -181,6 +191,11 @@ const CalendarPage = () => {
         defaultStart={defaultStart}
         occurrenceStart={occurrenceStart}
         onSaved={refetchEvents}
+      />
+      <CalendarManagementDialog
+        isOpen={isCalendarDialogOpen}
+        onClose={() => setIsCalendarDialogOpen(false)}
+        onSaved={fetchCalendars}
       />
     </PageLayout>
   );

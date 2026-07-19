@@ -371,6 +371,7 @@
     "endBeforeStart": "The end must be after the start.",
     "fields": {
       "summary": "Title",
+      "name": "Name",
       "calendar": "Calendar",
       "start": "Start",
       "end": "End",
@@ -397,6 +398,35 @@
       "this": "This event only",
       "thisAndFollowing": "This and following",
       "all": "All events"
+    },
+    "newCalendar": "New calendar",
+    "timetableTag": "Timetable calendar",
+    "share": {
+      "title": "Shares",
+      "add": "Add share",
+      "subject": "User or group",
+      "subjectType": {
+        "user": "User",
+        "group": "Group"
+      },
+      "permission": {
+        "none": "None",
+        "free_busy": "Free/busy",
+        "view": "View",
+        "modify": "Modify",
+        "admin": "Administrator"
+      }
+    },
+    "errors": {
+      "CalDavConnectionFailed": "Could not connect to the CalDAV server.",
+      "CalendarNotFound": "Calendar not found.",
+      "EventNotFound": "Event not found.",
+      "CreateEventFailed": "The event could not be created.",
+      "UpdateEventFailed": "The event could not be updated.",
+      "DeleteEventFailed": "The event could not be deleted.",
+      "CreateCalendarFailed": "The calendar could not be created.",
+      "CalendarBackendNotConfigured": "The calendar service is not configured.",
+      "SetTagsFailed": "The tags could not be saved."
     }
   },
   "chat": {
