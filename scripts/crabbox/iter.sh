@@ -7,7 +7,8 @@
 #   iter.sh deploy   # Voll-Stack gegen echten LMN hochziehen (siehe /test)
 #   iter.sh shots    # Playwright-Login-/Modul-Screenshots + Pull
 set -uo pipefail
-SLUG="${CRABBOX_SLUG:-lmnui}"
+SLUG="$(grep -m1 '^SLUG=' .crabbox/warm.env 2>/dev/null | cut -d= -f2)"
+SLUG="${SLUG:-${CRABBOX_SLUG:-lmnui}}"
 mkdir -p .crabbox/out
 T="${1:?"Ziel angeben (lint|test:api|test:frontend|test|i18n|build|check|all|cmd|deploy|shots)"}"; shift || true
 case "$T" in
