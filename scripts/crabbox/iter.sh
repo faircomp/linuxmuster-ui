@@ -17,9 +17,9 @@ case "$T" in
   test:frontend) CMD='npx nx test frontend --run';;
   test)          CMD='npm run test && npx nx test frontend --run';;
   i18n)          CMD='npm run check-translations && npm run check-error-message-translations';;
-  build)         CMD='npm run build:all';;
+  build)         CMD='NODE_OPTIONS=--max-old-space-size=6144 npm run build:all';;
   check)         CMD='npm run lint && npm run test && npx nx test frontend --run && npm run check-translations';;
-  all)           CMD='npm run lint && npm run test && npx nx test frontend --run && npm run build:all && npm run check-translations';;
+  all)           CMD='npm run lint && npm run test && npx nx test frontend --run && NODE_OPTIONS=--max-old-space-size=6144 npm run build:all && npm run check-translations';;
   cmd)           CMD="$*";;
   deploy)        CMD='bash scripts/crabbox/deploy.sh';;
   shots)         CMD='/tmp/pw/bin/python3 scripts/crabbox/shots.py';;
