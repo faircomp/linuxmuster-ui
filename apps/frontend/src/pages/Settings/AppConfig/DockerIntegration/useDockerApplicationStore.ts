@@ -35,6 +35,10 @@ import type DockerCompose from '@libs/docker/types/dockerCompose';
 import { RequestResponseContentType } from '@libs/common/types/http-methods';
 import type UpdateContainerResponse from '@libs/docker/types/updateContainerResponse';
 
+const PLUGINS_BASE_URL =
+  (import.meta as unknown as { env?: { VITE_PLUGINS_BASE_URL?: string } }).env?.VITE_PLUGINS_BASE_URL ||
+  EDU_PLUGINS_GITHUB_URL;
+
 const initialValues = {
   containers: [],
   tableContentData: [],
@@ -151,7 +155,7 @@ const useDockerApplicationStore = create<DockerContainerTableStore>((set, get) =
   getDockerContainerConfig: async (applicationName: TApps, containerName: string) => {
     set({ isLoading: true, error: null });
 
-    const url = `${EDU_PLUGINS_GITHUB_URL}/${applicationName}/${containerName}/docker-compose.yml?ts=${Date.now()}}`;
+    const url = `${PLUGINS_BASE_URL}/${applicationName}/${containerName}/docker-compose.yml?ts=${Date.now()}}`;
     try {
       const { data } = await axios.get<string>(url, {
         headers: {
@@ -181,7 +185,7 @@ const useDockerApplicationStore = create<DockerContainerTableStore>((set, get) =
     set({ isLoading: true, error: null });
     try {
       const response = await axios.get<string>(
-        `${EDU_PLUGINS_GITHUB_URL}/${applicationName}/${containerName}/${applicationName}.yml`,
+        `${PLUGINS_BASE_URL}/${applicationName}/${containerName}/${applicationName}.yml`,
         {
           headers: {
             Accept: RequestResponseContentType.APPLICATION_GITHUB_RAW,

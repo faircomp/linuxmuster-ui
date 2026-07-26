@@ -19,9 +19,5 @@
 
 import { PRODUCT_DOCS_URL } from './productInfo';
 
-const pluginsBaseUrl = (import.meta as unknown as { env?: { VITE_PLUGINS_BASE_URL?: string } }).env
-  ?.VITE_PLUGINS_BASE_URL;
-
-export const EDU_PLUGINS_GITHUB_URL =
-  pluginsBaseUrl || 'https://raw.githubusercontent.com/faircomp/linuxmuster-plugins/main/apps';
+export const EDU_PLUGINS_GITHUB_URL = 'https://raw.githubusercontent.com/faircomp/linuxmuster-plugins/main/apps';
 export const EDU_DOCS_URL = PRODUCT_DOCS_URL;
