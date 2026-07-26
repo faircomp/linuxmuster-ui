@@ -26,7 +26,10 @@ describe(WebdavSharesController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WebdavSharesController],
       providers: [{ provide: WebdavSharesService, useValue: mockWebdavSharesService }],
-    }).compile();
+    })
+      .overrideGuard(AdminGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<WebdavSharesController>(WebdavSharesController);
   });

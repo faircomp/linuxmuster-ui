@@ -37,6 +37,7 @@ const mockChatMessageModel = {
 const mockChatReadStatusModel = {
   find: jest.fn(),
   findOneAndUpdate: jest.fn(),
+  collection: { name: 'chatreadstatuses' },
 };
 const mockCacheManager = { get: jest.fn() };
 const mockSseService = { sendEventToUsers: jest.fn() };

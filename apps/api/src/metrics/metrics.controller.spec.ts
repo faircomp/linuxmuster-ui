@@ -18,7 +18,10 @@ describe(MetricsController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MetricsController],
       providers: [{ provide: MetricsService, useValue: mockMetricsService }],
-    }).compile();
+    })
+      .overrideGuard(AdminGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<MetricsController>(MetricsController);
   });

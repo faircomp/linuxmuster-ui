@@ -3,6 +3,7 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
 import AuthController from './auth.controller';
 import AuthService from './auth.service';
@@ -28,7 +29,10 @@ describe(AuthController.name, () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: CACHE_MANAGER, useValue: { get: jest.fn(), set: jest.fn() } },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

@@ -22,7 +22,10 @@ describe(WebhookClientsController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WebhookClientsController],
       providers: [{ provide: WebhookClientsService, useValue: mockWebhookClientsService }],
-    }).compile();
+    })
+      .overrideGuard(AdminGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<WebhookClientsController>(WebhookClientsController);
   });

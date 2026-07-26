@@ -27,7 +27,10 @@ describe(BulletinCategoryController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BulletinCategoryController],
       providers: [{ provide: BulletinCategoryService, useValue: mockBulletinCategoryService }],
-    }).compile();
+    })
+      .overrideGuard(AdminGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<BulletinCategoryController>(BulletinCategoryController);
   });

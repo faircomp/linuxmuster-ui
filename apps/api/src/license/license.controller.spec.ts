@@ -3,6 +3,7 @@
  * Copyright (C) 2026 Kevin Stenzel
  */
 
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
 import LicenseController from './license.controller';
 import LicenseService from './license.service';
@@ -20,8 +21,14 @@ describe(LicenseController.name, () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LicenseController],
-      providers: [{ provide: LicenseService, useValue: mockLicenseService }],
-    }).compile();
+      providers: [
+        { provide: LicenseService, useValue: mockLicenseService },
+        { provide: CACHE_MANAGER, useValue: { get: jest.fn(), set: jest.fn() } },
+      ],
+    })
+      .overrideGuard(AdminGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<LicenseController>(LicenseController);
   });

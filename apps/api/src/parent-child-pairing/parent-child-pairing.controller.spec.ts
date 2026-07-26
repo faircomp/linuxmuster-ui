@@ -34,7 +34,10 @@ describe('ParentChildPairingController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ParentChildPairingController],
       providers: [{ provide: ParentChildPairingService, useValue: mockParentChildPairingService }],
-    }).compile();
+    })
+      .overrideGuard(DynamicAppAccessGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ParentChildPairingController>(ParentChildPairingController);
   });

@@ -18,7 +18,10 @@ describe(WebhookController.name, () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WebhookController],
       providers: [{ provide: WebhookService, useValue: mockWebhookService }],
-    }).compile();
+    })
+      .overrideGuard(WebhookGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<WebhookController>(WebhookController);
   });
