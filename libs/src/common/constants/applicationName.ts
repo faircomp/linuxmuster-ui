@@ -17,6 +17,8 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-const APPLICATION_NAME = 'edulution.io';
+import { PRODUCT_NAME } from './productInfo';
+
+const APPLICATION_NAME = PRODUCT_NAME;
 
 export default APPLICATION_NAME;
