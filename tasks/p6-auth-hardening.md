@@ -189,7 +189,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4
 
-### T13 — api: AuthService.revokeSession + logout (legt auth.service.spec.ts an)  [ ]
+### T13 — api: AuthService.revokeSession + logout (legt auth.service.spec.ts an)  [x] OK — revokeSession + logout, auth.service.spec.ts angelegt (11 Tests); invalid_grant und Form-Contract mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (**NEU — existiert heute nicht, wird hier angelegt und von T15–T18/T24/T27 erweitert**)
 Soll: main.js:67393–67402 (`logout`) · main.js:67403–67428 (`revokeSession`) · Konstante `KEYCLOAK_INVALID_GRANT_ERROR = 'invalid_grant'` main.js:67342 · Konstruktor main.js:67350
 Änderung: `SessionDenylistService` als **letzten** Konstruktor-Parameter anhängen (`auth.service.ts:54–58`; T24 schiebt später `qrLoginSessionService` an Position 3 ein, Endstand = Bundle). `async revokeSession(refreshToken?: string): Promise<boolean>` — ohne Token `true`; sonst `POST` an `AUTH_PATHS.AUTH_OIDC_LOGOUT_PATH` über `this.keycloakApi` mit `new URLSearchParams({ client_id, client_secret, refresh_token }).toString()` und Content-Type `RequestResponseContentType.APPLICATION_X_WWW_FORM_URLENCODED` → `true`; im catch: bei Axios-Error mit Status 400 **und** `error.response.data?.error === KEYCLOAK_INVALID_GRANT_ERROR` → `Logger.debug(...)` + `true` (Token war schon ungültig, die Session ist de facto weg), sonst ``Logger.warn(`Failed to revoke session: ${error.message}`, AuthService.name)`` + `false`. `async logout(refreshToken: string, session?: JWTUser): Promise<void>` — wenn `session && !session.sid`: `Logger.warn('Verified access token carries no sid, its session cannot be denied and stays usable until it expires', AuthService.name)`; dann `denySession(session?.sid, session?.exp)` und `revokeSession(refreshToken)` (beide awaiten); wenn eines `false` liefert → `CustomHttpException(AuthErrorMessages.LogoutFailed, HttpStatus.INTERNAL_SERVER_ERROR, { isDenied, isRevoked }, AuthService.name)`. `'invalid_grant'` als Modul-Konstante.
@@ -198,7 +198,7 @@ i18n: keine (Key kommt aus T2)
 Doku: keine (intern)
 Abhängt von: T1, T2, T8, T9
 
-### T14 — api: POST /auth/logout inkl. LogoutRequestDto  [ ]
+### T14 — api: POST /auth/logout inkl. LogoutRequestDto  [x] OK — POST /auth/logout mit DTO, Throttle byIp + ThrottleGuard und strictValidationPipe; Guard und Pipe mutationsgeprüft
 Komponente: apps/api, libs · Dateien: `libs/src/auth/types/logoutRequest.dto.ts` (NEU), `apps/api/src/auth/auth.controller.ts`
 Soll: main.js:68041–68043 (Handler) · main.js:68105–68118 (Decorators) · main.js:68668 ff. (`LogoutRequestDto`, Modul-Bereich 68642–68679)
 Änderung: DTO-Klasse mit einem Feld `refresh_token: string`, validiert mit `@IsString()` + `@MinLength(1)` (Muster: `libs/src/auth/types/loginQrSse.dto.ts`), AGPL-SPDX-Header. Controller-Route: `@Public()` + `@Post(AUTH_PATHS.AUTH_LOGOUT)` + `@HttpCode(HttpStatus.NO_CONTENT)` + `@UsePipes(strictValidationPipe)` + **`@Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })` + `@UseGuards(ThrottleGuard)`**; Signatur `logout(@Body() body: LogoutRequestDto, @GetBearerSession() session: JWTUser | undefined)` → `this.authService.logout(body.refresh_token, session)`.
@@ -208,6 +208,12 @@ Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test --testPathPattern
 i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T7, T12, T13
+
+> **Fallstrick beim Bauen von T14 gefunden:** das Body-DTO muss als **Wert** importiert werden
+> (`import LogoutRequestDto from …`), nicht als `import type`. Mit `import type` löscht TypeScript den Import,
+> `design:paramtypes` steht dann auf `Object`, und die `ValidationPipe` überspringt die Prüfung **stillschweigend** —
+> tsc, eslint und jeder Contract-Test bleiben grün. Im kompilierten Bundle nachgeprüft: mit Wert-Import steht dort
+> `logoutRequest_dto_1.default`. Gilt für jedes künftige DTO in T21/T22/T27.
 
 ### T15 — api: validateTotp (Counter + explizites Fenster) + splitPasswordAndTotp  [ ]
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern, angelegt in T13)

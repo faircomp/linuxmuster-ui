@@ -17,7 +17,7 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import { Request } from 'express';
 import { from, Observable } from 'rxjs';
@@ -37,6 +37,7 @@ import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import type LoginQrSseDto from '@libs/auth/types/loginQrSse.dto';
 import { decodeBase64Api, encodeBase64Api } from '@libs/common/utils/getBase64StringApi';
 import GroupRoles from '@libs/groups/types/group-roles.enum';
+import type JWTUser from '@libs/user/types/jwt/jwtUser';
 import UserRoles from '@libs/user/constants/userRoles';
 import getIsAdmin from '@libs/user/utils/getIsAdmin';
 import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
@@ -45,8 +46,11 @@ import CustomHttpException from '../common/CustomHttpException';
 import { User, UserDocument } from '../users/user.schema';
 import SseService from '../sse/sse.service';
 import GlobalSettingsService from '../global-settings/global-settings.service';
+import SessionDenylistService from './session-denylist.service';
 
 const { KEYCLOAK_EDU_UI_SECRET, KEYCLOAK_EDU_UI_CLIENT_ID, KEYCLOAK_EDU_UI_REALM, KEYCLOAK_API } = process.env;
+
+const KEYCLOAK_INVALID_GRANT_ERROR = 'invalid_grant';
 
 @Injectable()
 class AuthService {
@@ -56,6 +60,7 @@ class AuthService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly sseService: SseService,
     private readonly globalSettingsService: GlobalSettingsService,
+    private readonly sessionDenylistService: SessionDenylistService,
   ) {
     this.keycloakApi = axios.create({
       baseURL: `${KEYCLOAK_API}/realms/${KEYCLOAK_EDU_UI_REALM}`,
@@ -114,6 +119,65 @@ class AuthService {
       throw new HttpException(
         { error: AuthErrorMessages.Unknown, error_description: AuthErrorMessages.LmnConnectionFailed },
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async revokeSession(refreshToken?: string): Promise<boolean> {
+    if (!refreshToken) {
+      return true;
+    }
+
+    try {
+      await this.keycloakApi.post(
+        AUTH_PATHS.AUTH_OIDC_LOGOUT_PATH,
+        new URLSearchParams({
+          client_id: KEYCLOAK_EDU_UI_CLIENT_ID ?? '',
+          client_secret: KEYCLOAK_EDU_UI_SECRET ?? '',
+          refresh_token: refreshToken,
+        }).toString(),
+        {
+          headers: {
+            [HTTP_HEADERS.ContentType]: RequestResponseContentType.APPLICATION_X_WWW_FORM_URLENCODED,
+          },
+        },
+      );
+      return true;
+    } catch (error) {
+      const isAlreadyInvalid =
+        error instanceof AxiosError &&
+        error.response?.status === HttpStatus.BAD_REQUEST &&
+        (error.response.data as ErrorResponse | undefined)?.error === KEYCLOAK_INVALID_GRANT_ERROR;
+
+      if (isAlreadyInvalid) {
+        Logger.debug('Refresh token was already invalid, its session is gone anyway', AuthService.name);
+        return true;
+      }
+
+      Logger.warn(`Failed to revoke session: ${(error as Error).message}`, AuthService.name);
+      return false;
+    }
+  }
+
+  async logout(refreshToken: string, session?: JWTUser): Promise<void> {
+    if (session && !session.sid) {
+      Logger.warn(
+        'Verified access token carries no sid, its session cannot be denied and stays usable until it expires',
+        AuthService.name,
+      );
+    }
+
+    const [isDenied, isRevoked] = await Promise.all([
+      this.sessionDenylistService.denySession(session?.sid, session?.exp),
+      this.revokeSession(refreshToken),
+    ]);
+
+    if (!isDenied || !isRevoked) {
+      throw new CustomHttpException(
+        AuthErrorMessages.LogoutFailed,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { isDenied, isRevoked },
+        AuthService.name,
       );
     }
   }

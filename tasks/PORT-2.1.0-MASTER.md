@@ -77,7 +77,15 @@ Jede dieser Fallen hat mindestens ein Ledger falsch-grün gemacht. Vor dem Schre
 8. **Testzahl-Zusagen gegen die reale Baseline messen**, nicht schätzen; eine Untergrenze unterhalb des Ist-Standes
    ist ohne jede Arbeit erfüllt.
 9. **`grep -c` über ein Glob** (`docs/adr/*.md`) gibt Pro-Datei-Zählungen aus — ein `≥ n`-Vergleich darauf ist bedeutungslos.
-10. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
+10. **`npm run lint` ist als Abnahme-Gate untauglich — es repariert still.** `apps/api/project.json` (und
+    `apps/frontend/project.json`) setzen am Lint-Target `"options": { "fix": true }`. Der Lauf **schreibt also in
+    den Arbeitsbaum** und meldet für jede autofixbare Regel (u. a. `import/order`) Erfolg, ohne sie je zu zeigen.
+    Genau so ist es am 2026-07-27 passiert: lokal 3 `import/order`-Fehler, remote „All files pass linting".
+    **`--skip-nx-cache` hilft dagegen nicht** — `fix` ist eine Target-Option und wirkt weiter.
+    Gate deshalb `npx nx run-many -t lint --skip-nx-cache --fix=false` oder direkt `npx eslint <pfade>`.
+    Nebenbefund: `npm run lint` ist auf `--projects=frontend,api,libs` festgenagelt, `nx run-many -t lint` nimmt das
+    Root-Projekt mit → 4 statt 3 „All files pass"-Zeilen, unabhängig vom Cache.
+11. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
     **nie** eine `|`-Alternation (nx reicht den Wert ungequotet an eine Shell); **nie** `--listTests` als Gate
     (endet bei 0 Treffern mit Exit 0). Frontend: Pfad **relativ zu `apps/frontend`**.
 
