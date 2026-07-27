@@ -402,3 +402,5 @@ scripts/ops/**/*.tar*
 *.gpg
 scripts/ops/out/
 dr-out/
+
+__pycache__/

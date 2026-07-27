@@ -22,7 +22,7 @@ case "$T" in
   all)           CMD='npm run lint && npm run test && npx nx test frontend --run && NODE_OPTIONS=--max-old-space-size=6144 npm run build:all && npm run check-translations';;
   cmd)           CMD="$*";;
   deploy)        CMD='bash scripts/crabbox/deploy.sh';;
-  shots)         CMD='/tmp/pw/bin/python3 scripts/crabbox/shots.py';;
+  shots)         CMD='set -a; . "$HOME/.edulution-lmn.env"; set +a; EDU_BASE_URL="https://$(hostname -I | awk "{print \$1}")" /tmp/pw/bin/python3 scripts/crabbox/shots.py';;
   *) echo "unbekanntes Ziel: $T"; exit 2;;
 esac
 echo "[iter:$T] auf $SLUG …"
