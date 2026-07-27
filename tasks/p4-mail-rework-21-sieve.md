@@ -49,6 +49,22 @@
 > Verifikation **remote**: `bash scripts/crabbox/iter.sh <lint|test:api|test:frontend|i18n|build|all>` bzw.
 > `iter.sh cmd '<befehl>'`; FE-Tasks **zusätzlich** `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'`.
 >
+> **Runner-/Slot-Fakten (auf der Box gemessen, 2026-07-27 — nicht raten, nicht „vereinfachen"):**
+> - **R1 — `npx tsc -p libs/tsconfig.json --noEmit` endet HEUTE mit exit 2.** Genau ein Alt-Fehler:
+>   `libs/src/license/constants/licenseServerUrl.ts(20,40): error TS4111`. „exit 0" ist damit **unerfüllbar**.
+>   Wo unten **`LIBS_TSC`** steht, ist exakt das gemeint:
+>   `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit 2>&1 | grep "error TS" | grep -v "licenseServerUrl.ts(20,40)" > /tmp/libs-tsc-new.txt; test ! -s /tmp/libs-tsc-new.txt'`
+>   → exit 0 nur, wenn **kein neuer** libs-Fehler dazugekommen ist. Den Baseline-Fehler nicht nebenbei mitfixen
+>   (Surgical-Regel) — dann müsste dieses Makro angepasst werden.
+> - **R2 — das FE läuft auf Vitest** (`apps/frontend/project.json`, `@nx/vite`). `--testPathPattern` ist ein
+>   **Jest**-Flag und bricht mit `CACError: Unknown option --testPathPattern` (rc=1). Richtig ist
+>   `npx nx test frontend --run src/<pfad relativ zu apps/frontend>`. API-seitig bleibt Jest:
+>   `npx nx test api --testPathPattern=<EIN Pfad-Token>` — **nie** eine `|`-Alternation (nx reicht das
+>   ungequotet an die Shell) und **nie** `--listTests` als Gate (exit 0 auch bei 0 Treffern).
+> - **R3 — Migrations-Slot: `p4-mail` hält appConfig-Slot **014**** (`PORT-2.1.0-MASTER.md:225` D1, `:140`).
+>   Die Slots **010–013** gehören `p6-migrations-2-1-catchup` (T8 `010`, T9 `011`, T11 `012-unify-mail-server-config`,
+>   T12 `013`) — dort **nicht** hineingreifen und `012` **nicht** nachbauen.
+>
 > **`[?] human-gate` bleibt:** Phase 3 wird nicht unbeaufsichtigt gebaut. Kevin gibt sie gesondert frei.
 
 ---
@@ -57,25 +73,25 @@
 Komponente: libs · Dateien: `libs/src/mail/constants/mailEndpointPaths.ts`, `libs/src/mail/constants/mailDefaultPorts.ts`
 Soll: NEW:28902–28928 (`MAIL_ENDPOINT_PATHS`, 24 Werte — gegenüber Fork **neu**: `AUTO_REPLY:'auto-reply'`, `SHARED:'shared'`, `FORWARD:'forward'`, `FILTERS:'filters'`, `ACTIVE:'active'`, `ADDRESSES:'addresses'`, `FAVORITES:'favorites'`) · NEW:4018–4024 (`MAIL_DEFAULT_PORTS` + `MANAGESIEVE: 4190`)
 Änderung: Die 7 Keys **am Ende** des bestehenden `MAIL_ENDPOINT_PATHS`-Objekts anhängen (Reihenfolge 2.1.0-treu), `MANAGESIEVE: 4190` an `MAIL_DEFAULT_PORTS` anhängen. Rein additiv, keine bestehende Zeile ändern.
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; `grep -c ": '" libs/src/mail/constants/mailEndpointPaths.ts` == 24; `grep MANAGESIEVE libs/src/mail/constants/mailDefaultPorts.ts` findet `4190`
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'test $(grep -c ": ." libs/src/mail/constants/mailEndpointPaths.ts) -eq 25'` — **heute selbst gemessen: 18** (das Muster `": ."` matcht **auch** die SPDX-Zeile `SPDX-License-Identifier: AGPL-3.0-or-later`; die apostroph-genaue Variante `": \x27"` zählt 17, überlebt aber den einfach gequoteten `iter.sh cmd '…'`-Wrapper nicht), nach den +7 Keys exakt **25**; `iter.sh cmd 'grep -q 4190 libs/src/mail/constants/mailDefaultPorts.ts'` exit 0
 i18n: keine
 Doku: keine (intern)
 Abhängt von: —
 
 ### T11 — libs: Mail-Limits & -Defaults (Konstanten)  [ ]
 Komponente: libs · Dateien: `libs/src/mail/constants/mailDefaults.ts`, `mailFieldLimits.ts`, `mailAttachmentMaxFileSize.ts`, `mailAttachmentMaxFileCount.ts`, `mailAddressMaxLength.ts`, `recipientSearch.ts` (alle neu)
-Soll: NEW:28956–28963 (`MAIL_DEFAULTS`: FOLDER=INBOX, PAGE 1, PAGE_SIZE 50, MAX_PAGE_SIZE 200, MAX_SEARCH_QUERY_LENGTH 256) · NEW:29046–29056 (`TOTAL_WIRE_MAX_BYTES = 20_971_520`; `MAIL_FIELD_LIMITS`: SUBJECT 998, TEXT_BODY 1_000_000, HTML_BODY = TOTAL_WIRE, IN_REPLY_TO 998, ADDRESS_NAME 255, ADDRESS 320) · NEW:28990 (`MAIL_ATTACHMENT_MAX_FILE_SIZE = 20*1024*1024`) · NEW:29018 (`MAIL_ATTACHMENT_MAX_FILE_COUNT = 10`) · NEW:41670 (`MAIL_ADDRESS_MAX_LENGTH = 320`) · NEW:38472–38476 (`RECIPIENT_SEARCH`: MIN_QUERY_LENGTH 1, MAX_RESULTS 50)
-Änderung: 6 `as const`-Konstantenmodule feldgenau anlegen. **`TOTAL_WIRE_MAX_BYTES` ist ein Literal ohne Env-Override** (siehe Header-Fakt 1). `MAIL_DEFAULTS.FOLDER` referenziert den INBOX-Namen aus dem bestehenden Fork-IMAP-Flag-Modul; existiert dort keiner, `'INBOX'` als Konstante in derselben Datei.
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; `grep -c '20_971_520\|20971520' libs/src/mail/constants/mailFieldLimits.ts` == 1
+Soll: NEW:28956–28963 (`MAIL_DEFAULTS`: **`FOLDER: MAIL_FOLDER_NAMES.INBOX`** (28957), PAGE 1, PAGE_SIZE 50, MAX_PAGE_SIZE 200, MAX_SEARCH_QUERY_LENGTH 256) · NEW:29046 (`TOTAL_WIRE_MAX_BYTES = 20_971_520` als Modul-Konstante) + NEW:29047–29055 (`MAIL_FIELD_LIMITS` mit **exakt diesen Feldnamen**: `SUBJECT_MAX_LENGTH: 998`, `TEXT_BODY_MAX_LENGTH: 1_000_000`, `HTML_BODY_MAX_LENGTH: TOTAL_WIRE_MAX_BYTES`, `IN_REPLY_TO_MAX_LENGTH: 998`, `ADDRESS_NAME_MAX_LENGTH: 255`, `ADDRESS_MAX_LENGTH: 320`, `TOTAL_WIRE_MAX_BYTES`) · NEW:28990 (`MAIL_ATTACHMENT_MAX_FILE_SIZE = 20*1024*1024`) · NEW:29018 (`MAIL_ATTACHMENT_MAX_FILE_COUNT = 10`) · NEW:41670 (`MAIL_ADDRESS_MAX_LENGTH = 320`) · NEW:38472–38476 (`RECIPIENT_SEARCH`: MIN_QUERY_LENGTH 1, MAX_RESULTS 50)
+Änderung: 6 `as const`-Konstantenmodule feldgenau anlegen; **Feldnamen wörtlich wie oben, keine Kurzformen**. **`TOTAL_WIRE_MAX_BYTES` ist ein Literal ohne Env-Override** (siehe Header-Fakt 1) und wird sowohl eigenständig als auch als Feld in `MAIL_FIELD_LIMITS` exportiert. **`MAIL_DEFAULTS.FOLDER` importiert `MAIL_FOLDER_NAMES.INBOX` aus T56** — der Fork hat heute **kein** IMAP-Flag-/Ordnernamen-Modul (`grep -rn "MAIL_FOLDER_NAMES\|MAIL_SPECIAL_USE" libs/ apps/` → leer); **kein zweites `'INBOX'`-Literal anlegen**.
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'grep -q "20_971_520" libs/src/mail/constants/mailFieldLimits.ts && grep -q "MAIL_FOLDER_NAMES" libs/src/mail/constants/mailDefaults.ts'` exit 0; `iter.sh cmd 'for k in SUBJECT_MAX_LENGTH TEXT_BODY_MAX_LENGTH HTML_BODY_MAX_LENGTH IN_REPLY_TO_MAX_LENGTH ADDRESS_NAME_MAX_LENGTH ADDRESS_MAX_LENGTH; do grep -q "$k" libs/src/mail/constants/mailFieldLimits.ts || exit 1; done'` exit 0
 i18n: keine
 Doku: keine (intern)
-Abhängt von: —
+Abhängt von: T56
 
 ### T12 — libs: IMAP-Lese-DTOs (Mailbox / Liste / Detail / Anhang / Status)  [ ]
 Komponente: libs · Dateien: `libs/src/mail/types/mailboxResponse.dto.ts`, `mailSummaryResponse.dto.ts`, `paginatedMailsResponse.dto.ts`, `mailDetailResponse.dto.ts`, `mailAttachmentResponse.dto.ts`, `mailStatusResponse.dto.ts`, `mailResponse.dto.ts`, `mailAddressBase.dto.ts` (alle neu)
 Soll: NEW:39427 `MailboxResponseDto` · NEW:39562 `MailSummaryResponseDto` · NEW:39494 `PaginatedMailsResponseDto` · NEW:39693 `MailDetailResponseDto` · NEW:39794 `MailAttachmentResponseDto` · NEW:39638 `MailStatusResponseDto` · NEW:39366 `MailResponseDto` · NEW:38670 `MailAddressBaseDto`
 Änderung: Response-DTO-Klassen feldgenau übernehmen (nur `@ApiProperty`, **keine** class-validator-Decorators — es sind Ausgabe-DTOs). Eine Klasse pro Datei (`max-classes-per-file`), Default-Export am Ende. SPDX.
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; `ls libs/src/mail/types | grep -cE "mailboxResponse|mailDetailResponse|paginatedMailsResponse"` == 3
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'test $(ls libs/src/mail/types | grep -cE "mailboxResponse|mailDetailResponse|paginatedMailsResponse") -eq 3'` exit 0
 i18n: keine
 Doku: keine (intern)
 Abhängt von: T11
@@ -84,7 +100,7 @@ Abhängt von: T11
 Komponente: libs · Dateien: `libs/src/mail/types/deleteMailsBody.dto.ts`, `mailMoveBody.dto.ts`, `mailStatusUpdate.dto.ts`, `mailFlagsUpdateBody.dto.ts`, `mailFolderCreateBody.dto.ts`, `mailFolderRenameBody.dto.ts`, `sendMailBody.dto.ts`, `saveDraftBody.dto.ts`, `sendMailResultResponse.dto.ts`, `saveDraftResponse.dto.ts`, `senderAddress.dto.ts`, `forwardSource.dto.ts` (alle neu)
 Soll: NEW:39847 `DeleteMailsBodyDto` · NEW:39897 `MailMoveBodyDto` · NEW:39999 `MailStatusUpdateDto` · NEW:39949 `MailFlagsUpdateBodyDto` · NEW:40059 `MailFolderCreateBodyDto` · NEW:40098 `MailFolderRenameBodyDto` · NEW:40143 `SendMailBodyDto` · NEW:39156 `SaveDraftBodyDto` · NEW:39317 `SendMailResultResponseDto` · NEW:39266 `SaveDraftResponseDto` · NEW:38710 `SenderAddressDto` · NEW:38755 `ForwardSourceDto`
 Änderung: Body-DTOs **inklusive aller class-validator-Decorators** übernehmen (Längen aus `MAIL_FIELD_LIMITS`/`MAIL_ADDRESS_MAX_LENGTH`, T11 — keine Zahlenliterale in den DTOs). Nested-Arrays mit `@ValidateNested({each:true})` + `@Type()`. SPDX.
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; `grep -L "class-validator" libs/src/mail/types/{deleteMailsBody,mailMoveBody,sendMailBody,saveDraftBody}.dto.ts` liefert nichts
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'for f in deleteMailsBody mailMoveBody sendMailBody saveDraftBody; do grep -q "class-validator" libs/src/mail/types/$f.dto.ts || exit 1; done'` exit 0
 i18n: keine
 Doku: keine (intern)
 Abhängt von: T11
@@ -93,7 +109,7 @@ Abhängt von: T11
 Komponente: libs · Dateien: `libs/src/mail/constants/recipientType.ts`, `libs/src/groups/constants/groupSubtype.ts`, `libs/src/mail/types/recipientResponse.dto.ts` (neu)
 Soll: NEW:30108–30114 (`RECIPIENT_TYPE = {USER:'user',GROUP:'group',ALIAS:'alias',SHARED:'shared'}`) · NEW:30175–30182 (`GROUP_SUBTYPE = {PARENTS:'parents',PARENTS_CLASS:'parentsClass',MAILLIST:'maillist',CLASS:'class',PROJECT:'project'}`) · NEW:42329–42345 (`RecipientResponseDto`: `type`/`label`/`email`)
 Änderung: Zwei const-Objekte + derived Types; `RecipientResponseDto` mit `@ApiProperty`. **Prüfen, ob `groupSubtype` im Fork schon existiert** (`grep -rn "GROUP_SUBTYPE" libs/`) — falls ja, nur fehlende Werte additiv ergänzen, keine neue Datei.
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; `grep -c "'" libs/src/mail/constants/recipientType.ts` >= 4
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'for k in USER GROUP ALIAS SHARED; do grep -q "$k:" libs/src/mail/constants/recipientType.ts || exit 1; done'` exit 0; `iter.sh cmd 'for k in PARENTS PARENTS_CLASS MAILLIST CLASS PROJECT; do grep -rq "$k:" libs/src/groups/constants/groupSubtype.ts || exit 1; done'` exit 0
 i18n: keine
 Doku: keine (intern)
 Abhängt von: —
@@ -165,7 +181,7 @@ Abhängt von: T11
 Komponente: libs · Dateien: `libs/src/mail/constants/mailAutoReplyDefaults.ts`, `mailAutoReplySenderScopes.ts`, `mailForwardDefaults.ts`, `mailFilterDefaults.ts`, `mailFilterActions.ts`, `mailFilterFields.ts`, `mailFilterTests.ts`, `mailFilterMatch.ts`, `mailFilterFieldTests.ts`, `sieveScript.ts` (alle neu)
 Soll: NEW:35645–35654 `MAIL_AUTO_REPLY_DEFAULTS` (REPLY_INTERVAL_DAYS_DEFAULT 1 / _MIN 1 / _MAX 365, NAME_MAX_LENGTH 100, SUBJECT_MAX_LENGTH 255, MESSAGE_MAX_LENGTH 4000, MAX_PRESETS_PER_USER 20, IMPORTED_PRESET_NAME_KEY `'mail.autoReply.importedName'`) · NEW:35682–35686 `MAIL_AUTO_REPLY_SENDER_SCOPES` (all/internal/external) · NEW:35714–35716 `MAIL_FORWARD_DEFAULTS` (`MAX_FORWARD_TARGETS: 4`) · NEW:35744–35750 `MAIL_FILTER_DEFAULTS` (MAX_RULES_PER_USER 50, MAX_CONDITIONS_PER_RULE 10, MAX_ACTIONS_PER_RULE 10, MAX_VALUE_LENGTH 1024, MAX_NAME_LENGTH 128) · NEW:35778–35785 `MAIL_FILTER_ACTIONS` (fileinto/redirect/redirectCopy/discard/addflag/setflag) · NEW:37718–37724 `MAIL_FILTER_FIELDS` (from/to/cc/subject/size) · NEW:38030–38036 `MAIL_FILTER_TESTS` (contains/is/matches/over/under) · NEW:37752–37755 `MAIL_FILTER_MATCH` (all/any) · NEW:42194–42202 `MAIL_FILTER_FIELD_TESTS` + `isFilterTestValidForField` (Text-Felder → contains/is/matches, `size` → over/under) · NEW:37018–37028 `SIEVE_SCRIPT` (ACTIVE_SCRIPT_NAME `'edulution'`, AUTO_REPLY/FORWARD/FILTERS_BLOCK_BEGIN|END, ZONE_UTC `'+0000'`)
 Änderung: 10 `as const`-Module feldgenau. `SIEVE_SCRIPT.ACTIVE_SCRIPT_NAME` bleibt **`'edulution'`** (Wert ist Wire-Format gegenüber Dovecot, kein Branding — im Rebrand nicht ändern, sonst verwaisen bestehende Skripte). `isFilterTestValidForField` als benannter Export neben dem Default.
-Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mailFilterFieldTests'` grün (size+contains → false, size+over → true, subject+matches → true, unbekanntes Feld → false); `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mailFilterFieldTests'` grün (size+contains → false, size+over → true, subject+matches → true, unbekanntes Feld → false) — **die Spec gehört nach `apps/api/src/mails/mailFilterFieldTests.spec.ts`, nicht nach `libs/`**: `libs/**/*.spec.ts` wird von keinem Runner erfasst (api-Jest hat `rootDir=apps/api`, Vitest `include=apps/frontend/src`; `PORT-2.1.0-MASTER.md:67` F1), der Verify liefe sonst gegen 0 Treffer; Fork-Präzedenz ist `apps/api/src/mails/mailcowMailboxValidation.spec.ts`. Zusätzlich `LIBS_TSC` (R1) exit 0
 i18n: keine (der Key-String `mail.autoReply.importedName` wird in T39 übersetzt)
 Doku: keine (intern)
 Abhängt von: —
@@ -300,7 +316,7 @@ Abhängt von: T14, T35
 Komponente: apps/api · Dateien: `apps/api/src/mails/mails.controller.ts`, `apps/api/src/mails/mails.module.ts`
 Soll: Decorator-Block NEW:28039–28277 + Handler NEW:27775–27852 — `GET ''` (28039), `GET mailboxes` (28049), `GET messages` (28059, Query `folder/page/limit/query/unreadOnly`, Clamping im Handler 27790–27800), `GET messages/:uid` (28094), `DELETE messages` (28108 + `UsePipes(MAILS_VALIDATION_PIPE)` 28112), `PATCH messages/destination` (28121), `PATCH messages/status` (28136), `POST mailboxes` (28151), `DELETE mailboxes/:path` (28164), `PATCH mailboxes` (28176), `GET messages/:uid/attachments/:partId` (28189), `POST outbox` (28210 + **`UseGuards(MailRequestSizeGuard)` 28222**), `POST drafts` (28237 + **Guard 28242**), `PUT drafts/:uid` (28257 + **Guard 28263**) · `MAIL_UPLOAD_LIMITS` (27749–27753) + `assertMailWithinTotalLimit` (27754–27759)
 Änderung: 14 Routen ergänzen, Delegation an `MailImapService`/`MailSmtpService`/`MailsService`. **`MailRequestSizeGuard` an outbox + beide drafts-Routen — nicht vergessen, das ist die einzige Vorab-Bremse vor dem Multer-Buffering.** `assertMailWithinTotalLimit` zusätzlich im Handler. `deleteFolder`/`renameFolder` rufen **im selben Handler** `mailSieveService.reconcileFilterFoldersForChange` (NEW:27821–27830) — sonst zeigen Filterregeln auf tote Ordner. Klassen-Decorators (`@RequireAppAccess(APPS.MAIL)`, `@ApiBearerAuth`) bleiben; kein Handler ist `@Public`.
-Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mails.controller'` grün (Clamping: `limit=9999` → 200, `page=0` → 1; `query` gesetzt → `searchMails` statt `getMailsByFolder`; `deleteFolder` ruft Reconcile mit `(path, null)`); `iter.sh cmd 'npx nx build api'` Successfully ran
+Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mails.controller'` grün (Clamping: `limit=9999` → 200, `page=0` → 1; `query` gesetzt → `searchMails` statt `getMailsByFolder`; `deleteFolder` ruft Reconcile mit `(path, null)`); `iter.sh cmd 'test $(grep -c "UseGuards(MailRequestSizeGuard)" apps/api/src/mails/mails.controller.ts) -eq 3'` exit 0 (**alle drei** Routen — die Import-Zeile matcht dieses Muster nicht, zwei von drei Guards fallen also durch); `iter.sh cmd 'npx nx build api'` „Successfully ran"
 i18n: keine
 Doku: keine (intern)
 Abhängt von: T19, T20, T21, T34
@@ -314,16 +330,19 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T23, T37, T36, T32, T33
 
-### T39 — BE: `GET /mails/domains` (Fork behält AdminGuard) + Mailcow-Admin-Restrouten  [ ]
-Komponente: apps/api · Dateien: `apps/api/src/mails/mails.controller.ts`, `apps/frontend/src/pages/Settings/AppConfig/mails/MailcowAdminPanel.tsx`, `apps/frontend/src/pages/Mail/useMailsStore.ts`
+### T39 — BE: `GET /mails/domains` (Fork behält AdminGuard) + Mailcow-Admin-Restrouten  [?] entscheidung (D8)
+Komponente: apps/api + apps/frontend · Dateien: `apps/api/src/mails/mails.controller.ts`, `apps/api/src/mails/mails.controller.spec.ts`, `apps/frontend/src/pages/Settings/AppConfig/mails/MailcowAdminPanel.tsx`, `apps/frontend/src/pages/Mail/useMailsStore.ts`
+**`[?]` — nicht ohne D8 bauen.** `PORT-2.1.0-MASTER.md:234` (D8) hält offen, ob der Fork den `AdminGuard` behält (Empfehlung: ja, einziger Consumer ist das Admin-Panel) oder 2.1.0-treu aufweitet. Bis Kevin entscheidet, bleibt der Task liegen — `:121` warnt genau davor, dass ein autonomer Agent hier einen Guard zieht.
+**Fork-Ist (verifiziert):** der Handler heißt `getMailcowDomains` (`mails.controller.ts:145`), der Pfad wird aus `MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES`/`.DOMAINS` komponiert (`:143`) und delegiert an **`MailcowAdminService.getMailcowDomains()`** — nicht an `MailsService`. Rename auf `getMailDomains`, Delegation an `MailcowAdminService` **bleibt**.
 Soll: NEW:28387–28394 (`GET mails/domains` → `mailsService.getMailcowDomains()`, **ohne `UseGuards`**) — ersetzt in 2.1.0 die 2.0.200-Route `GET mails/mailcow-mailboxes/domains` (dort mit AdminGuard) · NEW:28777–28839 (`GET mailcow-mailboxes/folders/:mailbox`, `GET mailcow-mailboxes/delegates`, `GET/POST mailcow-mailboxes/delegates/:mailbox`, `DELETE mailcow-mailboxes/:mailbox` — je mit `AdminGuard`)
 Änderung: Fork-Route auf `GET /mails/domains` umstellen (Pfad aus `MAIL_ENDPOINT_PATHS.DOMAINS`) und **`@UseGuards(AdminGuard)` bewusst beibehalten** — Divergenz zu 2.1.0, weil die Domainliste im Fork ausschließlich das Admin-Panel speist und eine Auskunft über alle Maildomänen an jeden angemeldeten Schüler unnötig ist. FE-Consumer (Store-Action + Panel) auf den neuen Pfad nachziehen (**Contract-Sync**, Surgical-Regel gilt hier nicht). Die in T7 deferrten Delegates-/Folders-Routen mit `AdminGuard` ergänzen (Service-Seite kommt aus T19/T35) und `deleteMailcowMailboxes` um die 2.1.0-`cleanupSharedMailboxData`-Kopplung erweitern.
-Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mails.controller'` grün (`GET /mails/domains` trägt `AdminGuard`; alte `mailcow-mailboxes/domains`-Route existiert nicht mehr); `iter.sh cmd 'grep -rn "mailcow-mailboxes/domains" apps/ libs/'` liefert **nichts**; `iter.sh test:frontend` grün (Store ruft `mails/domains`)
+Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mails.controller'` grün (`getMailDomains` trägt `AdminGuard`; kein Handler mehr unter `mailcow-mailboxes/domains`); `iter.sh cmd 'grep -q getMailDomains apps/api/src/mails/mails.controller.spec.ts && ! grep -qE "^  getMailcowDomains\\(" apps/api/src/mails/mails.controller.ts'` exit 0 — **Anker auf die Handler-Deklaration am Zeilenanfang**, nicht auf den Namen: die Delegationszeile `return this.mailcowAdminService.getMailcowDomains();` (`:146`) **bleibt** laut T38 bestehen, ein ungeankertes `! grep -q "getMailcowDomains("` könnte also nie grün werden. **Schlägt heute fehl** (`mails.controller.ts:145` heißt noch `getMailcowDomains(`, `mails.controller.spec.ts:43` listet noch den alten Namen), greift also genau dann, wenn Route **und** Contract-Spec umbenannt sind; `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/useMailsStore.spec.ts'` grün (Store ruft `mails/domains`)
 i18n: keine
 Doku: siehe T40
 Abhängt von: T35, T37
 
-### T40 — Doku: ADR „GET /mails/domains behält den AdminGuard"  [ ]
+### T40 — Doku: ADR zu `GET /mails/domains` (Guard behalten oder aufweiten)  [?] entscheidung (D8)
+**`[?]` — die ADR wird erst nach D8 geschrieben und hält fest, was entschieden wurde.** Fällt D8 auf „2.1.0-treu aufweiten", dreht sich Entscheidung und Konsequenz-Abschnitt um; der Titel `0002-mails-domains-admin-guard.md` passt für beide Ausgänge.
 Komponente: docs · Dateien: `docs/adr/0002-mails-domains-admin-guard.md` (neu)
 Soll: NEW:28387–28394 (2.1.0 ohne Guard) vs. 2.0.200:23664 ff. (`getMailcowDomains` mit `AdminGuard`) · Präzedenz-ADR `docs/adr/0001-active-mail-client-selector.md`
 Änderung: ADR mit Status/Kontext/Entscheidung/Konsequenzen: (a) 2.1.0 hat den Guard beim Umbau `mailcow-mailboxes/domains` → `domains` **entfernt**; (b) der Fork behält ihn, weil die Route im Fork nur das Admin-Panel bedient und die Domainliste eine Organisationsinformation ist; (c) Konsequenz: sollte später ein Endnutzer-Feature (z. B. Absenderklassifikation im Compose-Dialog) die Domains brauchen, wird eine **zweite, bewusst öffentliche** Route mit reduzierter Antwort geschaffen — der Guard wird nicht nachträglich entfernt; (d) Aufwand beim Upstream-Abgleich: diese Route bei jedem Retarget prüfen.
@@ -336,19 +355,19 @@ Abhängt von: T39
 Komponente: libs + apps/api · Dateien: `libs/src/appconfig/constants/extendedOptionKeys.ts`, `libs/src/appconfig/constants/extendedOptions/mailGeneralExtendedOptions.ts`, `libs/src/appconfig/constants/extendedOptions/mailServerExtendedOptions.ts` (neu), `mailboxManagementExtendedOptions.ts` (neu), `mailExternalProvidersExtendedOptions.ts` (neu), `libs/src/appconfig/constants/defaultAppConfig.ts`, `apps/api/src/appconfig/initializeCollection.ts`
 Soll: NEW:2371–2375 (`MAIL_IMAP_HOST`, `MAIL_IMAP_PORT`, `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_TLS_REJECT_UNAUTHORIZED`) · NEW:2411–2415 (`MAIL_MAILBOX_TABLE`, `MAIL_SIGNATURE`, `MAIL_PROVIDER_CONFIG_TABLE`, `MAIL_MANAGESIEVE_HOST`, `MAIL_MANAGESIEVE_PORT`) · NEW:3925–3991 `MAIL_SERVER_EXTENDED_OPTIONS` (IMAP-Host `input` half · SMTP-Host `input` half · IMAP-Port `number` third default 993 · SMTP-Port `number` third default 587 · TLS-Reject `switch` third default false · **ManageSieve-Host `input` half (3967)** · **ManageSieve-Port `number` third default `MAIL_DEFAULT_PORTS.MANAGESIEVE` (3975/3979)** · Signatur `wysiwyg` full) · NEW:4054–4062 `MAILBOX_MANAGEMENT_EXTENDED_OPTIONS` (`MAIL_MAILBOX_TABLE`, `type: table`, `width: full`) · NEW:3632–3640 `MAIL_EXTERNAL_PROVIDERS_EXTENDED_OPTIONS` (`MAIL_PROVIDER_CONFIG_TABLE`, `type: table`)
 Änderung: Key-Set angleichen: `MAIL_IMAP_URL`/`MAIL_IMAP_SECURE`/`MAIL_IMAP_TLS_REJECT_UNAUTHORIZED` **entfallen**, `MAIL_IMAP_HOST/PORT` + `MAIL_SMTP_HOST/PORT` + `MAIL_TLS_REJECT_UNAUTHORIZED` + `MAIL_SIGNATURE` + `MAIL_MANAGESIEVE_HOST/PORT` + die beiden Tabellen-Keys kommen dazu. **Header-Fakt 2: `MAIL_MAILBOX_TABLE`/`MAIL_PROVIDER_CONFIG_TABLE` existieren in 2.1.0 und werden portiert** — der zugehörige `ExtendedOptionField.table`-Renderer im FE ist nicht rekonstruierbar (nur das API-Bundle liegt un-minifiziert vor) und bleibt **Fork-Eigendesign**; existiert im Fork kein `table`-Feldtyp, werden die beiden Keys in diesem Task **ohne** Formulareintrag angelegt und der Eintrag folgt mit dem FE-Renderer. `MAIL_SOGO_THEME`/`MAIL_SOGO_THEME_UPDATE_CHECKER`/`ACTIVE_MAIL_CLIENT` bleiben unverändert (Fork-Divergenz).
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; `grep -cE "MAIL_IMAP_HOST|MAIL_SMTP_HOST|MAIL_MANAGESIEVE_HOST|MAIL_MANAGESIEVE_PORT|MAIL_TLS_REJECT_UNAUTHORIZED|MAIL_SIGNATURE" libs/src/appconfig/constants/extendedOptionKeys.ts` == 6; `! grep -q MAIL_IMAP_SECURE libs/src/appconfig/constants/extendedOptionKeys.ts`
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'test $(grep -cE "MAIL_IMAP_HOST|MAIL_SMTP_HOST|MAIL_MANAGESIEVE_HOST|MAIL_MANAGESIEVE_PORT|MAIL_TLS_REJECT_UNAUTHORIZED|MAIL_SIGNATURE" libs/src/appconfig/constants/extendedOptionKeys.ts) -eq 6'` exit 0; `iter.sh cmd '! grep -rq MAIL_IMAP_SECURE libs/ apps/'` exit 0 (**schlägt heute fehl**, solange der Key noch existiert); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0; `iter.sh cmd 'npx nx build api'` „Successfully ran"
 i18n: `appExtendedOptions.mailImapHostTitle|Description`, `mailSmtpHost*`, `mailImapPort*`, `mailSmtpPort*`, `mailTlsRejectUnauthorized*`, `mailManageSieveHostTitle|Description`, `mailManageSievePortTitle|Description`, `mailSignature*`, `mailboxManagementDescription`, `mailExternalProvidersDescription` — DE+EN+FR
 Doku: Ops-Runbook-Zeile (Mail-appconfig-Keys inkl. ManageSieve 4190) DE+EN+FR
 Abhängt von: T10
 
-### T42 — BE: forward-only appConfig-Migration `010-unify-mail-server-config` + schemaVersion++  [ ]
-Komponente: apps/api · Dateien: `apps/api/src/appconfig/migrations/migration010.ts` (neu), `apps/api/src/appconfig/migrations/appConfigMigrationsList.ts`
-Soll: NEW:6386–6425 (`012-unify-mail-server-config`) **als Vorlage, NICHT 1:1**: Upstream mappt `MAIL_IMAP_URL`/`MAIL_SMTP_URL` auf ein **einziges `MAIL_HOST`** (6395/6396) — dieser Key wird in 2.1.0 von **niemandem gelesen** (verifiziert: kein `MAIL_HOST` in `extendedOptionKeys` 2371–2415, kein Consumer). Gelesen werden `MAIL_IMAP_HOST` (33942), `MAIL_SMTP_HOST` (34165), `MAIL_MANAGESIEVE_HOST` (36169). Fork-Migrationsstand ist **009** → neue Nummer **010**.
-Änderung: Forward-only-Migration über alle appConfig-Dokumente: `MAIL_IMAP_URL` → `MAIL_IMAP_HOST` (Host via `new URL()`-Parsing, Fallback Rohwert) + `MAIL_IMAP_PORT` (aus URL, sonst `MAIL_DEFAULT_PORTS.IMAP_SSL`); `MAIL_SMTP_HOST`/`MAIL_SMTP_PORT` mangels Fork-Quelle aus dem IMAP-Host bzw. `SMTP_SUBMISSION` vorbelegen; `MAIL_IMAP_TLS_REJECT_UNAUTHORIZED` → `MAIL_TLS_REJECT_UNAUTHORIZED`; `MAIL_IMAP_SECURE` **löschen**; `MAIL_MANAGESIEVE_HOST` leer lassen (Fallback auf IMAP-Host greift in `SieveConfigService`), `MAIL_MANAGESIEVE_PORT` = 4190. **`schemaVersion` erhöhen** (AGENTS.md) und in `appConfigMigrationsList.ts` registrieren. Rollback = Dump **+ `master.key`**.
-Verify: `iter.sh cmd 'npx nx test api --testPathPattern=migration010'` grün (Fixture `MAIL_IMAP_URL='imaps://mail.school.tld:993'` → `MAIL_IMAP_HOST='mail.school.tld'`, `MAIL_IMAP_PORT=993`, kein `MAIL_IMAP_SECURE`, `MAIL_MANAGESIEVE_PORT=4190`, `schemaVersion` +1; Fixture ohne Mail-Doc läuft ohne Fehler; **kein** `MAIL_HOST` im Ergebnis)
+### T42 — BE: forward-only appConfig-Migration `014-split-mail-host` + schemaVersion++  [ ]
+Komponente: apps/api + libs · Dateien: `apps/api/src/appconfig/migrations/migration014.ts` (neu, SPDX), `apps/api/src/appconfig/migrations/migration014.spec.ts` (neu, SPDX), `apps/api/src/appconfig/migrations/appConfigMigrationsList.ts`, `apps/api/src/appconfig/appconfig.schema.ts`, `libs/src/migration/constants/terminalSchemaVersions.ts`
+Soll: **Kein Port der Upstream-Migration — die baut ein anderes Paket.** `012-unify-mail-server-config` (NEW:6362–6428) gehört `p6-migrations-2-1-catchup` **T11** und erledigt dort bereits: `MAIL_IMAP_URL`/`MAIL_SMTP_URL` → **`MAIL_HOST`** (6365/6366), `MAIL_IMAP_TLS_REJECT_UNAUTHORIZED`/`MAIL_SMTP_TLS_REJECT_UNAUTHORIZED` → `MAIL_TLS_REJECT_UNAUTHORIZED`, `MAIL_IMAP_SECURE`/`MAIL_SMTP_SECURE` gelöscht (6370), `MAIL_IMAP_PORT`/`MAIL_SMTP_PORT` aus den URLs. **Diesen Umbau hier NICHT wiederholen.** Upstream hört danach auf: `MAIL_HOST` wird in 2.1.0 von **niemandem** gelesen — verifiziert, die einzigen vier Treffer im Bundle (6365/6366/6403/6421) liegen alle in `migration012` selbst. Gelesen werden `MAIL_IMAP_HOST` (33942), `MAIL_SMTP_HOST` (34165), `MAIL_MANAGESIEVE_HOST` (36169). Genau diese Lücke schließt der Fork hier — es ist eine **Fork-eigene Anschluss-Migration**, kein Port.
+Änderung: **Slot 014** — `PORT-2.1.0-MASTER.md:225` (D1) und `:140` reservieren appConfig-014 für `p4-mail`; 010–013 gehören p6 (T8 `010` push, T9 `011` isPinned, T11 `012` mail-server-config, T12 `013` shareActions, danach Schema-Default 14 / `appconfigs: 14`). Also `migration014.ts`, `name: '014-split-mail-host-into-imap-smtp-sieve'`, `previousSchemaVersion = 14`, `newSchemaVersion = 15`. Forward-only auf dem MAIL-appConfig-Doc: `MAIL_HOST` → `MAIL_IMAP_HOST` **und** `MAIL_SMTP_HOST` (Zielkey nur setzen, wenn er fehlt), `MAIL_HOST` danach löschen; `MAIL_IMAP_PORT` fehlend → `MAIL_DEFAULT_PORTS.IMAP_SSL`, `MAIL_SMTP_PORT` fehlend → `MAIL_DEFAULT_PORTS.SMTP_SUBMISSION`; `MAIL_MANAGESIEVE_HOST` **leer lassen** (der IMAP-Fallback in `SieveConfigService` greift, T26), `MAIL_MANAGESIEVE_PORT = MAIL_DEFAULT_PORTS.MANAGESIEVE`. **Contract-Sync (Surgical-Regel gilt hier nicht):** `appconfig.schema.ts` `@Prop({ default: 14 })` → `15` (**heute steht dort `10`** — p6 hebt schrittweise auf 14), `terminalSchemaVersions.ts` `appconfigs: 15` (**die Datei legt p6 an, sie existiert heute noch nicht**), `migration014` an `appConfigMigrationsList.ts` anhängen. Keine Magic-Strings: `ExtendedOptionKeys` + `MAIL_DEFAULT_PORTS` aus libs. Rollback = Dump **+ `master.key`**.
+Verify: `iter.sh cmd 'npx nx run api:test -- --testPathPattern=migration014'` grün (Fixture `{MAIL_HOST:'mail.school.tld'}` → `MAIL_IMAP_HOST` **und** `MAIL_SMTP_HOST` = `mail.school.tld`, `MAIL_HOST` weg, `MAIL_MANAGESIEVE_PORT=4190`, `MAIL_MANAGESIEVE_HOST` ungesetzt, `schemaVersion` 14→15; bereits gesetztes `MAIL_IMAP_HOST` wird **nicht** überschrieben; kein MAIL-Doc → nur Bump; zweiter Lauf → No-Op); `iter.sh cmd 'grep -q "default: 15" apps/api/src/appconfig/appconfig.schema.ts && grep -q "appconfigs: 15" libs/src/migration/constants/terminalSchemaVersions.ts && grep -q migration014 apps/api/src/appconfig/migrations/appConfigMigrationsList.ts'` exit 0 — deckt genau die drei Stellen ab, die eine isolierte Migrations-Spec **nicht** sehen kann
 i18n: keine
 Doku: Migrations-Hinweis in `p1-migration-upgrade-test` ergänzen
-Abhängt von: T41
+Abhängt von: T41 · **`p6-migrations-2-1-catchup` T8/T9/T11/T12 (Slots 010–013) müssen vorher stehen** — sonst stimmen `previousSchemaVersion`, Schema-Default und `terminalSchemaVersions.ts` nicht und die Migration ist ein stiller No-Op
 
 ### T43 — i18n: Mail-Fehler + Sieve-UI-Keys DE+EN+FR  [ ]
 Komponente: apps/frontend · Dateien: `apps/frontend/src/locales/{de,en,fr}/translation.json`, `libs/src/mail/constants/mails-error-messages.ts`
@@ -372,7 +391,7 @@ Abhängt von: —
 Komponente: apps/frontend + libs · Dateien: `libs/src/mail/types/mailsStore.ts`, `libs/src/mail/constants/mailsStoreInitialState.ts`, `apps/frontend/src/pages/Mail/useMailsStore.ts` (+ `*.spec.ts`)
 Soll: Kontrakt aus T37 (Routen 1–14). **FE-Quelle existiert nicht** → Fork-Eigendesign nach dem Chat-/Mailcow-Store-Muster (p2-chat, T8).
 Änderung: Store-Actions über `eduApi` gegen `MAIL_ENDPOINT_PATHS`: `listMailboxes`, `getMailsByFolder(folder,page,limit,query,unreadOnly)` (Query via axios `params`, nicht `URLSearchParams`), `getMailDetail`, `deleteMails`, `moveMails`, `updateStatus`, `createFolder`, `deleteFolder`, `renameFolder`, `sendMail`, `saveDraft`, `replaceDraft`, `downloadAttachment` (`ResponseType.BLOB`). `handleApiError`, Mutationen geben `Promise<boolean>` zurück (Muster T8). Kein `fetch`, keine API-Calls in Komponenten.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=useMailsStore'` grün (jede Action: Pfad + Verb + Body/Params + State + Fehlerpfad); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/useMailsStore.spec.ts'` grün (jede Action: Pfad + Verb + Body/Params + State + Fehlerpfad); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: keine
 Doku: keine (intern)
 Abhängt von: T13, T37
@@ -381,7 +400,7 @@ Abhängt von: T13, T37
 Komponente: apps/frontend + libs · Dateien: `libs/src/mail/types/mailsStore.ts`, `apps/frontend/src/pages/Mail/useMailsStore.ts` (+ `*.spec.ts`)
 Soll: Kontrakt aus T38 (20 Sieve-Routen + Favoriten). **Fork-Eigendesign.**
 Änderung: Actions ergänzen: `fetchAutoReplyPresets`, `fetchAutoReplyAddresses`, `fetchMailDomains`, `createAutoReplyPreset`, `setActiveAutoReply(presetId|null)`, `updateAutoReplyPreset`, `deleteAutoReplyPreset`, `fetchManageableSharedMailboxes`, die 6 `shared/:mailbox`-Pendants, `fetchForwardConfig`/`setForwardConfig`/`deleteForwardConfig`, `fetchFilters`/`setFilters`/`deleteFilters`, `fetchFavoriteRecipients`, `searchRecipients`. Pfade ausschließlich aus `MAIL_ENDPOINT_PATHS` komponiert.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=useMailsStore'` grün (Pfad/Verb je Action; `setActiveAutoReply(null)` sendet `{presetId:null}`; Shared-Pfade enthalten die URL-kodierte Mailbox); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/useMailsStore.spec.ts'` grün (Pfad/Verb je Action; `setActiveAutoReply(null)` sendet `{presetId:null}`; Shared-Pfade enthalten die URL-kodierte Mailbox); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: keine
 Doku: keine (intern)
 Abhängt von: T45, T38
@@ -390,7 +409,7 @@ Abhängt von: T45, T38
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/MailPage.tsx`
 Soll: Baseline `.reference/2.1.0/baselines/19-mail.png` (T44). Selektor-Gating aus T2 bleibt. **Fork-Eigendesign.**
 Änderung: Platzhalter durch echte Shell ersetzen (Ordnerbaum-Slot | Listen-Slot | Detail-Slot + Compose-Trigger + Einstellungen-Einstiege für Abwesenheit/Weiterleitung/Filter). Rendering weiterhin **nur** bei `getActiveMailClient(appConfigs) === NATIVE`; Rollback-Anker (Ein-Zeilen-Revert auf `<NativeFrame appName={APPS.MAIL}/>`) bleibt gültig. `cn()`, SH-Wrapper.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=MailPage'` grün (native → Shell, sogo → null); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0; crabbox mit geseedetem `ACTIVE_MAIL_CLIENT=native` → `/mail` rendert die Shell, mit Default `sogo` → weiterhin SOGo-Iframe
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/MailPage.spec.tsx'` grün (native → Shell, sogo → null); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0; crabbox mit geseedetem `ACTIVE_MAIL_CLIENT=native` → `/mail` rendert die Shell, mit Default `sogo` → weiterhin SOGo-Iframe
 i18n: `mail.emptyState.*` DE+EN+FR
 Doku: keine (intern)
 Abhängt von: T44, T45
@@ -399,7 +418,7 @@ Abhängt von: T44, T45
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/components/MailFolderTree.tsx` (neu, + `*.spec.tsx`)
 Soll: Kontrakt `listMailboxes`/`createFolder`/`deleteFolder`/`renameFolder` (T37). **Fork-Eigendesign.**
 Änderung: Baum aus `listMailboxes` (SpecialUse-Ordner zuerst, dann Custom-Folder), Auswahl setzt den aktiven Ordner, Kontextmenü anlegen/umbenennen/löschen über die Store-Actions. **Hinweistext beim Umbenennen/Löschen, dass betroffene Filterregeln automatisch angepasst werden** (Backend-Reconcile aus T34/T37). Icons nur `@fortawesome/free-solid-svg-icons`.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=MailFolderTree'` grün; `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/MailFolderTree.spec.tsx'` grün; `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: `mail.folders.*`, `mail.folderActions.*` DE+EN+FR
 Doku: keine (intern)
 Abhängt von: T47
@@ -408,7 +427,7 @@ Abhängt von: T47
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/components/MailList.tsx` (neu, + `*.spec.tsx`)
 Soll: Kontrakt `getMailsByFolder(folder,page,limit,query,unreadOnly)`/`moveMails`/`updateStatus`/`deleteMails` (T37); Server-Clamping `MAX_PAGE_SIZE=200`, `MAX_SEARCH_QUERY_LENGTH=256` (T11). **Fork-Eigendesign.**
 Änderung: Paginierte Liste mit Zeilenauswahl, Bulk „verschieben/löschen/gelesen/markiert", Suchfeld (debounced, clientseitig auf 256 Zeichen begrenzt), Unread-Toggle. Seitengröße nie > 200 anfordern.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=MailList'` grün (Seitenwechsel ruft `page+1`; „als gelesen" ruft `PATCH mails/messages/status`; Verschieben ruft `PATCH mails/messages/destination`); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/MailList.spec.tsx'` grün (Seitenwechsel ruft `page+1`; „als gelesen" ruft `PATCH mails/messages/status`; Verschieben ruft `PATCH mails/messages/destination`); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: `mail.list.*`, `mail.actions.*` DE+EN+FR
 Doku: keine (intern)
 Abhängt von: T48
@@ -417,7 +436,7 @@ Abhängt von: T48
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/components/MailDetail.tsx` (neu, + `*.spec.tsx`)
 Soll: Kontrakt `getMailDetail(uid,folder)`/`downloadAttachment(uid,partId,folder)` (T37). **Fork-Eigendesign.**
 Änderung: Header (From/To/Cc/Datum), Body **sanitisiert** gerendert (HTML nie ungefiltert einhängen — bestehende Sanitizer-Kette des Forks wiederverwenden, `grep -rn "sanitize" apps/frontend/src`), Anhangsliste mit Download (`ResponseType.BLOB`), Reply-/Forward-Trigger (öffnet T51).
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=MailDetail'` grün (Body mit `<script>` wird nicht ausgeführt/entfernt; Anhang-Klick ruft die Attachment-Route); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/MailDetail.spec.tsx'` grün (Body mit `<script>` wird nicht ausgeführt/entfernt; Anhang-Klick ruft die Attachment-Route); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: `mail.detail.*`, `mail.attachments.*` DE+EN+FR
 Doku: keine (intern)
 Abhängt von: T49
@@ -426,7 +445,7 @@ Abhängt von: T49
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/components/MailCompose.tsx` (neu, + `*.spec.tsx`)
 Soll: Kontrakt `sendMail`/`saveDraft`/`replaceDraft`/`searchRecipients(q)`/`recipients/favorites` (T37/T38); Limits `MAIL_ATTACHMENT_MAX_FILE_SIZE` 20 MiB, `MAIL_ATTACHMENT_MAX_FILE_COUNT` 10, `TOTAL_WIRE_MAX_BYTES` 20 MiB (T11). **Fork-Eigendesign.**
 Änderung: To/Cc/Bcc mit Autocomplete (ab `RECIPIENT_SEARCH.MIN_QUERY_LENGTH`, Favoriten als Vorschlag beim Öffnen), Betreff, Body-Editor, Anhänge, Signatur aus `MAIL_SIGNATURE`. **Clientseitige Vorprüfung gegen dieselben Konstanten wie der Guard**, damit der Nutzer vor dem 413 gewarnt wird — die Server-Prüfung bleibt maßgeblich (T21). Reply/Forward-Prefill aus T50.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=MailCompose'` grün (Senden ruft `POST mails/outbox` als multipart; 11. Anhang blockiert; Gesamtgröße > 20 MiB blockiert mit Hinweis; Autocomplete ruft `mails/recipients/search?q=`); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/MailCompose.spec.tsx'` grün (Senden ruft `POST mails/outbox` als multipart; 11. Anhang blockiert; Gesamtgröße > 20 MiB blockiert mit Hinweis; Autocomplete ruft `mails/recipients/search?q=`); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: `mail.compose.*` DE+EN+FR
 Doku: kurze Webmail-Nutzerdoku (docs/, DE+EN+FR)
 Abhängt von: T50, T46
@@ -435,7 +454,7 @@ Abhängt von: T50, T46
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/components/MailAutoReply.tsx` (neu, + `*.spec.tsx`), `apps/frontend/src/pages/Mail/components/autoReplyValidation.ts` (neu)
 Soll: Kontrakt T38 (13 Auto-Reply-Routen); Grenzen aus `MAIL_AUTO_REPLY_DEFAULTS` (T22); Baseline `.reference/2.1.0/baselines/20-mail-autoreply.png` (T44). **Fork-Eigendesign.**
 Änderung: Preset-Liste + Editor (Name, Betreff, Nachricht, Intervall 1–365 Tage, Start-/Enddatum, Adressen-Mehrfachauswahl aus `auto-reply/addresses`, „eingehende verwerfen", Wochentage, Tageszeitfenster, Absender-Reichweite alle/intern/extern), Aktivieren/Deaktivieren über `PUT auto-reply/active`. Postfach-Umschalter für geteilte Postfächer aus `auto-reply/mailboxes` (nur anzeigen, wenn nicht leer). Pure Validierungsfunktion, die **exakt** die Grenzen aus T22 verwendet (kein zweiter Satz Zahlen).
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=autoReplyValidation'` grün (Name > 100 / Nachricht > 4000 / Intervall 0 / Uhrzeit `24:00` abgelehnt; gültiger Fall akzeptiert); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/autoReplyValidation.spec.ts'` grün (Name > 100 / Nachricht > 4000 / Intervall 0 / Uhrzeit `24:00` abgelehnt; gültiger Fall akzeptiert); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: `mail.autoReply.*` (inkl. `mail.autoReply.importedName` aus T43) DE+EN+FR
 Doku: Nutzerdoku-Abschnitt „Abwesenheitsnotiz" DE+EN+FR
 Abhängt von: T46, T47
@@ -444,7 +463,7 @@ Abhängt von: T46, T47
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/components/MailForwardSettings.tsx`, `MailFilterRules.tsx`, `mailFilterValidation.ts` (alle neu, + `*.spec.tsx`)
 Soll: Kontrakt T38 (`forward` GET/PUT/DELETE, `filters` GET/PUT/DELETE); Grenzen `MAX_FORWARD_TARGETS=4`, `MAX_RULES_PER_USER=50`, `MAX_CONDITIONS_PER_RULE=10`, `MAX_ACTIONS_PER_RULE=10`, `MAX_VALUE_LENGTH=1024`, `MAX_NAME_LENGTH=128` (T22); Feld/Test-Matrix `isFilterTestValidForField` (T22); Baseline `21-mail-filters.png` (T44). **Fork-Eigendesign.**
 Änderung: (a) Weiterleitung: bis zu 4 Ziele, „Kopie behalten", Zeitfenster; **eigene Adressen im Ziel-Feld clientseitig sperren** (der Server wirft sonst `SelfForwardNotAllowed`). (b) Filter: Regelliste mit Reihenfolge, je Regel Name/aktiv/all-any/Bedingungen (Feld × Test × Wert, Test-Auswahl über `isFilterTestValidForField` gefiltert)/Aktionen (fileinto mit Ordner-Dropdown aus `listMailboxes`, redirect, redirect :copy, discard, addflag, setflag)/„danach stoppen". Vom Server als `invalid` markierte Regeln sichtbar kennzeichnen (entstehen durch Ordner-Reconcile, T34).
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=mailFilterValidation'` grün (`size`+`contains` nicht wählbar; leerer `fileinto`-Wert blockt Speichern; 51. Regel blockt; 5. Weiterleitungsziel blockt; eigene Adresse als Ziel blockt); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/mailFilterValidation.spec.ts'` grün (`size`+`contains` nicht wählbar; leerer `fileinto`-Wert blockt Speichern; 51. Regel blockt; 5. Weiterleitungsziel blockt; eigene Adresse als Ziel blockt); `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0
 i18n: `mail.forward.*`, `mail.filters.*` (Feld-/Test-/Aktionslabels) DE+EN+FR
 Doku: Nutzerdoku-Abschnitte „Weiterleitung" und „Filterregeln" DE+EN+FR
 Abhängt von: T52, T48
@@ -453,7 +472,7 @@ Abhängt von: T52, T48
 Komponente: libs + apps/frontend · Dateien: `libs/src/appconfig/constants/extendedOptions/mailGeneralExtendedOptions.ts`, `libs/src/appconfig/constants/defaultAppConfig.ts`
 Soll: Muster `MAIL_SOGO_THEME`-Dropdown (`mailGeneralExtendedOptions.ts`), Labels aus T3. **Fork-Divergenz — in 2.1.0 gibt es keinen Selektor, SOGo ist dort gelöscht.**
 Änderung: `ACTIVE_MAIL_CLIENT` als `ExtendedOptionField.dropdown` einhängen (Optionen `native`/`sogo`, Warnhinweis `appExtendedOptions.activeMailClientWarning`, **ohne** `requiredContainers`). Fresh-Install-`defaultAppConfig` auf `native`. **`getActiveMailClient`-Fallback bleibt `?? SOGO`** — Bestandsinstanzen ohne gesetzten Key bleiben bewusst auf SOGo.
-Verify: `iter.sh cmd 'npx tsc -p libs/tsconfig.json --noEmit'` exit 0; crabbox-Fresh-Install → Mail-Settings zeigt das Dropdown, Default `native`; Bestandsinstanz ohne Key → weiterhin `sogo`
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'grep -q "ACTIVE_MAIL_CLIENT" libs/src/appconfig/constants/extendedOptions/mailGeneralExtendedOptions.ts && grep -q "ACTIVE_MAIL_CLIENT.SOGO;" libs/src/mail/utils/getActiveMailClient.ts'` exit 0 — **`grep` ist zeilenbasiert und der Fork bricht die Zeile vor dem Operator um** (`:14` endet auf `??`, `:15` ist `ACTIVE_MAIL_CLIENT.SOGO;`); ein Muster über beide Zeilen (`"?? ACTIVE_MAIL_CLIENT.SOGO"`) könnte nie matchen (Dropdown eingehängt **und** der Bestands-Fallback steht noch auf SOGo); crabbox-Fresh-Install → Mail-Settings zeigt das Dropdown, Default `native`; Bestandsinstanz ohne Key → weiterhin `sogo`
 i18n: Labels aus T3 (DE+EN+FR), ggf. Warnhinweis-Feinschliff
 Doku: Ops-Runbook: Default-Flip + Kill-Switch DE+EN+FR
 Abhängt von: T47, T52, T53
@@ -462,7 +481,38 @@ Abhängt von: T47, T52, T53
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/Mail/MailPage.tsx`, `apps/frontend/src/pages/Mail/components/MailSogoTab.tsx` (neu, + `*.spec.tsx`)
 Soll: Auth-Handoff `NativeFrame.tsx` (`eduApiToken` in der Proxy-URL), `useFrameDeepLinkSync`/`FRAME_URL_SYNC_*`. **Fork-Divergenz, kein 2.1.0-Pendant.**
 Änderung: Im nativen Modus SOGo als lazy gemounteten „Erweitert"-Tab einbetten (danach `display:none`-gemountet, kein Re-Auth). Empfohlen: Subroute `/mail` (nativ) / `/mail/erweitert` (SOGo) für Back-Button und teilbare Links. **Token-Rotations-Watcher:** Iframe-Reload bei JWT-Rotation. Der Tab ist nach T52/T53 kein Feature-Ersatz mehr, sondern reiner Escape-Hatch — im Hinweistext entsprechend formulieren.
-Verify: `iter.sh cmd 'npx nx test frontend --testPathPattern=MailSogoTab'` grün; `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0; crabbox mit `ACTIVE_MAIL_CLIENT=native` → Tab lädt SOGo mit gültigem Token, Hin/Her ohne Re-Login, nach simulierter Rotation lädt der Iframe neu
+Verify: `iter.sh cmd 'npx nx test frontend --run src/pages/Mail/components/MailSogoTab.spec.tsx'` grün; `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0; crabbox mit `ACTIVE_MAIL_CLIENT=native` → Tab lädt SOGo mit gültigem Token, Hin/Her ohne Re-Login, nach simulierter Rotation lädt der Iframe neu
 i18n: `mail.tabs.*`, `mail.openInSogo.*` (aus T3, DE+EN+FR)
 Doku: Nutzerdoku „SOGo als Erweitert-Tab" DE+EN+FR
 Abhängt von: T54
+
+### T56 — libs: `mailImapFlags`-Modul (IMAP-Flags, Special-Use, Ordnernamen, Pfade)  [ ]
+Komponente: libs · Dateien: `libs/src/mail/constants/mailImapFlags.ts` (neu)
+Soll: NEW:24276–24322 — `MAIL_IMAP_FLAGS` (24276: `SEEN '\\Seen'`, `FLAGGED`, `DELETED`, `ANSWERED`, `DRAFT`) · `MAIL_MAILBOX_FLAGS` (24283: `NOSELECT '\\Noselect'`) · `MAIL_SPECIAL_USE` (24287: INBOX/TRASH/JUNK/DRAFTS/SENT/ARCHIVE, Werte `'\\Inbox'` …) · `MAIL_FOLDER_NAMES` (24296: `INBOX: 'INBOX'`, `SENT: 'Sent'`, `DRAFTS: 'Drafts'`, `TRASH: 'Trash'`, `JUNK: 'Junk'`, `SPAM: 'Spam'`, `ARCHIVE: 'Archive'`) · `SYSTEM_FOLDER_NAMES` (24306, Array aus `MAIL_FOLDER_NAMES`, 7 Einträge) · `MAIL_PATHS` (24316: `SHARED_PREFIX 'Shared/'`, `SHARED_ROOT 'Shared'`, `DELIMITER '/'`) · **Default-Export ist `MAIL_IMAP_FLAGS` (24322)**, der Rest benannt.
+Änderung: Ein `as const`-Modul, Default-Export am Dateiende, übrige Objekte als benannte Exporte (so macht es das Bundle). Der Fork hat davon **nichts** — verifiziert: `grep -rn "MAIL_FOLDER_NAMES\|MAIL_SPECIAL_USE\|MAIL_IMAP_FLAGS" libs/ apps/` → leer; `PORT-2.1.0-MASTER.md:72` (F6) führt das als offenen Befund. Konsumenten in dieser Section: T11 (`MAIL_DEFAULTS.FOLDER`, NEW:28957), T16 (`flagsToStatus`/`statusToFlagUpdates`), T18 (`resolveDraftsFolder`/`resolveSentFolder`).
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'for k in MAIL_IMAP_FLAGS MAIL_MAILBOX_FLAGS MAIL_SPECIAL_USE MAIL_FOLDER_NAMES SYSTEM_FOLDER_NAMES MAIL_PATHS; do grep -q "$k" libs/src/mail/constants/mailImapFlags.ts || exit 1; done'` exit 0; `iter.sh cmd 'grep -q "SPDX-License-Identifier: AGPL-3.0-or-later" libs/src/mail/constants/mailImapFlags.ts && grep -q "export default MAIL_IMAP_FLAGS" libs/src/mail/constants/mailImapFlags.ts'` exit 0
+i18n: keine
+Doku: keine (intern)
+Abhängt von: —
+
+### T57 — BE: MailsService-Restdelta gegenüber dem **Fork** (Senden, Shared, Mailcow-Aliase)  [ ]
+Komponente: apps/api · Dateien: `apps/api/src/mails/mails.service.ts`, `apps/api/src/mails/mails.module.ts`
+Soll: **Fork-Ist verifiziert: `mails.service.ts` hat 576 Zeilen und endet fachlich bei `deleteSyncJobs` (Z. 549).** Diese 2.1.0-Methoden fehlen ihm komplett und werden von T37/T38/T39 aufgerufen — Anker einzeln nachgelesen: `listMailboxFolders` (30860) · `getSharedMailboxes` (30871) · `getSharedMailbox` (30875) · `setMailboxDelegates` (30897) · `getMailcowMailbox` (30956) · `updateSenderAcl` (30965) · `getSharedMailboxPassword` (31009) · `listActiveMailcowAliases` (31018) · `getMailcowAliasGotos` (31058) · `sendMail` (31141) · `fetchForwardAttachments` (31174) · `mergeForwardAttachments` (31192) · `saveDraft` (31197) · `resolveSenderCredentials` (31204–31245) · `deleteSharedMailbox` (31246) · `cleanupSharedMailboxData` (31268) · `removeSenderAclEntries` (31276).
+Änderung: Die 17 Methoden ergänzen. Sie hängen an `MailImapService` (T16–T19), `MailSmtpService` (T20), dem `SharedMailbox`-Model (T30) und dem bestehenden `MailcowAdminService` — **jede Mailcow-API-Nutzung läuft über den Fork-Service, keine zweite Axios-Instanz im `MailsService`**.
+**Sicherheitskern — `resolveSenderCredentials` (31204–31245), Reihenfolge 1:1:** (1) kein `fromAddress` **oder** normalisiert == eigene Adresse → eigene Credentials; (2) `sharedMailboxModel.findOne({mailbox: normalizedFrom}, 'delegates password encryptKey')` — Treffer und Nutzer **nicht** in `delegates` → `SendAsNotAllowed` (403); Treffer ohne `password`/`encryptKey` → `SendAsSharedMailboxNoCredentials` (424); sonst entschlüsseltes Shared-Passwort; (3) **kein Shared-Dokument → `getMailcowAliasGotos(normalizedFrom)`; enthält es die eigene Adresse, wird mit den EIGENEN Credentials und `fromHeader = Alias` gesendet** — dieser Alias-Pfad ist Pflicht, sonst laufen alle Alias-Absender in ein 403; (4) sonst `SendAsNotAllowed` (403). Die Prüfung sitzt **hier inline**, nicht in `assertCanManageSharedMailbox`. Entschlüsselte Shared-Passwörter **nie** loggen, nie in ein DTO zurückgeben.
+Verify: `iter.sh cmd 'npx nx test api --testPathPattern=mails.service'` grün (`resolveSenderCredentials`: eigene Adresse → eigene Credentials; Shared mit Delegat → entschlüsseltes Shared-Passwort; Shared ohne Delegat → 403 `SendAsNotAllowed`; Shared ohne Passwort → 424 `SendAsSharedMailboxNoCredentials`; **kein Shared-Doc, aber eigener Mailcow-Alias → eigene Credentials + `fromHeader` = Alias**; fremde Adresse ohne Alias → 403; `cleanupSharedMailboxData` löscht die SharedMailbox-Dokumente **und** ruft `removeSenderAclEntries`); `iter.sh cmd 'npx nx build api'` „Successfully ran"
+i18n: die in diesem Task erstmals geworfenen `mails.errors.*`-Keys DE+EN+FR (mit T43 abgleichen, nicht doppeln)
+Doku: keine (intern)
+Abhängt von: T19, T20, T30, T35
+
+### T58 — libs+FE: Tabellen-Keys `MAIL_MAILBOX_TABLE` / `MAIL_PROVIDER_CONFIG_TABLE`  [?] entscheidung
+Komponente: libs + apps/frontend · Dateien: `libs/src/appconfig/constants/extendedOptionKeys.ts`, `libs/src/appconfig/constants/extendedOptions/mailboxManagementExtendedOptions.ts` (neu), `mailExternalProvidersExtendedOptions.ts` (neu), `libs/src/appconfig/constants/appConfigSectionsKeys.ts`, `apps/frontend/src/pages/Settings/AppConfig/appConfigOptions.ts`, `apps/frontend/src/pages/Settings/AppConfig/components/table/tableConfigMap.tsx`
+Soll: NEW:2411 `MAIL_MAILBOX_TABLE`, NEW:2413 `MAIL_PROVIDER_CONFIG_TABLE` · NEW:4054–4062 `MAILBOX_MANAGEMENT_EXTENDED_OPTIONS` (`name: MAIL_MAILBOX_TABLE`, `description: 'appExtendedOptions.mailboxManagementDescription'`, `type: table`, `width: 'full'`) · NEW:3632–3640 `MAIL_EXTERNAL_PROVIDERS_EXTENDED_OPTIONS` (`name: MAIL_PROVIDER_CONFIG_TABLE`, `description: 'appExtendedOptions.mailExternalProvidersDescription'`, `type: table`, `width: 'full'`)
+Änderung: **`[?]` — vor der Umsetzung von Kevin freigeben lassen.** Fork-Bestand (verifiziert): `ExtendedOptionField.table` existiert (`extendedOptionField.ts:23`), `ExtendedOptionsForm.tsx:99` rendert ihn über `AppConfigTable`, `getAppConfigTableConfig` schlägt in `TABLE_CONFIG_MAP` nach und dort gibt es bereits einen `[APPS.MAIL]`-Eintrag (`tableConfigMap.tsx:120`). Gleichzeitig existiert für die Postfachverwaltung schon ein eigener, getesteter Panel-Pfad: `MailcowAdminPanel.tsx` (+ `getMailcowMailboxColumns.tsx`, `CreateMailboxDialog`, `EditMailboxDialog`, `ManageMailboxAclDialog`), gemountet in `AppConfigPage.tsx:303`. Optionen:
+**(a) empfohlen** — Keys anlegen, `AppConfigSectionsKeys` um `mailboxManagement` + `mailExternalProviders` erweitern, in `appConfigOptions.ts` mappen, in `tableConfigMap.tsx` je Key einen Eintrag ergänzen, der die bestehenden Columns/Dialoge wiederverwendet, und `MailcowAdminPanel` aus `AppConfigPage.tsx` ausbauen → 2.1.0-konform, **ein** Renderpfad.
+**(b)** — Keys anlegen, aber ohne Formulareintrag: erzeugt genau die tote-Key-Situation, die Header-Fakt 2 für 2.0.200 als Fehler benennt. Nur als Zwischenschritt akzeptabel.
+**Kein Weg darf zwei parallele Postfachtabellen erzeugen.**
+Verify: `LIBS_TSC` (R1) exit 0; `iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` exit 0; bei Variante (a): `iter.sh cmd 'grep -q MAIL_MAILBOX_TABLE apps/frontend/src/pages/Settings/AppConfig/components/table/tableConfigMap.tsx && test $(grep -c MailcowAdminPanel apps/frontend/src/pages/Settings/AppConfig/AppConfigPage.tsx) -eq 0'` exit 0 (**schlägt heute fehl** — `AppConfigPage.tsx:303` mountet das Panel noch); `iter.sh test:frontend` grün
+i18n: `appExtendedOptions.mailboxManagementDescription`, `appExtendedOptions.mailExternalProvidersDescription` DE+EN+FR
+Doku: keine (intern)
+Abhängt von: T41
