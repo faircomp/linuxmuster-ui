@@ -26,7 +26,7 @@ OUT_DIR = os.environ.get("EDU_SHOTS_DIR", os.path.expanduser("~/edulution-shots"
 NAV_TIMEOUT_MS = 45000
 SETTLE_MS = 4000
 
-MODULES = [
+DEFAULT_MODULES = [
     ("dashboard", "/dashboard"),
     ("filesharing", "/filesharing"),
     ("conferences", "/conferences"),
@@ -37,6 +37,15 @@ MODULES = [
     ("whiteboard", "/whiteboard"),
     ("settings", "/settings"),
 ]
+
+# Ueberschreibbar per EDU_MODULES="name:/pfad,name:/pfad" (z. B. fuer die rekonstruierten
+# 2.0-Module, die nicht in der Default-AppConfig stehen).
+_override = os.environ.get("EDU_MODULES", "").strip()
+MODULES = (
+    [(item.split(":", 1)[0], item.split(":", 1)[1]) for item in _override.split(",") if ":" in item]
+    if _override
+    else DEFAULT_MODULES
+)
 
 
 def main():
@@ -75,6 +84,16 @@ def main():
             "still_on_login": landed.rstrip("/").endswith("/login") or landed.rstrip("/") == BASE_URL.rstrip("/"),
         }
         page.screenshot(path=os.path.join(OUT_DIR, "01-after-login.png"), full_page=True)
+
+        # Der Community-Edition-Hinweis legt sich nach dem Login ueber jede Seite und wuerde
+        # alle Modul-Screenshots unbrauchbar machen -> einmal wegklicken.
+        try:
+            close_button = page.get_by_role("button", name="Close", exact=False)
+            if close_button.count() > 0:
+                close_button.first.click(timeout=5000)
+                page.wait_for_timeout(1000)
+        except Exception:  # noqa: BLE001 - Dialog ist optional
+            pass
 
         if report["login"]["on_dashboard"]:
             for name, path in MODULES:
