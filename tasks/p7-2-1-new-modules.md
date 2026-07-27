@@ -313,10 +313,11 @@ i18n: keine
 Doku: keine
 Abhängt von: —
 
-### T6 — api/common: NonEmptyStringPipe + StrictValidationPipe  [ ]
+### T6 — api/common: NonEmptyStringPipe (+ StrictValidationPipe **bereits gebaut**)  [ ]
 Komponente: apps/api · Dateien: `apps/api/src/common/pipes/nonEmptyString.pipe.ts`, `apps/api/src/common/pipes/strictValidationPipe.ts`
 Soll: NEW:47783-47825 (Modul 738, `NonEmptyStringPipe` — trimmt und wirft bei leerem Ergebnis) · `strictValidationPipe` (Modul 297, referenziert NEW:47684 als Controller-`@UsePipes`) — der Fork hat **keine** globale ValidationPipe (Notiz aus p5-calendar T5), deshalb muss sie explizit gesetzt werden.
-Änderung: `NonEmptyStringPipe` als `@Injectable()` `PipeTransform<string,string>` nach dem Muster von `apps/api/src/common/pipes/safe-path-segment.pipe.ts`. `strictValidationPipe` als exportierte `new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`-Instanz. **`transform:true` ist Pflicht**, sonst greifen `@Type`/`@ValidateNested` zur Laufzeit nicht. SPDX.
+Änderung: `NonEmptyStringPipe` als `@Injectable()` `PipeTransform<string,string>` nach dem Muster von `apps/api/src/common/pipes/safe-path-segment.pipe.ts`. `strictValidationPipe` **existiert bereits** (`apps/api/src/common/pipes/strictValidationPipe.ts`, aus `p6-fundament`) — **nicht neu anlegen und nicht überschreiben**. Die Datei bildet `NEW:14694` ab: `whitelist` + `forbidNonWhitelisted` + `disableErrorMessages: process.env.NODE_ENV === 'production'`, **ohne** `transform`.
+**Korrektur der ursprünglichen Vorgabe hier:** die frühere Fassung dieses Tasks verlangte `transform: true` mit der Begründung „sonst greifen `@Type`/`@ValidateNested` zur Laufzeit nicht". Das stimmt nicht — NestJS ruft `plainToInstance` + `validate` **vor** `isTransformEnabled` (`node_modules/@nestjs/common/pipes/validation.pipe.js:60-72`), verschachtelte Validierung greift also auch ohne `transform`. Wer braucht, dass die Instanz **zurückgegeben** wird, nimmt `strictTransformValidationPipe` (`NEW:18878`), der genau dafür existiert. Der alte Verify war ein `grep` und wäre in beiden Welten grün gewesen — ein späterer Agent hätte die Fundament-Datei still umgeschrieben.
 Verify: `iter.sh test:api` mit Spec: `NonEmptyStringPipe.transform('  ')` wirft, `transform(' a ')` liefert `'a'`; ein DTO mit Extra-Feld wird von `strictValidationPipe` abgelehnt.
 i18n: keine
 Doku: keine

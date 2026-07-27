@@ -57,6 +57,30 @@ XL, destruktiv, kein zweiter Branch offen. Enthält nach D1 nicht mehr: ciDarkBl
 
 ---
 
+### Verify-Regeln, die in dieser Session teuer erkauft wurden
+
+Jede dieser Fallen hat mindestens ein Ledger falsch-grün gemacht. Vor dem Schreiben einer `Verify:`-Zeile lesen:
+
+1. **`.reference/` existiert auf der Box nicht** (`.crabbox.yaml` `sync.exclude`). Ein Bundle-`grep` über
+   `iter.sh cmd` schlägt dort fehl — und weil der Fehler meist nur einen Teil einer Pipeline betrifft, endet das
+   Kommando trotzdem mit Exit 0, nur mit kleinerem Universum und dadurch **leichterer** Prüfschleife. Bundle-Greps
+   laufen **lokal**.
+2. **`… || echo OK`** druckt `OK` genau dann, wenn ein Glied **fehlschlägt** — invertiert falsch-grün.
+   Stattdessen `…; echo "[rc=$?]"` und auf `[rc=0]` prüfen.
+3. **`|| true`** schluckt genau den Guard davor.
+4. **`! grep -q <name> <datei>`** kann nie grün werden, wenn der Name berechtigt in der Datei stehenbleibt
+   (z. B. als Delegationsziel). Am Zeilenanfang ankern (`^  name(`).
+5. **`! grep …` auf eine NEUE Datei** ist vakuum-grün: ohne Datei scheitert `grep`, `!` dreht das in Erfolg.
+   Immer `test -f <datei> && ! grep …`.
+6. **`grep` ist zeilenbasiert.** Ein Muster, das die Quelle über zwei Zeilen umbricht (`… ??\n  WERT;`), matcht nie.
+7. **`npm run check-filenames` liest nur gestagte Dateien** — ohne vorheriges `git add` prüft es nichts und endet mit 0.
+8. **Testzahl-Zusagen gegen die reale Baseline messen**, nicht schätzen; eine Untergrenze unterhalb des Ist-Standes
+   ist ohne jede Arbeit erfüllt.
+9. **`grep -c` über ein Glob** (`docs/adr/*.md`) gibt Pro-Datei-Zählungen aus — ein `≥ n`-Vergleich darauf ist bedeutungslos.
+10. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
+    **nie** eine `|`-Alternation (nx reicht den Wert ungequotet an eine Shell); **nie** `--listTests` als Gate
+    (endet bei 0 Treffern mit Exit 0). Frontend: Pfad **relativ zu `apps/frontend`**.
+
 ## 2. BLOCKER
 
 42 BLOCKING-Befunde. **Kein Paket startet, bevor seine Blocker im Ledger behoben sind.** Reihenfolge = Fix-Reihenfolge.
@@ -67,9 +91,9 @@ XL, destruktiv, kein zweiter Branch offen. Enthält nach D1 nicht mehr: ciDarkBl
 | F1 | `libs/**/*.spec.ts` wird von **keinem** Runner erfasst (api-Jest rootDir=`apps/api`, vitest include=`apps/frontend/src`); 0 Specs unter `libs/` | Runner festlegen oder Specs nach `apps/api/src/…` (betrifft p6-auth T5, p4-mail T22) |
 | F2 | `nx run api:test -- --testPathPattern=X` unbewiesen → ~25 Verifies können **vakuum-grün** laufen | Idiom einmal beweisen (Testzahl-Assertion), sonst `npx jest -c apps/api/jest.config.ts` |
 | F3 | `@ApiAuth()` existiert im Fork nicht (0 Treffer) — 3 Ledger fordern ihn, eines begründet ihn fälschlich als Auth-Fix | Decorator aus NEW:14097 portieren (reine Swagger-Doku, **kein** Runtime-Auth) |
-| F4 | `strictValidationPipe` existiert nicht; calendar-T9/T14 hängen unbenannt an contacts-T6 | In `p6-fundament` anlegen, beide Ledger auf Abhängigkeit setzen |
+| F4 | ~~`strictValidationPipe` existiert nicht~~ | **ERLEDIGT** — `apps/api/src/common/pipes/strictValidationPipe.ts` + `strictTransformValidationPipe.ts` gebaut (`NEW:14694` / `NEW:18878`). p7-2-1 T6 und p4-mail sind auf die Dateien umgebogen; T6s widersprüchliche `transform:true`-Vorgabe ist korrigiert. Offen bleibt nur die Abhängigkeitskante calendar-T9/T14 → contacts-T6. |
 | F5 | `npm run generate:swagger` + `swagger-spec.json` existieren nicht — 4 Tasks haben sie als DoD | Portieren oder Zeile streichen (D5) |
-| F6 | Kein `mailImapFlags`-Modul (`MAIL_FOLDER_NAMES`/`MAIL_SPECIAL_USE`/`MAIL_PATHS`) — p4-mail T11/T16/T18 hängen daran | NEW:24276-24305 portieren |
+| F6 | ~~Kein `mailImapFlags`-Modul~~ | **ERLEDIGT** — `libs/src/mail/constants/mailImapFlags.ts` (`NEW:24276-24322`, alle sechs Konstanten, Laufzeitwerte gegen das Bundle geprüft). Die zwei hartkodierten `'INBOX'` im Fork sind bereits umgestellt. |
 
 ### `p6-auth-hardening` (4)
 - **A1** `libs/…/compareSecretsConstantTime.spec.ts` läuft nirgends → T5-Verify (einziger Beweis der Constant-Time-Prüfung) ist nichtig. → F1.
