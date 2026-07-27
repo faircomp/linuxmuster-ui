@@ -97,8 +97,8 @@ describe('OnlyOffice config hardening', () => {
         username: 'alice',
       });
 
-      expect(sanitized.editorConfig.mode).toBe('view');
-      expect(Object.values(sanitized.document.permissions).every((granted) => granted === false)).toBe(true);
+      expect(sanitized.editorConfig?.mode).toBe('view');
+      expect(Object.values(sanitized.document?.permissions ?? {}).every((granted) => granted === false)).toBe(true);
     });
 
     it('ignores a client-claimed identity and uses the authenticated username', () => {
@@ -107,7 +107,7 @@ describe('OnlyOffice config hardening', () => {
         { canWrite: true, username: 'alice' },
       );
 
-      expect(sanitized.editorConfig.user).toEqual({ id: 'alice', name: 'alice' });
+      expect(sanitized.editorConfig?.user).toEqual({ id: 'alice', name: 'alice' });
     });
 
     it('drops fields the client smuggled in, since the payload is rebuilt', () => {
@@ -125,8 +125,8 @@ describe('OnlyOffice config hardening', () => {
         username: 'alice',
       });
 
-      expect(sanitized.document.permissions.edit).toBe(true);
-      expect(sanitized.editorConfig.mode).toBe('edit');
+      expect(sanitized.document?.permissions?.edit).toBe(true);
+      expect(sanitized.editorConfig?.mode).toBe('edit');
     });
 
     it('overrides permissions the client sent itself', () => {
@@ -143,7 +143,7 @@ describe('OnlyOffice config hardening', () => {
         { canWrite: false, username: 'alice' },
       );
 
-      expect(Object.values(sanitized.document.permissions).every((granted) => granted === false)).toBe(true);
+      expect(Object.values(sanitized.document?.permissions ?? {}).every((granted) => granted === false)).toBe(true);
     });
 
     it('survives a missing or non-object config instead of throwing', () => {
@@ -199,9 +199,9 @@ describe('OnlyOffice config hardening', () => {
       const [signedPayload] = generateOnlyOfficeToken.mock.calls[0];
 
       expect(signedPayload).not.toBe(clientConfig);
-      expect(signedPayload.document.permissions.edit).toBe(false);
-      expect(signedPayload.editorConfig.mode).toBe('view');
-      expect(signedPayload.editorConfig.user).toEqual({ id: 'alice', name: 'alice' });
+      expect(signedPayload.document?.permissions?.edit).toBe(false);
+      expect(signedPayload.editorConfig?.mode).toBe('view');
+      expect(signedPayload.editorConfig?.user).toEqual({ id: 'alice', name: 'alice' });
       expect(result.config).toBe(signedPayload);
       expect(result.token).toBe('signed.jwt');
     });

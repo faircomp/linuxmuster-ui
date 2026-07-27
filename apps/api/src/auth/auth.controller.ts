@@ -37,12 +37,13 @@ import { ApiTags } from '@nestjs/swagger';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { Request } from 'express';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
-import AuthRequestArgs from '@libs/auth/types/auth-request';
 import { AUTH_CACHE_TTL_MS } from '@libs/common/constants/cacheTtl';
 import AuthErrorMessages from '@libs/auth/constants/authErrorMessages';
 import type LoginQrSseDto from '@libs/auth/types/loginQrSse.dto';
 import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS } from '@libs/auth/constants/authThrottleConfig';
 import LogoutRequestDto from '@libs/auth/types/logoutRequest.dto';
+import AuthenticateRequestDto from '@libs/auth/types/authenticateRequest.dto';
+import TotpSetupBodyDto from '@libs/auth/types/totpSetupBody.dto';
 import type JWTUser from '@libs/user/types/jwt/jwtUser';
 import CustomHttpException from '../common/CustomHttpException';
 import Public from '../common/decorators/public.decorator';
@@ -50,6 +51,7 @@ import AuthService from './auth.service';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import GetBearerSession from '../common/decorators/getBearerSession.decorator';
 import strictValidationPipe from '../common/pipes/strictValidationPipe';
+import whitelistValidationPipe from '../common/pipes/whitelistValidationPipe';
 import GetCurrentUserGroups from '../common/decorators/getCurrentUserGroups.decorator';
 import Throttle from '../common/throttle/throttle.decorator';
 import ThrottleGuard from '../common/throttle/throttle.guard';
@@ -81,9 +83,10 @@ class AuthController {
 
   @Public()
   @Post()
-  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true, byUsername: true })
   @UseGuards(ThrottleGuard)
-  authenticate(@Body() body: AuthRequestArgs) {
+  @UsePipes(whitelistValidationPipe)
+  authenticate(@Body() body: AuthenticateRequestDto) {
     return this.authService.authenticateUser(body);
   }
 
@@ -103,7 +106,8 @@ class AuthController {
   }
 
   @Post(AUTH_PATHS.AUTH_CHECK_TOTP)
-  setupTotp(@GetCurrentUsername() username: string, @Body() body: { totp: string; secret: string }) {
+  @UsePipes(strictValidationPipe)
+  setupTotp(@GetCurrentUsername() username: string, @Body() body: TotpSetupBodyDto) {
     return this.authService.setupTotp(username, body);
   }
 

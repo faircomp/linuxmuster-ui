@@ -7,6 +7,7 @@ interface ThrottleConfig {
   limit: number;
   ttl: number;
   byIp: boolean;
+  byUsername: boolean;
 }
 
 export default ThrottleConfig;

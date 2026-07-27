@@ -85,7 +85,13 @@ Jede dieser Fallen hat mindestens ein Ledger falsch-grün gemacht. Vor dem Schre
     Gate deshalb `npx nx run-many -t lint --skip-nx-cache --fix=false` oder direkt `npx eslint <pfade>`.
     Nebenbefund: `npm run lint` ist auf `--projects=frontend,api,libs` festgenagelt, `nx run-many -t lint` nimmt das
     Root-Projekt mit → 4 statt 3 „All files pass"-Zeilen, unabhängig vom Cache.
-11. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
+11. **Spec-Dateien werden von keinem tsc-Gate geprüft.** `apps/api/tsconfig.app.json` **excludiert** `*.spec.ts`,
+    `apps/api/tsconfig.spec.json` ist standalone unbrauchbar (fehlende `Multer`-Typdefinition, `libs/` nicht im
+    `include` → 722 TS6307), und ts-jest läuft wegen `isolatedModules: true` transpile-only. Ein Typfehler in einer
+    Spec ist damit **unsichtbar** — jede Ledger-Zeile „tsc fehlerfrei" belegt für Spec-Arbeit nichts.
+    Am 2026-07-27 lagen so 15 echte Typfehler im Baum. Gate dafür ist jetzt **`npm run check-spec-types`**
+    (`tsconfig.spec-check.json`); bei Spec-Arbeit mitlaufen lassen.
+12. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
     **nie** eine `|`-Alternation (nx reicht den Wert ungequotet an eine Shell); **nie** `--listTests` als Gate
     (endet bei 0 Treffern mit Exit 0). Frontend: Pfad **relativ zu `apps/frontend`**.
 

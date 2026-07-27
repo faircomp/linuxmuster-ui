@@ -253,7 +253,7 @@ i18n: keine (Key kommt aus T2)
 Doku: keine (T34 sammelt)
 Abhängt von: T2, T17
 
-### T19 — api: ThrottleGuard auf Multi-Principal (resolvePrincipals/byUsername)  [ ]
+### T19 — api: ThrottleGuard auf Multi-Principal (resolvePrincipals/byUsername)  [x] OK — resolvePrincipals + Multi-Principal-canActivate, byUsername in ThrottleConfig/Decorator; 7 neue Fälle, Normalisierung und Mehr-Key-Prüfung mutationsgeprüft
 Komponente: apps/api, libs · Dateien: `apps/api/src/common/throttle/throttle.guard.ts`, `apps/api/src/common/throttle/throttle.decorator.ts`, `libs/src/common/types/throttleConfig.ts`, `apps/api/src/common/throttle/throttle.guard.spec.ts` (existiert, erweitern)
 Soll: main.js:67075–67092 (`resolvePrincipals`) · main.js:67098–67147 (`canActivate`) · main.js:66984–66990 (`Throttle` mit `byUsername`)
 Änderung: `ThrottleConfig` (`libs/src/common/types/throttleConfig.ts:6–10`) um `byUsername: boolean` erweitern; `ThrottleOptions` im Decorator (`throttle.decorator.ts:10–12`) entsprechend, Default `false`. **`enabledEnv` NICHT portieren** (kein Flag, siehe Kopf-Notiz). Modul-Funktion `resolvePrincipals(request, config): string[]` — bei `request.user?.preferred_username` sofort `[authenticatedUsername]`; sonst Array aufbauen: bei `config.byUsername` und `typeof body?.username === 'string'` den getrimmten, lowercase Usernamen als `` `user:${bodyUsername}` `` (leerer String wird verworfen), bei `config.byIp` `` `ip:${request.ip ?? 'unknown'}` ``. `canActivate` umbauen: `principals.length === 0` → `true`; ``cacheKeys = principals.map(p => `${p}:${routePath}`)``; **erst** prüfen, ob *irgendein* Key schon über dem Limit ist (`find`) → 429 mit `X-RateLimit-*`/`Retry-After` und `{ principal: blocked.cacheKey, routePath }` im Detail; **dann** alle Keys hochzählen bzw. anlegen und `minRemaining` über alle Keys bilden (`Math.max(0, minRemaining)` im Header). Eviction-Logik (`MAX_CACHE_SIZE`, `TARGET_SIZE_AFTER_CLEANUP`, `EVICTION_CHECK_INTERVAL`, `insertionCounter`, `throttle.guard.ts:20–39`) unverändert lassen. Fehlerkonstante bleibt `CommonErrorMessages.RATE_LIMIT_EXCEEDED` (der Fork hat kein separates `throttleErrorMessages`-Modul; der Wert ist identisch zu **main.js:67182**, `'common.errors.rateLimitExceeded'`) — kein Refactor.
@@ -263,7 +263,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: —
 
-### T20 — api: Throttle auf POST /auth um byUsername erweitern  [ ]
+### T20 — api: Throttle auf POST /auth um byUsername erweitern  [x] OK — POST /auth mit byIp + byUsername; Verhaltenstest: Limit-Versuche von ebenso vielen verschiedenen IPs blocken den nächsten
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.ts`, `apps/api/src/auth/authThrottle.spec.ts`
 Soll: main.js:68094 — `Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byUsername: true, enabledEnv: ENABLE_EXPERIMENTAL_AUTH })`
 Änderung: Die bestehende Decorator-Zeile (`auth.controller.ts:78`) auf `@Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true, byUsername: true })` ändern. **Abweichung vom Bundle bewusst:** 2.1.0 lässt `byIp` weg — damit wäre ein Angreifer, der Usernamen von einer IP rotiert, ungedrosselt. Beides zusammen ist eine echte Obermenge; die IP-Seite ist im LMN-Szenario unkritisch (Clients kommen mit eigenen LAN-IPs, `trust proxy` steht in `main.ts:58`). `enabledEnv` entfällt (kein Flag).
@@ -272,7 +272,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T19
 
-### T21 — api: AuthenticateRequestDto + whitelistValidationPipe auf POST /auth  [ ]
+### T21 — api: AuthenticateRequestDto + whitelistValidationPipe auf POST /auth  [x] OK — AuthenticateRequestDto + whitelistValidationPipe; gegen den echten oidc-client-ts-Body getestet, inkl. „unbekanntes Feld bricht den Login nicht"
 Komponente: apps/api, libs · Dateien: `libs/src/auth/types/authenticateRequest.dto.ts` (NEU), `apps/api/src/auth/auth.controller.ts`
 Soll: main.js:68540–68556 ff. (`AuthenticateRequestDto`, Modul-Bereich 68513–68589) · main.js:68096 (`UsePipes(whitelistValidationPipe)`)
 Änderung: DTO mit `grant_type` (`@IsIn(Object.values(AUTH_GRANT_TYPES))`), `username` (`@ValidateIf(dto => dto.grant_type === AUTH_GRANT_TYPES.PASSWORD)` + `@IsString()` + `@MinLength(1)`), `password` (gleiche Bedingung), `refresh_token` (`@ValidateIf(... === REFRESH_TOKEN)` + `@IsString()` + `@MinLength(1)`), `scope` (`@IsOptional()` + `@IsString()`). Route: `@UsePipes(whitelistValidationPipe)` ergänzen. **Bewusst `whitelist`, nicht `strict`:** oidc-client-ts sendet `client_id` (und je nach `client_authentication` weitere Felder) mit; `forbidNonWhitelisted` würde jeden Login mit 400 abweisen. Handler-Signatur auf `@Body() body: AuthenticateRequestDto` umstellen. `AuthService.authenticateUser` nimmt weiterhin `AuthRequestArgs` (= `ProcessResourceOwnerPasswordCredentialsArgs & { grant_type: string }`, also `{ username: string; password: string; skipUserInfo?; extraTokenParams?; grant_type: string }`) — das DTO ist dazu strukturell zuweisbar, **kein `as`-Cast** (AGENTS.md).
@@ -281,7 +281,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T1, T7
 
-### T22 — api: TotpSetupBodyDto + strictValidationPipe auf POST /auth/totp  [ ]
+### T22 — api: TotpSetupBodyDto + strictValidationPipe auf POST /auth/totp  [x] OK — TotpSetupBodyDto + strictValidationPipe; Pipe-Wahl je Route in einer Contract-Tabelle gepinnt
 Komponente: apps/api, libs · Dateien: `libs/src/auth/types/totpSetupBody.dto.ts` (NEU), `apps/api/src/auth/auth.controller.ts`
 Soll: main.js:68707 ff. (`TotpSetupBodyDto`, Modul-Bereich 68681–68725) · main.js:68132 (`UsePipes(strictValidationPipe)` auf der Route)
 Änderung: DTO mit `totp: string` und `secret: string`, beide `@IsString()` + `@MinLength(1)`. Handler `setupTotp` von `@Body() body: { totp: string; secret: string }` (`auth.controller.ts:90`) auf das DTO umstellen und `@UsePipes(strictValidationPipe)` ergänzen. Hier ist `strict` richtig — die Route hat einen geschlossenen, selbst definierten Body und nur einen Konsumenten (`createTotpSlice.setupTotp`, `apps/frontend/src/store/UserStore/createTotpSlice.ts:41–56`, sendet exakt `{ totp, secret }`).
@@ -289,6 +289,20 @@ Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test --testPathPattern
 i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T7
+
+> **Zu T21, statt des deploy-gebundenen Regressions-Gates:** die Pipe-Wahl ist jetzt **unit-getestet gegen den
+> echten Request-Body**, den `oidc-client-ts` baut (`authenticateRequestValidation.spec.ts`). Belegt ist damit:
+> `client_id`/`client_secret` werden gestrippt (der Server setzt eigene, `signin()`), ein **unbekanntes Zusatzfeld
+> wird nicht abgewiesen** (mit `strict` wäre jeder Login 400 — mutationsgeprüft), der Refresh-Grant kommt ohne
+> `username`/`password` durch, und ein unbekannter `grant_type` fällt auf 400. Der UI-Login-Check beim nächsten
+> Voll-Stack-Verify bleibt sinnvoll, ist aber nicht mehr der einzige Nachweis.
+
+> **Beim Bauen von T19 gefunden — Cache-Key-Amplifikation:** der `ThrottleGuard` läuft **vor** der
+> `ValidationPipe`, `body.username` ist dort also völlig ungeprüft. Ohne Längenbegrenzung wäre jeder Key bis zum
+> Express-Body-Limit (100 kB) lang, `MAX_CACHE_SIZE = 10_000` begrenzt nur die **Anzahl** — zusammen ~1 GB Heap,
+> auslösbar über gefälschte `X-Forwarded-For` (der Fork hat `trust proxy: true`). Der Username wird deshalb auf
+> `MAX_THROTTLE_PRINCIPAL_LENGTH` **gekürzt, nicht verworfen** — Verwerfen wäre eine Umgehung des Zählers.
+> Ein Test pinnt das (zwei Usernamen, die sich erst hinter dem Cap unterscheiden, teilen ein Budget).
 
 ### T23 — api: QrLoginSessionService (Single-Use-Session + Subscriber-Token)  [ ]
 Komponente: apps/api · Dateien: `apps/api/src/sse/qr-login-session.service.ts` (NEU), `apps/api/src/sse/qr-login-session.service.spec.ts` (NEU), `apps/api/src/sse/sse.module.ts`, `libs/src/auth/types/qrLoginSessionState.ts` (NEU)

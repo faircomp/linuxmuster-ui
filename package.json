@@ -37,6 +37,7 @@
     "check:pii-fixtures": "tsx scripts/crabbox/fixtures/assert-synthetic.ts",
     "realm:diff": "node scripts/keycloak-realm-diff/diff-realm.mjs docs/keycloak/realm-template.reference.json docs/keycloak/realm-2.0.200.baseline.json",
     "format": "pretty-quick --staged",
+    "check-spec-types": "tsc -p tsconfig.spec-check.json",
     "check-translations": "tsx ./scripts/checkTranslations.ts",
     "check-error-message-translations": "tsx scripts/checkErrorMessages.ts",
     "check-filenames": "git diff --name-only --cached --relative -- '*.ts' '*.tsx' | xargs --no-run-if-empty tsx scripts/checkFilenames.ts",

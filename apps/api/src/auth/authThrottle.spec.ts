@@ -35,6 +35,39 @@ describe('public auth routes are throttled', () => {
     expect(config?.ttl).toBe(AUTH_THROTTLE_TTL_MS);
   });
 
+  it('also throttles the login by username, so spraying from rotating addresses is bounded', () => {
+    const config = readConfig('authenticate');
+
+    expect(config?.byUsername).toBe(true);
+    expect(config?.byIp).toBe(true);
+  });
+
+  it('blocks the same username after the limit even when every attempt comes from a new address', () => {
+    const guard = new ThrottleGuard(reflector);
+    const attempt = (ip: string) =>
+      ({
+        getHandler: () => AuthController.prototype.authenticate,
+        getClass: () => AuthController,
+        switchToHttp: () => ({
+          getRequest: () => ({
+            ip,
+            method: 'POST',
+            path: '/auth',
+            route: { path: '/auth' },
+            user: undefined,
+            body: { username: 'sprayed-account' },
+          }),
+          getResponse: () => ({ setHeader: jest.fn() }),
+        }),
+      }) as unknown as ExecutionContext;
+
+    for (let i = 0; i < AUTH_THROTTLE_LIMIT; i += 1) {
+      expect(guard.canActivate(attempt(`203.0.113.${100 + i}`))).toBe(true);
+    }
+
+    expect(() => guard.canActivate(attempt('203.0.113.200'))).toThrow();
+  });
+
   it('throttles by IP, without which anonymous callers would pass unthrottled', () => {
     // The guard returns true immediately for anonymous requests unless byIp is set,
     // so byIp is what makes the login throttle effective at all.

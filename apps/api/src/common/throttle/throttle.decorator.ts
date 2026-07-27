@@ -9,10 +9,16 @@ import ThrottleConfig from '@libs/common/types/throttleConfig';
 
 interface ThrottleOptions {
   byIp?: boolean;
+  byUsername?: boolean;
 }
 
 const Throttle = (limit: number, ttl: number, options?: ThrottleOptions) => {
-  const config: ThrottleConfig = { limit, ttl, byIp: options?.byIp ?? false };
+  const config: ThrottleConfig = {
+    limit,
+    ttl,
+    byIp: options?.byIp ?? false,
+    byUsername: options?.byUsername ?? false,
+  };
   return SetMetadata(THROTTLE_METADATA_KEY, config);
 };
 

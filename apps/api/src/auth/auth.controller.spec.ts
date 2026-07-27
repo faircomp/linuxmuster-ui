@@ -10,10 +10,14 @@ import { PIPES_METADATA } from '@nestjs/common/constants';
 import THROTTLE_METADATA_KEY from '@libs/common/constants/throttleMetadataKey';
 import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS } from '@libs/auth/constants/authThrottleConfig';
 import type ThrottleConfig from '@libs/common/types/throttleConfig';
+import AuthenticateRequestDto from '@libs/auth/types/authenticateRequest.dto';
+import TotpSetupBodyDto from '@libs/auth/types/totpSetupBody.dto';
+import LogoutRequestDto from '@libs/auth/types/logoutRequest.dto';
 import controllerContractReflection from '../common/controllerContractReflection';
 import AuthService from './auth.service';
 import AuthController from './auth.controller';
 import strictValidationPipe from '../common/pipes/strictValidationPipe';
+import whitelistValidationPipe from '../common/pipes/whitelistValidationPipe';
 import ThrottleGuard from '../common/throttle/throttle.guard';
 
 const mockAuthService = {
@@ -70,12 +74,33 @@ describe(AuthController.name, () => {
       expect(config?.byIp).toBe(true);
       expect(controllerContractReflection.getRouteGuards(AuthController, 'logout')).toContain(ThrottleGuard);
     });
+  });
 
-    it('validates its body, so the route cannot be called without a refresh token', () => {
-      const pipes = Reflect.getMetadata(PIPES_METADATA, AuthController.prototype.logout as never) as unknown[];
+  describe('body validation contract', () => {
+    it.each([
+      ['authenticate', whitelistValidationPipe],
+      ['setupTotp', strictValidationPipe],
+      ['logout', strictValidationPipe],
+    ] as const)('runs %s through the expected validation pipe', (route, expected) => {
+      const pipes = Reflect.getMetadata(PIPES_METADATA, AuthController.prototype[route] as never) as unknown[];
 
-      expect(pipes).toHaveLength(1);
-      expect(pipes[0]).toBe(strictValidationPipe);
+      expect(pipes).toContain(expected);
+    });
+
+    it.each([
+      ['authenticate', 0, AuthenticateRequestDto],
+      ['setupTotp', 1, TotpSetupBodyDto],
+      ['logout', 0, LogoutRequestDto],
+    ] as const)('binds the %s body to its dto, which validation silently skips otherwise', (route, index, dto) => {
+      const paramTypes = Reflect.getMetadata('design:paramtypes', AuthController.prototype, route) as unknown[];
+
+      expect(paramTypes[index]).toBe(dto);
+    });
+
+    it('keeps the login on the stripping pipe, since a rejecting one would break every login', () => {
+      const pipes = Reflect.getMetadata(PIPES_METADATA, AuthController.prototype.authenticate as never) as unknown[];
+
+      expect(pipes).not.toContain(strictValidationPipe);
     });
   });
 
