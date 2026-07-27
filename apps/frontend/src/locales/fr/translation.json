@@ -2511,7 +2511,8 @@
       "MailcowObjectExists": "L'objet existe déjà",
       "MailcowMaxMailboxesExceeded": "Le nombre maximal de boîtes aux lettres est atteint",
       "MailcowQuotaExceeded": "Le quota de stockage a été dépassé",
-      "MailcowAccessDenied": "Accès refusé"
+      "MailcowAccessDenied": "Accès refusé",
+      "SyncJobAccessDenied": "Accès refusé : cette tâche de synchronisation n'appartient pas à votre compte."
     }
   },
   "licensing": {

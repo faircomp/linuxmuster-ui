@@ -2536,7 +2536,8 @@
       "MailcowObjectExists": "Das Objekt existiert bereits",
       "MailcowMaxMailboxesExceeded": "Die maximale Anzahl an Postfächern ist erreicht",
       "MailcowQuotaExceeded": "Das Speicherkontingent wurde überschritten",
-      "MailcowAccessDenied": "Zugriff verweigert"
+      "MailcowAccessDenied": "Zugriff verweigert",
+      "SyncJobAccessDenied": "Zugriff verweigert: Dieser Synchronisierungsauftrag gehört nicht zu Ihrem Konto."
     }
   },
   "licensing": {

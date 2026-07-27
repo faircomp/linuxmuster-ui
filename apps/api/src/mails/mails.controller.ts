@@ -20,11 +20,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import MAIL_ENDPOINT from '@libs/mail/constants/mail-endpoint';
 import MAIL_ENDPOINT_PATHS from '@libs/mail/constants/mailEndpointPaths';
-import { CreateSyncJobDto, MailDto, MailProviderConfigDto, SogoThemeVersionDto, SyncJobDto } from '@libs/mail/types';
+import { MailDto, MailProviderConfigDto, SogoThemeVersionDto, SyncJobDto } from '@libs/mail/types';
 import CreateMailboxDto from '@libs/mail/types/createMailbox.dto';
 import UpdateMailboxDto from '@libs/mail/types/updateMailbox.dto';
 import DeleteMailboxesDto from '@libs/mail/types/deleteMailboxes.dto';
 import MailboxAclDto from '@libs/mail/types/mailboxAcl.dto';
+import MailProviderPublicConfigDto from '@libs/mail/types/mailProviderPublicConfig.dto';
+import CreateSyncJobRequestDto from '@libs/mail/types/createSyncJobRequest.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import SOGO_THEME from '@libs/mail/constants/sogoTheme';
 import APPS from '@libs/appconfig/constants/apps';
@@ -73,7 +75,13 @@ class MailsController {
     return mails;
   }
 
-  @Get('provider-config')
+  @Get(`${MAIL_ENDPOINT_PATHS.PROVIDER_CONFIG}/${MAIL_ENDPOINT_PATHS.PUBLIC}`)
+  async getPublicMailProviderConfigs(): Promise<MailProviderPublicConfigDto[]> {
+    return this.mailsService.getPublicMailProviderConfigs();
+  }
+
+  @Get(MAIL_ENDPOINT_PATHS.PROVIDER_CONFIG)
+  @UseGuards(AdminGuard)
   async getExternalMailProviderConfig(): Promise<MailProviderConfigDto[]> {
     return this.mailsService.getExternalMailProviderConfig();
   }
@@ -98,11 +106,12 @@ class MailsController {
   }
 
   @Post('sync-job')
+  @UsePipes(MAILS_VALIDATION_PIPE)
   async postSyncJob(
-    @Body() createSyncJobDto: CreateSyncJobDto,
+    @Body() createSyncJobRequest: CreateSyncJobRequestDto,
     @GetUsersEmailAddress() emailAddress: string,
   ): Promise<SyncJobDto[]> {
-    return this.mailsService.createSyncJob(createSyncJobDto, emailAddress);
+    return this.mailsService.createSyncJob(createSyncJobRequest, emailAddress);
   }
 
   @Delete('sync-job')

@@ -25,13 +25,14 @@ import type {
   MailDto,
   MailsStore,
   MailProviderConfigDto,
-  CreateSyncJobDto,
   SyncJobDto,
   MailcowMailboxDto,
 } from '@libs/mail/types';
 import type CreateMailboxDto from '@libs/mail/types/createMailbox.dto';
 import type UpdateMailboxDto from '@libs/mail/types/updateMailbox.dto';
 import type MailboxAclDto from '@libs/mail/types/mailboxAcl.dto';
+import type MailProviderPublicConfigDto from '@libs/mail/types/mailProviderPublicConfig.dto';
+import type CreateSyncJobRequestDto from '@libs/mail/types/createSyncJobRequest.dto';
 import MAIL_ENDPOINT from '@libs/mail/constants/mail-endpoint';
 import MAIL_ENDPOINT_PATHS from '@libs/mail/constants/mailEndpointPaths';
 import eduApi from '@/api/eduApi';
@@ -53,6 +54,18 @@ const useMailsStore = create<MailsStore>((set) => ({
       set({ mails: data });
     } catch (error) {
       handleApiError(error, set);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  getPublicMailProviderConfigs: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await eduApi.get<MailProviderPublicConfigDto[]>(`${MAILS_PATH}/provider-config/public`);
+      set({ publicMailProviderConfigs: response.data });
+    } catch (error) {
+      handleApiError(error, set, 'mailProviderConfigError');
     } finally {
       set({ isLoading: false });
     }
@@ -106,10 +119,10 @@ const useMailsStore = create<MailsStore>((set) => ({
     }
   },
 
-  postSyncJob: async (createSyncJobDto: CreateSyncJobDto) => {
+  postSyncJob: async (createSyncJobRequest: CreateSyncJobRequestDto) => {
     set({ isEditSyncJobLoading: true });
     try {
-      const response = await eduApi.post<SyncJobDto[]>(`${MAILS_PATH}/sync-job`, createSyncJobDto);
+      const response = await eduApi.post<SyncJobDto[]>(`${MAILS_PATH}/sync-job`, createSyncJobRequest);
       set({ syncJobs: response.data });
       toast.success(i18n.t('mail.importer.syncAccountAdded'));
     } catch (error) {

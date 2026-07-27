@@ -23,13 +23,11 @@ import { useTranslation } from 'react-i18next';
 import { MailIcon } from '@/assets/icons';
 import { DropdownSelect } from '@/components';
 import useMailsStore from '@/pages/Mail/useMailsStore';
-import useUserStore from '@/store/UserStore/useUserStore';
 import { Form } from '@/components/ui/Form';
 import SaveButton from '@/components/shared/FloatingsButtonsBar/CommonButtonConfigs/saveButton';
 import DeleteButton from '@/components/shared/FloatingsButtonsBar/CommonButtonConfigs/deleteButton';
 import ReloadButton from '@/components/shared/FloatingsButtonsBar/CommonButtonConfigs/reloadButton';
 import type FloatingButtonsBarConfig from '@libs/ui/types/FloatingButtons/floatingButtonsBarConfig';
-import syncjobDefaultConfig from '@libs/mail/constants/sync-job-default-config';
 import FloatingButtonsBar from '@/components/shared/FloatingsButtonsBar/FloatingButtonsBar';
 import StateLoader from '@/pages/FileSharing/utilities/StateLoader';
 import FormField from '@/components/shared/FormField';
@@ -37,7 +35,6 @@ import useAppConfigsStore from '@/pages/Settings/AppConfig/useAppConfigsStore';
 import APPS from '@libs/appconfig/constants/apps';
 import findAppConfigByName from '@libs/common/utils/findAppConfigByName';
 import PageLayout from '@/components/structure/layout/PageLayout';
-import { replaceGermanUmlauts } from '@libs/common/utils/string/latinize';
 import { SectionAccordion, SectionAccordionItem } from '@/components/ui/SectionAccordion';
 import MailImporterTable from './MailImporterTable';
 import DeleteMailSyncJobsDialog from './DeleteMailSyncJobsDialog';
@@ -46,15 +43,14 @@ const UserSettingsMailsPage: React.FC = () => {
   const { t } = useTranslation();
   const {
     isEditSyncJobLoading,
-    externalMailProviderConfig,
-    getExternalMailProviderConfig,
+    publicMailProviderConfigs,
+    getPublicMailProviderConfigs,
     selectedSyncJob,
     setSelectedSyncJob,
     getSyncJob,
     postSyncJob,
     deleteSyncJobs,
   } = useMailsStore();
-  const { user } = useUserStore();
   const [option, setOption] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const form = useForm();
@@ -63,16 +59,16 @@ const UserSettingsMailsPage: React.FC = () => {
 
   useEffect(() => {
     if (isMailConfigured) {
-      void getExternalMailProviderConfig();
+      void getPublicMailProviderConfigs();
     }
   }, []);
 
   useEffect(() => {
-    if (isMailConfigured && externalMailProviderConfig.length > 0) {
-      setOption(externalMailProviderConfig[0].id);
+    if (isMailConfigured && publicMailProviderConfigs.length > 0) {
+      setOption(publicMailProviderConfigs[0].id);
       void getSyncJob();
     }
-  }, [externalMailProviderConfig.length]);
+  }, [publicMailProviderConfigs.length]);
 
   const handleDeleteSyncJob = () => {
     if (Object.keys(selectedSyncJob).length > 0) {
@@ -89,28 +85,19 @@ const UserSettingsMailsPage: React.FC = () => {
   };
 
   const handleCreateSyncJob = () => {
-    const selectedProviderConfig = externalMailProviderConfig.filter((config) => config.id === option)[0];
-
-    const createSyncJobDto = {
-      ...syncjobDefaultConfig,
-      username: user?.email || '',
-      host1: selectedProviderConfig.host,
-      port1: selectedProviderConfig.port,
+    void postSyncJob({
+      mailProviderId: option,
       user1: form.getValues('email') as string,
       password1: form.getValues('password') as string,
-      enc1: selectedProviderConfig.encryption,
-      subfolder2: replaceGermanUmlauts(selectedProviderConfig.label),
-    };
-
-    void postSyncJob(createSyncJobDto);
+    });
   };
 
   const config: FloatingButtonsBarConfig = {
     buttons: [
-      SaveButton(handleCreateSyncJob, externalMailProviderConfig.length > 0),
+      SaveButton(handleCreateSyncJob, publicMailProviderConfigs.length > 0),
       ReloadButton(() => {
         void getSyncJob();
-        void getExternalMailProviderConfig();
+        void getPublicMailProviderConfigs();
       }),
       DeleteButton(handleDeleteSyncJob, Object.keys(selectedSyncJob).length > 0),
     ],
@@ -144,7 +131,7 @@ const UserSettingsMailsPage: React.FC = () => {
             <div className="space-y-6">
               <div className="space-y-4">
                 <DropdownSelect
-                  options={externalMailProviderConfig}
+                  options={publicMailProviderConfigs}
                   selectedVal={t(option)}
                   handleChange={setOption}
                   classname="md:w-1/3"

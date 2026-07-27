@@ -2606,7 +2606,8 @@
       "MailcowObjectExists": "The object already exists",
       "MailcowMaxMailboxesExceeded": "The maximum number of mailboxes has been reached",
       "MailcowQuotaExceeded": "The storage quota was exceeded",
-      "MailcowAccessDenied": "Access denied"
+      "MailcowAccessDenied": "Access denied",
+      "SyncJobAccessDenied": "Access denied: this sync job does not belong to your account."
     }
   },
   "licensing": {

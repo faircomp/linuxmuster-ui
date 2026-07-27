@@ -48,6 +48,10 @@ import GroupRoles from '@libs/groups/types/group-roles.enum';
 import SseMessageType from '@libs/common/types/sseMessageType';
 import DOCKER_STATES from '@libs/docker/constants/dockerStates';
 import MAIL_IDLE_CONFIG from '@libs/mail/constants/mailIdleConfig';
+import MailProviderPublicConfigDto from '@libs/mail/types/mailProviderPublicConfig.dto';
+import CreateSyncJobRequestDto from '@libs/mail/types/createSyncJobRequest.dto';
+import syncjobDefaultConfig from '@libs/mail/constants/sync-job-default-config';
+import { replaceGermanUmlauts } from '@libs/common/utils/string/latinize';
 import CustomHttpException from '../common/CustomHttpException';
 import DockerService from '../docker/docker.service';
 import FilesystemService from '../filesystem/filesystem.service';
@@ -412,6 +416,16 @@ class MailsService implements OnModuleInit {
     return mailProviders;
   }
 
+  async getPublicMailProviderConfigs(): Promise<MailProviderPublicConfigDto[]> {
+    const mailProvidersList = await this.mailProviderModel.find({}, 'mailProviderId name label');
+
+    return mailProvidersList.map((item) => ({
+      id: item.mailProviderId,
+      name: item.name,
+      label: item.label,
+    }));
+  }
+
   async getExternalMailProviderConfig(): Promise<MailProviderConfigDto[]> {
     const mailProvidersList = await this.mailProviderModel.find({}, 'mailProviderId name label host port encryption');
 
@@ -495,9 +509,33 @@ class MailsService implements OnModuleInit {
     }
   }
 
-  async createSyncJob(createSyncJobDto: CreateSyncJobDto, emailAddress: string) {
+  async createSyncJob(createSyncJobRequest: CreateSyncJobRequestDto, emailAddress: string) {
+    const provider = await this.mailProviderModel
+      .findOne({ mailProviderId: createSyncJobRequest.mailProviderId }, 'mailProviderId name label host port encryption')
+      .catch(() => null);
+
+    if (!provider) {
+      throw new CustomHttpException(
+        MailsErrorMessages.MailProviderNotFound,
+        HttpStatus.NOT_FOUND,
+        undefined,
+        MailsService.name,
+      );
+    }
+
+    const ownedSyncJob: CreateSyncJobDto = {
+      ...syncjobDefaultConfig,
+      username: emailAddress,
+      host1: provider.host,
+      port1: provider.port,
+      enc1: provider.encryption,
+      user1: createSyncJobRequest.user1,
+      password1: createSyncJobRequest.password1,
+      subfolder2: replaceGermanUmlauts(provider.label),
+    };
+
     try {
-      const response = await this.mailcowApi.post<SyncJobResponseDto>('/add/syncjob', createSyncJobDto);
+      const response = await this.mailcowApi.post<SyncJobResponseDto>('/add/syncjob', ownedSyncJob);
       if (response) {
         const syncJobs = await this.getSyncJobs(emailAddress);
         return syncJobs;
@@ -509,9 +547,21 @@ class MailsService implements OnModuleInit {
   }
 
   async deleteSyncJobs(syncJobIds: string[], emailAddress: string) {
-    // NIEDUUI-374: Check if user has permission to delete
+    const ownedJobs = await this.getSyncJobs(emailAddress);
+    const ownedIds = new Set(ownedJobs.map((job) => String(job.id)));
+    const requestedIds = syncJobIds.map((id) => String(id));
+
+    if (requestedIds.some((id) => !ownedIds.has(id))) {
+      throw new CustomHttpException(
+        MailsErrorMessages.SyncJobAccessDenied,
+        HttpStatus.FORBIDDEN,
+        undefined,
+        MailsService.name,
+      );
+    }
+
     try {
-      const response = await this.mailcowApi.post<SyncJobResponseDto>('/delete/syncjob', syncJobIds);
+      const response = await this.mailcowApi.post<SyncJobResponseDto>('/delete/syncjob', requestedIds);
       if (response) {
         const syncJobs = await this.getSyncJobs(emailAddress);
         return syncJobs;

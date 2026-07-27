@@ -27,6 +27,7 @@ enum MailsErrorMessages {
   MailcowApiGetSyncJobsFailed = 'mails.errors.MailcowApiGetSyncJobsFailed',
   MailcowApiCreateSyncJobFailed = 'mails.errors.MailcowApiCreateSyncJobFailed',
   MailcowApiDeleteSyncJobsFailed = 'mails.errors.MailcowApiDeleteSyncJobsFailed',
+  SyncJobAccessDenied = 'mails.errors.SyncJobAccessDenied',
   MailcowApiGetDomainsFailed = 'mails.errors.MailcowApiGetDomainsFailed',
   MailcowApiGetMailboxesFailed = 'mails.errors.MailcowApiGetMailboxesFailed',
   MailcowApiCreateMailboxFailed = 'mails.errors.MailcowApiCreateMailboxFailed',

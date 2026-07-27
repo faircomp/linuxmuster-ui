@@ -41,6 +41,7 @@ const mockMailcowAdminService = {
 const mockGlobalSettingsService = { getAdminGroupsFromCache: jest.fn() };
 
 const ADMIN_GUARDED_ROUTES = [
+  'getExternalMailProviderConfig',
   'postExternalMailProviderConfig',
   'deleteExternalMailProviderConfig',
   'checkSogoThemeVersion',
@@ -53,7 +54,7 @@ const ADMIN_GUARDED_ROUTES = [
   'deleteMailcowMailboxes',
   'updateMailboxAcl',
 ];
-const NON_ADMIN_ROUTES = ['getMails', 'getExternalMailProviderConfig', 'getSyncJob', 'postSyncJob', 'deleteSyncJobs'];
+const NON_ADMIN_ROUTES = ['getMails', 'getPublicMailProviderConfigs', 'getSyncJob', 'postSyncJob', 'deleteSyncJobs'];
 
 describe(MailsController.name, () => {
   let controller: MailsController;
