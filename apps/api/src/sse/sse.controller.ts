@@ -27,6 +27,8 @@ import APPS from '@libs/appconfig/constants/apps';
 import SSE_EDU_API_ENDPOINTS from '@libs/sse/constants/sseEndpoints';
 import ConferencesErrorMessage from '@libs/conferences/types/conferencesErrorMessage';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
+import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
+import PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX from '@libs/sse/constants/publicConferenceSseChannelPrefix';
 import CustomHttpException from '../common/CustomHttpException';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import SseService from './sse.service';
@@ -55,7 +57,7 @@ class SseController {
   ): Promise<Observable<MessageEvent | null>> {
     const exists = await this.conferenceModel.exists({ meetingID, isPublic: true });
     if (exists) {
-      return this.sseService.subscribe(meetingID, res);
+      return this.sseService.subscribe(`${PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX}${meetingID}`, res);
     }
     throw new CustomHttpException(
       ConferencesErrorMessage.MeetingNotFound,
@@ -68,7 +70,7 @@ class SseController {
   @Public()
   @Sse(AUTH_PATHS.AUTH_ENDPOINT)
   publicLoginSse(@Query('sessionId') sessionId: string, @Res() res: Response): Observable<MessageEvent | null> {
-    return this.sseService.subscribe(sessionId, res);
+    return this.sseService.subscribe(`${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${sessionId}`, res);
   }
 }
 

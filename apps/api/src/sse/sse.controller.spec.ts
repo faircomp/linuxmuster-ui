@@ -22,6 +22,8 @@ import { Response } from 'express';
 import { of } from 'rxjs';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
+import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
+import PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX from '@libs/sse/constants/publicConferenceSseChannelPrefix';
 import SseController from './sse.controller';
 import SseService from './sse.service';
 import { Conference } from '../conferences/conference.schema';
@@ -68,13 +70,32 @@ describe('SseController', () => {
   });
 
   describe('publicConferenceSse', () => {
-    it('should call sseService.subscribe with the meetingID and response', async () => {
+    it('subscribes to the namespaced public conference channel', async () => {
       const meetingID = '12345';
       const response = {} as Response;
 
       await sseController.publicConferenceSse(meetingID, response);
 
-      expect(sseService.subscribe).toHaveBeenCalledWith(meetingID, response);
+      expect(sseService.subscribe).toHaveBeenCalledWith(`${PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX}${meetingID}`, response);
+    });
+  });
+
+  describe('public SSE channels stay out of the user namespace', () => {
+    it('namespaces the login session channel', () => {
+      const response = {} as Response;
+
+      sseController.publicLoginSse('some-session-id', response);
+
+      expect(sseService.subscribe).toHaveBeenCalledWith(`${LOGIN_SESSION_SSE_CHANNEL_PREFIX}some-session-id`, response);
+    });
+
+    it('cannot be pointed at a username, even when the query looks like one', () => {
+      const response = {} as Response;
+
+      sseController.publicLoginSse('global-admin', response);
+
+      expect(sseService.subscribe).not.toHaveBeenCalledWith('global-admin', response);
+      expect(sseService.subscribe).toHaveBeenCalledWith(`${LOGIN_SESSION_SSE_CHANNEL_PREFIX}global-admin`, response);
     });
   });
 });

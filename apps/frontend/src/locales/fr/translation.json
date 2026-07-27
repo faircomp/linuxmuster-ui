@@ -248,7 +248,8 @@
       "LmnConnectionFailed": "La connexion au serveur scolaire a échoué.",
       "KeycloakConnectionFailed": "La connexion au serveur d'authentification a échoué.",
       "EdulutionConnectionFailed": "La connexion au serveur Edulution a échoué. Veuillez réessayer plus tard.",
-      "tokenIsNotActive": "La session n'est plus active."
+      "tokenIsNotActive": "La session n'est plus active.",
+      "Forbidden": "Accès refusé"
     },
     "logout": {
       "success": "Avec succès"

@@ -39,6 +39,7 @@ import { decodeBase64Api, encodeBase64Api } from '@libs/common/utils/getBase64St
 import GroupRoles from '@libs/groups/types/group-roles.enum';
 import UserRoles from '@libs/user/constants/userRoles';
 import getIsAdmin from '@libs/user/utils/getIsAdmin';
+import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
 import CustomHttpException from '../common/CustomHttpException';
 import { User, UserDocument } from '../users/user.schema';
 import SseService from '../sse/sse.service';
@@ -262,12 +263,13 @@ class AuthService {
 
   loginViaApp(body: LoginQrSseDto, sessionId: string) {
     const { username, password } = body;
-    const isConnectionActive = this.sseService.getUserConnection(sessionId);
+    const channelId = `${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${sessionId}`;
+    const isConnectionActive = this.sseService.getUserConnection(channelId);
 
     if (!isConnectionActive) throw new CustomHttpException(UserErrorMessages.NotFoundError, HttpStatus.NOT_FOUND);
 
     this.sseService.sendEventToUser(
-      sessionId,
+      channelId,
       encodeBase64Api(JSON.stringify({ username, password })),
       SSE_MESSAGE_TYPE.MESSAGE,
     );
