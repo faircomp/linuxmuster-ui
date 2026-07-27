@@ -1663,7 +1663,7 @@ Doku: kurzer Verweis im README-Betriebsteil auf `docs/ops/dr-runbook.md` + Total
 Abhängt von: T1, T5
 
 ## p1-observability [P1] — Observability, Health-/Build-Metadaten & Sentry
-_Ziel:_ Health liefert Build-Metadaten; Observability + Sentry-Entscheidung · _Abhängt-von:_ — · _Status:_ erledigt (4/5 authored; T1/T2/T3/T5 lokal verifiziert [eslint/grep], jest-Lauf box-gated; T4 [?] DSGVO-Produktentscheidung für Kevin) · _Tasks:_ 5
+_Ziel:_ Health liefert Build-Metadaten; Observability + Sentry-Entscheidung · _Abhängt-von:_ — · _Status:_ **erledigt (5/5)** — T4 am 2026-07-27 entschieden+umgesetzt (PII/Sampling gehärtet, SOLL-Abweichung dokumentiert) · _Tasks:_ 5
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-observability.md` · Soll: main.js:56941-56961 (HealthService.buildInfo/onModuleInit/Spread), 56932/57023-57029 (Disk-Threshold), 56789-56851 (HealthController-Guards), 59716-59723 (configuration-Contract — Fremd-Paket, nur Referenz), 59762-59795 & 54486-54495 (Sentry), 948 (LoggingInterceptor) · upstream/1166-logging-add-kibana-prometheus (Prometheus/Kibana — bewusst NICHT übernommen, Umriss) · .reference/2.0.200/baselines/— (kein Baseline-Shot; BE/Env/Ops)
 
 > Kontext-Notiz: Dieses Paket ist **disjunkt** zu `p1-own-ci-registry`. Dort liegt das gesamte
@@ -1701,15 +1701,7 @@ Verify: `iter.sh test:api` grün inkl. `getLogLevels.spec.ts` (5 Assertions oben
 i18n: keine
 Doku: keine (intern)
 
-### T4 — Sentry-Telemetrie-Härtung (PII/Sampling)  [?] human-gate: **DSGVO-Produktentscheidung (Offene Frage 2)** — `sendDefaultPii:true`+`tracesSampleRate:1.0` im 2.0-SOLL an Sentry senden ALLE PII; für Schul-/Minderjährigen-Plattform (R12) **Empfehlung: härten** (`sendDefaultPii:false`, Sampling 0.1) in BE (enableSentryForNest.ts) + FE (useSentryStore.ts). Bewusste SOLL-Abweichung → Kevins Entscheidung. Sentry-Code **unverändert SOLL-treu** gelassen; Sentry ist default AUS (T2), also kein akutes Leak. Bei Freigabe: Code + docs/observability.md-Entscheidung im selben Commit
-Komponente: apps/api, apps/frontend · Dateien: apps/api/src/sentry/enableSentryForNest.ts, apps/frontend/src/store/useSentryStore.ts
-Soll: main.js:59762-59795 (BE `sendDefaultPii:true`, `tracesSampleRate:1.0`, `profilesSampleRate:1.0`) · useSentryStore.ts:50-56 (FE identisch)
-Änderung (nur bei Freigabe von Offener Frage 2): `sendDefaultPii` in BE **und** FE auf `false`, `tracesSampleRate`/`profilesSampleRate` auf einen konservativen Wert (z. B. `0.1`) senken — DSGVO-Härtung für Schul-/Minderjährigen-PII (R12). Bewusste Abweichung vom 2.0-SOLL; greift nur bei aktivem Sentry. Andernfalls Task als `[~]` (SOLL-treu belassen) schließen.
-Verify: `iter.sh test:api` + `iter.sh cmd 'npx nx test frontend'` grün; `iter.sh cmd 'grep -q "sendDefaultPii: false" apps/api/src/sentry/enableSentryForNest.ts && grep -q "sendDefaultPii: false" apps/frontend/src/store/useSentryStore.ts && echo OK'` → OK.
-i18n: keine
-Doku: docs/observability.md (Entscheidung nachziehen) — im selben Commit
-Abhängt von: T5 (Entscheidung dort dokumentiert) · braucht Entscheidung (Offene Frage 2)
-
+### T4 — Sentry-Telemetrie-Härtung (PII/Sampling)  [x] OK (2026-07-27, Kevin hat „härten" freigegeben) Bewusste SOLL-Abweichung gegenüber 2.0.200 (`sendDefaultPii:true`, `tracesSampleRate/profilesSampleRate:1.0`): gemeinsame Konstanten `libs/src/common/constants/sentryTelemetry.ts` (`SENTRY_SEND_DEFAULT_PII=false`, `SENTRY_TRACES_SAMPLE_RATE=0.1`, `SENTRY_PROFILES_SAMPLE_RATE=0.1`, SPDX-AGPL) — genutzt von **BE** (`apps/api/src/sentry/enableSentryForNest.ts`) **und FE** (`apps/frontend/src/store/useSentryStore.ts`), also ein Wert-Ort statt zwei. Damit landen auch bei aktiviertem Sentry keine Nutzer-PII (IP/Header/Bodies) beim Dritt-Empfänger; Trace-Volumen 10 %. Sentry bleibt zusätzlich default AUS (T2). Doku-Entscheidung in `docs/observability.md` **DE+EN** im selben Commit. eslint clean, vitest 188/188 grün (keine sentry-spezifischen jest-Specs vorhanden).
 ### T5 — docs/observability.md: Monitoring-Contract, Env-Inventar, Sentry-Entscheidung (DE+EN)  [x] OK docs/observability.md (DE+EN, SPDX): Health-Endpoints als Monitoring-Contract (/edu-api/health {auth}, /check {@Public+LocalhostGuard}, /stats {auth} inkl. Build-Metadaten-Felder), Env-Inventar, Sentry-off-Entscheidung + R12, Cross-Link ci-release.md; grep-Verify PASS
 Komponente: Doku · Dateien: docs/observability.md (neu)
 Soll: main.js:56789-56851 (Health-Routen/Guards), 56941-56961 (Response-Shape inkl. Build-Metadaten) · Master-Plan §5.5 (Health als Monitoring-Contract, Sentry-Default) · §2.7/R12 (Dritt-Empfänger)

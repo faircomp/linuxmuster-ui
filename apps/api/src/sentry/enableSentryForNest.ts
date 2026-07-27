@@ -22,6 +22,11 @@ import { DynamicModule, Logger } from '@nestjs/common';
 import { init as sentryInit } from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
+import {
+  SENTRY_PROFILES_SAMPLE_RATE,
+  SENTRY_SEND_DEFAULT_PII,
+  SENTRY_TRACES_SAMPLE_RATE,
+} from '@libs/common/constants/sentryTelemetry';
 import configuration from '../config/configuration';
 
 const enableSentryForNest = (): DynamicModule[] => {
@@ -38,10 +43,10 @@ const enableSentryForNest = (): DynamicModule[] => {
 
   sentryInit({
     dsn,
-    sendDefaultPii: true,
+    sendDefaultPii: SENTRY_SEND_DEFAULT_PII,
     integrations: [nodeProfilingIntegration()],
-    tracesSampleRate: 1.0,
-    profilesSampleRate: 1.0,
+    tracesSampleRate: SENTRY_TRACES_SAMPLE_RATE,
+    profilesSampleRate: SENTRY_PROFILES_SAMPLE_RATE,
     environment: process.env.EDULUTION_BASE_DOMAIN ?? 'localhost',
     release: `edulution-api@${version}`,
   });

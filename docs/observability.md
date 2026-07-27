@@ -41,10 +41,14 @@ den laufenden Image-Stand. Der Disk-Schwellwert kommt aus `EDUI_DISK_SPACE_THRES
 
 Sentry ist **standardmäßig aus** (`ENABLE_SENTRY=false`). Es wird **nie ein Fremd-DSN**
 (z. B. von edulution.io) geerbt — die DSN-Zeilen bleiben leer; ein eigener DSN wird nur explizit
-gesetzt. **Datenschutz-Hinweis (R12):** Sentry ist ein Dritt-Empfänger. Für eine Schul-/
-Minderjährigen-Plattform ist die PII-/Sampling-Härtung (`sendDefaultPii`, `tracesSampleRate`)
-eine offene Entscheidung (s. Backlog `p1-observability` T4) — solange Sentry aus ist, verlässt
-kein PII das System.
+gesetzt. **Datenschutz-Härtung (R12) — entschieden 2026-07-27:** Sentry ist ein Dritt-Empfänger.
+Für eine Schul-/Minderjährigen-Plattform weicht der Fork hier **bewusst vom 2.0-SOLL ab**:
+`sendDefaultPii = false` und `tracesSampleRate`/`profilesSampleRate = 0.1` statt der 2.0-Werte
+`true` / `1.0`. Die Werte stehen als gemeinsame Konstanten in
+`libs/src/common/constants/sentryTelemetry.ts` und gelten für **BE und FE** gleichermaßen.
+Damit landen auch bei aktiviertem Sentry keine Nutzer-PII (IP, Header, Request-Bodies)
+automatisch beim Dritt-Empfänger, und das Trace-Volumen bleibt auf 10 %. Solange Sentry aus
+ist (Default), verlässt ohnehin kein PII das System.
 
 ---
 
@@ -74,7 +78,10 @@ See the table above (`EDUI_LOG_LEVEL`, `EDUI_DISK_SPACE_THRESHOLD`, `ENABLE_SENT
 ### Sentry telemetry decision
 
 Sentry is **off by default** (`ENABLE_SENTRY=false`); no foreign DSN is ever inherited (the DSN
-lines stay empty), and an own DSN is only set explicitly. **Privacy note (R12):** Sentry is a
-third-party recipient. For a school / minors' platform the PII/sampling hardening
-(`sendDefaultPii`, `tracesSampleRate`) is an open decision (backlog `p1-observability` T4); while
-Sentry is off, no PII leaves the system.
+lines stay empty), and an own DSN is only set explicitly. **Privacy hardening (R12) - decided 2026-07-27:** Sentry is a
+third-party recipient. For a school / minors' platform this fork **deliberately deviates from
+the 2.0 baseline**: `sendDefaultPii = false` and `tracesSampleRate`/`profilesSampleRate = 0.1`
+instead of 2.0's `true` / `1.0`. The values live as shared constants in
+`libs/src/common/constants/sentryTelemetry.ts` and apply to **both API and frontend**. Even with
+Sentry enabled, no user PII (IP, headers, request bodies) is sent automatically, and trace volume
+stays at 10%. While Sentry is off (the default), no PII leaves the system anyway.
