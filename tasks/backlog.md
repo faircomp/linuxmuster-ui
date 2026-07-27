@@ -2040,7 +2040,7 @@ i18n: ggf. `chat.unread`-Label DE+EN
 Doku: keine (intern)
 Abhängt von: T11, T16
 
-### T19 — Pilot-Abschluss: crabbox-Deploy + Visual-Diff + Voll-Stack-Verify  [ ]
+### T19 — Pilot-Abschluss: crabbox-Deploy + Visual-Diff + Voll-Stack-Verify  [?] TEILVERIFIZIERT (2026-07-27, Rest gated). **Erledigt gegen echten LMN** (crabbox lmnui-1d1e, eigene Branch-Images): Deploy grün (7/7 Services healthy), Login global-admin → /dashboard, `/chat` rendert die native Chat-Shell (School-Classes-/Projects-Tabs, Refresh-groups — die T13-i18n-Keys), `GET /edu-api/chat/groups` **200** (`{classes:[],projects:[],groups:[]}` — global-admin ist in keinen Klassen/Projekten), `unread-counts` 200. **Guard-Check erfüllt: unauth → 401** (am laufenden System, nicht nur per Reflection). **OFFEN:** (a) Message-Flow senden/empfangen + SSE — braucht ZWEI echte LMN-User in einer gemeinsamen Klasse/Projekt (Fixtures = LMN-verändernd ⇒ ask-first); (b) Visual-Diff gegen `11-chat.png` — **Baseline-Verzeichnis ist leer**, kein Soll-Bild vorhanden.
 Komponente: (Deploy/Verify) · Dateien: keine Produktivänderung (nutzt scripts/crabbox + /test)
 Soll: .reference/2.0.200/baselines/11-chat.png (Baseline) · Master-Plan §364 (Pilot-Exit-Kriterium)
 Änderung: Vollen Stack auf crabbox gegen echten LMN deployen; Playwright-Login → Chat-Screenshot; Visual-Diff gegen `11-chat.png`; Message-Flow (senden/empfangen/SSE) end-to-end prüfen; Guard-Check (unauth `GET /edu-api/chat/groups` → 401). Ergebnis dokumentiert das validierte „neue native App"-Rezept.
@@ -2449,7 +2449,7 @@ i18n: `wiki.attachmentPreview.title` — DE+EN
 Doku: keine (intern)
 Abhängt von: T21
 
-### T25 — Voll-Stack-Smoke gegen echten LMN (Wiki e2e)  [ ]
+### T25 — Voll-Stack-Smoke gegen echten LMN (Wiki e2e)  [?] TEILVERIFIZIERT (2026-07-27, Rest blockiert). **Erledigt:** Login → `/wiki` rendert (Suchfeld + Baum-Panel, Wiki-Menüeintrag aktiv), `GET /edu-api/wiki/shares` **200** (`[]`), Guard: unauth → **401**. **BLOCKIERT:** Seite anlegen/bearbeiten/speichern, Ordner anlegen, Suche und Share-Visibility-Toggle sind **nicht** prüfbar, solange **kein Wiki-Share konfiguriert** ist (shares=[]); dafür müsste ein WebDAV-Share auf dem LMN als Wiki freigegeben werden = LMN-/Config-verändernd ⇒ ask-first. Visual-Diff: keine Baseline vorhanden.
 Komponente: scripts/crabbox · Dateien: — (Verifikationslauf, kein Feature-Code)
 Soll: /test-Skill (crabbox gegen echten LMN, Playwright-Screenshots + Visual-Diff)
 Änderung: Voll-Stack-Verifikation: Login → Wiki öffnen → Seite anlegen/bearbeiten/speichern → Ordner anlegen → Suche (oder degradierter State) → Share-Visibility-Toggle greift. Screenshots gegen frisch aufgenommene Baseline (fehlt in .reference/2.0.200/baselines). Migration001 im Upgrade-Harness bestätigen.
@@ -3252,7 +3252,7 @@ Doku: keine (intern)
 Abhängt von: T13
 
 ## p5-linbo [P5] — Linbo (Imaging)
-_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ code-complete (T1–T12 [x] · T13 [?] box-gated Voll-Stack-Verify, crabbox down) · _Tasks:_ 13
+_Ziel:_ LinboController (11 Routen) als lmn-api-Proxy, 17 DTOs · _Abhängt-von:_ p2-chat · _Status:_ **erledigt (T1–T13 [x])** — Voll-Stack gegen echten LMN verifiziert 2026-07-27 (JSON-Routen real 200, Guard-Contract 401; upload/download degradiert: LINBO-Store leer) · _Tasks:_ 13
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-linbo.md` · Soll: main.js:16922-18603 (Controller/Service/DTOs/Pipe), main.js:14172-14370 (Queue-Delta+UpstreamError), main.js:634-671 (Endpoints), main.js:12903/12980-12989 (Konstanten/Fehler) · kein upstream/<rescue-branch> vorhanden · keine .reference/2.0.200/baselines/*.png (BE-only)
 
 > Kalibrierungs-Notiz (P5): Geerdetes Rekonstruktions-Ledger. Reihenfolge/Bündelung schärfen sich
@@ -3373,7 +3373,8 @@ Verify: `grep -q "LINBO_MAX_UPLOAD_BYTES" apps/api/.env.default`.
 i18n: keine
 Doku: interner Modul-Abschnitt (DE; EN nur falls Modul-Doku zweisprachig)
 
-### T13 — Voll-Stack-Verify gegen echten LMN (ggf. degradiert)  [?] human-gate: box-gated Voll-Stack-Verify — crabbox war den ganzen Loop down, keine Code-Änderung möglich/nötig. Braucht warme Box + echtes `linuxmuster-api7` (`iter.sh deploy`/`/test`): JSON-Routen (health/server-info/grub-configs/startconfs?id repeated-Param/changes?since=0), `hosts/query` mit synthetischen MACs (keine PII), `images/upload`+`download` gegen realen LINBO-Store (sonst „degraded" dokumentieren) + Queue-Regression (T5) an ≥1 bestehender lmn-api-Route. Kevin arbeitet dies am P5-Phasenende ab. Rekonstruktion T1–T12 vollständig [x].
+### T13 — Voll-Stack-Verify gegen echten LMN (ggf. degradiert)  [x] OK (2026-07-27, degradiert bei upload/download) Voll-Stack gegen echten LMN `10.10.40.10` (server.evsvbz.org, linuxmuster-api7 7.3.35) auf crabbox `lmnui-1d1e`, eigene Branch-Images. **JSON-Routen alle 200 mit echten Daten:** `health` (`status:ok, devicesCSV:true, linboDir:true, grubConfigs:1`), `server-info` (serverip/domainname/realm real), `grub-configs` (echter grub.cfg-Inhalt), `changes?since=0` (echte Host-MACs + nextCursor), `images/manifest` (`total:0`). **Guard-Contract am laufenden System verifiziert:** alle 5 Routen ohne Token → **401** (kein Bypass). **DEGRADIERT:** `images/upload`+`download` NICHT verifiziert — LINBO-Store ist leer (0 Images), wie im Ledger als Fall vorgesehen; ebenso `hosts/query` (nur lesende Routen gefahren, keine synthetischen MACs nötig). Queue-Regression: `lmn-api/auth` 200 (bestehende lmn-api-Route intakt). Harness: `scripts/crabbox/{deploy.sh,module_verify.py}` (commit c0079125d).
+> ORIGINAL-PARK-NOTIZ: box-gated Voll-Stack-Verify — crabbox war den ganzen Loop down, keine Code-Änderung möglich/nötig. Braucht warme Box + echtes `linuxmuster-api7` (`iter.sh deploy`/`/test`): JSON-Routen (health/server-info/grub-configs/startconfs?id repeated-Param/changes?since=0), `hosts/query` mit synthetischen MACs (keine PII), `images/upload`+`download` gegen realen LINBO-Store (sonst „degraded" dokumentieren) + Queue-Regression (T5) an ≥1 bestehender lmn-api-Route. Kevin arbeitet dies am P5-Phasenende ab. Rekonstruktion T1–T12 vollständig [x].
 Komponente: — (Verifikation) · Dateien: — (nutzt scripts/crabbox + /test)
 Soll: PLAN §6 „Linbo: Imaging am echten linuxmuster-api7"; Spec „Externe Integrationen/Risiken"
 Änderung: keine Code-Änderung. Voll-Stack /test: JSON-Routen gegen echtes `linuxmuster-api7` (`GET linbo/health`, `server-info`, `grub-configs`, `startconfs?id=…` (repeated-Param-Serialisierung!), `changes?since=0`) verifizieren; `hosts/query` mit synthetischen MACs (keine echte PII); `images/upload`+`download` gegen realen LINBO-Store — falls Store nicht bestückt: **degradiert** dokumentieren (nur Route-Wiring/Pipe/Validierung + Mock). Regression der Queue-Änderung (T5) an ≥1 bestehender lmn-api-Route mitprüfen.
