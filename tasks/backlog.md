@@ -2176,7 +2176,7 @@ Doku: kurzer Modul-Abschnitt „ParentChildPairing" (DE+EN) im selben Commit
 Abhängt von: T7, T13, T14
 
 ## p3-wiki [P3] — Wiki
-_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ code-complete (20 [x]); **T25 teilverifiziert** [Voll-Stack-Verify 2026-07-27, crabbox lmnui-1d1e gegen echten LMN 10.10.40.10]: `/wiki` rendert, `wiki/shares` 200, Guard unauth→401. Editieren/Suche/Share-Toggle blockiert, solange kein Wiki-Share konfiguriert ist (ask-first); 2 weitere [?] parkiert · _Tasks:_ 25
+_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ code-complete (20 [x]); **T25 blockiert durch LMN-WebDAV-Ausfall** (HTTP 500 auf jedem Pfad/Nutzer, serverseitig — nicht unser Code); FE+Route+Guard verifiziert; 2 weitere [?] parkiert · _Tasks:_ 25
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · .reference/2.0.200/ui/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
 
 > Kalibrierungs-Notiz (P3): BE-Tasks sind aus main.js hart verankert und ausführbar. Die FE-Tasks
@@ -2431,47 +2431,7 @@ i18n: `wiki.attachmentPreview.title` — DE+EN
 Doku: keine (intern)
 Abhängt von: T21
 
-### T25 — Voll-Stack-Smoke gegen echten LMN (Wiki e2e)  [?] TEILVERIFIZIERT (2026-07-27, Rest blockiert). **Erledigt:** Login → `/wiki` rendert (Suchfeld + Baum-Panel, Wiki-Menüeintrag aktiv), `GET /edu-api/wiki/shares` **200** (`[]`), Guard: unauth → **401**. **BLOCKIERT:** Seite anlegen/bearbeiten/speichern, Ordner anlegen, Suche und Share-Visibility-Toggle sind **nicht** prüfbar, solange **kein Wiki-Share konfiguriert** ist (shares=[]); dafür müsste ein WebDAV-Share auf dem LMN als Wiki freigegeben werden = LMN-/Config-verändernd ⇒ ask-first. Visual-Diff: keine Baseline vorhanden.
-Komponente: scripts/crabbox · Dateien: — (Verifikationslauf, kein Feature-Code)
-Soll: /test-Skill (crabbox gegen echten LMN, Playwright-Screenshots + Visual-Diff)
-Änderung: Voll-Stack-Verifikation: Login → Wiki öffnen → Seite anlegen/bearbeiten/speichern → Ordner anlegen → Suche (oder degradierter State) → Share-Visibility-Toggle greift. Screenshots gegen frisch aufgenommene Baseline (fehlt in .reference/2.0.200/baselines). Migration001 im Upgrade-Harness bestätigen.
-Verify: /test — LMN-Login + Wiki-Modul-Flow grün; Visual-Diff im Toleranzrahmen; keine Guard-/Auth-Regression.
-i18n: keine
-Doku: docs/features/p3-wiki.md „Verifiziert"-Notiz — intern
-Abhängt von: T13, T15, T22, T23, T24
-
-## p4-mail-rework [P4] — Mail-Rework (BEIDES: nativer Client + SOGo-Iframe, EINE App, `ACTIVE_MAIL_CLIENT`-Selektor)
-_Ziel:_ Mail BEIDES: ACTIVE_MAIL_CLIENT-Selector (nativ⟷SOGo), phasiert + Mailcow-Admin · _Abhängt-von:_ p2-chat · _Status:_ **Phase 1 (T1–T4) + Phase 2 Mailcow-Admin (T5–T8) erledigt** · **Phase 3 (T9–T25 nativer IMAP/SMTP-Client) = `[?] human-gate`** (GATE Z.2587, menschliches Go nötig; Delegates auch Phase-3) · _Tasks:_ 25
-> **[?] human-gate: p4-mail Phase-2-Abschluss (Mailcow-Admin T5–T8).** (a) **Voll-Stack/Remote-Verify box-gated** (crabbox down den ganzen Loop): `iter.sh all` (lint+jest+vitest+build:all+i18n) + path-gated Deploy/Shots gegen echten LMN — bisher pro Commit lokal (eslint + isolierter tsc + vitest/inline-node) + jest lokal für BE-Units; steht noch aus für CI-Parität. (b) **PR-Gate (prompt-pflichtig):** Push `feat/2.0-backlog` + Draft-PR (Repo `faircomp/linuxmuster-ui`) für den p4-mail-Phase-1+2-Diff. Beide Kevin/beaufsichtigt. **Phase 3 NICHT autonom starten** (eigener GATE).
-Branch: `feat/2.0-backlog` · Spec: `docs/features/p4-mail-rework.md` · Soll: Selektor-Präzedenz `ACTIVE_DOCUMENT_EDITOR` main.js:2114 (Key) · 26541-26542 (Lesung `?? ONLY_OFFICE`) · 27148-27152 (FILESHARING_DOCKER_CONTAINERS) · 27180-27184 (Const) · main.js:23140-24941 (MailsController, 36 Routen) · 23896 (MAIL_ENDPOINT_PATHS) · 25203/27545/28650/28907 (Services) · 32604 (MailRequestSizeGuard) · 4119 (Migration 012) · 2078-2117 (ExtendedOptionKeys) · 2158 (MAIL_DEFAULT_PORTS) · FE-Ist MailPage.tsx:24 / NativeFrameManager.tsx:64 / NativeAppPageManager.tsx:30-38 / NativeFrame.tsx:136-140 · upstream/997-mail-rework-imap-flow-and-add-additional-logging (nur Struktur-Referenz, 1.6-Zweig) · KEIN Baseline-Screenshot (.reference/2.0.200/baselines/ ohne Mail-Shot)
-
-> Kalibrierung (P4): geerdetes Rekonstruktions-Ledger, **phasiert**. Der Selektor (Phase 1) ist 1:1 aus
-> `ACTIVE_DOCUMENT_EDITOR` abgeleitet — dieselbe `extendedOption`-Plumbing, **aber ohne** Container-
-> Umschaltung (Kern-Asymmetrie: der Mail-Flag schaltet nur die FE-Oberfläche auf **einem** Mailcow-Stack).
-> BE (Routen/Guards/Migration/appconfig) ist gegen echtes 2.0 (`main.js`) mit Zeilenankern verifiziert.
-> Der native FE-Schnitt (Phase 3) erbt das Muster vom Chat-Piloten (Zustand-Store mit `eduApi`,
-> Native-Route statt `<NativeFrame>`, i18n-Sweep) und schärft sich nach P0-Drift. Abhängt-von-Paket:
-> p2-chat. Neue Dateien tragen AGPL-SPDX.
-
-> **GATE §9.10 — ENTSCHIEDEN:** Mail kann **BEIDES** (nativer Client + SOGo-Iframe) als **EINE App**, per
-> `ACTIVE_MAIL_CLIENT`-Selektor (`native` ⟷ `sogo`, Default `sogo`), **phasiert**. Die frühere Offene
-> Frage „nativ vs. Iframe vs. Split" **entfällt** — kein Task ist mehr `[?]`-gegated auf diese Frage.
-> **Zwei orthogonale Achsen:** (a) End-User-Webmail-Oberfläche = `native` ⟷ `sogo` (Selektor);
-> (b) Mailcow-Admin-Panel = **immer nativ, immer da**, nicht Teil des Selektors.
-> **Verbleibendes menschliches Go:** nur **vor Phase 3** (der teure/riskante native IMAP/SMTP-Client,
-> ~25–40 PT, keine FE-Source/Baseline). Phase 1/2/4-Mechanik ist entschieden.
-> **Phase 2 (Mailcow-Admin) liefert eigenständigen Wert, auch wenn Phase 3 nie kommt.**
-> Ehrlich: Der Selektor spart **keinen** PT am nativen Client — er macht ihn nur inkrementell mergebar,
-> pilotierbar und ein-Klick-rückrollbar (`ACTIVE_MAIL_CLIENT = sogo` = Kill-Switch/Rollback-Anker).
-
----
-
-## Phase 1 — Selektor-Harness (SOGo bleibt Default, Dropdown noch versteckt)
-
-Mechanik steht, Verhalten **unverändert** (reiner SOGo-Iframe wie 1.6). Der Key wird **früh** eingeführt,
-die **UI-Wahl erst Phase 4** freigeschaltet (damit kein Admin auf eine leere native Shell flippt). Dieser
-Block ist das Merge-Sicherheitsnetz für Phase 2/3. Keine Migration, kein neuer Endpunkt.
-
+### T25 — Voll-Stack-Smoke gegen echten LMN (Wiki e2e)  [?] BLOCKIERT durch LMN-seitigen WebDAV-Ausfall (2026-07-27). **Verifiziert:** Login → `/wiki` rendert (Suchfeld + Baum-Panel, Menueeintrag aktiv), `GET /edu-api/wiki/shares` **200**, Guard unauth → **401**. **BLOCKER (nicht unser Code):** Der WebDAV-Endpunkt des LMN (`linuxmuster-webui`/ajenti, Plugin `lmn_smbclient/views/lmnwebdav.py`) liefert **HTTP 500 fuer JEDEN Pfad und JEDEN Nutzer** (`/webdav/`, `/webdav/default-school`, `/webdav/linuxmuster-global`, `/webdav/<user>`), auch von localhost. Log: `ERROR : Unhandled endpoint error at /webdav/...`, ohne Traceback. **Authentifizierung funktioniert** (`ajenti[...]: verifyan has logged in`) — der Fehler entsteht erst im Handler. Gegenprobe mit frisch angelegten Schuelerkonten (Home-Verzeichnisse vorhanden): unveraendert 500 → **liegt nicht an fehlenden Schul-Homes**. Fehldiagnose ausgeschlossen: `smbprotocol`/`spnego`/`gevent` sind im Dienst-Interpreter `/opt/linuxmuster/bin/python3` **vorhanden** (ein erster Gegenbefund kam vom falschen System-Python). **Folge:** Wiki-Seiten anlegen/bearbeiten/speichern, Ordner, Suche und Share-Toggle sind auf DIESEM Server nicht verifizierbar; dasselbe betrifft Filesharing. **Kevin-Entscheidung:** WebDAV auf dem LMN instandsetzen (Serverseite, bewusst NICHT von mir angefasst) oder gegen einen anderen linuxmuster-Server verifizieren. Visual-Diff zusaetzlich mangels Baseline offen.
 ### T1 — libs: `ACTIVE_MAIL_CLIENT`-Const + Key + `getActiveMailClient`-Util  [x] OK (84a9fab8d)
 > **OK (84a9fab8d):** (a) `activeMailClient.ts` Const-Objekt `{SOGO:'sogo', NATIVE:'native'}` (**SOGO zuerst = Default**) + derived Type (Muster wie wikiNodeType/sortDirection; kein enum). (b) `ACTIVE_MAIL_CLIENT`-Key in extendedOptionKeys.ts neben MAIL_* (Z.29) → fließt automatisch in ExtendedOptionKeysType. (c) `getActiveMailClient(appConfigs)` = einziger Lesepunkt: `getExtendedOptionsValue<ActiveMailClient>(appConfigs, APPS.MAIL, ExtendedOptionKeys.ACTIVE_MAIL_CLIENT) ?? ACTIVE_MAIL_CLIENT.SOGO`. SPDX-AGPL, `import type` getrennt (Review-Nit). **Logik inline-node-verifiziert 4/4** (no-config/no-key→sogo, native→native, sogo→sogo), isolierter tsc (inkl. temp-Spec) + eslint der 3 Code-Dateien CLEAN, Key-grep bestätigt. **Kein co-located libs-Spec** (libs/tsconfig.json excludet Specs → eslint-Parsing-Fehler; frontend-vitest-include erfasst libs nicht → orphaned/nicht-lauffähig) — **laufendes Test folgt in T2** (FE-Consumer NativeFrameManager/MailPage konsumieren getActiveMailClient, vitest-fähig). Review approve.
 Soll: main.js:27180-27184 (`ACTIVE_DOCUMENT_EDITOR = {ONLY_OFFICE,COLLABORA} as const` → Fork-Analog `ACTIVE_MAIL_CLIENT = {SOGO:'sogo',NATIVE:'native'}`) · main.js:2114 (Key im ExtendedOptionKeys-Objekt) · main.js:26541-26542 (Lesung mit Caller-Default `?? ONLY_OFFICE` → hier `?? SOGO`) · Fork-Util `libs/src/appconfig/utils/getExtendedOptionsValue.ts` (liefert `undefined`, kein Default)
