@@ -17,14 +17,21 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
+const AUTH_ENDPOINT = 'auth';
+const AUTH_LOGOUT = 'logout';
+
 const AUTH_PATHS = {
-  AUTH_ENDPOINT: 'auth',
+  AUTH_ENDPOINT,
   AUTH_OIDC_CONFIG_PATH: '/.well-known/openid-configuration',
   AUTH_OIDC_TOKEN_PATH: '/protocol/openid-connect/token',
   AUTH_OIDC_USERINFO_PATH: '/protocol/openid-connect/userinfo',
   AUTH_QRCODE: 'qrcode',
   AUTH_CHECK_TOTP: 'totp',
   AUTH_VIA_APP: 'edu-app',
+  AUTH_OIDC_LOGOUT_PATH: '/protocol/openid-connect/logout',
+  AUTH_LOGOUT,
+  AUTH_LOGOUT_ENDPOINT: `${AUTH_ENDPOINT}/${AUTH_LOGOUT}`,
+  AUTH_QR_SESSION: 'qr-session',
 } as const;
 
 export default AUTH_PATHS;

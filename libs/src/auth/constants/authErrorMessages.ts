@@ -26,6 +26,8 @@ enum AuthErrorMessages {
   TotpInvalid = 'auth.errors.TotpInvalid',
   LmnConnectionFailed = 'auth.errors.LmnConnectionFailed',
   KeycloakConnectionFailed = 'auth.errors.KeycloakConnectionFailed',
+  TotpAlreadyUsed = 'auth.errors.TotpAlreadyUsed',
+  LogoutFailed = 'auth.errors.LogoutFailed',
 }
 
 export default AuthErrorMessages;

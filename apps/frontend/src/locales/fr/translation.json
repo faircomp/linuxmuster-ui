@@ -249,7 +249,9 @@
       "KeycloakConnectionFailed": "La connexion au serveur d'authentification a échoué.",
       "EdulutionConnectionFailed": "La connexion au serveur Edulution a échoué. Veuillez réessayer plus tard.",
       "tokenIsNotActive": "La session n'est plus active.",
-      "Forbidden": "Accès refusé"
+      "Forbidden": "Accès refusé",
+      "TotpAlreadyUsed": "Ce code à usage unique a déjà été utilisé. Merci d'attendre le prochain code.",
+      "LogoutFailed": "La déconnexion n'a pas pu être effectuée entièrement."
     },
     "logout": {
       "success": "Avec succès"

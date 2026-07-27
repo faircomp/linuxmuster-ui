@@ -259,7 +259,9 @@
       "LmnConnectionFailed": "Connection to school server failed.",
       "KeycloakConnectionFailed": "Connection to authentication server failed.",
       "EdulutionConnectionFailed": "Connection to linuxmuster server failed. Please try again later.",
-      "Forbidden": "Access denied"
+      "Forbidden": "Access denied",
+      "TotpAlreadyUsed": "This one-time code has already been used. Please wait for the next code.",
+      "LogoutFailed": "The logout could not be completed fully."
     },
     "logout": {
       "success": "Logout successful"

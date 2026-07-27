@@ -40,6 +40,7 @@ import GroupRoles from '@libs/groups/types/group-roles.enum';
 import UserRoles from '@libs/user/constants/userRoles';
 import getIsAdmin from '@libs/user/utils/getIsAdmin';
 import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
+import AUTH_GRANT_TYPES from '@libs/auth/constants/authGrantTypes';
 import CustomHttpException from '../common/CustomHttpException';
 import { User, UserDocument } from '../users/user.schema';
 import SseService from '../sse/sse.service';
@@ -120,7 +121,7 @@ class AuthService {
   async authenticateUser(body: AuthRequestArgs): Promise<SigninResponse> {
     const { grant_type: grantType, password: encodedPassword, username: identifier } = body;
 
-    if (grantType === 'refresh_token') {
+    if (grantType === AUTH_GRANT_TYPES.REFRESH_TOKEN) {
       return this.signin(body);
     }
 
