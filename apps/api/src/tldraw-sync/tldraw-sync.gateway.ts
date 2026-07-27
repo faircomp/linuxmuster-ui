@@ -32,6 +32,7 @@ import TLDRAW_SINGLE_USER_ROOM_PREFIX from '@libs/whiteboard/constants/tldrawSin
 import GroupMemberDto from '@libs/groups/types/groupMember.dto';
 import Attendee from '../conferences/attendee.schema';
 import TLDrawSyncService from './tldraw-sync.service';
+import SessionDenylistService from '../auth/session-denylist.service';
 
 @WebSocketGateway({
   path: `${EDU_API_ROOT}/${TLDRAW_SYNC_ENDPOINTS.BASE}`,
@@ -45,6 +46,7 @@ class TLDrawSyncGateway implements OnGatewayConnection, OnModuleInit {
   constructor(
     private readonly tldrawSyncService: TLDrawSyncService,
     private readonly jwtService: JwtService,
+    private readonly sessionDenylistService: SessionDenylistService,
   ) {}
 
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this
@@ -155,6 +157,11 @@ class TLDrawSyncGateway implements OnGatewayConnection, OnModuleInit {
         publicKey: this.pubKey,
         algorithms: ['RS256'],
       });
+
+      if (await this.sessionDenylistService.isSessionDenied(user.sid)) {
+        client.close();
+        return {};
+      }
 
       const { preferred_username: username, family_name: lastName, given_name: firstName } = user;
 

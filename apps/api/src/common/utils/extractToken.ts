@@ -20,6 +20,7 @@
 import { parse } from 'cookie';
 import { Request } from 'express';
 import COOKIE_DESCRIPTORS from '@libs/common/constants/cookieDescriptors';
+import getBearerTokenFromHeader from './getBearerTokenFromHeader';
 
 const extractToken = (request: Request): string => {
   const tokenFromQuery = request.query.token as string;
@@ -27,12 +28,9 @@ const extractToken = (request: Request): string => {
     return tokenFromQuery;
   }
 
-  const authHeader = request.headers.authorization;
-  if (authHeader) {
-    const [type, token] = authHeader.split(' ');
-    if (type === 'Bearer' && token) {
-      return token;
-    }
+  const tokenFromHeader = getBearerTokenFromHeader(request);
+  if (tokenFromHeader) {
+    return tokenFromHeader;
   }
 
   const cookies = parse(request.headers.cookie || '');

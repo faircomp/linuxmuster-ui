@@ -142,7 +142,7 @@ Abhängt von: —
 > die Bundle-Fassung lässt es also passieren und reicht es als `string` weiter. Unsere Fassung wirft 400.
 > Ein Testfall pinnt das. **Nicht auf „Bundle-Treue" zurückkorrigieren.**
 
-### T8 — api: SessionDenylistService  [ ]
+### T8 — api: SessionDenylistService  [x] OK — SessionDenylistService + 9 Tests; isSessionDenied fail-open bei Cache-Ausfall
 Komponente: apps/api · Dateien: `apps/api/src/auth/session-denylist.service.ts` (NEU), `apps/api/src/auth/session-denylist.service.spec.ts` (NEU)
 Soll: main.js:67890–67927 (Modul 1020) — `static getCacheKey(sid)` 67895–67897 · `denySession(sid, exp)` 67898–67914 · `isSessionDenied(sid)` 67915–67926
 Änderung: `@Injectable()`-Service mit `@Inject(CACHE_MANAGER) private readonly cacheManager: Cache` (Muster: `apps/api/src/users/users.service.ts:57`, `Cache` aus `'cache-manager'`; `CacheModule` ist global, `app.module.ts:94–95`). ``static getCacheKey(sid: string) => `${REVOKED_SESSION_CACHE_KEY_PREFIX}${sid}` ``. `denySession(sid?: string, exp?: number): Promise<boolean>` — ohne `sid` oder `exp` sofort `true` (nichts zu tun); `remainingLifetimeMs = exp * MILLISECONDS_PER_SECOND - Date.now()`, bei `<= 0` sofort `true`; sonst `cacheManager.set(key, true, remainingLifetimeMs)` → `true`, im catch ``Logger.error(`Failed to deny session ${sid}: ${error.message}`, SessionDenylistService.name)`` → `false`. `isSessionDenied(sid?: string): Promise<boolean>` — ohne `sid` `false`; sonst `(await cacheManager.get(key)) === true`, im catch `Logger.error` → **`false`** (fail-open ist hier Absicht: ein Redis-Ausfall darf nicht jeden angemeldeten User aussperren). Statische Logger-Aufrufe (AGENTS.md), keine Kommentare im Code.
@@ -151,16 +151,16 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T4
 
-### T9 — api: AuthModule stellt SessionDenylistService bereit, TLDrawSyncModule importiert AuthModule  [ ]
+### T9 — api: AuthModule stellt SessionDenylistService bereit, TLDrawSyncModule importiert AuthModule  [x] OK — AuthModule providers+exports, TLDrawSyncModule importiert AuthModule; madge zyklenfrei
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.module.ts`, `apps/api/src/tldraw-sync/tldraw-sync.module.ts`
 Soll: main.js:67262–67279 (AuthModule: `providers: [AuthService, SessionDenylistService]` 67276, `exports: [SessionDenylistService]` 67277) · main.js:74274–74285 (TLDrawSyncModule, `imports: [AuthModule, …]` 74276–74277)
 Änderung: `SessionDenylistService` in `AuthModule.providers` **und** `AuthModule.exports`. In `TLDrawSyncModule.imports` `AuthModule` als erstes Element ergänzen. `AppModule` importiert `AuthModule` bereits (`apps/api/src/app/app.module.ts:125`) — damit ist der Service für den global via `APP_GUARD` registrierten `AuthGuard` (`app.module.ts:161–162`) auflösbar; **hier nichts an app.module.ts ändern**. `AuthModule` bleibt nicht-global (Bundle-Parität) — deshalb ist die TLDrawSync-Kante nötig.
-Verify: `bash scripts/crabbox/iter.sh test:api` grün (kein Nest-DI-Fehler beim Kompilieren der Test-Module) · `bash scripts/crabbox/iter.sh build` erfolgreich · `bash scripts/crabbox/iter.sh cmd 'npm run check-circular-deps'` grün
+Verify: `bash scripts/crabbox/iter.sh test:api` grün (kein Nest-DI-Fehler beim Kompilieren der Test-Module) · `bash scripts/crabbox/iter.sh build` erfolgreich · `bash scripts/crabbox/iter.sh cmd 'npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.base.json apps/api/src/auth/auth.module.ts apps/api/src/tldraw-sync/tldraw-sync.module.ts apps/api/src/auth/auth.guard.ts'` → „No circular dependency found" — **nicht** `npm run check-circular-deps`: das Skript liest `git diff --cached` und meldet ohne vorheriges `git add` „No TypeScript files changed" mit Exit 0, prüft also nichts
 i18n: keine
 Doku: keine (intern)
 Abhängt von: T8
 
-### T10 — api: AuthGuard setzt die sid-Denylist durch  [ ]
+### T10 — api: AuthGuard setzt die sid-Denylist durch  [x] OK — AuthGuard prüft die Denylist; request.user/token nur unter if(user) — mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.guard.ts`, `apps/api/src/auth/auth.guard.spec.ts` (NEU)
 Soll: main.js:79653–79691 (Modul 1203) — Konstruktor 79653, `let user` 79663, Denylist-Check **79677–79682**, Schreib-Guard **79683–79686**
 Änderung: `SessionDenylistService` als dritten Konstruktor-Parameter injizieren. `canActivate` umbauen: das Verify-Ergebnis zunächst in eine lokale `let user: JWTUser | undefined` schreiben (nicht mehr direkt nach `request.user`, heute `auth.guard.ts:51–55`); danach `if (user && (await this.sessionDenylistService.isSessionDenied(user.sid)))` → auf nicht-`@Public`-Routen `CustomHttpException(AuthErrorMessages.TokenExpired, HttpStatus.UNAUTHORIZED, 'Session revoked', AuthGuard.name)`, auf `@Public`-Routen `user = undefined` (Request läuft anonym weiter). Der Schreibvorgang steht **unter `if (user) { request.user = user; request.token = token; }`** — genau wie im Bundle (79683–79686). Nicht unbedingt schreiben: sonst trüge `request.token` auch bei unverifiziertem oder denylistetem Token einen Wert und die Gleichheitsprüfung aus T12, die die Sicherheitsgrenze von `/auth/logout` ist, würde aufgeweicht. Rest (isPublic/no-JWT-Zweig, `auth.guard.ts:63–72`) unverändert.
@@ -169,7 +169,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T8, T9
 
-### T11 — api: tldraw-WebSocket-Gateway setzt die sid-Denylist durch  [ ]
+### T11 — api: tldraw-WebSocket-Gateway setzt die sid-Denylist durch  [x] OK — Gateway schliesst den Socket vor dem Destructuring — mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/tldraw-sync/tldraw-sync.gateway.ts`, `apps/api/src/tldraw-sync/tldraw-sync.gateway.spec.ts` (NEU)
 Soll: main.js:75070–75092 — Denylist-Check **75083–75086**: nach `jwtService.verifyAsync` und **vor** dem Destructuring von `preferred_username` (75087) `if (await this.sessionDenylistService.isSessionDenied(user.sid)) { client.close(); return {}; }`
 Änderung: `SessionDenylistService` als dritten Konstruktor-Parameter (nach `TLDrawSyncService`, `JwtService`; heute `tldraw-sync.gateway.ts:45–48`) injizieren. In `private async authenticate(...)` (`tldraw-sync.gateway.ts:134`) direkt nach dem `verifyAsync`-Ergebnis (Zeilen 154–157) und **vor** dem Destructuring in Zeile 159 den Denylist-Check einfügen: Socket schliessen, leeres Objekt zurückgeben. **Ohne diesen Schritt hat ein abgemeldeter User weiter Live-Zugriff auf Whiteboard-Räume** — die WebSocket-Route läuft nicht über den globalen `AuthGuard`.
@@ -178,7 +178,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T8, T9
 
-### T12 — api: Bearer-Token-Extraktion vereinheitlichen + GetBearerSession-Decorator  [ ]
+### T12 — api: Bearer-Token-Extraktion vereinheitlichen + GetBearerSession-Decorator  [x] OK — getBearerTokenFromHeader/-SessionFromRequest + Decorator; Gleichheitsprüfung mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/common/utils/getBearerTokenFromHeader.ts` (NEU), `apps/api/src/common/utils/getBearerSessionFromRequest.ts` (NEU), `apps/api/src/common/utils/getBearerSessionFromRequest.spec.ts` (NEU), `apps/api/src/common/utils/extractToken.spec.ts` (NEU), `apps/api/src/common/decorators/getBearerSession.decorator.ts` (NEU), `apps/api/src/common/utils/extractToken.ts` (ändern)
 Soll: main.js:68406–68412 (`getBearerTokenFromHeader`) · main.js:68370–68376 (`getBearerSessionFromRequest`) · main.js:68337–68340 (`GetBearerSession`) · main.js:79725–79735 (`extractToken` nutzt den Header-Helper)
 Änderung: `getBearerTokenFromHeader(request): string | undefined` — `const [scheme, token] = request.headers.authorization?.split(' ') ?? []`, bei `scheme !== BEARER_AUTH_SCHEME || !token` → `undefined`. `getBearerSessionFromRequest(request): JWTUser | undefined` — Token aus dem Header holen; wenn `!tokenFromHeader || tokenFromHeader !== request.token` → `undefined`, sonst `request.user`. **Diese Gleichheitsprüfung ist die Sicherheitsgrenze für `/auth/logout`**: nur ein Token, der über den Authorization-Header kam *und* vom AuthGuard verifiziert wurde, darf eine sid denylisten — sonst könnte ein Query-/Cookie-Token fremde Sessions sperren. Nicht vereinfachen. `GetBearerSession = createParamDecorator((_data, ctx) => getBearerSessionFromRequest(ctx.switchToHttp().getRequest()))` (Muster: `apps/api/src/common/decorators/getToken.decorator.ts`). In `extractToken.ts` den inline-`'Bearer'`-Block (**Zeilen 30–36**) durch `getBearerTokenFromHeader(request)` ersetzen; Query-Zweig (25–28) und Cookie-Zweig (38–39) unverändert.
