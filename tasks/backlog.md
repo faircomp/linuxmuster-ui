@@ -121,6 +121,41 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
     Contacts-Modul (haengt an SOGo/CardDAV), Fork-Migrations-Numerierungsband (9xx?), React-19-Termin,
     Rekonstruierbarkeit des 2.1.0-Frontends (nur das API-Bundle ist un-minifiziert).
 
+- **2.1.0-PORT-PLANUNG ABGESCHLOSSEN (2026-07-27) — 286 Tasks in 7 Ledgern + Master-Plan.**
+  Erzeugt per Workflow (7 Pakete parallel gegen beide Bundles, danach je eine adversariale Pruefung, dann Master).
+  Dateien: `tasks/p6-auth-hardening.md` (34) · `tasks/p6-onlyoffice-hardening.md` (28) ·
+  `tasks/p6-migrations-2-1-catchup.md` (43) · `tasks/p4-mail-rework-21-sieve.md` (46) ·
+  `tasks/p7-2-1-new-modules.md` (82) · `tasks/p7-fe-toolchain-catchup.md` (23) ·
+  `tasks/p7-deps-config-infra.md` (30) · **`tasks/PORT-2.1.0-MASTER.md`** (Reihenfolge/Blocker/Contracts/
+  Teststrategie/Aufwand/Entscheidungen) · `tasks/PORT-2.1.0-REVIEWS.md` (die 7 Pruefberichte).
+  - **WICHTIG — kein Ledger ist startklar.** Alle sieben Pruefungen enden auf **LEDGER-NEEDS-WORK**
+    (4-9 Blocker je Paket, ~42 gesamt): falsche Zeilenanker, Annahmen die der Fork-Code widerlegt,
+    nicht ausfuehrbare Verify-Kommandos, fehlende Contract-Kopplungen. **Blocker-Fix zuerst (~1-2 Sessions),
+    dann bauen** — sonst produzieren die Ledger falsch-gruene Verifys.
+  - **Neues Paket `p6-fundament` (~12 Tasks) muss VOR allem anderen kommen:** gemeinsame Vorbedingungen,
+    die >=2 Ledger stillschweigend voraussetzen und die keines baut (`apiAuth.decorator`,
+    `strictValidationPipe`, `mailImapFlags`, master.key-Util, libs-Spec-Runner, **Beweis dass das
+    Jest-Filter-Idiom ueberhaupt narrowt** — sonst sind ~40 Verify-Zeilen falsch-gruen).
+  - **Migrationen sind der einzige global serialisierende Faktor.** Fuenf Pakete schreiben in dieselbe
+    Kette → **nie mehr als ein migrationsschreibendes Paket offen**. Serielle Linie:
+    `p6-migrations` → `p7-fe-toolchain-B` → `p7-calendar-sogo` → `p7-surveys-limiter` → `p4-mail`.
+  - **Wellen:** 0 `p6-fundament` · 1 Sicherheit ohne Schema-Beruehrung (`auth`, `onlyoffice`, `deps-infra`) ·
+    2 `fe-toolchain-A` (React 19/ESLint 9 — vor jeder neuen FE-Zeile, sonst doppelt geschrieben) ·
+    3 `migrations` ALLEIN · 4 Contract-Aenderungen mit Migration · 5 neue Module.
+  - **Aufwand ehrlich:** ~300 Tasks netto, davon ~20 dauerhaft `[?] human-gate`. Bei 6-10 Tasks je
+    Session sind das **35-50 Sessions**; Welle 3 allein 6-8 Sessions am Stueck und nicht parallelisierbar.
+  - **Nicht verifizierbar ohne Fehlendes (ehrlich benannt, nicht wegargumentiert):** 2.1.0-Baselines
+    (⇒ das gesamte FE hat **kein visuelles Abnahmekriterium**) · SOGo-Instanz (Kalender-Sharing +
+    Contacts sind ohne sie funktionslos) · ManageSieve-Server (der Sieve-Client ist **selbstgebaut**,
+    Protokollfehler waeren unsere) · LDAPS-Zertifikate mit SANs · zweiter LMN · LLM-Key+AVV.
+  - **Entscheidungen, die den Plan blockieren** (Details in PORT-2.1.0-MASTER.md §6): D1 Migrations-
+    Eigentum · D2 `surveyAnswers/002` in-place ersetzen (bewusste forward-only-Ausnahme) · D3
+    `webdavShares`-Nummernkollision (Vorschlag: eigenes `forkSchemaVersion`+9xx-Band) · D4 Versions-/
+    Tag-Politik (sonst meldet `/health/version` weiter **1.6.266**) · D5 Swagger · D6 libs-Spec-Runner ·
+    D7 kein `ENABLE_EXPERIMENTAL_AUTH` + Keycloak-Brute-Force-Settings anfassen duerfen · D8
+    `GET /mails/domains` · D16 React 19 via npm-overrides · D17 Baselines · D9-D11 Dump-Regime,
+    `encryptKey`-Umbau, **Share-Passwoerter liegen bis zum ACL-Paket im Klartext in Mongo** · D13 AI-Modul.
+
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
 ## Reihenfolge (Topo-Sort; ⭐ = kritischer Pfad)
