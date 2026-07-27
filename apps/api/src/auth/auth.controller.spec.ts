@@ -116,5 +116,20 @@ describe(AuthController.name, () => {
         expect(controllerContractReflection.isRoutePublic(AuthController, route)).toBe(false);
       });
     });
+
+    it('has no public route beyond the listed ones, so a new handler cannot slip past unnoticed', () => {
+      const allRoutes = Object.getOwnPropertyNames(AuthController.prototype).filter((name) => name !== 'constructor');
+      const publicRoutes = allRoutes.filter((route) =>
+        controllerContractReflection.isRoutePublic(AuthController, route),
+      );
+
+      expect(publicRoutes.sort()).toEqual([...PUBLIC_ROUTES].sort());
+    });
+
+    it('covers every handler between the two lists, so neither can go stale', () => {
+      const allRoutes = Object.getOwnPropertyNames(AuthController.prototype).filter((name) => name !== 'constructor');
+
+      expect(allRoutes.sort()).toEqual([...PUBLIC_ROUTES, ...PROTECTED_ROUTES].sort());
+    });
   });
 });
