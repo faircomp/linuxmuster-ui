@@ -279,7 +279,7 @@ class FilesharingService {
   async handleCallback(req: Request, res: Response, path: string, filename: string, username: string, share: string) {
     const webdavShare = await this.webdavSharesService.getWebdavShareFromCache(share);
 
-    return OnlyofficeService.handleCallback(
+    return this.onlyofficeService.handleCallback(
       req,
       res,
       getPathWithoutWebdav(path, webdavShare.pathname),

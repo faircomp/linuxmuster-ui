@@ -56,6 +56,7 @@ import { randomUUID } from 'crypto';
 import APPS from '@libs/appconfig/constants/apps';
 import type { IConfig } from '@onlyoffice/document-editor-react';
 import ONLY_OFFICE_CALLBACK_PATH from '@libs/filesharing/constants/onlyOfficeCallbackPath';
+import ONLY_OFFICE_CALLBACK_STATUS from '@libs/filesharing/constants/onlyOfficeCallbackStatus';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import FilesystemService from '../filesystem/filesystem.service';
 import FilesharingService from './filesharing.service';
@@ -263,7 +264,7 @@ class FilesharingController {
   ) {
     try {
       const { status } = req.body as OnlyOfficeCallbackData;
-      if (status === 1) {
+      if (status === ONLY_OFFICE_CALLBACK_STATUS.EDITING) {
         return res.status(HttpStatus.OK).json({ error: 0 });
       }
 
