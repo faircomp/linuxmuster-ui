@@ -44,7 +44,7 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - `[?] human-gate: Repo-Freigabe (public) erst nach Rebrand-Gate` — `p1-installer-rebrand-dist` T7 (+ `p1-rebrand`) müssen gelandet sein, bevor ein Repo public wird (sonst edulution-Branding/Netzint-Header öffentlich); erfüllt zugleich AGPL-§13.
   - Box-gated Verifies zum Nachziehen am P1-Voll-Stack: `p1-own-ci-registry` T3/T5, `p0-realm-diff-baseline` T4/T6, `p1-installer-ci` CI-Run/skopeo.
   - **Geparkte Sections (vollständig box-/infra-gated, nicht autonom baubar):** `p2-install-e2e` (7/7 human-gate — realer Install-Beweis: Box+Bootstrap+echter LMN+7-Service-Stack+Playwright-Login); `p1-migration-upgrade-test` (8/8 — echtes 1.6-Image+Mongo+api-Boot-Logs auf der Box **und** abhängig vom noch nicht rekonstruierten Deploy-Harness `deploy.sh`/`shots.py`); `p1b-tracking-pipeline` (16/16 — **separates Greenfield-Repo `linuxmuster-tracking`** außerhalb des Zwei-Repo-Modells + box-gated skopeo/crane/trivy gegen live-ghcr; Repo-Anlage unter faircomp = Setup-Entscheidung). Alle warten auf warme Box + (Tracking) Repo-Setup.
-  - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); jest/nx-Lauf box-gated. Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
+  - **`p1-port-api-specs-ci` fertig** (11/11 authored) — `test:api:ci`-Gate + benannter CI-Test-Step; `controllerContractReflection`-Helper; **14 neue Controller-Auth-Contract-Specs** (alle 29 Controller haben jetzt Specs, via `check-spec-coverage` in CI+pre-commit erzwungen); Spec-Policy-Doku. Lokal verifiziert (tsc/eslint/tsx/yaml/route-grep); **jest/nx-Lauf 2026-07-27 remote grün** (86 Suites/694 Tests) + Guard-Contract am laufenden Stack (10/10 Routen unauth→401). Sichert v.a. die `@Public()`-Opt-outs gegen Auth-Bypass ab.
   - **`p1-security-cve-track` fertig** (8/8 authored) — Dependabot (npm/actions/docker), Base-Image-Digest-Pinning, npm-audit-Gate (severity-Ceiling + reviewBy-Ablauf), 2 Trivy-Image-Scan-Gates (PR + fail-closed Release), `scanImages.sh`-Cron-Scanner, Accepted-CVE-Register + Track-Doku. **Befund: 30 high/critical Prod-CVEs Alt-Last der v1.6.266-Basis** baselined (reviewBy 2026-10-15, [[cve-baseline-debt]]) — Remediation via Dependabot vor Public-Gehen priorisieren. Lokal verifiziert; Trivy-CI-Runs box-gated.
   - **`p1-observability` fertig** (4/5 authored) — HealthService liefert Build-Metadaten in jeder Health-Antwort (Monitoring-Contract), Observability-Env gehärtet, getLogLevels-Regressions-Spec, `docs/observability.md` (DE+EN). `[?] human-gate: p1-observability T4` — **DSGVO-Entscheidung**: Sentry-Telemetrie im 2.0-SOLL sendet ALLE PII (`sendDefaultPii:true`); für eine Minderjährigen-Plattform (R12) **empfehle ich Härtung** — Kevins Entscheidung. Sentry ist default AUS, kein akutes Leak. jest-Lauf box-gated.
   - **`p1-dr-runbook` fertig** (6/6 authored) — DR-Runbook + geteilte `dr-lib.sh` + `dr-backup.sh` (pflicht-verschlüsselt, kein Klartext-Leak) + `dr-restore.sh` (Validierung vor jedem destruktiven Schritt) + `dr-drill.sh` (Round-Trip-Abnahmetest mit Prod-Guard) + Wiring (npm/systemd/.gitignore). Alle 4 Skripte shellcheck-CLEAN + docker-stub-verifiziert; **Reviews fanden real: Docker-Namens-Match-Bug, PW-auf-argv, einen Klartext-Leak-Blocker (in meinem Fix), ein False-Green-DR-Test-Loch, fehlender Prod-Guard — alle behoben.** Drill-RUN box-gated.
@@ -617,7 +617,7 @@ Doku: keine (intern)
 Abhängt von: T6
 
 ## p1-rebrand [P1] ⭐ — P1
-_Ziel:_ edulution-io-Refs/Marken/Lizenz-Header per Deny/Allowlist auf faircomp · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ erledigt (16/16) · _Tasks:_ 16
+_Ziel:_ edulution-io-Refs/Marken/Lizenz-Header per Deny/Allowlist auf faircomp · _Abhängt-von:_ p0-supply-chain-inventory · _Status:_ erledigt (16/16) — **Nachtrag 2026-07-27:** der Voll-Stack-Verify deckte eine übersehene Stelle auf: `APPLICATION_NAME` stand noch auf `'edulution.io'` und war nutzersichtbar in Browser-Tab-Titel (PageTitle), Copyright-Footer JEDER Seite, Community-Edition-Dialog, WebDAV-Setup und Update-Toast → aus `PRODUCT_NAME` abgeleitet (commit 3d09e86c2). Lehre: rein statische Rebrand-Prüfung findet variabel eingesetzte Namens-Konstanten nicht · _Tasks:_ 16
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-rebrand.md` · Soll: reiner Rebrand/Legal (kein main.js-Anker/Rescue-Branch); Belege: PLAN §2.3/2.4/2.5/4.1/9 · nx.json:3 · scripts/addLicenseHeader.ts:23–39 · libs/src/common/constants/urls.ts:20–22 · .github/workflows/{container-build,build-and-test,api-tag,frontend-tag}.yml · package.json:19–22 · README.md · LICENSE_EXCEPTIONS.md · apps/frontend/index.html
 
 > Platzhalter-Zielwerte bis OF1 entschieden: Org `faircomp`, Images `ghcr.io/faircomp/linuxmuster-ui` / `ghcr.io/faircomp/linuxmuster-api`, Anzeigename „linuxmuster", Repo-URL `https://github.com/faircomp/linuxmuster-ui`. Allowlist (nicht anfassen): `@edulution-io/ui-kit`, `edu-*`, `isEdulutionApp`/`EDULUTION_APP_AGENT_IDENTIFIER`, `EDULUTION_MANAGER_*`, `edulution-manager`, `edu_`-Icon-Pfade, `edulution-binduser-*`-Keys, `/opt/edulution/api`, Issue-URL-Kommentare, sämtliche Netzint-Copyright-Header auf Bestandsdateien.
@@ -834,7 +834,7 @@ i18n: keine · Doku: keine
 Abhängt von: T4, T5, T6
 
 ## p1-own-ci-registry [P1] ⭐ — Eigene CI-Pipeline & Container-Registry (Härtung)
-_Ziel:_ Eigene CI+Registry: Images grün-gegated+gehärtet nach ghcr/faircomp · _Abhängt-von:_ p1-rebrand · _Status:_ erledigt (11/11 authored; T3-docker/T5-jest-Verify box-gated, T11-Smoke human-gate) · _Tasks:_ 11
+_Ziel:_ Eigene CI+Registry: Images grün-gegated+gehärtet nach ghcr/faircomp · _Abhängt-von:_ p1-rebrand · _Status:_ erledigt (11/11 authored; **jest-Vorbehalt aufgelöst 2026-07-27**: voller Remote-Lauf `iter.sh all` grün — lint 3/3, jest 86 Suites/694 Tests, vitest 40/188, build:all 3/3, i18n; T3-docker + T11-Smoke bleiben human-gate) · _Tasks:_ 11
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-own-ci-registry.md` · Soll: main.js:59718–59722 (Health-Env-Contract) · container-build.yml:100/104/109–111/159–161 · bump-{patch,minor}-version-tag.yml · publish-ui-kit.yml:14–16 (permissions-Referenz) · kein Rescue-Branch/Screenshot (CI-Infra)
 
 > Kontext-Notiz: Abhängt von `p1-rebrand` (Image-Name-Strings `edulution-io`→`faircomp`,
@@ -1186,7 +1186,7 @@ Abhängt von: T3, T4
 ---
 
 ## p2-install-e2e [P2] ⭐ — Erstinstallation end-to-end über den EIGENEN Installer (der Beweis)
-_Ziel:_ Leere Ubuntu-Box → unser Bootstrap → Wizard → laufende Instanz am echten LMN + Login · _Abhängt-von:_ p1-installer-ci, p1-installer-rebrand-dist · _Status:_ blockiert (human-gate: realer Install-Beweis — frische Box + Bootstrap-Lauf + echter LMN + 7-Service-Stack + Playwright-Login; alle Verifies „auf der Box" am echten LMN = ask-first/box-gated; Harness hängt zusätzlich am noch nicht rekonstruierten Deploy-/shots-Harness) · _Tasks:_ 7
+_Ziel:_ Leere Ubuntu-Box → unser Bootstrap → Wizard → laufende Instanz am echten LMN + Login · _Abhängt-von:_ p1-installer-ci, p1-installer-rebrand-dist · _Status:_ blockiert (human-gate: realer Install-Beweis — frische Box + Bootstrap-Lauf + echter LMN + 7-Service-Stack + Playwright-Login; alle Verifies „auf der Box" am echten LMN = ask-first/box-gated; **Deploy-/shots-Harness ist seit 2026-07-27 rekonstruiert und real erprobt** (commit c0079125d: deploy.sh/generate_env.py/stage-templates.sh/shots.py; 7/7 Services healthy, Login→/dashboard gegen echten LMN) → dieser Teil-Blocker ENTFÄLLT; es bleibt der menschliche Install-Beweis über den EIGENEN Installer-Bootstrap auf frischer Box) · _Tasks:_ 7
 Branch: `feat/2.0-backlog` · **Repo: `linuxmuster-ui-installer`** (Test-Harness ggf. im UI-Repo unter `scripts/crabbox/`) · Soll: `apps/public-page/public/installer` (Bootstrap) · `apps/webinstaller-api/app/main.py:206 /api/configure`, `:435 /api/finish` · `/test`-Skill (crabbox-Rezept)
 
 > **Warum dieses Paket existiert:** Kein anderes Paket beweist, dass die **Installation** funktioniert.
@@ -1259,7 +1259,7 @@ Doku: `docs/install.md` DE+EN+FR
 Abhängt von: T5, T6
 
 ## p1-migration-upgrade-test [P1] — Migrations-Upgrade-Test (echte 1.6-DB → eigenes Image)
-_Ziel:_ 1.6-DB→eigenes Image Upgrade-Pfad real testen · _Abhängt-von:_ p1-installer-repoint, p0-migrations-inventory · _Status:_ blockiert (box-gated: echtes 1.6.266-Image + Mongo + api-Boot-Logs auf der Box; zusätzlich abhängig vom noch NICHT rekonstruierten Deploy-Harness deploy.sh/generate_env.py/shots.py — Scripts nicht verifizierbar-authorbar ohne Box) · _Tasks:_ 8
+_Ziel:_ 1.6-DB→eigenes Image Upgrade-Pfad real testen · _Abhängt-von:_ p1-installer-repoint, p0-migrations-inventory · _Status:_ blockiert (box-gated: echtes 1.6.266-Image + Mongo + api-Boot-Logs auf der Box; Deploy-Harness-Abhängigkeit **aufgelöst**: deploy.sh/generate_env.py/shots.py existieren seit 2026-07-27 und sind gegen den echten LMN erprobt (c0079125d). Offen bleibt nur der Upgrade-Pfad selbst: echtes 1.6.266-Image + Seed-Restore + Boot-Log-Assertion auf der Box) · _Tasks:_ 8
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-migration-upgrade-test.md` · Soll: main.js:2676 (Engine) · main.js:2678/2681 (Log-Strings) · main.js:9214 (getMasterKey) · main.js:7950 (unwrapEncryptKey) · docs/migrations/2.0-migrations-inventory.md (p0) · .reference/2.0.200/baselines/dashboard.png
 
 > Voraussetzungen (Abhängt-von, paketweit): `p0-migrations-inventory` (Inventar + gedraftetes
@@ -1342,7 +1342,7 @@ Doku: docs/migrations/upgrade-1.6-to-2.0.md (DE, intern) — diese Task IST die 
 Abhängt von: T7
 
 ## p1-port-api-specs-ci [P1] — API-Specs als CI-Green-Gate + Smoke/Contract-Tests
-_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ erledigt (11/11 authored; T1-T3+T9-T11 lokal verifiziert [tsc/eslint/tsx/yaml], T4-T8 eslint+route-grep verifiziert; jest/nx-Lauf box-gated) · _Tasks:_ 11
+_Ziel:_ 28 Bestands-Specs als CI-Green-Gate + Smoke/Contract · _Abhängt-von:_ p1-own-ci-registry · _Status:_ erledigt (11/11 authored; T1-T3+T9-T11 lokal verifiziert [tsc/eslint/tsx/yaml], T4-T8 eslint+route-grep; **jest/nx-Vorbehalt aufgelöst 2026-07-27**: `iter.sh all` remote grün, alle 29 Controller-Auth-Contract-Specs laufen — 86 Suites/694 Tests; zusätzlich Guard-Contract am LAUFENDEN System bestätigt: 10/10 Modul-Routen unauth→401) · _Tasks:_ 11
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p1-port-api-specs-ci.md` · Soll: PLAN §6/Zeile 317 · §5.1/Zeile 252 · §3.2/Zeile 156 · §6.8/Zeile 314 · §8-P1/Zeile 362 · app.module.ts:150–158 (globaler AuthGuard+AccessGuard) · Bestands-Specs sse.controller.spec.ts / users.controller.spec.ts · scripts/checkFilenames.ts (Check-Muster) · Guard-Anker main.js:11219/56551/56883/59956/63161
 
 > Kontext: 28 Bestands-Specs (nativ aus 1.6.266). 29 Controller, davon 14 ohne Spec:
@@ -1871,7 +1871,7 @@ Doku: README (dieses Task IST die Doku)
 Abhängt von: T15
 
 ## p2-chat [P2] ⭐ — Chat (nativer Gruppen-Chat)
-_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ Code fertig (T1–T18 [x]/[~]) — nur T19 (Pilot-Abschluss: crabbox-Deploy + Visual-Diff) box-gated offen; Rezept code-seitig validiert → Folge-Phasen entblockt · _Tasks:_ 19
+_Ziel:_ PILOT: nativer Gruppen-Chat BE+FE end-to-end — validiert das Rezept · _Abhängt-von:_ p1-installer-repoint · _Status:_ Code fertig (T1–T18 [x]/[~]); **T19 teilverifiziert** [Voll-Stack-Verify 2026-07-27, crabbox lmnui-1d1e gegen echten LMN 10.10.40.10]: Deploy grün, `/chat` rendert die native Shell, chat-Routen 200, Guard unauth→401. Offen bleiben Message-Flow/SSE (braucht 2 LMN-User in gemeinsamer Klasse = ask-first) und Visual-Diff (keine Baseline vorhanden) · _Tasks:_ 19
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p2-chat.md` · Soll: main.js:68378–69512 (ChatModule 68378 · ChatController 68438 · ChatService 68779 · getUnreadCounts 68938 · Conversation-Schema 69227 · ChatMessage-Schema 69382 · ChatReadStatus-Schema 69487 · ALLOWED_CONVERSATION_TYPES 69344 · CHAT_ERROR_MESSAGES 69127) · upstream/1851-add-chat-page (PRIMÄR, FE+BE) · upstream/1866-add-chat-backend-with-message-schema-and-api (ergänzend, älter) · .reference/2.0.200/baselines/11-chat.png
 
 > Hinweis Rekonstruktion: `1851` ist diverged (datiert vor 1.6→2.0-Merge) und kennt **kein**
@@ -2050,7 +2050,7 @@ Doku: docs/ „Chat" (DE+EN, kurz) · CHANGELOG-Eintrag
 Abhängt von: T11, T12, T17
 
 ## p3-parent-child-pairing [P3] — ParentChildPairing
-_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ blockiert (14/15 [x], T15 box-gated [?]) · _Tasks:_ 15
+_Ziel:_ ParentChildPairing: Code-Pairing (TTL), Rollen, LMN-Gruppenpflege · _Abhängt-von:_ p2-chat · _Status:_ blockiert (14/15 [x]; T15 teilverifiziert — Route+Guard real geprüft, Accept/Reject-Flow braucht LMN-Fixtures = ask-first) · _Tasks:_ 15
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-parent-child-pairing.md` · Soll: main.js:60108/60169/60806 (Modul/Service/Controller) · main.js:12624 (LMN) · main.js:60489/60525/60557/60589/60619/64074 (Konstanten/Helper/QR) · upstream/1717-add-pairing-administration-page · kein Baseline-Screenshot (Modul in 1.6 nicht vorhanden)
 
 > Kalibrierung (P3): geerdetes Rekonstruktions-Ledger. Zeilenanker/Signaturen gegen echtes 2.0 (`main.js`) verifiziert.
@@ -2184,7 +2184,7 @@ i18n: **das ist** die i18n-Task (DE+EN Pflicht)
 Doku: keine (intern)
 Abhängt von: T10, T12
 
-### T15 — Voll-Stack-Verify gegen echten LMN (Accept→Gruppe, Reject→Entfernung)  [?] human-gate: box-gated (crabbox down den ganzen Loop). Braucht warme Box: eigene Images bauen → 7-Service-Stack + linuxmuster-api7 gegen echten LMN, synthetische Eltern/Schüler-Fixtures: Code(Schüler)→einlösen(Eltern)=PENDING → Admin akzeptiert → Eltern in LMN-Gruppe `<student>-parents` (GET users/<student> zeigt parents) → Reject entfernt. + Playwright-Shot UserSettings-/ParentAssignment-Seite. **Offene Frage 2:** trägt Eltern das `/role-parent`-Claim? LMN-verändernd = ask-first. Doku „ParentChildPairing"-Abschnitt DE+EN im selben Commit. Abhängt: T7/T13/T14 (alle [x]) → nur noch Box nötig.
+### T15 — Voll-Stack-Verify gegen echten LMN (Accept→Gruppe, Reject→Entfernung)  [?] TEILVERIFIZIERT [Voll-Stack-Verify 2026-07-27, crabbox lmnui-1d1e gegen echten LMN 10.10.40.10]: `GET /edu-api/parent-child-pairing/all` **200** (`[]`), Guard unauth→**401**, Stack+Login grün. OFFEN (ask-first, LMN-verändernd): der eigentliche Flow Code→Einlösen→PENDING→Accept→LMN-Gruppe `<student>-parents`→Reject-Entfernung braucht synthetische Eltern/Schüler-Fixtures auf dem echten LMN; ebenso die Offene Frage 2 (`/role-parent`-Claim). ORIGINAL-PARK: box-gated (crabbox down den ganzen Loop). Braucht warme Box: eigene Images bauen → 7-Service-Stack + linuxmuster-api7 gegen echten LMN, synthetische Eltern/Schüler-Fixtures: Code(Schüler)→einlösen(Eltern)=PENDING → Admin akzeptiert → Eltern in LMN-Gruppe `<student>-parents` (GET users/<student> zeigt parents) → Reject entfernt. + Playwright-Shot UserSettings-/ParentAssignment-Seite. **Offene Frage 2:** trägt Eltern das `/role-parent`-Claim? LMN-verändernd = ask-first. Doku „ParentChildPairing"-Abschnitt DE+EN im selben Commit. Abhängt: T7/T13/T14 (alle [x]) → nur noch Box nötig.
 Komponente: scripts/crabbox (Voll-Stack) · Dateien: — (nur Verifikation, ggf. Playwright-Shot)
 Soll: main.js:12624/12634 (LMN `users/<student>/parents`), :60358-60378 (Statuswechsel-Wirkung)
 Änderung: keine Code-Änderung. Auf warmer crabbox mit **synthetischen** Eltern-/Schüler-Fixtures: Code erzeugen (Schüler), einlösen (Eltern) → `PENDING`; Admin akzeptiert → Eltern in LMN-Gruppe `<student>-parents`; ablehnen → Entfernung. Prüfen, dass Eltern das `/role-parent`-Claim tragen (offene Frage 2 der Spec).
@@ -2194,7 +2194,7 @@ Doku: kurzer Modul-Abschnitt „ParentChildPairing" (DE+EN) im selben Commit
 Abhängt von: T7, T13, T14
 
 ## p3-wiki [P3] — Wiki
-_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ code-complete (Code fertig, 20 [x]; T25 [?] box-gated Voll-Stack-Smoke, crabbox down; 2 weitere [?] parkiert) · _Tasks:_ 25
+_Ziel:_ WikiModule (9 Routen WebDAV, ETag) + TipTap-FE-Editor · _Abhängt-von:_ p2-chat · _Status:_ code-complete (20 [x]); **T25 teilverifiziert** [Voll-Stack-Verify 2026-07-27, crabbox lmnui-1d1e gegen echten LMN 10.10.40.10]: `/wiki` rendert, `wiki/shares` 200, Guard unauth→401. Editieren/Suche/Share-Toggle blockiert, solange kein Wiki-Share konfiguriert ist (ask-first); 2 weitere [?] parkiert · _Tasks:_ 25
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p3-wiki.md` · Soll: main.js:69628 (WikiModule) · main.js:71593 (WikiController) · main.js:70322/70610/70884/71024 (Services) · main.js:2098 (WIKI_SHARE_VISIBILITY_TABLE) · main.js:2456 (defaultAppConfig) · KEIN upstream/*-Rescue-Branch (reine Rekonstruktion) · .reference/2.0.200/ui/.../WikiPage-CCeoG8Ux.js + wiki-editor-uttP9V64.js (nur Verhaltensreferenz) · Baseline-Screenshot fehlt → frisch gegen crabbox 2.0.200 aufnehmen
 
 > Kalibrierungs-Notiz (P3): BE-Tasks sind aus main.js hart verankert und ausführbar. Die FE-Tasks
@@ -3063,7 +3063,7 @@ Doku: keine (Verify-Log)
 Abhängt von: T13
 
 ## p5-calendar [P5] — Calendar
-_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat (Pilot code-fertig) · _Status:_ **code-complete (T1-T18 [x]; Voll-Stack-Verify + PR box-/human-gated)** · _Tasks:_ 18
+_Ziel:_ CalendarModule (7 Routen) + FE-Grid mit rrule · _Abhängt-von:_ p2-chat (Pilot code-fertig) · _Status:_ **code-complete (T1-T18 [x])**; Voll-Stack [Voll-Stack-Verify 2026-07-27, crabbox lmnui-1d1e gegen echten LMN 10.10.40.10]: Guard unauth→**401** OK, aber `GET /edu-api/calendar/calendars` → **503 `CalendarBackendNotConfigured`** — korrektes Verhalten ohne CalDAV-Backend, d. h. nur der Fehlerpfad ist geprüft, **die Funktion nicht**. Echter Calendar-Verify braucht ein konfiguriertes CalDAV-Backend (Konfig-Entscheidung). PR human-gated · _Tasks:_ 18
 Branch: `feat/2.0-backlog` · Spec: `docs/features/p5-calendar.md` · Soll: main.js:33176-33381 (Module/Controller) · 33439-34752 (Enums/Schemas/Service/IcalMapper) · 35267-35925 (DTOs) · 2085-2087 (appconfig-Keys) · kein Rescue-Branch · kein .reference/2.0.200/baselines/*calendar* (FE = laufende 2.0-crabbox als Live-Referenz)
 
 > P5-Kalibrierungs-Notiz: Geerdetes Rekonstruktions-Ledger. BE-Anker sind aus main.js
