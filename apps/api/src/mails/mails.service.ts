@@ -52,6 +52,7 @@ import MailProviderPublicConfigDto from '@libs/mail/types/mailProviderPublicConf
 import CreateSyncJobRequestDto from '@libs/mail/types/createSyncJobRequest.dto';
 import syncjobDefaultConfig from '@libs/mail/constants/sync-job-default-config';
 import { replaceGermanUmlauts } from '@libs/common/utils/string/latinize';
+import { MAIL_FOLDER_NAMES } from '@libs/mail/constants/mailImapFlags';
 import CustomHttpException from '../common/CustomHttpException';
 import DockerService from '../docker/docker.service';
 import FilesystemService from '../filesystem/filesystem.service';
@@ -363,7 +364,7 @@ class MailsService implements OnModuleInit {
     let mailboxLock: MailboxLockObject | undefined;
     const mails: MailDto[] = [];
     try {
-      mailboxLock = await imapClient.getMailboxLock('INBOX');
+      mailboxLock = await imapClient.getMailboxLock(MAIL_FOLDER_NAMES.INBOX);
 
       const unseenMailUids = await imapClient.search({ seen: false }, { uid: true });
 
@@ -511,7 +512,10 @@ class MailsService implements OnModuleInit {
 
   async createSyncJob(createSyncJobRequest: CreateSyncJobRequestDto, emailAddress: string) {
     const provider = await this.mailProviderModel
-      .findOne({ mailProviderId: createSyncJobRequest.mailProviderId }, 'mailProviderId name label host port encryption')
+      .findOne(
+        { mailProviderId: createSyncJobRequest.mailProviderId },
+        'mailProviderId name label host port encryption',
+      )
       .catch(() => null);
 
     if (!provider) {

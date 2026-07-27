@@ -34,6 +34,7 @@ import NOTIFICATION_SOURCE_TYPE from '@libs/notification/constants/notificationS
 import NOTIFICATION_TYPE from '@libs/notification/constants/notificationType';
 import NOTIFICATION_CREATOR_SYSTEM from '@libs/notification/constants/notificationCreatorSystem';
 import NOTIFICATION_TEMPLATES from '@libs/notification/constants/notificationTemplates';
+import { MAIL_FOLDER_NAMES } from '@libs/mail/constants/mailImapFlags';
 import AppConfigService from '../appconfig/appconfig.service';
 import SseService from '../sse/sse.service';
 import NotificationsService from '../notifications/notifications.service';
@@ -225,7 +226,7 @@ class MailIdleService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await client.connect();
-      await client.mailboxOpen('INBOX');
+      await client.mailboxOpen(MAIL_FOLDER_NAMES.INBOX);
 
       const mailboxStatus = client.mailbox;
       if (mailboxStatus) {
