@@ -34,6 +34,7 @@ import APPS from '@libs/appconfig/constants/apps';
 import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import MultipleSelectorGroup from '@libs/groups/types/multipleSelectorGroup';
 import PUBLIC_EXTENDED_OPTION_KEYS from '@libs/appconfig/constants/publicExtendedOptionKeys';
+import pickSafeExtendedOptions from '@libs/appconfig/utils/pickSafeExtendedOptions';
 import CustomHttpException from '../common/CustomHttpException';
 import { AppConfig } from './appconfig.schema';
 import initializeCollection from './initializeCollection';
@@ -255,9 +256,7 @@ class AppConfigService implements OnModuleInit {
           .lean();
 
         appConfigDto = appConfigObjects.map((config) => {
-          const extendedOptions = { ...(config.extendedOptions ?? {}) };
-          delete extendedOptions.ONLY_OFFICE_JWT_SECRET;
-          delete extendedOptions.COLLABORA_WOPI_SECRET;
+          const extendedOptions = pickSafeExtendedOptions(config.extendedOptions);
 
           return {
             name: config.name,

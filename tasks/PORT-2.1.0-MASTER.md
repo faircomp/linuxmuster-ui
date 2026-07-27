@@ -82,7 +82,11 @@ Jede dieser Fallen hat mindestens ein Ledger falsch-grün gemacht. Vor dem Schre
     den Arbeitsbaum** und meldet für jede autofixbare Regel (u. a. `import/order`) Erfolg, ohne sie je zu zeigen.
     Genau so ist es am 2026-07-27 passiert: lokal 3 `import/order`-Fehler, remote „All files pass linting".
     **`--skip-nx-cache` hilft dagegen nicht** — `fix` ist eine Target-Option und wirkt weiter.
-    Gate deshalb `npx nx run-many -t lint --skip-nx-cache --fix=false` oder direkt `npx eslint <pfade>`.
+    Gate deshalb **`NODE_OPTIONS=--max-old-space-size=6144 npx nx run-many -t lint --skip-nx-cache --fix=false --parallel=1`**
+    oder direkt `npx eslint <pfade>`. **Die beiden letzten Flags sind nicht optional:** ohne Cache linten alle vier
+    Projekte parallel, und auf der 8-GB-crabbox sterben `libs:lint` und `ui-kit:lint` dann am V8-Heap
+    (`FatalProcessOutOfMemory`). nx meldet das als „flaky task" — es ist keins, es ist OOM. Wer das übersieht,
+    hält ein Infrastrukturproblem für einen Codefehler oder gewöhnt sich an, das Gate zu ignorieren.
     Nebenbefund: `npm run lint` ist auf `--projects=frontend,api,libs` festgenagelt, `nx run-many -t lint` nimmt das
     Root-Projekt mit → 4 statt 3 „All files pass"-Zeilen, unabhängig vom Cache.
 11. **Spec-Dateien werden von keinem tsc-Gate geprüft.** `apps/api/tsconfig.app.json` **excludiert** `*.spec.ts`,
