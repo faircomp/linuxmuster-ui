@@ -403,4 +403,7 @@ scripts/ops/**/*.tar*
 scripts/ops/out/
 dr-out/
 
+# crabbox harness state (lease/VM identifiers) and remote run logs
+.crabbox/
+
 __pycache__/

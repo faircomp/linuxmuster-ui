@@ -32,6 +32,7 @@ import { Response } from 'express';
 import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
 import PUBLIC_DOWNLOADS_PATH from '@libs/common/constants/publicDownloadsPath';
 import PUBLIC_ASSET_PATH from '@libs/common/constants/publicAssetPath';
+import DOWNLOADS_PATH_SEGMENT from '@libs/common/constants/downloadsPathSegment';
 import LoggingInterceptor from '../logging/logging.interceptor';
 import AppConfigModule from '../appconfig/appconfig.module';
 import UsersModule from '../users/users.module';
@@ -107,7 +108,7 @@ import WebhookClientsModule from '../webhook-clients/webhook-clients.module';
     EventEmitterModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: PUBLIC_DOWNLOADS_PATH,
-      serveRoot: `/${EDU_API_ROOT}/downloads`,
+      serveRoot: `/${EDU_API_ROOT}/${DOWNLOADS_PATH_SEGMENT}`,
     }),
     ServeStaticModule.forRoot({
       rootPath: PUBLIC_ASSET_PATH,

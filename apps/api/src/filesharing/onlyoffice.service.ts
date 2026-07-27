@@ -29,6 +29,7 @@ import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import APPS from '@libs/appconfig/constants/apps';
 import type PatchConfigDto from '@libs/common/types/patchConfigDto';
 import PUBLIC_DOWNLOADS_PATH from '@libs/common/constants/publicDownloadsPath';
+import type { IConfig } from '@onlyoffice/document-editor-react';
 import CustomHttpException from '../common/CustomHttpException';
 import AppConfigService from '../appconfig/appconfig.service';
 import FilesystemService from '../filesystem/filesystem.service';
@@ -65,7 +66,7 @@ class OnlyofficeService implements OnModuleInit {
     }
   }
 
-  async generateOnlyOfficeToken(payload: string): Promise<string> {
+  async generateOnlyOfficeToken(payload: IConfig): Promise<string> {
     const appConfig = await this.appConfigService.getAppConfigByName(APPS.FILE_SHARING);
     if (!appConfig?.extendedOptions || !appConfig.extendedOptions[ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET]) {
       throw new CustomHttpException(FileSharingErrorMessage.AppNotProperlyConfigured, HttpStatus.INTERNAL_SERVER_ERROR);

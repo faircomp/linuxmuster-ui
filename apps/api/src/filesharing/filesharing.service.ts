@@ -41,6 +41,14 @@ import { randomUUID } from 'crypto';
 import PublicShareResponseDto from '@libs/filesharing/types/publicShareResponseDto';
 import PUBLIC_SHARE_LINK_SCOPE from '@libs/filesharing/constants/publicShareLinkScope';
 import CustomFile from '@libs/filesharing/types/customFile';
+import type { IConfig } from '@onlyoffice/document-editor-react';
+import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
+import sanitizeOnlyOfficeConfig from '@libs/filesharing/utils/sanitizeOnlyOfficeConfig';
+import DOWNLOADS_PATH_SEGMENT from '@libs/common/constants/downloadsPathSegment';
+import ONLY_OFFICE_CALLBACK_PATH from '@libs/filesharing/constants/onlyOfficeCallbackPath';
+import type OnlyOfficeTokenOptions from '@libs/filesharing/types/onlyOfficeTokenOptions';
+import type OnlyOfficeTokenResponseDto from '@libs/filesharing/types/onlyOfficeTokenResponseDto';
+import FileSharingApiEndpoints from '@libs/filesharing/types/fileSharingApiEndpoints';
 import { PublicShare, PublicShareDocument } from './publicFileShare.schema';
 import UsersService from '../users/users.service';
 import WebdavService from '../webdav/webdav.service';
@@ -220,8 +228,52 @@ class FilesharingService {
     return this.fileSystemService.fileLocation(username, filePath, filename, client, share);
   }
 
-  async getOnlyOfficeToken(payload: string) {
-    return this.onlyofficeService.generateOnlyOfficeToken(payload);
+  static assertDocumentUrlMatchesFile(clientConfig: IConfig | undefined, filePath: string, fileName: string): void {
+    const expectedHashedFilename = FilesystemService.generateHashedFilename(filePath, fileName);
+    const clientDocumentUrl = clientConfig?.document?.url;
+    const clientCallbackUrl = clientConfig?.editorConfig?.callbackUrl;
+
+    let parsedDocumentUrl: URL | null = null;
+    let parsedCallbackUrl: URL | null = null;
+    try {
+      parsedDocumentUrl = clientDocumentUrl ? new URL(clientDocumentUrl) : null;
+      parsedCallbackUrl = clientCallbackUrl ? new URL(clientCallbackUrl) : null;
+    } catch {
+      parsedDocumentUrl = null;
+      parsedCallbackUrl = null;
+    }
+
+    const allowedCallbackPathname = `/${EDU_API_ROOT}/${FileSharingApiEndpoints.BASE}/${ONLY_OFFICE_CALLBACK_PATH}`;
+
+    if (
+      !parsedDocumentUrl ||
+      !parsedCallbackUrl ||
+      parsedDocumentUrl.origin !== parsedCallbackUrl.origin ||
+      parsedCallbackUrl.pathname !== allowedCallbackPathname ||
+      parsedDocumentUrl.pathname !== `/${EDU_API_ROOT}/${DOWNLOADS_PATH_SEGMENT}/${expectedHashedFilename}`
+    ) {
+      throw new CustomHttpException(
+        FileSharingErrorMessage.PublicFileIsRestricted,
+        HttpStatus.FORBIDDEN,
+        'document.url does not match requested file',
+        FilesharingService.name,
+      );
+    }
+  }
+
+  async getOnlyOfficeToken(
+    clientConfig: IConfig,
+    options: OnlyOfficeTokenOptions,
+  ): Promise<OnlyOfficeTokenResponseDto> {
+    FilesharingService.assertDocumentUrlMatchesFile(clientConfig, options.filePath, options.fileName);
+
+    const config = sanitizeOnlyOfficeConfig(clientConfig, {
+      canWrite: options.canWrite,
+      username: options.username,
+    });
+    const token = await this.onlyofficeService.generateOnlyOfficeToken(config);
+
+    return { config, token };
   }
 
   async handleCallback(req: Request, res: Response, path: string, filename: string, username: string, share: string) {

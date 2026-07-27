@@ -54,6 +54,8 @@ import JWTUser from '@libs/user/types/jwt/jwtUser';
 import { pipeline } from 'stream/promises';
 import { randomUUID } from 'crypto';
 import APPS from '@libs/appconfig/constants/apps';
+import type { IConfig } from '@onlyoffice/document-editor-react';
+import ONLY_OFFICE_CALLBACK_PATH from '@libs/filesharing/constants/onlyOfficeCallbackPath';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import FilesystemService from '../filesystem/filesystem.service';
 import FilesharingService from './filesharing.service';
@@ -187,8 +189,18 @@ class FilesharingController {
   }
 
   @Post(FileSharingApiEndpoints.ONLY_OFFICE_TOKEN)
-  getOnlyofficeToken(@Body() payload: string) {
-    return this.filesharingService.getOnlyOfficeToken(payload);
+  getOnlyofficeToken(
+    @Body() clientConfig: IConfig,
+    @Query('filePath') filePath: string,
+    @Query('fileName') fileName: string,
+    @GetCurrentUsername() username: string,
+  ) {
+    return this.filesharingService.getOnlyOfficeToken(clientConfig, {
+      canWrite: true,
+      username,
+      filePath,
+      fileName,
+    });
   }
 
   @Post(FileSharingApiEndpoints.COLLABORA_TOKEN)
@@ -240,7 +252,7 @@ class FilesharingController {
     return this.filesharingService.listPublicShares(currentUser);
   }
 
-  @Post('callback')
+  @Post(ONLY_OFFICE_CALLBACK_PATH)
   async handleCallback(
     @Req() req: Request,
     @Res() res: Response,

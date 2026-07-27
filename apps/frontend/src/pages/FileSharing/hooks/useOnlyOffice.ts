@@ -46,7 +46,7 @@ const useOnlyOffice = ({ filePath, fileName, url, type, mode }: UseOnlyOfficePro
   const { webdavShare } = useParams();
   const [editorConfig, setEditorConfig] = useState<IConfig | null>(null);
   const { eduApiToken, user } = useUserStore();
-  const { getOnlyOfficeJwtToken } = useFileEditorStore();
+  const { getOnlyOfficeConfigAndToken } = useFileEditorStore();
   const { language } = useLanguage();
   const { theme, getResolvedTheme } = useThemeStore();
 
@@ -86,8 +86,11 @@ const useOnlyOffice = ({ filePath, fileName, url, type, mode }: UseOnlyOfficePro
         lang: language,
         uiTheme,
       });
-      onlyOfficeConfig.token = await getOnlyOfficeJwtToken(onlyOfficeConfig);
-      setEditorConfig(onlyOfficeConfig);
+      const signed = await getOnlyOfficeConfigAndToken(onlyOfficeConfig, filePath, fileName);
+      if (!signed) {
+        return;
+      }
+      setEditorConfig({ ...signed.config, token: signed.token });
     };
 
     void fetchFileUrlAndToken();
