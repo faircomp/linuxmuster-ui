@@ -100,6 +100,27 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   2. **2.0.156-Baselines** liegen in `.reference/2.0.156/baselines/` (11 Shots, gegen echten LMN). Exakt 2.0.200 ist **nicht mehr beschaffbar**; bei einem Wechsel auf 2.1.0 waeren Baselines neu gegen 2.1.0 aufzunehmen.
   3. **`p1b-tracking-pipeline`** haette dieses Drift-Event automatisch gemeldet — dies ist der erste reale Anlass, sie zu bauen.
 
+- **ENTSCHEIDUNG KEVIN (2026-07-27): SOLL-STAND WECHSELT AUF 2.1.0.** Ab sofort ist
+  `.reference/2.1.0/api/main.js` die massgebliche Soll-Quelle fuer **neue** Rekonstruktionsarbeit;
+  `.reference/2.0.200/` bleibt als Herkunftsnachweis des bereits Gebauten liegen.
+  - **Begruendung:** 2.1.0 enthaelt die Auth-Haertungen, die uns ohnehin fehlen, und Mail Phase 3 ist
+    erst bei den Dependencies — der Wechsel kostet dort **null Rework**. Gegen 2.0.200 weiterzubauen
+    hiesse, dieselben Dateien zweimal zu portieren (`MailImapService` 354→479, `MailsService` 712→848,
+    `RecipientsService` 112→250 Zeilen).
+  - **Sofort-Folgen:** p4-mail T10–T14 Soll-Quelle → 2.1.0; neue Tasks **T13b Sieve-Stack** und
+    **T14b Auto-Reply/Forward/Filter (+6 Schemas, 21 Routen)** einziehen; `GET /mails/domains`
+    bewusst **mit** `AdminGuard` bauen (Fork-Divergenz, ins ADR).
+  - **Baselines:** die 11 Shots in `.reference/2.0.156/` bleiben als Herkunftsnachweis, sind aber ab
+    jetzt der falsche Massstab → bei der ersten 2.1.0-FE-Arbeit neu gegen 2.1.0 aufnehmen.
+  - **Arbeitsreihenfolge (aus dem Port-Plan):** Welle 0 = Sicherheits-Hotfixes ohne Feature-Scope ·
+    Welle 1 = Auth-Haertung (2-Stufen-Login, Logout+Denylist, TOTP-Replay) · Welle 2 = Migrations-
+    Rueckstand streng seriell · danach Features (Sieve, Exam-Mode-Jobs, Kalender-Sharing).
+  - **`ENABLE_EXPERIMENTAL_AUTH` wird NICHT uebernommen** — Empfehlung des Plans: kein Flag, alle
+    Haertungen unbedingt aktiv. (Bestaetigung durch Kevin steht noch aus, Default ist „unbedingt".)
+  - **Weiter offen fuer Kevin:** AI-Modul (externe LLM-Provider + Schuelerdaten = DSGVO-Entscheidung),
+    Contacts-Modul (haengt an SOGo/CardDAV), Fork-Migrations-Numerierungsband (9xx?), React-19-Termin,
+    Rekonstruierbarkeit des 2.1.0-Frontends (nur das API-Bundle ist un-minifiziert).
+
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
 ## Reihenfolge (Topo-Sort; ⭐ = kritischer Pfad)
