@@ -29,6 +29,7 @@ import {
   Query,
   Req,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
@@ -38,11 +39,14 @@ import AuthRequestArgs from '@libs/auth/types/auth-request';
 import { AUTH_CACHE_TTL_MS } from '@libs/common/constants/cacheTtl';
 import AuthErrorMessages from '@libs/auth/constants/authErrorMessages';
 import type LoginQrSseDto from '@libs/auth/types/loginQrSse.dto';
+import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS } from '@libs/auth/constants/authThrottleConfig';
 import CustomHttpException from '../common/CustomHttpException';
 import Public from '../common/decorators/public.decorator';
 import AuthService from './auth.service';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import GetCurrentUserGroups from '../common/decorators/getCurrentUserGroups.decorator';
+import Throttle from '../common/throttle/throttle.decorator';
+import ThrottleGuard from '../common/throttle/throttle.guard';
 
 const { EDUI_OIDC_CONFIG_CACHE_TTL } = process.env;
 const oidcConfigCacheTtl =
@@ -71,6 +75,8 @@ class AuthController {
 
   @Public()
   @Post()
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })
+  @UseGuards(ThrottleGuard)
   authenticate(@Body() body: AuthRequestArgs) {
     return this.authService.authenticateUser(body);
   }
@@ -87,6 +93,8 @@ class AuthController {
 
   @Public()
   @Get(`${AUTH_PATHS.AUTH_CHECK_TOTP}/:username`)
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })
+  @UseGuards(ThrottleGuard)
   getTotpInfo(@Param() params: { username: string }) {
     return this.authService.getTotpInfo(params.username);
   }
