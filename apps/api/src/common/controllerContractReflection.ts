@@ -5,7 +5,7 @@
 
 import { GUARDS_METADATA } from '@nestjs/common/constants';
 import type { CanActivate, Type } from '@nestjs/common';
-import { PUBLIC_ROUTE_KEY } from '@libs/auth/constants/appAccessKeys';
+import { APP_ACCESS_KEY, PUBLIC_ROUTE_KEY } from '@libs/auth/constants/appAccessKeys';
 
 type GuardReference = Type<CanActivate>;
 
@@ -21,6 +21,9 @@ const getRouteGuards = (controller: Type<unknown>, methodName: string): GuardRef
 const isRoutePublic = (controller: Type<unknown>, methodName: string): boolean =>
   (Reflect.getMetadata(PUBLIC_ROUTE_KEY, getRouteHandler(controller, methodName)) as boolean | undefined) ?? false;
 
-const controllerContractReflection = { getClassGuards, getRouteGuards, isRoutePublic };
+const getRequiredAppAccess = (controller: Type<unknown>, methodName: string): string | undefined =>
+  Reflect.getMetadata(APP_ACCESS_KEY, getRouteHandler(controller, methodName)) as string | undefined;
+
+const controllerContractReflection = { getClassGuards, getRouteGuards, isRoutePublic, getRequiredAppAccess };
 
 export default controllerContractReflection;

@@ -8,8 +8,8 @@ import GroupRoles from '@libs/groups/types/group-roles.enum';
 import PARENT_CHILD_PAIRING_STATUS from '@libs/parent-child-pairing/constants/parentChildPairingStatus';
 import type SubmitParentChildPairingCodeDto from '@libs/parent-child-pairing/types/submitParentChildPairingCodeDto';
 import type JwtUser from '@libs/user/types/jwt/jwtUser';
+import APPS from '@libs/appconfig/constants/apps';
 import controllerContractReflection from '../common/controllerContractReflection';
-import DynamicAppAccessGuard from '../common/guards/dynamicAppAccess.guard';
 import ParentChildPairingService from './parent-child-pairing.service';
 import ParentChildPairingController from './parent-child-pairing.controller';
 
@@ -35,8 +35,6 @@ describe('ParentChildPairingController', () => {
       controllers: [ParentChildPairingController],
       providers: [{ provide: ParentChildPairingService, useValue: mockParentChildPairingService }],
     })
-      .overrideGuard(DynamicAppAccessGuard)
-      .useValue({ canActivate: () => true })
       .compile();
 
     controller = module.get<ParentChildPairingController>(ParentChildPairingController);
@@ -120,21 +118,24 @@ describe('ParentChildPairingController', () => {
       expect(controllerContractReflection.isRoutePublic(ParentChildPairingController, route)).toBe(false);
     });
 
+  });
+
+  describe('authorisation contract', () => {
     it.each(['getAllParentChildPairings', 'updateParentChildPairingStatus'])(
-      'guards %s with the DynamicAppAccessGuard',
+      'gates %s behind LINUXMUSTER app access',
       (route) => {
-        expect(controllerContractReflection.getRouteGuards(ParentChildPairingController, route)).toContain(
-          DynamicAppAccessGuard,
+        expect(controllerContractReflection.getRequiredAppAccess(ParentChildPairingController, route)).toBe(
+          APPS.LINUXMUSTER,
         );
       },
     );
 
-    it.each(['getCode', 'refreshCode', 'createParentChildPairing', 'getEnrichedRelationships'])(
-      'does not add the DynamicAppAccessGuard to the user-facing route %s',
+    it.each(['getCode', 'createParentChildPairing', 'getEnrichedRelationships'])(
+      'leaves the user-facing route %s open to any authenticated user',
       (route) => {
-        expect(controllerContractReflection.getRouteGuards(ParentChildPairingController, route)).not.toContain(
-          DynamicAppAccessGuard,
-        );
+        expect(
+          controllerContractReflection.getRequiredAppAccess(ParentChildPairingController, route),
+        ).toBeUndefined();
       },
     );
   });

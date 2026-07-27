@@ -14,7 +14,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HTTP_HEADERS } from '@libs/common/types/http-methods';
@@ -27,11 +26,12 @@ import type ParentChildPairingCodeResponseDto from '@libs/parent-child-pairing/t
 import type EnrichedRelationshipResponseDto from '@libs/parent-child-pairing/types/enrichedRelationshipResponseDto';
 import type SubmitParentChildPairingCodeDto from '@libs/parent-child-pairing/types/submitParentChildPairingCodeDto';
 import type JwtUser from '@libs/user/types/jwt/jwtUser';
+import APPS from '@libs/appconfig/constants/apps';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import GetCurrentUserGroups from '../common/decorators/getCurrentUserGroups.decorator';
 import GetCurrentUser from '../common/decorators/getCurrentUser.decorator';
-import DynamicAppAccessGuard from '../common/guards/dynamicAppAccess.guard';
 import ParentChildPairingService from './parent-child-pairing.service';
+import RequireAppAccess from '../common/decorators/requireAppAccess.decorator';
 
 @ApiTags(PARENT_CHILD_PAIRING_API_ENDPOINTS.BASE)
 @ApiBearerAuth()
@@ -81,7 +81,7 @@ class ParentChildPairingController {
   }
 
   @ApiOperation({ summary: 'Get all parent-child pairings' })
-  @UseGuards(DynamicAppAccessGuard)
+  @RequireAppAccess(APPS.LINUXMUSTER)
   @Get(PARENT_CHILD_PAIRING_API_ENDPOINTS.ALL)
   async getAllParentChildPairings(
     @Query(PARENT_CHILD_PAIRING_QUERY_PARAMS.STATUS) status?: string,
@@ -91,7 +91,7 @@ class ParentChildPairingController {
   }
 
   @ApiOperation({ summary: 'Update parent-child pairing status' })
-  @UseGuards(DynamicAppAccessGuard)
+  @RequireAppAccess(APPS.LINUXMUSTER)
   @Patch(`:id/${PARENT_CHILD_PAIRING_API_ENDPOINTS.STATUS}`)
   async updateParentChildPairingStatus(
     @Param('id') id: string,
