@@ -2514,7 +2514,7 @@ Abhängt von: p2-chat (FE-Store-/Panel-Muster)
 >
 > **`[?] human-gate` — LOOP: Phase 3 (T9–T25) NICHT autonom bauen.** Explizites GATE (menschliches Go) + kein Baseline/keine FE-Source → im unbeaufsichtigten Loop überspringen und mit der nächsten Section **`p4-filesharing-wopi`** fortfahren. Kevin gibt Phase 3 gesondert frei.
 
-### T9 — Deps: nodemailer + mailparser  [ ]
+### T9 — Deps: nodemailer + mailparser  [x] OK (2026-07-27) `nodemailer@^8.0.5` + `mailparser@^3.9.8` + `@types/nodemailer@^8.0.1` als Runtime-Deps ergaenzt (`imapflow`/`@types/imapflow`/`@types/mailparser` waren bereits da). Lockfile aufgeloest zu nodemailer 8.0.11 / mailparser 3.9.14. **Bewusst bei 8.x statt aktuellem 9.x**: 8.0.5 ist die 2.0.200-Version (Rekonstruktionstreue), `^` laesst 8.x-Sicherheitsupdates zu. package.json-Diff exakt 3 Zeilen. **Remote verifiziert**: `npm ci` OK, `require(nodemailer)/require(mailparser)` aufloesbar, `nx build api` **Successfully ran**.
 Komponente: root package.json · Dateien: `package.json`
 Soll: Master-Plan §7 (nodemailer 8.0.5, mailparser 3.9.8); main.js-Service-Imports (MailSmtpService/MailImapService). `imapflow`, `@types/imapflow`, `@types/mailparser` sind bereits vorhanden.
 Änderung: `nodemailer@^8.0.5` + `mailparser@^3.9.8` als Runtime-Deps ergänzen (Typen bereits da). `npm install` remote, Lockfile aktualisieren.
