@@ -260,7 +260,10 @@ class ChatService {
             {
               $match: {
                 $expr: {
-                  $and: [{ $eq: ['$conversationId', '$$conversationId'] }, { $eq: ['$username', username] }],
+                  $and: [
+                    { $eq: [{ $toString: '$conversationId' }, { $toString: '$$conversationId' }] },
+                    { $eq: ['$username', username] },
+                  ],
                 },
               },
             },
@@ -281,7 +284,7 @@ class ChatService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$conversationId', '$$conversationId'] },
+                    { $eq: [{ $toString: '$conversationId' }, { $toString: '$$conversationId' }] },
                     { $ne: ['$createdBy', username] },
                     { $or: [{ $eq: ['$$readAt', null] }, { $gt: ['$createdAt', '$$readAt'] }] },
                   ],

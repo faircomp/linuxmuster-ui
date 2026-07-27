@@ -153,6 +153,23 @@ describe('ChatService', () => {
       expect(result).toEqual(counts);
       expect(mockConversationModel.aggregate).toHaveBeenCalledTimes(1);
     });
+
+    it('compares conversation ids as strings in both lookups', async () => {
+      mockGroupsService.getUserGroupsAndProjects.mockResolvedValue({
+        classes: [{ name: GROUP_NAME, path: '/07a' }],
+        projects: [],
+        groups: [],
+      });
+      mockConversationModel.aggregate.mockResolvedValue([]);
+
+      await service.getUnreadCounts(USERNAME);
+
+      const [[pipeline]] = mockConversationModel.aggregate.mock.calls as unknown as [[unknown[]]];
+      const lookups = JSON.stringify(pipeline.filter((stage) => '$lookup' in (stage as object)));
+      expect(lookups).not.toContain('["$conversationId","$$conversationId"]');
+      expect((lookups.match(/\{"\$toString":"\$conversationId"\}/g) || []).length).toBe(2);
+      expect((lookups.match(/\{"\$toString":"\$\$conversationId"\}/g) || []).length).toBe(2);
+    });
   });
 
   describe('getReadReceipts', () => {
