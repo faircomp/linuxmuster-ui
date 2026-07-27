@@ -66,6 +66,14 @@ Task-Status: `[ ]` offen · `[x]` fertig · `[~]` übersprungen (Grund) · `[?]`
   - **Auf dem LMN hinterlassen (Testdaten, entfernbar):** `verifyan`/`verifybe` (Schueler, `students.csv`, Klasse `testklasse`) + `verifpet` (Elternteil, `parents.csv`, `role-parent`) — loeschen via CSV-Zeilen entfernen + `sophomorix-check && sophomorix-kill`; Backups `*.bak-vor-verify-*`. **Kein Code/keine Konfiguration des LMN veraendert.**
   - `[?] human-gate` offen: Draft-PRs (alle Phasen) · p4-mail Phase 3 (T9–T25, 17 offene `[ ]`) · GHCR-Sichtbarkeit/Erst-Builds · `linuxmuster-tracking`-Repo · Sentry-DSGVO (p1-observability T4) · Wiki-e2e (LMN-WebDAV) · 2.0-Baselines fuer echte Visual-Diffs fehlen weiterhin.
 
+- **UPSTREAM-DRIFT ENTDECKT (2026-07-27) — betrifft die Projektgrundlage, Kevin-Entscheidung noetig.**
+  Beim Beschaffen der Baselines aufgefallen: **upstream published weiter Images**, obwohl der Quellcode weg bleibt.
+  - `github.com/edulution-io/edulution-ui` ist **weiterhin 404** (Repo bleibt verschwunden) — die Fork-Praemisse haelt.
+  - **ABER `ghcr.io/edulution-io/edulution-{api,ui}:latest` ist inzwischen `2.1.0`**, gebaut **2026-07-17** (rev `5c58d5818c1efff0422e914bf5785209b972cec6`) — also **zwei Tage nach** unserer Referenz-Erfassung (`.reference/2.0.200/PROVENANCE.txt`: 2026-07-15, latest = 2.0.200, rev 7356c68).
+  - Die Tag-Liste (707 Tags) zeigt **aktive Entwicklung**: `v2-1-0` sowie Branch-Tags wie `3141-wiki-proxy-config`, `3135-report-user-count-to-license-server`, `2855-collabora-wss-http2-sse-token`, `2650-secure-qr-login-channel`, `feature-satellite-central-network`, `2817-two-stage-login-...-brute-force-protection`.
+  - **Konsequenz Baselines:** exakt `2.0.200` ist **nicht mehr beschaffbar** — es war nur `latest` und wurde nie versioniert getaggt; hoechster 2.0-Tag ist `v2-0-156`. Baselines werden daher gegen **`v2-0-156`** aufgenommen (gleiche Minor-Linie, naeher an unserem Rekonstruktionsziel als 2.1.0) und sind entsprechend zu labeln.
+  - **Offene Entscheidungen fuer Kevin:** (a) `2.1.0`-`main.js` als **neue Referenz** erfassen (`fetch-reference.sh` kann das, Quelle bleibt un-minified) und die Rekonstruktion darauf nachziehen? (b) Ist das der Ausloeser, `p1b-tracking-pipeline` endlich zu bauen — genau dieses Drift-Event ist ihr Zweck? (c) Sicherheitsrelevant: Tags wie `2817-...brute-force-protection-on-auth` und `2650-secure-qr-login-channel` deuten auf **Auth-Haertungen in 2.1**, die unserem 2.0.200-Nachbau fehlen.
+
 **Getroffene Entscheidungen:** §9.1 Org `faircomp`/Name ohne Marke · §9.2 Version `2.0.x` · §9.3 Single-`main` · §9.5 Lizenzserver stubben · §9.8 MobileDevices+Satellites deferred · §9.12 Sentry aus · §9.13 QR-Login verbergen · **§9.10 Mail = BEIDES** (`ACTIVE_MAIL_CLIENT`-Selector nativ⟷SOGo, phasiert; Mailcow-Admin immer da) · **§9.11 FR = mitpflegen** (Locale aktiv, Paket `x-i18n-fr`).
 
 ## Reihenfolge (Topo-Sort; ⭐ = kritischer Pfad)
