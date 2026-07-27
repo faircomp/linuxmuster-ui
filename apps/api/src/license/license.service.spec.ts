@@ -10,12 +10,12 @@
  * A copy of the license can be found at: https://www.gnu.org/licenses/agpl-3.0.html
  */
 
-jest.mock('@libs/license/constants/licenseServerUrl', () => ({ __esModule: true, default: '' }));
-jest.mock('axios');
-
 import { HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import LicenseService from './license.service';
+
+jest.mock('@libs/license/constants/licenseServerUrl', () => ({ __esModule: true, default: '' }));
+jest.mock('axios');
 
 describe('LicenseService — AGPL community mode (empty LICENSE_SERVER_URL)', () => {
   const licenseModel = {

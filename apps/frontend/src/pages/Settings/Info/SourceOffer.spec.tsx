@@ -15,13 +15,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PRODUCT_SOURCE_URL } from '@libs/common/constants/productInfo';
 
+import SourceOffer from './SourceOffer';
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: { version?: string }) => (opts?.version ? `${key}:${opts.version}` : key),
   }),
 }));
-
-import SourceOffer from './SourceOffer';
 
 describe('SourceOffer (AGPL §13 source offer)', () => {
   it('renders a prominent link to PRODUCT_SOURCE_URL with the section-13 text and a version field', () => {

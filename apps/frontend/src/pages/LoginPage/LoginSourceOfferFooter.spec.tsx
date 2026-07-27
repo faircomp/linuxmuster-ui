@@ -15,11 +15,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PRODUCT_SOURCE_URL } from '@libs/common/constants/productInfo';
 
+import LoginSourceOfferFooter from './LoginSourceOfferFooter';
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import LoginSourceOfferFooter from './LoginSourceOfferFooter';
 
 describe('LoginSourceOfferFooter (AGPL §13 pre-auth footer link)', () => {
   it('renders a footer anchor pointing to PRODUCT_SOURCE_URL', () => {

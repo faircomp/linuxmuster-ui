@@ -14,6 +14,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import LicenseOverview from './LicenseOverview';
+
 const { mockStore } = vi.hoisted(() => ({ mockStore: vi.fn() }));
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -22,8 +24,6 @@ vi.mock('@edulution-io/ui-kit', () => ({
   Button: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
 }));
 vi.mock('./RegisterLicenseDialog', () => ({ default: () => <div data-testid="register-dialog" /> }));
-
-import LicenseOverview from './LicenseOverview';
 
 const baseStore = { isRegisterDialogOpen: false, setIsRegisterDialogOpen: vi.fn() };
 
