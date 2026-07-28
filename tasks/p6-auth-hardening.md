@@ -269,6 +269,21 @@ Abhängt von: T2, T17
 > **Offen (eigener Task):** `UserSchema.index({ username: 1 }, { unique: true, collation: … })` — macht Duplikate
 > unmöglich und aus dem Collection-Scan einen Index-Seek, braucht aber einen einmaligen Dedupe-Lauf.
 
+> **End-to-end gegen den echten Stack verifiziert (2026-07-28, crabbox, eigene Images aus dem Branch).**
+> MFA wurde für den Testadmin per `POST /auth/totp` mit selbst erzeugtem Secret aktiviert und danach per
+> `PUT /auth/totp` wieder abgeschaltet — **am LMN-Server wurde nichts geändert**. Acht Prüfungen, alle bestanden:
+> 1. Passwort ohne Code → 401 `auth.errors.TotpMissing`
+> 2. falsches Passwort → 401 `invalid_grant`
+> 3. unbekannter Nutzer → 401 `invalid_grant`, **byte-identisch zu 2** (kein Enumerations-Orakel)
+> 4. Passwort + gültiger Code → 201 mit Tokens
+> 5. **derselbe Code im selben 30-s-Fenster → 401 `auth.errors.TotpAlreadyUsed`** (das Abnahmekriterium von T18;
+>    nur gegen einen echten Mongo zu sehen, weil der Claim im `findOneAndUpdate`-Filter steckt)
+> 6. falsches Passwort + plausibler Code → 401 `invalid_grant`
+> 7. Login in **Großschreibung** + Code → 201 (die Collation trägt end-to-end)
+> 8. `GET /auth/totp/<GROSSSCHREIBUNG>` → `true` (zweite Collation-Stelle)
+> Nebenbefund: der Aufräum-Login lief in ein **429** — der `byUsername`-Throttle aus T20 greift am echten Stack
+> nach ~10 Versuchen in 5 Minuten. Nach Ablauf des Fensters: Login 201, MFA-Status `false`, Box sauber.
+
 ### T19 — api: ThrottleGuard auf Multi-Principal (resolvePrincipals/byUsername)  [x] OK — resolvePrincipals + Multi-Principal-canActivate, byUsername in ThrottleConfig/Decorator; 7 neue Fälle, Normalisierung und Mehr-Key-Prüfung mutationsgeprüft
 Komponente: apps/api, libs · Dateien: `apps/api/src/common/throttle/throttle.guard.ts`, `apps/api/src/common/throttle/throttle.decorator.ts`, `libs/src/common/types/throttleConfig.ts`, `apps/api/src/common/throttle/throttle.guard.spec.ts` (existiert, erweitern)
 Soll: main.js:67075–67092 (`resolvePrincipals`) · main.js:67098–67147 (`canActivate`) · main.js:66984–66990 (`Throttle` mit `byUsername`)
