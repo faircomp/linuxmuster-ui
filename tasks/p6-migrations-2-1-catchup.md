@@ -34,6 +34,14 @@ Branch: `feat/2.0-backlog` (mitwachsend — **kein zweiter Migrations-Branch, ni
 > · **globalSettings 007 = hier (T14)**, **008 = `tasks/p7-fe-toolchain-catchup.md` T4+T5** (`PORT-2.1.0-MASTER.md:140` weist die Kette `ciLightBlue → ciDarkBlue` dortthin, D1). T15 ist deshalb nur noch Übergabe — s. dort.
 > · **ADR-Nummer:** `docs/adr/` hat `0001-active-mail-client-selector`, `0001-naming-registry`, `0002-mobile-access-hidden`; **0003** ist von `p6-auth-hardening` beansprucht → dieses Paket nimmt **0004** (T2).
 > · **`libs/src/mail/constants/mailDefaultPorts.ts` existiert bereits** (SPDX, 3 Keys) — T10 legt nichts neu an, `MANAGESIEVE: 4190` gehört `p4-mail`.
+> · **Sechs Schemas tragen `schemaVersion`, stehen aber in KEINER Terminal-Tabelle** — weder in
+>   `scripts/migrations/assert-schema-versions.ts:8-20` noch in der neuen libs-Konstante aus T4:
+>   `chat/schemas/chatMessage`, `chat/schemas/chatReadStatus`, `chat/schemas/conversation`,
+>   `ldap-keycloak-sync/ldap-keycloak-sync`, `notifications/userNotification`,
+>   `parent-child-pairing/parent-child-pairing`. **Heute folgenlos** — keines hat Migrationen, das Feld steht nur
+>   da. Aber der Guard prüft „jede Collection erreicht ihre Terminal-Version" und sieht diese sechs nicht; wer
+>   später eine Chat-Migration baut, bekommt kein Gate. T42 (Zusammenführung der beiden Wahrheiten) soll sie
+>   deshalb mit aufnehmen — mit dem Ist-Default als Terminal-Wert, solange es keine Migration gibt.
 > · **`.reference/` ist vom Box-Sync ausgeschlossen** (`.crabbox.yaml` `sync.exclude`, zusätzlich `.gitignore:390`). **Jeder Bundle-`grep` läuft lokal**, nie über `iter.sh cmd` — dort existiert die Datei nicht und der grep scheitert bzw. verifiziert nichts.
 
 ---
