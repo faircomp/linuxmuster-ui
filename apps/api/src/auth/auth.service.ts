@@ -338,13 +338,6 @@ class AuthService {
     throw new CustomHttpException(AuthErrorMessages.TotpInvalid, HttpStatus.UNAUTHORIZED, undefined, AuthService.name);
   }
 
-  async getTotpInfo(usernameOrEmail: string) {
-    const query = usernameOrEmail.includes('@') ? { email: usernameOrEmail } : { username: usernameOrEmail };
-
-    const user = await this.userModel.findOne(query, { mfaEnabled: 1 }).collation(CASE_INSENSITIVE_COLLATION).lean();
-    return user?.mfaEnabled ?? false;
-  }
-
   async disableTotp(username: string) {
     try {
       return await this.userModel

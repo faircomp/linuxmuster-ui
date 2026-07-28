@@ -384,17 +384,17 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T6, T7, T23, T24
 
-### T28 — FE: Two-Stage-Login — TOTP-Feld aus der 401-Antwort statt aus der Vorab-Abfrage  [ ]
+### T28 — FE: Two-Stage-Login — TOTP-Feld aus der 401-Antwort statt aus der Vorab-Abfrage  [x] OK — Vorab-Abfrage raus, TOTP-Feld öffnet aus der 401-Antwort; Entscheidung in die reine Funktion `resolveAuthErrorAction` gezogen (10 Tests) + Verdrahtungs-Spec (4 Tests), beides mutationsgeprüft
 Komponente: apps/frontend · Dateien: `apps/frontend/src/pages/LoginPage/LoginPage.tsx`, `apps/frontend/src/pages/LoginPage/useAuthErrorHandler.ts`, `apps/frontend/src/pages/LoginPage/useAuthErrorHandler.spec.ts` (NEU)
 Soll: **Nicht aus dem Bundle rekonstruierbar** — nur die API ist un-minifiziert. Fork-Eigenentwurf gegen den in T17 gebauten Contract (401 `auth.errors.TotpMissing` nach erfolgreicher Passwortprüfung, 401 `auth.errors.TotpInvalid`/`auth.errors.TotpAlreadyUsed` danach).
 Änderung: `handleCheckMfaStatus` (`LoginPage.tsx:256–263`) ersatzlos streichen; das Formular submittet direkt `onSubmit` (Zeile 386: `form.handleSubmit(onSubmit)` statt der Verzweigung). Im QR-Pfad (`LoginPage.tsx:222–224`) den `getTotpStatus`-Aufruf durch ein direktes `form.handleSubmit(onSubmit)()` ersetzen (die lokale `handleEnterMfa`-Funktion, Zeilen 217–220, entfällt damit ebenfalls). In `useAuthErrorHandler` **vor** dem generischen `form.setError`-Zweig (`useAuthErrorHandler.ts:51`): enthält `authError.message` den Key `AuthErrorMessages.TotpMissing`, dann kein Form-Fehler, sondern ein neuer Callback-Parameter `onTotpRequired?: () => void` — LoginPage setzt daraufhin `setIsEnterTotpVisible(true)` und `setShowQrCode(false)`. Die Fehlerkeys `TotpInvalid`/`TotpAlreadyUsed` laufen weiter in den normalen Fehlerpfad (sichtbar im TOTP-Schritt). `onSubmit` selbst bleibt unverändert — es hängt `:${totpValue}` schon heute an, sobald `isEnterTotpVisible || totpValue` (Zeile 109). Keine Kommentare im Code, `cn()` für classNames, Hooks oben importieren.
 *(Dass die Fehlerkeys im `authError.message` ankommen, ist im Fork bereits belegt: der bestehende MFA-Flow zeigt `auth.errors.TotpInvalid` genau über diesen Pfad.)*
-Verify: `bash scripts/crabbox/iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` fehlerfrei (**Pflicht** — eslint+vitest verdecken fehlende Required-Props) · `bash scripts/crabbox/iter.sh cmd 'npx nx test frontend --run useAuthErrorHandler'` grün (narrowt, schlägt bei fehlender Spec-Datei mit „No test files found" fehl) — Fehler mit `auth.errors.TotpMissing` ⇒ `onTotpRequired` gerufen und **kein** `form.setError('password', ...)`; Fehler mit `auth.errors.TotpInvalid` ⇒ `form.setError` gerufen und `onTotpRequired` **nicht** · `bash scripts/crabbox/iter.sh test:frontend` grün
+Verify: `bash scripts/crabbox/iter.sh cmd 'npx tsc -p apps/frontend/tsconfig.app.json --noEmit'` fehlerfrei (**Pflicht** — eslint+vitest verdecken fehlende Required-Props) · `bash scripts/crabbox/iter.sh cmd 'npx nx test frontend --run src/pages/LoginPage/resolveAuthErrorAction.spec.ts'` **und** `… --run src/pages/LoginPage/useAuthErrorHandler.spec.tsx` grün (beide narrowen; eine fehlende Datei ergibt „No test files found", Exit 1) — Fehler mit `auth.errors.TotpMissing` ⇒ `onTotpRequired` gerufen und **kein** `form.setError('password', ...)`; Fehler mit `auth.errors.TotpInvalid` ⇒ `form.setError` gerufen und `onTotpRequired` **nicht** · `bash scripts/crabbox/iter.sh test:frontend` grün
 i18n: keine (Keys existieren bzw. kommen aus T2)
 Doku: keine (T34 sammelt)
 Abhängt von: T17
 
-### T29 — FE: getTotpStatus aus dem Store entfernen  [ ]
+### T29 — FE: getTotpStatus aus dem Store entfernen  [x] OK — getTotpStatus aus Store, Slice-Typ und LoginPage; repo-weit 0 Treffer
 Komponente: apps/frontend, libs · Dateien: `apps/frontend/src/store/UserStore/createTotpSlice.ts`, `libs/src/user/types/store/totpSlice.ts`, `apps/frontend/src/pages/LoginPage/LoginPage.tsx`
 Soll: Fork-Eigenentwurf (Folge der T30-Entscheidung, kein Bundle-Anker — 2.1.0 lässt die Route unter dem Flag nur 404 laufen, wir löschen sie)
 Änderung: Die Store-Methode `getTotpStatus` (`createTotpSlice.ts:58–77`) löschen **und** die Typdeklaration `getTotpStatus: (username: string) => Promise<boolean>;` in `libs/src/user/types/store/totpSlice.ts:22` entfernen; den Destructuring-Eintrag in `LoginPage.tsx:73` entfernen. Nach T28 hat sie keinen Aufrufer mehr. `apps/api/src/mobileAppModule` bleibt unangetastet (eigener, authentifizierter Endpoint).
@@ -403,7 +403,7 @@ i18n: keine
 Doku: keine
 Abhängt von: T28
 
-### T30 — api: GET /auth/totp/:username löschen (Enumerations-Orakel)  [ ]
+### T30 — api: GET /auth/totp/:username löschen (Enumerations-Orakel)  [x] OK — Route gelöscht; Contract-Specs nachgezogen — die erschöpfende Assertion aus T33 hat den Wechsel erzwungen
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.ts`, `apps/api/src/auth/auth.controller.spec.ts`, `apps/api/src/auth/authThrottle.spec.ts`
 Soll: main.js:68050–68055 + 68146–68156 — 2.1.0 lässt die Route bestehen und wirft unter aktivem Flag `NotFoundError`. Da wir kein Flag führen (Kopf-Notiz), ist eine Route, die immer 404 liefert, toter Code → **löschen**.
 Änderung: Handler `getTotpInfo` (`auth.controller.ts:94–100`) samt `@Public()`, `@Throttle`, `@UseGuards(ThrottleGuard)` entfernen. `AuthService.getTotpInfo` (`auth.service.ts:200–205`) **bleibt** (authentifizierter `mobileApp`-Konsument, `apps/api/src/mobileAppModule/mobileApp.service.ts:86`). In `auth.controller.spec.ts` `'getTotpInfo'` aus `PUBLIC_ROUTES` (Zeile 23) und aus dem `mockAuthService` (Zeilen 14–21) entfernen; in `authThrottle.spec.ts` die `getTotpInfo`-Fälle (Zeilen 30 und 42) streichen. **Reihenfolge zwingend nach T28/T29** — davor bricht jeder MFA-Login.
@@ -411,6 +411,28 @@ Verify: `bash scripts/crabbox/iter.sh test:api` grün · `bash scripts/crabbox/i
 i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T28, T29
+
+> **Zwei bewusste Abweichungen beim Bauen von T28–T30:**
+> 1. **Keine Hook-Spec, sondern eine reine Funktion.** T28 verlangte eine Spec für `useAuthErrorHandler`. Im Repo
+>    gibt es kein `@testing-library/react` (nur `@testing-library/jest-dom`), und das Muster der bestehenden
+>    FE-Specs (`renderToStaticMarkup`) führt `useEffect` gar nicht aus. Statt eine Dependency aufzunehmen ist die
+>    Entscheidungslogik in `resolveAuthErrorAction.ts` gezogen (Muster: `resolveOfficeEditorPreviewType`) und dort
+>    getestet. Die **Verdrahtung** deckt zusätzlich `useAuthErrorHandler.spec.tsx` ab — mit `createRoot` + `act`
+>    aus `react-dom/test-utils`, was ohne neue Dependency geht, weil vitest ohnehin in `jsdom` läuft
+>    (`apps/frontend/vite.config.mts:58`). Mutationsgeprüft: fällt `onTotpRequired?.()` weg, bricht der MFA-Login
+>    stumm — zwei Tests werden rot.
+> 2. **`AuthService.getTotpInfo` ist gelöscht, nicht behalten.** T30 begründete das Behalten mit einem
+>    `mobileApp`-Konsumenten. Das ist **falsch**: `mobileApp.service.ts:86` hat eine **eigene** `getTotpInfo` über
+>    `userService.findOne` mit anderer Rückgabeform (`{secret, createdAt}` statt `boolean`), und
+>    `grep -rn "authService" apps/api/src/mobileAppModule/` ist leer — das Modul injiziert `AuthService` gar nicht.
+>    Nach dem Löschen der Route hatte die Methode null Aufrufer. Unabhängig im Review bestätigt.
+>    Nebeneffekt: die Collation, die T15–T18 in `getTotpInfo` brauchte (damit ein MFA-Nutzer mit abweichender
+>    Schreibweise nicht in eine Sackgasse läuft), ist damit gegenstandslos — in `authenticateUser` bleibt sie.
+>
+> **Aus dem Review notiert, außerhalb des Scopes:** bei geöffnetem TOTP-Feld ist der Submit-Button auch bei leerem
+> Code aktiv; ein Klick liefert dann `invalid_grant` („falsche Zugangsdaten"), obwohl das Passwort nachweislich
+> stimmt — vorher genauso irreführend, jetzt nachweislich falsch. Fix wäre ein `disabled`, sobald der Code nicht
+> `AUTH_TOTP_CONFIG.digits` Stellen hat.
 
 ### T31 — FE: QR-Login-Session vom Server beziehen  [ ]
 Komponente: apps/frontend, libs · Dateien: `apps/frontend/src/store/UserStore/createQrCodeSlice.ts`, `libs/src/user/types/store/qrCodeSlice.ts`, `apps/frontend/src/pages/LoginPage/LoginPage.tsx`
@@ -432,7 +454,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T14
 
-### T33 — api: Auth-Contract-Specs auf den neuen Routenstand ziehen  [~] TEILWEISE — der wertvollste Teil ist gebaut: **erschöpfende** Bypass-Assertion (Menge der @Public-Routen == PUBLIC_ROUTES) plus Vollständigkeitsnetz (beide Listen zusammen decken jeden Handler). Beide mutationsgeprüft: eine eingeschmuggelte @Public-Route und eine umgedrehte geschützte Route werden erkannt — vorher war beides für die Handlisten unsichtbar. **Rest wartet auf T25/T30:** die Listen tragen heute den Ist-Stand (`getTotpInfo` noch drin, `createQrLoginSession` noch nicht); wer T25/T30 baut, muss sie mitziehen — die neuen Netze erzwingen das, sie werden sonst rot.
+### T33 — api: Auth-Contract-Specs auf den neuen Routenstand ziehen  [~] TEILWEISE — der wertvollste Teil ist gebaut: **erschöpfende** Bypass-Assertion (Menge der @Public-Routen == PUBLIC_ROUTES) plus Vollständigkeitsnetz (beide Listen zusammen decken jeden Handler). Beide mutationsgeprüft: eine eingeschmuggelte @Public-Route und eine umgedrehte geschützte Route werden erkannt — vorher war beides für die Handlisten unsichtbar. **T30 ist inzwischen gebaut** und hat `getTotpInfo` aus den Listen gezogen — die erschöpfende Assertion hat das erzwungen, genau wie vorgesehen. **Rest wartet auf T25:** `createQrLoginSession` fehlt in `PUBLIC_ROUTES`, wer T25 baut, muss sie mitziehen.
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.spec.ts`, `apps/api/src/auth/authThrottle.spec.ts`
 Soll: Ergebnis von T14/T20/T25/T30 — die Spec ist das Bypass-Regressionsnetz (siehe `p1-port-api-specs-ci`, `check-spec-coverage` im `.husky/pre-commit` + CI)
 Änderung: `PUBLIC_ROUTES` (Zeile 23) auf den Endstand setzen: `['authconfig', 'authenticate', 'logout', 'createQrLoginSession', 'loginViaApp']`; `PROTECTED_ROUTES` (Zeile 24) bleibt `['getQrCode', 'setupTotp', 'disableTotp', 'disableTotpForUser']`. `mockAuthService` um `logout` und `createQrLoginSession` ergänzen, `getTotpInfo` entfernen. **Keine** zusätzlichen Provider mocken — der `AuthController` injiziert ausschliesslich `AuthService` (`auth.controller.ts:60`); `QrLoginSessionService`/`SessionDenylistService` gehören ins Testmodul von `auth.service.spec.ts`, nicht hierher. In `authThrottle.spec.ts` die Route-Liste auf `['authenticate', 'createQrLoginSession', 'logout']` ziehen und für alle drei `limit`/`ttl` sowie `byIp` prüfen, für `authenticate` zusätzlich `byUsername`. Explizite Negativ-Assertion ergänzen (Auth-Bypass-Gate), konkret:

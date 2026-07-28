@@ -27,7 +27,7 @@ const buildContext = (ip: string) =>
   }) as unknown as ExecutionContext;
 
 describe('public auth routes are throttled', () => {
-  it.each([['authenticate'], ['getTotpInfo']] as const)('configures a throttle on %s', (method) => {
+  it.each([['authenticate']] as const)('configures a throttle on %s', (method) => {
     const config = readConfig(method);
 
     expect(config).toBeDefined();
@@ -72,7 +72,6 @@ describe('public auth routes are throttled', () => {
     // The guard returns true immediately for anonymous requests unless byIp is set,
     // so byIp is what makes the login throttle effective at all.
     expect(readConfig('authenticate')?.byIp).toBe(true);
-    expect(readConfig('getTotpInfo')?.byIp).toBe(true);
   });
 
   it('blocks an anonymous caller once the limit is exceeded', () => {

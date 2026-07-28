@@ -70,8 +70,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation() as { state: LocationState };
 
-  const { eduApiToken, totpIsLoading, isAuthenticated, createOrUpdateUser, setEduApiToken, getTotpStatus } =
-    useUserStore();
+  const { eduApiToken, totpIsLoading, isAuthenticated, createOrUpdateUser, setEduApiToken } = useUserStore();
   const { isLmn, isGeneric } = useDeploymentTarget();
   const { lmnApiToken, user: lmnUser } = useLmnApiStore();
   const globalSettings = useGlobalSettingsApiStore((s) => s.globalSettings);
@@ -98,7 +97,12 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  useAuthErrorHandler(auth.error, form, showQrCode);
+  const handleTotpRequired = () => {
+    setIsEnterTotpVisible(true);
+    setShowQrCode(false);
+  };
+
+  useAuthErrorHandler(auth.error, form, showQrCode, handleTotpRequired);
 
   const onSubmit = async () => {
     try {
@@ -214,14 +218,7 @@ const LoginPage: React.FC = () => {
         console.error('JSON parse error:', error);
       }
 
-      const handleEnterMfa = () => {
-        setIsEnterTotpVisible(true);
-        setShowQrCode(false);
-      };
-
-      void getTotpStatus(form.getValues('username')).then((isMfaEnabled) =>
-        isMfaEnabled ? handleEnterMfa() : form.handleSubmit(onSubmit)(),
-      );
+      void form.handleSubmit(onSubmit)();
     };
 
     eventSource.addEventListener(SSE_MESSAGE_TYPE.MESSAGE, handleLoginEvent, { signal });
@@ -252,15 +249,6 @@ const LoginPage: React.FC = () => {
       handleAbortConnection();
     };
   }, [showQrCode, sessionID]);
-
-  const handleCheckMfaStatus = async () => {
-    const isMfaEnabled = await getTotpStatus(form.getValues('username'));
-    if (!isMfaEnabled) {
-      await form.handleSubmit(onSubmit)();
-    } else {
-      setIsEnterTotpVisible(true);
-    }
-  };
 
   const onTotpCancelButtonClick = () => {
     form.clearErrors();
@@ -383,7 +371,7 @@ const LoginPage: React.FC = () => {
             data-testid="test-id-login-page-form"
           >
             <form
-              onSubmit={form.handleSubmit(isEnterTotpVisible ? onSubmit : handleCheckMfaStatus)}
+              onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4"
               data-testid="test-id-login-page-form"
             >

@@ -111,14 +111,6 @@ class AuthController {
     return this.authService.setupTotp(username, body);
   }
 
-  @Public()
-  @Get(`${AUTH_PATHS.AUTH_CHECK_TOTP}/:username`)
-  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })
-  @UseGuards(ThrottleGuard)
-  getTotpInfo(@Param() params: { username: string }) {
-    return this.authService.getTotpInfo(params.username);
-  }
-
   @Put(AUTH_PATHS.AUTH_CHECK_TOTP)
   disableTotp(@GetCurrentUsername() username: string) {
     return this.authService.disableTotp(username);

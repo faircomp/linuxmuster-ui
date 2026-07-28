@@ -25,14 +25,13 @@ const mockAuthService = {
   authenticateUser: jest.fn(),
   getQrCode: jest.fn(),
   setupTotp: jest.fn(),
-  getTotpInfo: jest.fn(),
   disableTotp: jest.fn(),
   disableTotpForUser: jest.fn(),
   loginViaApp: jest.fn(),
   logout: jest.fn(),
 };
 
-const PUBLIC_ROUTES = ['authconfig', 'authenticate', 'getTotpInfo', 'loginViaApp', 'logout'];
+const PUBLIC_ROUTES = ['authconfig', 'authenticate', 'loginViaApp', 'logout'];
 const PROTECTED_ROUTES = ['getQrCode', 'setupTotp', 'disableTotp', 'disableTotpForUser'];
 
 describe(AuthController.name, () => {
