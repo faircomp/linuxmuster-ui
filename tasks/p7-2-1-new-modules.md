@@ -1151,20 +1151,16 @@ i18n: keine
 Doku: keine
 Abhängt von: T5
 
-### T7 — api/surveys: Migration 005 (Choice-Duplikate)  [?] — **zusätzlicher Blocker: Versionslücke 002→005**
-> **Beim Einspielen der Patches gefunden, am Bundle und am Runner nachgemessen.** Upstream hat für `surveys`
-> **sechs** Migrationen: `000`, `001`, `002` (→2), `003-strip-origin-from-survey-urls` (2→3, NEW:62838-62840),
-> `004-add-participated-usernames` (3→4, NEW:63010-63012), `005` (4→5, NEW:63059-63061).
-> `MigrationService.runMigrations` (`apps/api/src/migration/migration.service.ts:25-34`) führt **jede** Migration
-> der Liste aus; gefiltert wird in der Migration selbst über ihre `previousSchemaVersion`.
-> **Folge:** baut der Fork nur `002` und dann `005`, stehen die Surveys auf `schemaVersion: 2`, `005` filtert auf
-> `4` und findet **nie ein Dokument** — sie läuft bei jedem Boot, tut nichts und meldet Erfolg. Kein Test und kein
-> Gate fängt das, weil die Migration formal fehlerfrei durchläuft.
-> **Zwei Wege, einer davon zu entscheiden:** (a) `003` und `004` mitportieren — dann stimmt die Kette, aber es sind
-> zwei zusätzliche Migrationen, deren fachlichen Nutzen der Fork erst braucht (`003` normalisiert Survey-URLs,
-> `004` füllt `participatedUsernames`); (b) `005` als **`003`** mit `previousSchemaVersion = 2` bauen — weniger
-> Arbeit, aber eine bewusste Nummern-Divergenz zu 2.1.0, die im Migrations-Nummernband dokumentiert werden muss.
-> Ohne diese Entscheidung ist T7 nicht ausführbar.
+### T7 — api/surveys: Migration 005 (Choice-Duplikate)  [?]
+> **Zurückgezogen: die hier zuvor gemeldete „Versionslücke 002→005" existiert nicht.** Ich hatte nur dieses
+> Paket gelesen und daraus geschlossen, die Kette springe von 002 auf 005. Tatsächlich baut
+> `p6-migrations-2-1-catchup` alle vier: **T33 = 002**, **T35 = 003** (`StripOriginFromSurveyUrls`, 2→3),
+> **T37 = 004** (`AddParticipatedUsernames`, 3→4), **T39 = 005** (4→5) — die Schema-Defaults stehen dort
+> ausdrücklich als „2 → 3", „3 → 4", „4 → 5". `previousSchemaVersion = 4` in 005 ist also erfüllt.
+> **Nicht umnummerieren:** `003` ist von T35 belegt; eine zweite `003` mit `previousSchemaVersion = 2` wäre
+> genau die Doppelbelegung, die `npm run check-ledger-claims` verhindern soll.
+> Dieser Task bleibt `[?]` aus seinem **ursprünglichen** Grund: gebaut wird nur, wenn Migration 002 in der Praxis
+> Duplikate erzeugt — das entscheidet der Migrations-Testlauf gegen die echte Kopie, nicht dieses Ledger.
 Komponente: apps/api · Dateien: `apps/api/src/surveys/migrations/surveysMigration005DeduplicateBackendLimiterChoices.ts`
 Soll: NEW:63093ff (`surveysMigration005DeduplicateBackendLimiterChoices`).
 Änderung: **Nur bauen, wenn Migration 002 in der Praxis Duplikate erzeugt** (2.1.0 brauchte sie offenbar nachträglich). Entschieden wird **nach dem Migrations-Testlauf gegen die echte Kopie in `p7-surveys-limiter-collection:T9`** — T4 verifiziert nur gegen Mocks und kann diese Frage nicht beantworten; sonst `[~]` mit Begründung. Beachten: 2.1.0 hat dazwischen `003StripOriginFromSurveyUrls` und `004AddParticipatedUsernames` — die gehören **nicht** in dieses Paket; nach diesem Paket ist `002MoveBackendLimitersToOwnCollection` die höchste Fork-Migration, die Datei heißt hier also `surveysMigration003DeduplicateBackendLimiterChoices.ts` mit `version: 3` (`previousSchemaVersion=2`, `newSchemaVersion=3`) — `005` **nicht** blind übernehmen, und `Survey.schemaVersion`-Default in `survey.schema.ts` mit anheben.
