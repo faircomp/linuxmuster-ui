@@ -434,6 +434,20 @@ Abhängt von: T28, T29
 > stimmt — vorher genauso irreführend, jetzt nachweislich falsch. Fix wäre ein `disabled`, sobald der Code nicht
 > `AUTH_TOTP_CONFIG.digits` Stellen hat.
 
+> **Abnahme nach T28–T30 am deployten Stack (2026-07-28), sieben Prüfungen, alle bestanden:**
+> Passwort ohne Code → 401 `TotpMissing` · falsches Passwort → 401 `invalid_grant` · unbekannter Nutzer →
+> **byte-identisch dazu** · Passwort + Code → 201 · **derselbe Code nochmal → 401 `TotpAlreadyUsed`** ·
+> Großschreibung + Code → 201 · `GET /auth/totp/<name>` → **404**. Zusätzlich: das UI-Bundle enthält den String
+> `auth/totp/` nicht mehr (mit Positivkontrolle geprüft, damit das kein Falsch-Grün ist), und
+> `GET /mobile-app/totp-info` antwortet weiterhin 401 — die eigene Route des Mobile-Moduls ist unberührt.
+>
+> **Ein sporadischer Fehlschlag beim Testen — Ursache liegt NICHT im Produktcode.** In zwei von rund sechs Läufen
+> wurde ein frisch berechneter Code als `TotpInvalid` abgelehnt, der nächste ging. Geklärt mit
+> `apps/api/src/auth/totpWindow.spec.ts` (Fake-Timer): `validateTotp` akzeptiert einen korrekt erzeugten Code an
+> **jeder Sekunde** seines Fensters sowie ein Fenster davor und danach, und lehnt ihn erst zwei Fenster später ab.
+> Ein korrekt berechneter Code kann also nicht abgelehnt werden — die Ursache lag im Wegwerf-Python der
+> Prüfmatrix. Der Test bleibt als Regressionsnetz: verengt jemand `TOTP_VALIDATION_WINDOW` auf 0, wird er rot.
+
 ### T31 — FE: QR-Login-Session vom Server beziehen  [ ]
 Komponente: apps/frontend, libs · Dateien: `apps/frontend/src/store/UserStore/createQrCodeSlice.ts`, `libs/src/user/types/store/qrCodeSlice.ts`, `apps/frontend/src/pages/LoginPage/LoginPage.tsx`
 Soll: **Nicht rekonstruierbar** (kein FE-Bundle) — Fork-Eigenentwurf gegen `POST /auth/qr-session` aus T25.
