@@ -2610,6 +2610,13 @@ Abhängt von: p2-chat (FE-Store-/Panel-Muster)
 
 ## Phase 3 — Nativer IMAP/SMTP-Webmail-Client hinter dem Flag (Default bleibt `sogo`)
 
+> **ERSETZT — T10–T25 hier NICHT bauen.** `tasks/p4-mail-rework-21-sieve.md` sagt in seinem Kopf ausdrücklich
+> „ersetzt die bisherigen T10–T25" und ist gegen **2.1.0** rekonstruiert; die Tasks unten stammen aus der
+> 2.0.200-Ära. Acht Dateien würden sonst **doppelt** angelegt (`mail-imap.service.ts`, `mail-smtp.service.ts`,
+> `mail-request-size.guard.ts`, `MailFolderTree/MailList/MailDetail/MailCompose/MailSogoTab.tsx`) — mit
+> unterschiedlichem Inhalt, weil 2.1.0 im Mail-Modul von 36 auf 56 Routen geht. Der Abschnitt bleibt als
+> Herkunftsnachweis stehen.
+
 > **GATE — menschliches Go erforderlich, bevor Phase 3 startet.** Teurer/riskanter Block (~25–40 PT),
 > keine FE-Source/kein Baseline. Jede FE-Komponente landet **default-off** (Selektor bleibt `sogo`),
 > pilotierbar per Seed/DB (`ACTIVE_MAIL_CLIENT: 'native'` auf einer Instanz). Mail ist zu keinem Zeitpunkt
@@ -2680,7 +2687,14 @@ i18n: neue Keys `appExtendedOptions.mailImapHost*/mailSmtpHost*/mailTlsReject*/m
 Doku: Ops-Runbook-Zeile (Mail-appconfig-Keys) DE+EN+FR
 Abhängt von: T5
 
-### T16 — BE: forward-only appConfig-Migration (unify-mail-server-config) + schemaVersion++  [ ]
+### T16 — BE: forward-only appConfig-Migration (unify-mail-server-config) + schemaVersion++  [~] ERSETZT — nicht bauen
+> **Dateiname-Kollision aufgelöst.** Dieser Eintrag stammt aus der 2.0-Ära (`Soll: main.js:4119` = **2.0.200**-Bundle)
+> und beansprucht `apps/api/src/appconfig/migrations/migration012.ts`. Denselben Dateinamen belegt inzwischen
+> `tasks/p6-migrations-2-1-catchup.md` T11 mit anderem, gegen **2.1.0** rekonstruiertem Inhalt; das Nummernband
+> appConfig 010–013 gehört laut dessen Reservierungsblock diesem Paket, 014 dem Mail-Paket.
+> **Der fachliche Inhalt hier — `MAIL_IMAP_URL` in Host/Port zerlegen — ist damit nicht verloren:** er gehört in
+> `p4-mail-rework-21-sieve` (Slot 014), das die Mail-Keys ohnehin umbaut. Wer hier baut, erzeugt eine zweite
+> `migration012.ts` und bricht die Monotonie.
 Komponente: apps/api/src/appconfig/migrations · Dateien: `apps/api/src/appconfig/migrations/migration012.ts` (neu), `appConfigMigrationsList.ts`
 Soll: main.js:4119 (`012-unify-mail-server-config`) — ABER angepasst: Fork-Baseline (`MAIL_IMAP_URL/PORT/SECURE/TLS_REJECT`, **kein** SMTP) → 2.0-Key-Set **getrennt** (`MAIL_IMAP_HOST/PORT` + `MAIL_SMTP_HOST/PORT` + `MAIL_TLS_REJECT_UNAUTHORIZED`), `MAIL_IMAP_SECURE` entfernen, Ports aus URL/`MAIL_DEFAULT_PORTS` ableiten. Fork-appConfig-Migrationsstand = `009`.
 Änderung: Migration forward-only über alle appConfig-Docs, **`schemaVersion++`** (AGENTS.md-Pflicht), in `appConfigMigrationsList.ts` registrieren. **NICHT** upstream-`012` blind portieren (erzeugt falsches `MAIL_HOST`). Nummer per p0-migrations-inventory (010/011 vorher?). SPDX-AGPL.
@@ -2756,6 +2770,8 @@ Abhängt von: T22
 ---
 
 ## Phase 4 — Endbild + Default-Flip (SOGo als „Erweitert"-Tab)
+
+> **ERSETZT — wie Phase 3.** `tasks/p4-mail-rework-21-sieve.md` deckt Phase 3 **und 4** gegen 2.1.0 ab (dessen Kopf: „Phase 3 + 4 NEU gegen 2.1.0"). `MailSogoTab.tsx` wuerde sonst zweimal angelegt (hier T25, dort T55). Abschnitt bleibt als Herkunftsnachweis stehen.
 
 „BEIDES" wird für den **Nutzer** real: nativer Client als Landing + SOGo als eingebetteter Escape-Hatch.
 Dropdown wird sichtbar geschaltet, Default flippt auf `native`. SOGo bleibt permanent wählbarer Wert

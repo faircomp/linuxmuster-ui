@@ -146,8 +146,15 @@ i18n: keine
 Doku: `docs/adr/` Kurz-Eintrag oder Abschnitt im Bundle-Diff-Report: Route-Bruch `assets/<file>` → `assets/<roomId>/<file>` + geschlossene Guard-Lücke + Hinweis, dass alte Clients 404/403 bekommen
 Abhängt von: T6, T7, T8
 
-### T10 — API: TldrawSyncRoom.schemaVersion + Disk-Migration 000-namespace-assets-by-room  [ ]
-Komponente: apps/api · Dateien: `apps/api/src/tldraw-sync/tldraw-sync-room.schema.ts`, `apps/api/src/tldraw-sync/migrations/migration000NamespaceAssetsByRoom.ts` (neu), `apps/api/src/tldraw-sync/migrations/tldrawSyncRoomMigrationsList.ts` (neu), `apps/api/src/tldraw-sync/tldraw-sync.service.ts`, `apps/api/src/tldraw-sync/migrations/migration000NamespaceAssetsByRoom.spec.ts` (neu)
+### T10 — API: die in `p6-migrations` gebaute tldraw-Migration verdrahten  [ ]
+> **DATEI-OWNERSHIP GEKLÄRT (Kollision mit `p6-migrations-2-1-catchup` T20/T21).** `migration000NamespaceAssetsByRoom.ts`,
+> `tldrawSyncRoomMigrationsList.ts` und das `schemaVersion`-Feld in `tldraw-sync-room.schema.ts` **baut
+> `p6-migrations-2-1-catchup`**. Grundlage ist die Grundregel in `PORT-2.1.0-MASTER.md`: „**Nummern vergibt
+> ausschließlich `p6-migrations`**", und die serielle Linie lautet `p6-migrations` → `p7-fe-toolchain-B` → …
+> Welle 2 ist `p7-fe-toolchain-**A**` und enthält bewusst **keine** Migration; dieser Task gehört in den **B**-Teil,
+> also hinter `p6-migrations`. **Diese Task legt die Dateien nicht an.** Zusatz: die p6-Fassung enthält einen
+> Bugfix gegen einen Endlos-Retry, den die hiesige Beschreibung nicht hat — sie ist auch inhaltlich die richtige.
+Komponente: apps/api · Dateien: **keine neuen** — `migration000NamespaceAssetsByRoom.ts`, `tldrawSyncRoomMigrationsList.ts` und das `schemaVersion`-Feld in `tldraw-sync-room.schema.ts` legt `p6-migrations-2-1-catchup` T20/T21 an (siehe Kasten oben). Diese Task berührt nur die FE-/Consumer-Seite des tldraw-Upgrades.
 Soll: NEW:74318-74338 (`TldrawSyncRoom` mit drittem Feld `@Prop({ required: false }) schemaVersion: number`) · NEW:74742-74806 (`name = '000-namespace-assets-by-room'`, `schemaVersion = 1`, `ASSET_URL_PROPS = ['src','url']`, `moveLegacyAssetFile`, sequentielles `reduce` über Räume/Dokumente/Props, `updateOne({roomId}, hasChanges ? {$set:{roomData, schemaVersion}} : {$set:{schemaVersion}})`, `Logger.error` je Raum im catch, Abschluss-Log) · NEW:74703-74706 (`tldrawSyncRoomMigrationsList = [migration000NamespaceAssetsByRoom]`) · NEW:74411-74413 (`async onModuleInit() { await MigrationService.runMigrations(this.roomModel, tldrawSyncRoomMigrationsList); }`).
 Änderung: **Destruktiv — verschiebt Dateien auf der Platte.** Vor jedem Lauf gegen echte Daten: Dump **+ `./data/master.key`**. Forward-only, kein Rollback.
 - Schema: Feld `schemaVersion?: number` mit `@Prop({ required: false })` ergänzen (`@Schema({ timestamps: true, strict: true })` bleibt).

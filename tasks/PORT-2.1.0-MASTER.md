@@ -99,6 +99,25 @@ Jede dieser Fallen hat mindestens ein Ledger falsch-grün gemacht. Vor dem Schre
     **nie** eine `|`-Alternation (nx reicht den Wert ungequotet an eine Shell); **nie** `--listTests` als Gate
     (endet bei 0 Treffern mit Exit 0). Frontend: Pfad **relativ zu `apps/frontend`**.
 
+### Datei-Ownership zwischen Paketen
+
+Elf Dateien wurden am 2026-07-28 von **zwei** Ledgern gleichzeitig als „NEU" beansprucht — drei davon hatte
+niemand gemeldet, sie kamen erst aus einem systematischen Sweep. Wer beide baut, bekommt dieselbe Datei zweimal
+mit unterschiedlichem Inhalt.
+
+`npm run check-ledger-claims` erzwingt das jetzt (`scripts/checkLedgerFileClaims.ts`). Ein Abschnitt oder Task,
+der `ERSETZT` im Titel bzw. in der Kopfnotiz trägt, zählt nicht mehr als Anspruch.
+
+Entschieden wurde nach den beiden Regeln oben, nicht nach Gefühl:
+
+| Datei(en) | Eigentümer | Regel |
+|---|---|---|
+| calendar `000`/`001` + Liste | `p6-migrations` | Welle 4b „verdrahtet die in Welle 3 gebaute … `calendar/001`" |
+| `surveysMigration002` + Liste | `p6-migrations` | Welle 4c „Struktur kam in Welle 3" |
+| tldraw `000` + Liste + `schemaVersion` | `p6-migrations` | „Nummern vergibt ausschließlich `p6-migrations`"; Welle 2 ist `fe-toolchain-**A**` ohne Migration |
+| `appConfig/migration012.ts` | `p6-migrations` | `backlog` T16 ist ein 2.0.200-Eintrag, fachlich gehört der Inhalt in `p4-mail` (Slot 014) |
+| 8 Mail-Dateien (Phase 3/4) | `p4-mail-rework` | dessen Kopf: „ersetzt die bisherigen T10–T25" |
+
 ## 2. BLOCKER
 
 42 BLOCKING-Befunde. **Kein Paket startet, bevor seine Blocker im Ledger behoben sind.** Reihenfolge = Fix-Reihenfolge.

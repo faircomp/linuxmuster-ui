@@ -139,7 +139,15 @@ i18n: keine
 Doku: `docs/features/p7-calendar-sogo-sharing.md`: Abschnitt „ID-Format-Wechsel + warum irreversibel"
 Abhängt von: T5
 
-### T7 — api/calendar: Migrationen 000 (shares droppen) + 001 (re-key)  [ ]
+### T7 — api/calendar: die in Welle 3 gebauten Migrationen verdrahten  [ ]
+> **DATEI-OWNERSHIP GEKLÄRT (Kollision mit `p6-migrations-2-1-catchup` T22/T23).** Die drei Dateien
+> (`migration000DropLegacyShares.ts`, `migration001RekeyMetadataToUrlHashIds.ts`,
+> `calendarMetadataMigrationsList.ts`) **baut `p6-migrations-2-1-catchup`** — das ist Welle 3, dieses Paket ist
+> Welle 4b, und `PORT-2.1.0-MASTER.md` sagt es wörtlich: 4b „verdrahtet die in Welle 3 gebaute, bewusst
+> unverdrahtete `calendar/001`". **Diese Task legt die Dateien also NICHT an**, sondern setzt voraus, dass sie
+> existieren, und übernimmt nur das Einhängen in die Liste bzw. das Modul, sobald T8 das `shares`-Feld entfernt
+> hat. Sind die Dateien beim Ausführen nicht da, ist die Welle-3-Reihenfolge verletzt — dann abbrechen, nicht
+> selbst bauen.
 Komponente: apps/api · Dateien: `apps/api/src/calendar/migrations/migration000DropLegacyShares.ts`, `apps/api/src/calendar/migrations/migration001RekeyMetadataToUrlHashIds.ts`, `apps/api/src/calendar/migrations/calendarMetadataMigrationsList.ts`, `apps/api/src/calendar/calendar.module.ts`
 Soll: NEW:46225-46240 (`name:'000-drop-legacy-shares'`, `version:1`, `updateMany({$or:[{shares:{$exists:true}},{schemaVersion:{$exists:false}},{schemaVersion:{$lt:1}}]}, {$unset:{shares:''},$set:{schemaVersion:1}})`) · NEW:46272-46315 (`name:'001-rekey-metadata-to-url-hash-ids'`, `version:2`: Alt-ID dekodieren → neue Hash-ID; existiert die Ziel-ID schon, Tags **mergen** (`Array.from(new Set(...))`), `ownerUsername` des Bestands bevorzugen, Alt-Dokument `deleteOne`; sonst nur `calendarId` umschreiben. Am Ende Log `re-keyed X and merged Y`).
 Änderung: Beide Migrationen 1:1, Muster wie `apps/api/src/surveys/migrations/*` (Objekt mit `name`/`version`/`execute`). Liste in dieser Reihenfolge registrieren und im Modul einhängen. **Forward-only.** SPDX.
@@ -936,7 +944,13 @@ i18n: keine
 Doku: keine
 Abhängt von: T2
 
-### T4 — api/surveys: Migration 002 (verschieben) — DESTRUKTIV  [ ]
+### T4 — api/surveys: die in Welle 3 gebaute Migration 002 verdrahten — DESTRUKTIV  [ ]
+> **DATEI-OWNERSHIP GEKLÄRT (Kollision mit `p6-migrations-2-1-catchup` T33).**
+> `surveysMigration002MoveBackendLimitersToOwnCollection.ts` und `surveysMigrationsList.ts` **baut
+> `p6-migrations-2-1-catchup`** (Welle 3). `PORT-2.1.0-MASTER.md` führt dieses Paket als Welle 4c mit dem Zusatz
+> „Struktur kam in Welle 3". **Diese Task legt die Dateien also NICHT an**; sie ergänzt die Feature-Schicht
+> (SSE-Broadcast, `selectionCount`-Reconcile) auf der bereits vorhandenen Struktur. Fehlen die Dateien, ist die
+> Wellen-Reihenfolge verletzt — abbrechen, nicht selbst bauen.
 Komponente: apps/api · Dateien: `apps/api/src/surveys/migrations/surveysMigration002MoveBackendLimitersToOwnCollection.ts`, `apps/api/src/surveys/migrations/surveysMigrationsList.ts`
 Soll: NEW:62619-62740. `version: 2`; `previousSchemaVersion=1`, `newSchemaVersion=2`. Cursor über Surveys mit `schemaVersion===1` **oder** fehlendem `schemaVersion` **oder** nicht-leerem `backendLimiters`. Ohne Limiter: nur `schemaVersion` setzen (gesammelt per `bulkWrite`). Mit Limitern: über alle `SurveyAnswer`-Dokumente des Surveys zählen (`countChoiceMatchesInAnswer`; bei `isCustomUserEntry` gegen `${questionName}${SURVEYJS_COMMENT_SUFFIX}`), Ergebnis als `selectionCount` in die neuen Dokumente (`upsert` mit `$setOnInsert`, `ordered:false`). **Bei Write-Errors: `Logger.error`, Survey in `failedSurveyIds`, `schemaVersion`-Bump überspringen (Retry beim nächsten Boot).** Erfolgreiche: `$unset:{backendLimiters:''}` + `$max:{schemaVersion:2}` mit `{strict:false}`. Abschluss-Logs für migrierte und fehlgeschlagene Dokumente.
 Änderung: 1:1, in `surveysMigrationsList` **nach** `001Attachments` einsortieren (Monotonie). Hilfsfunktionen `countChoiceMatchesInAnswer` (Modul 950 — Zeilen per grep bestätigen) und `SURVEYJS_COMMENT_SUFFIX` im Fork suchen, sonst anlegen. **Forward-only.** SPDX.
