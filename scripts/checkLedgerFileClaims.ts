@@ -10,12 +10,14 @@ import chalk from 'chalk';
 const TASKS_DIR = path.join(__dirname, '..', 'tasks');
 const CLAIMED_PREFIXES = ['apps/', 'libs/', 'scripts/', 'docs/'];
 const NEW_FILE_PATTERN = /`([a-zA-Z0-9_./-]+\.(?:ts|tsx|json|md|yml|sh|py))`\s*\((?:NEU|neu)[^)]*\)/g;
-const TASK_HEADING_PATTERN = /^### (T\d+)/;
+const TASK_HEADING_PATTERN = /^### (T\d+[a-z]?)/;
 const SUPERSEDED_MARKER = 'ERSETZT';
 const SECTION_HEADING_PREFIX = '## ';
+const SECTION_LABEL_PATTERN = /^##\s+([^\s—·[]+)/;
 
 interface Claim {
   ledger: string;
+  section: string;
   task: string;
 }
 
@@ -27,6 +29,7 @@ const collectClaims = (): Map<string, Claim[]> => {
     .forEach((file) => {
       const ledger = path.basename(file, '.md');
       let task = '';
+      let section = '';
       let superseded = false;
 
       fs.readFileSync(path.join(TASKS_DIR, file), 'utf8')
@@ -34,6 +37,7 @@ const collectClaims = (): Map<string, Claim[]> => {
         .forEach((line) => {
           if (line.startsWith(SECTION_HEADING_PREFIX)) {
             superseded = false;
+            section = SECTION_LABEL_PATTERN.exec(line)?.[1] ?? '';
           }
           if (line.includes(SUPERSEDED_MARKER)) {
             superseded = true;
@@ -52,7 +56,7 @@ const collectClaims = (): Map<string, Claim[]> => {
             if (!CLAIMED_PREFIXES.some((prefix) => filePath.startsWith(prefix))) {
               return;
             }
-            claims.set(filePath, [...(claims.get(filePath) ?? []), { ledger, task }]);
+            claims.set(filePath, [...(claims.get(filePath) ?? []), { ledger, section, task }]);
           });
         });
     });
@@ -65,7 +69,7 @@ const evaluate = (claims: Map<string, Claim[]>): string[] =>
     .filter(([, owners]) => new Set(owners.map((owner) => owner.ledger)).size > 1)
     .map(
       ([filePath, owners]) =>
-        `${filePath} — beansprucht von ${owners.map((owner) => `${owner.ledger}:${owner.task}`).join(', ')}`,
+        `${filePath} — beansprucht von ${owners.map((owner) => `${owner.ledger}${owner.section && owner.section !== owner.ledger ? `/${owner.section}` : ''}:${owner.task}`).join(', ')}`,
     );
 
 const collisions = evaluate(collectClaims());
