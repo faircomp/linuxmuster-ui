@@ -215,7 +215,7 @@ Abhängt von: T7, T12, T13
 > tsc, eslint und jeder Contract-Test bleiben grün. Im kompilierten Bundle nachgeprüft: mit Wert-Import steht dort
 > `logoutRequest_dto_1.default`. Gilt für jedes künftige DTO in T21/T22/T27.
 
-### T15 — api: validateTotp (Counter + explizites Fenster) + splitPasswordAndTotp  [ ]
+### T15 — api: validateTotp (Counter + explizites Fenster) + splitPasswordAndTotp  [x] OK — validateTotp (Counter + Fenster 1) + splitPasswordAndTotp aus AUTH_TOTP_CONFIG.digits; checkTotp delegiert
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern, angelegt in T13)
 Soll: main.js:67340–67341 (`TOTP_VALIDATION_WINDOW = 1`, ``TOTP_SUFFIX_PATTERN = new RegExp(`:(\\d{${AUTH_TOTP_CONFIG.digits}})$`)``) · main.js:67360–67367 (`validateTotp`) · 67368–67370 (`checkTotp` delegiert) · 67371–67377 (`splitPasswordAndTotp`)
 Änderung: Zwei Modul-Konstanten anlegen; das Suffix-Pattern **aus `AUTH_TOTP_CONFIG.digits` bauen** (`libs/src/auth/constants/totp-config.ts`, digits=6), nicht hart. `static validateTotp(token, username, secret): number | null` — `new TOTP({ ...AUTH_TOTP_CONFIG, label: username, secret }).validate({ token, window: TOTP_VALIDATION_WINDOW })`; bei `delta === null` → `null`, sonst `Math.floor(Date.now() / 1000 / AUTH_TOTP_CONFIG.period) + delta` (= der Counter, zu dem der Code gehört). `static checkTotp` (heute `auth.service.ts:64–67`) bleibt erhalten, delegiert jetzt auf `validateTotp(...) !== null` (Aufrufer `setupTotp`, `auth.service.ts:186`, unverändert). `static splitPasswordAndTotp(passwordString): { password: string; token: string | null }` — `TOTP_SUFFIX_PATTERN.exec(...)`; ohne Treffer `{ password: passwordString, token: null }`, sonst `{ password: passwordString.slice(0, match.index), token: match[1] }`.
@@ -225,7 +225,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T13 (gemeinsame Spec-Datei)
 
-### T16 — api: signinOrNull + signinWithSuffixCostParity (Cost-Parity-Dummy-Signins)  [ ]
+### T16 — api: signinOrNull + signinWithSuffixCostParity (Cost-Parity-Dummy-Signins)  [x] OK — signinOrNull + signinWithSuffixCostParity; der verworfene Dummy-Call ist die Cost-Parity, kein toter Code — mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern)
 Soll: main.js:67378–67385 (`signinOrNull`) · main.js:67386–67392 (`signinWithSuffixCostParity`)
 Änderung: `private async signinOrNull(body, password?)` — `try { return await this.signin(body, password) } catch { return null }`. `private async signinWithSuffixCostParity(body, passwordString)` — `const { password, token } = AuthService.splitPasswordAndTotp(passwordString)`; **wenn `token !== null`, einen zusätzlichen `await this.signinOrNull(body, password)` fahren, dessen Ergebnis verworfen wird**; danach immer `return this.signin(body, passwordString)` (volles Passwort — ein Nicht-MFA-User darf ein Passwort haben, das auf `:123456` endet). Der verworfene Call ist **kein toter Code**: er gleicht die Anzahl der Keycloak-Roundtrips an den MFA-Pfad an, damit die Antwortzeit nicht verrät, ob ein User MFA hat. Im Commit-Body vermerken, damit es kein Reviewer „aufräumt".
@@ -234,7 +234,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T13 (gemeinsame Spec-Datei), T15
 
-### T17 — api: authenticateUser auf Two-Stage-Login umbauen  [ ]
+### T17 — api: authenticateUser auf Two-Stage-Login umbauen  [x] OK — authenticateUser gedreht: Keycloak-Signin VOR jeder TOTP-Aussage, ein Pfad für unbekannt und Nicht-MFA
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern)
 Soll: main.js:67466–67521 (`authenticateUser`) — Projektion **67473**, Nicht-MFA/Unbekannt-Pfad **67475–67477**, `throwTotpMissing` **67481–67484**, Token-fehlt-Pfad **67485–67488**, Passwort-Fallback **67489–67499**, `validateTotp` + `throwTotpInvalid` **67500–67507**
 Änderung: Reihenfolge komplett drehen — **Keycloak-Signin passiert VOR jeder Aussage über TOTP**. (1) `grantType === AUTH_GRANT_TYPES.REFRESH_TOKEN` → `this.signin(body)` (unverändert, `auth.service.ts:123–125`). (2) User laden, Projektion auf `'mfaEnabled totpSecret totpLastUsedCounter username email'` (heute `'mfaEnabled totpSecret username email'`, `auth.service.ts:131`). (3) `if (!user || !user.mfaEnabled) return this.signinWithSuffixCostParity(body, passwordString)` — **ein Pfad für unbekannte und für Nicht-MFA-User**, damit die Antwort keinen von beiden verrät; ersetzt die heutigen zwei getrennten Zweige (`auth.service.ts:135–143`). (4) MFA-Pfad: `const { totpSecret = '', username } = user;` + `splitPasswordAndTotp`; lokales `throwTotpMissing = (refreshToken?: string) => { void this.revokeSession(refreshToken); throw new HttpException({ error: AuthErrorMessages.TotpMissing, error_description: AuthErrorMessages.TotpMissing }, HttpStatus.UNAUTHORIZED) }`. (5) `token === null` → erst `await this.signin(body, password)` (Passwort muss stimmen!), dann `throwTotpMissing(tokens.refresh_token)`. (6) sonst `signin(body, password)` in `try`; im `catch (passwordError)` `signinOrNull(body, passwordString)` — liefert das `null`, `throw passwordError`, sonst (das vermeintliche Token war Teil des Passworts) `throwTotpMissing(fullTokens.refresh_token)`. (7) `validateTotp` → bei `null` `throwTotpInvalid()` (ebenfalls mit `void this.revokeSession(tokens.refresh_token)`), sonst `return tokens`. Die `revokeSession`-Aufrufe sind bewusst `void`/nicht-awaited (main.js:67482/67502/67516) — sie dürfen die Fehlerantwort nicht verzögern. **Der Replay-Claim kommt in T18 dazu.**
@@ -243,7 +243,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T1, T13, T15, T16
 
-### T18 — api: TOTP-Replay-Schutz über atomar geclaimten totpLastUsedCounter  [ ]
+### T18 — api: TOTP-Replay-Schutz über atomar geclaimten totpLastUsedCounter  [x] OK — totpLastUsedCounter + atomarer Claim per findOneAndUpdate-Filter; setupTotp/disableTotp unsetzen ihn
 Komponente: apps/api · Dateien: `apps/api/src/users/user.schema.ts`, `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern)
 Soll: main.js:11446 (Feld) + **11492–11495** (`@Prop({ type: Number }) totpLastUsedCounter`) · main.js:**67508–67519** (Claim, im Bundle unter `if (experimentalAuth)`) · main.js:67536 (`$unset` in `setupTotp`) · main.js:67553 (`$unset` in `disableTotp`)
 Änderung: (1) `@Prop({ type: Number }) totpLastUsedCounter?: number;` im `User`-Schema zwischen `totpCreatedAt` (`user.schema.ts:57–58`) und `language` (60–61) ergänzen. (2) In `authenticateUser` nach erfolgreicher `validateTotp` den Counter **atomar claimen**: `const claimed = await this.userModel.findOneAndUpdate({ username, $or: [{ totpLastUsedCounter: { $lt: counter } }, { totpLastUsedCounter: { $exists: false } }] }, { $set: { totpLastUsedCounter: counter } }).lean();` — bei `!claimed` `void this.revokeSession(tokens.refresh_token)` und `HttpException({ error: AuthErrorMessages.TotpAlreadyUsed, error_description: AuthErrorMessages.TotpAlreadyUsed }, HttpStatus.UNAUTHORIZED)`. Der Filter selbst ist die Race-Sperre — **kein** vorheriges `findOne` + Vergleich. Das 2.1.0-`if (experimentalAuth)` (67508) entfällt, der Claim läuft unbedingt. (3) `setupTotp` (`auth.service.ts:186–195`): `$unset: { totpLastUsedCounter: 1 }` neben das bestehende `$set`. (4) `disableTotp` (`auth.service.ts:206 ff.`): `totpLastUsedCounter: 1` in das bestehende `$unset` aufnehmen.
@@ -252,6 +252,22 @@ Verify: `bash scripts/crabbox/iter.sh cmd 'npx nx run api:test --testPathPattern
 i18n: keine (Key kommt aus T2)
 Doku: keine (T34 sammelt)
 Abhängt von: T2, T17
+
+> **Zusatz über das Ledger hinaus — MFA-Bypass über die Schreibweise, am laufenden Stack gemessen.**
+> Keycloak authentifiziert Usernamen **case-insensitiv** (auf der crabbox nachgemessen: `GLOBAL-ADMIN` und
+> `Global-admin` liefern beide HTTP 201 + `access_token`), der Mongo-Lookup war ohne Collation case-**sensitiv**
+> (kein Index, keine Collation im Schema). Ein MFA-Nutzer, der sich als `Alice` statt `alice` anmeldet, fiel damit
+> in den Nicht-MFA-Zweig und bekam Tokens **ohne** TOTP. **Keine Regression von T17** — der alte Code hatte
+> denselben Zweig — aber es hebelt aus, wofür T15–T18 gebaut ist.
+> Behoben mit `.collation({ locale: 'en', strength: 2 })` an **beiden** Lookups (`authenticateUser` **und**
+> `getTotpInfo`; ohne den zweiten liefe ein MFA-Nutzer mit abweichender Schreibweise in eine Sackgasse, weil das
+> FE über `getTotpStatus` entscheidet, ob es das TOTP-Feld zeigt). `strength: 2` ignoriert **nur** Groß-/Kleinschreibung,
+> nicht Diakritika — `müller` ≠ `muller` bleibt.
+> **Fail-closed gegen Duplikate:** ohne Unique-Index liefert ein Collation-`findOne` bei zwei Schreibvarianten ein
+> **beliebiges** Dokument, und `POST /users` lässt jeden Eingeloggten eine Variante anlegen. Deshalb `find` statt
+> `findOne`: sobald **irgendeine** Variante `mfaEnabled` trägt, gilt MFA, und deren Secret wird benutzt.
+> **Offen (eigener Task):** `UserSchema.index({ username: 1 }, { unique: true, collation: … })` — macht Duplikate
+> unmöglich und aus dem Collection-Scan einen Index-Seek, braucht aber einen einmaligen Dedupe-Lauf.
 
 ### T19 — api: ThrottleGuard auf Multi-Principal (resolvePrincipals/byUsername)  [x] OK — resolvePrincipals + Multi-Principal-canActivate, byUsername in ThrottleConfig/Decorator; 7 neue Fälle, Normalisierung und Mehr-Key-Prüfung mutationsgeprüft
 Komponente: apps/api, libs · Dateien: `apps/api/src/common/throttle/throttle.guard.ts`, `apps/api/src/common/throttle/throttle.decorator.ts`, `libs/src/common/types/throttleConfig.ts`, `apps/api/src/common/throttle/throttle.guard.spec.ts` (existiert, erweitern)

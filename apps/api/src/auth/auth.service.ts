@@ -52,6 +52,12 @@ const { KEYCLOAK_EDU_UI_SECRET, KEYCLOAK_EDU_UI_CLIENT_ID, KEYCLOAK_EDU_UI_REALM
 
 const KEYCLOAK_INVALID_GRANT_ERROR = 'invalid_grant';
 
+const CASE_INSENSITIVE_COLLATION = { locale: 'en', strength: 2 };
+
+const TOTP_VALIDATION_WINDOW = 1;
+
+const TOTP_SUFFIX_PATTERN = new RegExp(`:(\\d{${AUTH_TOTP_CONFIG.digits}})$`);
+
 @Injectable()
 class AuthService {
   private keycloakApi: AxiosInstance;
@@ -67,9 +73,29 @@ class AuthService {
     });
   }
 
+  static validateTotp(token: string, username: string, secret: string): number | null {
+    const totp = new TOTP({ ...AUTH_TOTP_CONFIG, label: username, secret });
+    const delta = totp.validate({ token, window: TOTP_VALIDATION_WINDOW });
+
+    if (delta === null) {
+      return null;
+    }
+
+    return Math.floor(Date.now() / 1000 / AUTH_TOTP_CONFIG.period) + delta;
+  }
+
   static checkTotp(token: string, username: string, secret: string): boolean {
-    const newTotp = new TOTP({ ...AUTH_TOTP_CONFIG, label: username, secret });
-    return newTotp.validate({ token }) !== null;
+    return AuthService.validateTotp(token, username, secret) !== null;
+  }
+
+  static splitPasswordAndTotp(passwordString: string): { password: string; token: string | null } {
+    const match = TOTP_SUFFIX_PATTERN.exec(passwordString);
+
+    if (!match) {
+      return { password: passwordString, token: null };
+    }
+
+    return { password: passwordString.slice(0, match.index), token: match[1] };
   }
 
   authconfig(req: Request): Observable<OidcMetadata> {
@@ -182,6 +208,24 @@ class AuthService {
     }
   }
 
+  private async signinOrNull(body: AuthRequestArgs, password?: string): Promise<SigninResponse | null> {
+    try {
+      return await this.signin(body, password);
+    } catch {
+      return null;
+    }
+  }
+
+  private async signinWithSuffixCostParity(body: AuthRequestArgs, passwordString: string): Promise<SigninResponse> {
+    const { password, token } = AuthService.splitPasswordAndTotp(passwordString);
+
+    if (token !== null) {
+      await this.signinOrNull(body, password);
+    }
+
+    return this.signin(body, passwordString);
+  }
+
   async authenticateUser(body: AuthRequestArgs): Promise<SigninResponse> {
     const { grant_type: grantType, password: encodedPassword, username: identifier } = body;
 
@@ -191,50 +235,79 @@ class AuthService {
 
     const passwordString = decodeBase64Api(encodedPassword);
 
-    const user = await this.userModel
-      .findOne(
+    const candidates = await this.userModel
+      .find(
         identifier.includes('@') ? { email: identifier.toLowerCase() } : { username: identifier },
-        'mfaEnabled totpSecret username email',
+        'mfaEnabled totpSecret totpLastUsedCounter username email',
       )
+      .collation(CASE_INSENSITIVE_COLLATION)
       .lean();
 
-    if (!user) {
-      return this.signin(body, passwordString);
+    const mfaUser = candidates.find((candidate) => candidate.mfaEnabled);
+
+    if (!mfaUser) {
+      return this.signinWithSuffixCostParity(body, passwordString);
     }
 
-    const { mfaEnabled = false, totpSecret = '', username } = user;
+    const { totpSecret = '', username } = mfaUser;
+    const { password, token } = AuthService.splitPasswordAndTotp(passwordString);
 
-    if (!mfaEnabled) {
-      return this.signin(body, passwordString);
-    }
-
-    const lastColonIndex = passwordString.lastIndexOf(':');
-
-    if (lastColonIndex === -1) {
+    const throwTotpMissing = (refreshToken?: string): never => {
+      void this.revokeSession(refreshToken);
       throw new HttpException(
         { error: AuthErrorMessages.TotpMissing, error_description: AuthErrorMessages.TotpMissing },
         HttpStatus.UNAUTHORIZED,
       );
+    };
+
+    if (token === null) {
+      const passwordOnlyTokens = await this.signin(body, password);
+      return throwTotpMissing(passwordOnlyTokens.refresh_token);
     }
 
-    const password = passwordString.slice(0, lastColonIndex);
-    const token = passwordString.slice(lastColonIndex + 1);
+    let tokens: SigninResponse;
 
-    if (!token)
-      throw new HttpException(
-        { error: AuthErrorMessages.TotpMissing, error_description: AuthErrorMessages.TotpMissing },
-        HttpStatus.UNAUTHORIZED,
-      );
+    try {
+      tokens = await this.signin(body, password);
+    } catch (passwordError) {
+      const fullPasswordTokens = await this.signinOrNull(body, passwordString);
 
-    const isTotpValid = AuthService.checkTotp(token, username, totpSecret);
+      if (!fullPasswordTokens) {
+        throw passwordError;
+      }
 
-    if (!isTotpValid) {
+      return throwTotpMissing(fullPasswordTokens.refresh_token);
+    }
+
+    const counter = AuthService.validateTotp(token, username, totpSecret);
+
+    if (counter === null) {
+      void this.revokeSession(tokens.refresh_token);
       throw new HttpException(
         { error: AuthErrorMessages.TotpInvalid, error_description: AuthErrorMessages.TotpInvalid },
         HttpStatus.UNAUTHORIZED,
       );
     }
-    return this.signin(body, password);
+
+    const claimed = await this.userModel
+      .findOneAndUpdate(
+        {
+          username,
+          $or: [{ totpLastUsedCounter: { $lt: counter } }, { totpLastUsedCounter: { $exists: false } }],
+        },
+        { $set: { totpLastUsedCounter: counter } },
+      )
+      .lean();
+
+    if (!claimed) {
+      void this.revokeSession(tokens.refresh_token);
+      throw new HttpException(
+        { error: AuthErrorMessages.TotpAlreadyUsed, error_description: AuthErrorMessages.TotpAlreadyUsed },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return tokens;
   }
 
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this
@@ -253,7 +326,10 @@ class AuthService {
       const user = await this.userModel
         .findOneAndUpdate<User>(
           { username },
-          { $set: { mfaEnabled: true, totpSecret: secret, totpCreatedAt: new Date() } },
+          {
+            $set: { mfaEnabled: true, totpSecret: secret, totpCreatedAt: new Date() },
+            $unset: { totpLastUsedCounter: 1 },
+          },
           { new: true, projection: { totpSecret: 0, password: 0 } },
         )
         .lean();
@@ -265,7 +341,7 @@ class AuthService {
   async getTotpInfo(usernameOrEmail: string) {
     const query = usernameOrEmail.includes('@') ? { email: usernameOrEmail } : { username: usernameOrEmail };
 
-    const user = await this.userModel.findOne(query, { mfaEnabled: 1 }).lean();
+    const user = await this.userModel.findOne(query, { mfaEnabled: 1 }).collation(CASE_INSENSITIVE_COLLATION).lean();
     return user?.mfaEnabled ?? false;
   }
 
@@ -276,7 +352,7 @@ class AuthService {
           { username },
           {
             $set: { mfaEnabled: false },
-            $unset: { totpSecret: 1, totpCreatedAt: 1 },
+            $unset: { totpSecret: 1, totpCreatedAt: 1, totpLastUsedCounter: 1 },
           },
           { new: true, projection: { totpSecret: 0, password: 0 } },
         )

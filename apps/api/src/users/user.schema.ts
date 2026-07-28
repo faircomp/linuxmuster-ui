@@ -57,6 +57,9 @@ export class User {
   @Prop({ type: Date })
   totpCreatedAt?: Date;
 
+  @Prop({ type: Number })
+  totpLastUsedCounter?: number;
+
   @Prop({ type: String, default: UserLanguage.SYSTEM })
   language: UserLanguageType;
 
