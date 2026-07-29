@@ -29,28 +29,33 @@ import {
   Put,
   Query,
   Req,
+  Res,
   UseInterceptors,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
 import { AUTH_CACHE_TTL_MS } from '@libs/common/constants/cacheTtl';
-import AuthErrorMessages from '@libs/auth/constants/authErrorMessages';
-import type LoginQrSseDto from '@libs/auth/types/loginQrSse.dto';
+import LoginQrSseDto from '@libs/auth/types/loginQrSse.dto';
 import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS } from '@libs/auth/constants/authThrottleConfig';
 import LogoutRequestDto from '@libs/auth/types/logoutRequest.dto';
 import AuthenticateRequestDto from '@libs/auth/types/authenticateRequest.dto';
 import TotpSetupBodyDto from '@libs/auth/types/totpSetupBody.dto';
 import type JWTUser from '@libs/user/types/jwt/jwtUser';
-import CustomHttpException from '../common/CustomHttpException';
+import {
+  QR_LOGIN_COOKIE_PATH,
+  QR_LOGIN_SESSION_TTL_MS,
+  QR_LOGIN_TOKEN_COOKIE_PREFIX,
+} from '@libs/auth/constants/qrLoginSessionConfig';
 import Public from '../common/decorators/public.decorator';
 import AuthService from './auth.service';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import GetBearerSession from '../common/decorators/getBearerSession.decorator';
 import strictValidationPipe from '../common/pipes/strictValidationPipe';
+import UuidPipe from '../common/pipes/uuid.pipe';
 import whitelistValidationPipe from '../common/pipes/whitelistValidationPipe';
 import GetCurrentUserGroups from '../common/decorators/getCurrentUserGroups.decorator';
 import Throttle from '../common/throttle/throttle.decorator';
@@ -128,10 +133,27 @@ class AuthController {
   }
 
   @Public()
+  @Post(AUTH_PATHS.AUTH_QR_SESSION)
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })
+  @UseGuards(ThrottleGuard)
+  async createQrLoginSession(@Res({ passthrough: true }) res: Response) {
+    const { sessionId, subscriberToken } = await this.authService.createQrLoginSession();
+
+    res.cookie(`${QR_LOGIN_TOKEN_COOKIE_PREFIX}${sessionId}`, subscriberToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      path: QR_LOGIN_COOKIE_PATH,
+      maxAge: QR_LOGIN_SESSION_TTL_MS,
+    });
+
+    return { sessionId };
+  }
+
+  @Public()
   @Post(AUTH_PATHS.AUTH_VIA_APP)
-  loginViaApp(@Body() body: LoginQrSseDto, @Query('sessionId') sessionId: string) {
-    if (!sessionId)
-      throw new CustomHttpException(AuthErrorMessages.Unknown, HttpStatus.BAD_REQUEST, undefined, AuthController.name);
+  @UsePipes(strictValidationPipe)
+  loginViaApp(@Body() body: LoginQrSseDto, @Query('sessionId', UuidPipe) sessionId: string) {
     return this.authService.loginViaApp(body, sessionId);
   }
 }

@@ -17,10 +17,11 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { Controller, Res, Sse, MessageEvent, Query, HttpStatus } from '@nestjs/common';
+import { Controller, Req, Res, Sse, MessageEvent, Query, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
-import { Response } from 'express';
+import { parse } from 'cookie';
+import { Request, Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import APPS from '@libs/appconfig/constants/apps';
@@ -29,9 +30,13 @@ import ConferencesErrorMessage from '@libs/conferences/types/conferencesErrorMes
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
 import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
 import PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX from '@libs/sse/constants/publicConferenceSseChannelPrefix';
+import AuthErrorMessages from '@libs/auth/constants/authErrorMessages';
+import { QR_LOGIN_TOKEN_COOKIE_PREFIX } from '@libs/auth/constants/qrLoginSessionConfig';
 import CustomHttpException from '../common/CustomHttpException';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import SseService from './sse.service';
+import QrLoginSessionService from './qr-login-session.service';
+import UuidPipe from '../common/pipes/uuid.pipe';
 import Public from '../common/decorators/public.decorator';
 import { Conference, ConferenceDocument } from '../conferences/conference.schema';
 
@@ -41,6 +46,7 @@ import { Conference, ConferenceDocument } from '../conferences/conference.schema
 class SseController {
   constructor(
     private readonly sseService: SseService,
+    private readonly qrLoginSessionService: QrLoginSessionService,
     @InjectModel(Conference.name) private conferenceModel: Model<ConferenceDocument>,
   ) {}
 
@@ -69,7 +75,23 @@ class SseController {
 
   @Public()
   @Sse(AUTH_PATHS.AUTH_ENDPOINT)
-  publicLoginSse(@Query('sessionId') sessionId: string, @Res() res: Response): Observable<MessageEvent | null> {
+  async publicLoginSse(
+    @Query('sessionId', UuidPipe) sessionId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<Observable<MessageEvent | null>> {
+    const subscriberToken = parse(req.headers.cookie || '')[`${QR_LOGIN_TOKEN_COOKIE_PREFIX}${sessionId}`];
+    const isSubscriberVerified = await this.qrLoginSessionService.verifySubscriber(sessionId, subscriberToken);
+
+    if (!isSubscriberVerified) {
+      throw new CustomHttpException(
+        AuthErrorMessages.Forbidden,
+        HttpStatus.FORBIDDEN,
+        { sessionId },
+        SseController.name,
+      );
+    }
+
     return this.sseService.subscribe(`${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${sessionId}`, res);
   }
 }

@@ -47,6 +47,7 @@ import { User, UserDocument } from '../users/user.schema';
 import SseService from '../sse/sse.service';
 import GlobalSettingsService from '../global-settings/global-settings.service';
 import SessionDenylistService from './session-denylist.service';
+import QrLoginSessionService from '../sse/qr-login-session.service';
 
 const { KEYCLOAK_EDU_UI_SECRET, KEYCLOAK_EDU_UI_CLIENT_ID, KEYCLOAK_EDU_UI_REALM, KEYCLOAK_API } = process.env;
 
@@ -65,6 +66,7 @@ class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly sseService: SseService,
+    private readonly qrLoginSessionService: QrLoginSessionService,
     private readonly globalSettingsService: GlobalSettingsService,
     private readonly sessionDenylistService: SessionDenylistService,
   ) {
@@ -395,12 +397,20 @@ class AuthService {
     return { success: true, status: HttpStatus.OK };
   }
 
-  loginViaApp(body: LoginQrSseDto, sessionId: string) {
+  async createQrLoginSession(): Promise<{ sessionId: string; subscriberToken: string }> {
+    return this.qrLoginSessionService.create();
+  }
+
+  async loginViaApp(body: LoginQrSseDto, sessionId: string) {
     const { username, password } = body;
     const channelId = `${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${sessionId}`;
     const isConnectionActive = this.sseService.getUserConnection(channelId);
 
     if (!isConnectionActive) throw new CustomHttpException(UserErrorMessages.NotFoundError, HttpStatus.NOT_FOUND);
+
+    const isSessionConsumed = await this.qrLoginSessionService.consume(sessionId);
+
+    if (!isSessionConsumed) throw new CustomHttpException(UserErrorMessages.NotFoundError, HttpStatus.NOT_FOUND);
 
     this.sseService.sendEventToUser(
       channelId,

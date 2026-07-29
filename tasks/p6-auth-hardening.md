@@ -335,7 +335,7 @@ Abhängt von: T7
 > `MAX_THROTTLE_PRINCIPAL_LENGTH` **gekürzt, nicht verworfen** — Verwerfen wäre eine Umgehung des Zählers.
 > Ein Test pinnt das (zwei Usernamen, die sich erst hinter dem Cap unterscheiden, teilen ein Budget).
 
-### T23 — api: QrLoginSessionService (Single-Use-Session + Subscriber-Token)  [ ]
+### T23 — api: QrLoginSessionService (Single-Use-Session + Subscriber-Token)  [x] OK — QrLoginSessionService in SseModule (@Global, keine neue Modulkante), Single-Use consume, konstantzeitiger Token-Vergleich; 10 Tests, madge zyklenfrei
 Komponente: apps/api · Dateien: `apps/api/src/sse/qr-login-session.service.ts` (NEU), `apps/api/src/sse/qr-login-session.service.spec.ts` (NEU), `apps/api/src/sse/sse.module.ts`, `libs/src/auth/types/qrLoginSessionState.ts` (NEU)
 Soll: main.js:67744–67781 (Modul 1017) — `buildCacheKey` 67749–67751 · `create` 67752–67758 · `verifySubscriber` 67759–67765 · `consume` 67766–67774 · **Modulregistrierung main.js:74091–74103**
 Änderung: `@Injectable()`-Service mit `@Inject(CACHE_MANAGER) private readonly cacheManager: Cache`. ``static buildCacheKey(sessionId) => `${QR_LOGIN_SESSION_CACHE_PREFIX}${sessionId}` ``. `create(): Promise<{ sessionId: string; subscriberToken: string }>` — `randomUUID()` aus `node:crypto` für die sessionId, `randomBytes(QR_LOGIN_SUBSCRIBER_TOKEN_BYTES).toString('hex')` für den Token, `cacheManager.set(key, { subscriberToken }, QR_LOGIN_SESSION_TTL_MS)`. `verifySubscriber(sessionId, subscriberToken?): Promise<boolean>` — State laden; ohne State oder ohne nicht-leeren String-Token `false`; sonst `compareSecretsConstantTime(state.subscriberToken, subscriberToken)`. `consume(sessionId): Promise<boolean>` — State laden, ohne State `false`, sonst `cacheManager.del(key)` und `true` (**Single-Use**: ein abgefangener QR-Code lässt sich nicht zweimal einlösen). State-Typ als eigener Typ in `libs/src/auth/types/qrLoginSessionState.ts`.
@@ -345,7 +345,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T3, T5, T6
 
-### T24 — api: AuthService.createQrLoginSession  [ ]
+### T24 — api: AuthService.createQrLoginSession  [x] OK — createQrLoginSession durchgereicht, Konstruktor-Reihenfolge = Bundle
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern)
 Soll: main.js:67584–67586 (`createQrLoginSession`) · Konstruktor main.js:67350
 Änderung: `QrLoginSessionService` (aus `../sse/qr-login-session.service`) als **dritten** Konstruktor-Parameter einschieben und `createQrLoginSession()` durchreichen (`return this.qrLoginSessionService.create()`). Endstand der Parameterreihenfolge = 2.1.0: `userModel, sseService, qrLoginSessionService, globalSettingsService, sessionDenylistService`. Betrifft ausserdem die Testmodule (Provider ergänzen). **Keine** Änderung an `AuthModule` nötig — `SseModule` ist `@Global` und exportiert den Service seit T23.
@@ -354,7 +354,7 @@ i18n: keine
 Doku: keine (intern)
 Abhängt von: T13, T23
 
-### T25 — api: POST /auth/qr-session mit httpOnly/SameSite=strict/pfad-gebundenem Cookie  [ ]
+### T25 — api: POST /auth/qr-session mit httpOnly/SameSite=strict/pfad-gebundenem Cookie  [x] OK — POST /auth/qr-session mit httpOnly/SameSite=strict/pfad-gebundenem Cookie; Token verlässt den Server nie im Body — mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.ts`
 Soll: main.js:68064–68074 (Handler) · main.js:68190–68209 (Decorators)
 Änderung: Route `@Public()` + `@Post(AUTH_PATHS.AUTH_QR_SESSION)` + `@Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS, { byIp: true })` + `@UseGuards(ThrottleGuard)`; Signatur `async createQrLoginSession(@Res({ passthrough: true }) res: Response)`. Aus `authService.createQrLoginSession()` `{ sessionId, subscriberToken }` holen, dann ``res.cookie(`${QR_LOGIN_TOKEN_COOKIE_PREFIX}${sessionId}`, subscriberToken, { httpOnly: true, secure: process.env.NODE_ENV !== 'development', sameSite: 'strict', path: QR_LOGIN_COOKIE_PATH, maxAge: QR_LOGIN_SESSION_TTL_MS })`` und **nur `{ sessionId }`** zurückgeben — der Token verlässt den Server nie im Body. **Abweichung vom Bundle:** 2.1.0 setzt hier `Throttle(...)` ohne Optionen (main.js:68193); da `resolvePrincipals` für anonyme Requests dann `[]` liefert, ist der Throttle dort wirkungslos — wir setzen `{ byIp: true }`.
@@ -364,7 +364,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T3, T24
 
-### T26 — api: SSE-Login-Kanal verlangt den Subscriber-Token  [ ]
+### T26 — api: SSE-Login-Kanal verlangt den Subscriber-Token  [x] OK — SSE-Login-Kanal verlangt den Subscriber-Token; ohne Cookie 403 und subscribe wird nie gerufen — mutationsgeprüft
 Komponente: apps/api · Dateien: `apps/api/src/sse/sse.controller.ts`, `apps/api/src/sse/sse.controller.spec.ts`
 Soll: main.js:74176–74183 (Handler `publicLoginSse`) · main.js:**74208–74221** (Decorators; `@Query('sessionId', UuidPipe)` 74215, `@Req()` 74216) · Konstruktor main.js:74161
 Änderung: `QrLoginSessionService` in den `SseController` injizieren (2. Konstruktor-Parameter, wie im Bundle) — **keine Modul-Änderung nötig**, der Service wird seit T23 vom selben `SseModule` bereitgestellt. `publicLoginSse` (`sse.controller.ts:70–74`) auf `async` umstellen und um `@Req() req: Request` erweitern; `sessionId` durch die `UuidPipe` schleusen. Im Handler: ``const token = parse(req.headers.cookie || '')[`${QR_LOGIN_TOKEN_COOKIE_PREFIX}${sessionId}`]`` (`cookie` ist bereits Dependency, `package.json:116`, und wird in `apps/api/src/common/utils/extractToken.ts:20` schon so benutzt), dann `await this.qrLoginSessionService.verifySubscriber(sessionId, token)`; bei `false` `CustomHttpException(AuthErrorMessages.Forbidden, HttpStatus.FORBIDDEN, { sessionId }, SseController.name)`. Erst danach ``this.sseService.subscribe(`${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${sessionId}`, res)``. **Ohne diesen Schritt kann jeder, der eine sessionId errät oder mitliest, den Login-Kanal abhören und die durchgereichten Credentials mitlesen.** Die bereits gelandete Kanal-Namespacing-/Doppel-Subscriber-Logik nicht anfassen.
@@ -374,7 +374,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T6, T23, T25
 
-### T27 — api: loginViaApp konsumiert die Session einmalig + UuidPipe + DTO-Härtung  [ ]
+### T27 — api: loginViaApp konsumiert die Session einmalig + UuidPipe + DTO-Härtung  [x] OK — loginViaApp konsumiert die Session einmalig (nach dem getUserConnection-Check), UuidPipe + strictValidationPipe + DTO gehärtet
 Komponente: apps/api, libs · Dateien: `apps/api/src/auth/auth.service.ts`, `apps/api/src/auth/auth.service.spec.ts` (erweitern), `apps/api/src/auth/auth.controller.ts`, `libs/src/auth/types/loginQrSse.dto.ts`
 Soll: main.js:67587–67597 (`loginViaApp` mit `consume` in 67593–67595) · main.js:68075–68077 + 68210–68227 (Route mit `strictValidationPipe` 68213 und `@Query('sessionId', UuidPipe)` 68223) · main.js:68789 ff. (`LoginViaAppBodyDto`)
 Änderung: In `AuthService.loginViaApp` (`auth.service.ts:264–273`) nach dem bestehenden `getUserConnection`-Check ein `const isSessionConsumed = await this.qrLoginSessionService.consume(sessionId)` einziehen; bei `false` `CustomHttpException(UserErrorMessages.NotFoundError, HttpStatus.NOT_FOUND)`. Erst danach `sendEventToUser`. Methode wird `async`. Controller: `@UsePipes(strictValidationPipe)` ergänzen und `@Query('sessionId', UuidPipe) sessionId: string` — damit entfällt der handgeschriebene `if (!sessionId) throw ...`-Block (`auth.controller.ts:121–122`); die Pipe deckt das ab. `LoginQrSseDto` **wiederverwenden** statt ein `LoginViaAppBodyDto` neu anzulegen (AGENTS.md: erst suchen) und um `@MinLength(1)` auf beiden Feldern ergänzen, damit es dem Bundle-DTO entspricht.
@@ -448,7 +448,7 @@ Abhängt von: T28, T29
 > Ein korrekt berechneter Code kann also nicht abgelehnt werden — die Ursache lag im Wegwerf-Python der
 > Prüfmatrix. Der Test bleibt als Regressionsnetz: verengt jemand `TOTP_VALIDATION_WINDOW` auf 0, wird er rot.
 
-### T31 — FE: QR-Login-Session vom Server beziehen  [ ]
+### T31 — FE: QR-Login-Session vom Server beziehen  [x] OK — Session kommt vom Server statt aus getRandomUUID; Toggle-Entscheidung als reine Funktion getestet; 3*60*1000 durch QR_LOGIN_SESSION_TTL_MS ersetzt
 Komponente: apps/frontend, libs · Dateien: `apps/frontend/src/store/UserStore/createQrCodeSlice.ts`, `libs/src/user/types/store/qrCodeSlice.ts`, `apps/frontend/src/pages/LoginPage/LoginPage.tsx`
 Soll: **Nicht rekonstruierbar** (kein FE-Bundle) — Fork-Eigenentwurf gegen `POST /auth/qr-session` aus T25.
 Änderung: Im Store (nicht in der Komponente, AGENTS.md) eine Methode `createQrLoginSession: () => Promise<string | undefined>` ergänzen — **auch im Slice-Typ `libs/src/user/types/store/qrCodeSlice.ts`** —, die per ``eduApi.post<{ sessionId: string }>(`${AUTH_PATHS.AUTH_ENDPOINT}/${AUTH_PATHS.AUTH_QR_SESSION}`)`` die Session anlegt und `data.sessionId` liefert; Fehler über `handleApiError`. In `handleCancelOrToggleQrCode` (`LoginPage.tsx:271–279`) `getRandomUUID()` durch den Store-Aufruf ersetzen (`async`), `setSessionID` erst mit der Server-Antwort setzen und `setShowQrCode(true)` nur bei Erfolg. Der `EventSource`-Aufruf (Zeilen 200–202) und der QR-Value (Zeile 327) bleiben unverändert — sie benutzen nur die neue sessionId. Der Import `getRandomUUID` in LoginPage entfällt, sofern kein weiterer Nutzer in der Datei (die Util selbst bleibt, andere Seiten nutzen sie).
@@ -459,7 +459,7 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T25, T26, T27
 
-### T32 — FE: Logout ruft POST /auth/logout  [ ]
+### T32 — FE: Logout ruft POST /auth/logout  [x] OK — Logout ruft POST /auth/logout vor removeUser (sonst fehlt der Bearer für GetBearerSession); lokaler Logout bleibt bei Serverfehler garantiert — mutationsgeprüft
 Komponente: apps/frontend, libs · Dateien: `apps/frontend/src/store/UserStore/createUserSlice.ts`, `libs/src/user/types/store/userSlice.ts`, `apps/frontend/src/hooks/useLogout.tsx`
 Soll: **Nicht rekonstruierbar** (kein FE-Bundle) — Fork-Eigenentwurf gegen `POST /auth/logout` aus T14.
 Änderung: In `createUserSlice.logout` (`createUserSlice.ts:47–51`) **vor** dem `set({ isAuthenticated: false })` den Refresh-Token an die API schicken: `eduApi.post(AUTH_PATHS.AUTH_LOGOUT_ENDPOINT, { refresh_token: refreshToken })`, Fehler mit `handleApiError` schlucken (ein fehlgeschlagener Server-Logout darf den lokalen Logout **nicht** blockieren — der User muss immer rauskommen; das deckt auch ein 429 aus T14 ab). Der Refresh-Token kommt aus dem oidc-Kontext; da der Store keinen `useAuth`-Zugriff hat, den Token als Parameter durchreichen: Signatur in `libs/src/user/types/store/userSlice.ts:34` auf `logout: (refreshToken?: string) => Promise<void>` ändern und in `useLogout.tsx:49` `await logout(auth.user?.refresh_token)`. Der bestehende `silentLogout()`-Aufruf (`useLogout.tsx:65`, Keycloak-Formular-Logout) bleibt — er beendet die Browser-SSO-Session, der neue Call widerruft Refresh-Token + sid serverseitig; beides ist nötig.
@@ -468,7 +468,28 @@ i18n: keine
 Doku: keine (T34 sammelt)
 Abhängt von: T14
 
-### T33 — api: Auth-Contract-Specs auf den neuen Routenstand ziehen  [~] TEILWEISE — der wertvollste Teil ist gebaut: **erschöpfende** Bypass-Assertion (Menge der @Public-Routen == PUBLIC_ROUTES) plus Vollständigkeitsnetz (beide Listen zusammen decken jeden Handler). Beide mutationsgeprüft: eine eingeschmuggelte @Public-Route und eine umgedrehte geschützte Route werden erkannt — vorher war beides für die Handlisten unsichtbar. **T30 ist inzwischen gebaut** und hat `getTotpInfo` aus den Listen gezogen — die erschöpfende Assertion hat das erzwungen, genau wie vorgesehen. **Rest wartet auf T25:** `createQrLoginSession` fehlt in `PUBLIC_ROUTES`, wer T25 baut, muss sie mitziehen.
+> **Beim Bauen von T23–T27/T31/T32 gefunden:**
+> 1. **Der `import type`-Fallstrick aus T14 hat wieder zugeschlagen** — diesmal bei `LoginQrSseDto` in
+>    `auth.controller.ts`. Der type-only Import stand dort schon **vorher**, war aber folgenlos, weil an der Route
+>    keine Pipe hing; erst das `@UsePipes(strictValidationPipe)` aus T27 machte ihn scharf. **Präzisierung der
+>    Wirkung** (am kompilierten Bundle gemessen, nicht angenommen): der Emit ist `design:paramtypes: [Object, …]`,
+>    und bei `Object` **überspringt** die `ValidationPipe` die Prüfung stillschweigend — die Härtung wäre also
+>    wirkungslos gewesen, nicht (wie ein Review vermutete) die Route tot. Beides ist schlecht, aber nur eines davon
+>    fällt im Betrieb auf. Behoben durch Wert-Import; ein Test liest den Metatype jetzt **aus der Reflection** und
+>    fährt die echte Pipe damit — er wird rot, sobald jemand den Import zurückdreht.
+> 2. **Sieben weitere Controller** haben ebenfalls type-only `@Body()`-DTOs (`parent-child-pairing`, `license`,
+>    `docker`, `global-settings`, `appconfig`, `veyon`, `lmnApi`). Heute folgenlos, weil dort keine Pipe hängt —
+>    aber wer eine ergänzt, tappt in dieselbe Falle. Gehört als eigener Task in den Backlog.
+> 3. **`MOBILE_APP_ENABLED = false`** (ADR 0002): `createQrLoginSession` ist aus der ausgelieferten UI derzeit
+>    **unerreichbar**, der Toggle rendert nur während der TOTP-Eingabe und verzweigt dort sofort. Das entschärft
+>    das T27-Risiko (externe Mobile-App gegen `strictValidationPipe`) stark — heisst aber auch: **kein Gate fährt
+>    diesen Pfad**, weder das Human-Gate noch die Voll-Stack-Schritte von T31. Wer das Flag umlegt, muss den
+>    QR-Login zuerst manuell durchspielen.
+> 4. **Restverhalten, bundle-identisch, kein Code-Fix hier:** wer den QR-Code lesen kann, kann dem Opfer-Browser
+>    **einmal** eigene Zugangsdaten unterschieben (Forced Login) — `getUserConnection` trägt, `consume` gelingt,
+>    die Seite submittet. Gehört in die Security-Doku (T34).
+
+### T33 — api: Auth-Contract-Specs auf den neuen Routenstand ziehen  [~] TEILWEISE — der wertvollste Teil ist gebaut: **erschöpfende** Bypass-Assertion (Menge der @Public-Routen == PUBLIC_ROUTES) plus Vollständigkeitsnetz (beide Listen zusammen decken jeden Handler). Beide mutationsgeprüft: eine eingeschmuggelte @Public-Route und eine umgedrehte geschützte Route werden erkannt — vorher war beides für die Handlisten unsichtbar. **T30 ist inzwischen gebaut** und hat `getTotpInfo` aus den Listen gezogen — die erschöpfende Assertion hat das erzwungen, genau wie vorgesehen. **T25 ist gebaut** und hat `createQrLoginSession` in `PUBLIC_ROUTES` gezogen — die erschöpfende Assertion hat es erzwungen (zwei Tests wurden rot). Damit ist T33 inhaltlich vollständig.
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.spec.ts`, `apps/api/src/auth/authThrottle.spec.ts`
 Soll: Ergebnis von T14/T20/T25/T30 — die Spec ist das Bypass-Regressionsnetz (siehe `p1-port-api-specs-ci`, `check-spec-coverage` im `.husky/pre-commit` + CI)
 Änderung: `PUBLIC_ROUTES` (Zeile 23) auf den Endstand setzen: `['authconfig', 'authenticate', 'logout', 'createQrLoginSession', 'loginViaApp']`; `PROTECTED_ROUTES` (Zeile 24) bleibt `['getQrCode', 'setupTotp', 'disableTotp', 'disableTotpForUser']`. `mockAuthService` um `logout` und `createQrLoginSession` ergänzen, `getTotpInfo` entfernen. **Keine** zusätzlichen Provider mocken — der `AuthController` injiziert ausschliesslich `AuthService` (`auth.controller.ts:60`); `QrLoginSessionService`/`SessionDenylistService` gehören ins Testmodul von `auth.service.spec.ts`, nicht hierher. In `authThrottle.spec.ts` die Route-Liste auf `['authenticate', 'createQrLoginSession', 'logout']` ziehen und für alle drei `limit`/`ttl` sowie `byIp` prüfen, für `authenticate` zusätzlich `byUsername`. Explizite Negativ-Assertion ergänzen (Auth-Bypass-Gate), konkret:

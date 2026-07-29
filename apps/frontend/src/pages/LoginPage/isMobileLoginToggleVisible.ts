@@ -12,7 +12,6 @@
 
 import { MOBILE_APP_ENABLED } from '@libs/common/constants/productInfo';
 
-const isMobileLoginToggleVisible = (isEnterTotpVisible: boolean): boolean =>
-  isEnterTotpVisible || MOBILE_APP_ENABLED;
+const isMobileLoginToggleVisible = (isEnterTotpVisible: boolean): boolean => isEnterTotpVisible || MOBILE_APP_ENABLED;
 
 export default isMobileLoginToggleVisible;

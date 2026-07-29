@@ -46,7 +46,7 @@ const useLogout = ({ isForceLogout = false }: UseLogoutProps = {}) => {
   const isPublicPage = publicAppConfigs?.some((config) => config.name === pathname.split('/')[1]);
 
   const handleLogout = useCallback(async () => {
-    await logout();
+    await logout(auth.user?.refresh_token);
 
     await auth.removeUser();
 

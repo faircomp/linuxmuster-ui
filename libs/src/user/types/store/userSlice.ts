@@ -31,7 +31,7 @@ type UserSlice = {
   eduApiToken: string;
   setEduApiToken: (eduApiToken: string) => void;
   isPreparingLogout: boolean;
-  logout: () => Promise<void>;
+  logout: (refreshToken?: string) => Promise<void>;
   userIsLoading: boolean;
   userError: Error | null;
   searchAttendees: (searchQuery: string) => Promise<AttendeeDto[]>;

@@ -10,8 +10,9 @@ import { AxiosError } from 'axios';
 import AuthErrorMessages from '@libs/auth/constants/authErrorMessages';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
 import AUTH_TOTP_CONFIG from '@libs/auth/constants/totp-config';
+import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
 import { Secret, TOTP } from 'otpauth';
-import { encodeBase64Api } from '@libs/common/utils/getBase64StringApi';
+import { decodeBase64Api, encodeBase64Api } from '@libs/common/utils/getBase64StringApi';
 import type { SigninResponse } from 'oidc-client-ts';
 import type AuthRequestArgs from '@libs/auth/types/auth-request';
 import { HTTP_HEADERS, RequestResponseContentType } from '@libs/common/types/http-methods';
@@ -20,6 +21,7 @@ import { User } from '../users/user.schema';
 import SseService from '../sse/sse.service';
 import GlobalSettingsService from '../global-settings/global-settings.service';
 import SessionDenylistService from './session-denylist.service';
+import QrLoginSessionService from '../sse/qr-login-session.service';
 import AuthService from './auth.service';
 
 const REFRESH_TOKEN = 'a-refresh-token';
@@ -45,7 +47,11 @@ describe(AuthService.name, () => {
       providers: [
         AuthService,
         { provide: getModelToken(User.name), useValue: userModel },
-        { provide: SseService, useValue: { sendEventToUser: jest.fn() } },
+        { provide: SseService, useValue: { sendEventToUser: jest.fn(), getUserConnection: jest.fn() } },
+        {
+          provide: QrLoginSessionService,
+          useValue: { create: jest.fn(), consume: jest.fn(), verifySubscriber: jest.fn() },
+        },
         { provide: GlobalSettingsService, useValue: { getGlobalSettings: jest.fn() } },
         { provide: SessionDenylistService, useValue: { denySession, isSessionDenied: jest.fn() } },
       ],
@@ -144,6 +150,76 @@ describe(AuthService.name, () => {
   });
 });
 
+describe(`${AuthService.name} qr login session`, () => {
+  let service: AuthService;
+
+  const create = jest.fn();
+  const consume = jest.fn();
+  const getUserConnection = jest.fn();
+  const sendEventToUser = jest.fn();
+
+  const SESSION_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+  const CREDENTIALS = { username: 'alice', password: 'geheim' };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    getUserConnection.mockReturnValue(true);
+    consume.mockResolvedValue(true);
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        { provide: getModelToken(User.name), useValue: { findOne: jest.fn(), find: jest.fn() } },
+        { provide: SseService, useValue: { sendEventToUser, getUserConnection } },
+        { provide: QrLoginSessionService, useValue: { create, consume, verifySubscriber: jest.fn() } },
+        { provide: GlobalSettingsService, useValue: { getGlobalSettings: jest.fn() } },
+        { provide: SessionDenylistService, useValue: { denySession: jest.fn(), isSessionDenied: jest.fn() } },
+      ],
+    }).compile();
+    service = module.get<AuthService>(AuthService);
+  });
+
+  it('hands the session creation to the session service', async () => {
+    create.mockResolvedValue({ sessionId: SESSION_ID, subscriberToken: 'token' });
+
+    await expect(service.createQrLoginSession()).resolves.toEqual({
+      sessionId: SESSION_ID,
+      subscriberToken: 'token',
+    });
+  });
+
+  it('forwards the credentials once the session is consumed', async () => {
+    await service.loginViaApp(CREDENTIALS, SESSION_ID);
+
+    expect(consume).toHaveBeenCalledWith(SESSION_ID);
+    expect(sendEventToUser).toHaveBeenCalledTimes(1);
+
+    const [channel, payload] = sendEventToUser.mock.calls[0] as [string, string, string];
+    expect(channel).toBe(`${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${SESSION_ID}`);
+    expect(JSON.parse(decodeBase64Api(payload))).toEqual(CREDENTIALS);
+  });
+
+  it('refuses a second redemption of the same session and sends nothing', async () => {
+    consume.mockResolvedValue(false);
+
+    await expect(service.loginViaApp(CREDENTIALS, SESSION_ID)).rejects.toThrow(
+      expect.objectContaining({ status: HttpStatus.NOT_FOUND }) as unknown as Error,
+    );
+
+    expect(sendEventToUser).not.toHaveBeenCalled();
+  });
+
+  it('does not consume a session nobody is listening on', async () => {
+    getUserConnection.mockReturnValue(false);
+
+    await expect(service.loginViaApp(CREDENTIALS, SESSION_ID)).rejects.toThrow(
+      expect.objectContaining({ status: HttpStatus.NOT_FOUND }) as unknown as Error,
+    );
+
+    expect(consume).not.toHaveBeenCalled();
+  });
+});
+
 describe(`${AuthService.name} two-stage login`, () => {
   let service: AuthService;
   let signin: jest.SpyInstance;
@@ -184,7 +260,11 @@ describe(`${AuthService.name} two-stage login`, () => {
       providers: [
         AuthService,
         { provide: getModelToken(User.name), useValue: userModel },
-        { provide: SseService, useValue: { sendEventToUser: jest.fn() } },
+        { provide: SseService, useValue: { sendEventToUser: jest.fn(), getUserConnection: jest.fn() } },
+        {
+          provide: QrLoginSessionService,
+          useValue: { create: jest.fn(), consume: jest.fn(), verifySubscriber: jest.fn() },
+        },
         { provide: GlobalSettingsService, useValue: { getGlobalSettings: jest.fn() } },
         { provide: SessionDenylistService, useValue: { denySession: jest.fn(), isSessionDenied: jest.fn() } },
       ],

@@ -35,6 +35,7 @@ import type UserDto from '@libs/user/types/user.dto';
 import processLdapGroups from '@libs/user/utils/processLdapGroups';
 import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
+import { QR_LOGIN_SESSION_TTL_MS } from '@libs/auth/constants/qrLoginSessionConfig';
 import QRCodeDisplay from '@/components/ui/QRCodeDisplay';
 import PageTitle from '@/components/PageTitle';
 import SSE_EDU_API_ENDPOINTS from '@libs/sse/constants/sseEndpoints';
@@ -50,7 +51,7 @@ import { getAssetUrl } from '@libs/appconfig/utils/getAppAsset';
 import ASSET_TYPES from '@libs/appconfig/constants/assetTypes';
 import useDeploymentTarget from '@/hooks/useDeploymentTarget';
 import useLmnApiStore from '@/store/useLmnApiStore';
-import getRandomUUID from '@/utils/getRandomUUID';
+import resolveQrToggleAction, { QR_TOGGLE_ACTION } from './resolveQrToggleAction';
 import LoginSourceOfferFooter from './LoginSourceOfferFooter';
 import isMobileLoginToggleVisible from './isMobileLoginToggleVisible';
 import getLoginFormSchema from './getLoginFormSchema';
@@ -70,7 +71,8 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation() as { state: LocationState };
 
-  const { eduApiToken, totpIsLoading, isAuthenticated, createOrUpdateUser, setEduApiToken } = useUserStore();
+  const { eduApiToken, totpIsLoading, isAuthenticated, createOrUpdateUser, setEduApiToken, createQrLoginSession } =
+    useUserStore();
   const { isLmn, isGeneric } = useDeploymentTarget();
   const { lmnApiToken, user: lmnUser } = useLmnApiStore();
   const globalSettings = useGlobalSettingsApiStore((s) => s.globalSettings);
@@ -235,14 +237,11 @@ const LoginPage: React.FC = () => {
       setShowQrCode(false);
     };
 
-    const timeoutId = setTimeout(
-      () => {
-        handleAbortConnection();
-        toast.info(t('login.infoQrCodeExpired'));
-        setShowQrCode(false);
-      },
-      3 * 60 * 1000,
-    );
+    const timeoutId = setTimeout(() => {
+      handleAbortConnection();
+      toast.info(t('login.infoQrCodeExpired'));
+      setShowQrCode(false);
+    }, QR_LOGIN_SESSION_TTL_MS);
 
     return () => {
       clearTimeout(timeoutId);
@@ -256,14 +255,27 @@ const LoginPage: React.FC = () => {
     setIsEnterTotpVisible(false);
   };
 
-  const handleCancelOrToggleQrCode = () => {
-    if (isEnterTotpVisible) {
+  const handleCancelOrToggleQrCode = async () => {
+    const action = resolveQrToggleAction(isEnterTotpVisible, showQrCode);
+
+    if (action === QR_TOGGLE_ACTION.CANCEL_TOTP) {
       onTotpCancelButtonClick();
-    } else {
-      const newSessionID = getRandomUUID();
-      setSessionID(newSessionID);
-      setShowQrCode((prev) => !prev);
+      return;
     }
+
+    if (action === QR_TOGGLE_ACTION.HIDE) {
+      setShowQrCode(false);
+      return;
+    }
+
+    const newSessionID = await createQrLoginSession();
+
+    if (!newSessionID) {
+      return;
+    }
+
+    setSessionID(newSessionID);
+    setShowQrCode(true);
   };
 
   useEffect(() => {

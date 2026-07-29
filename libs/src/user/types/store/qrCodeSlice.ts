@@ -20,6 +20,7 @@
 type QrCodeSlice = {
   qrCode: string;
   getQrCode: () => Promise<void>;
+  createQrLoginSession: () => Promise<string | undefined>;
   qrCodeIsLoading: boolean;
   qrCodeError: Error | null;
   resetQrCodeSlice: () => void;
