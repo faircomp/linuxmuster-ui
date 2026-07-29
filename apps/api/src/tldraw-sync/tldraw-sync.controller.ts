@@ -42,12 +42,14 @@ import HistoryPageDto from '@libs/whiteboard/types/historyPageDto';
 import TLDRAW_MULTI_USER_ROOM_PREFIX from '@libs/whiteboard/constants/tldrawMultiUserRoomPrefix';
 import CommonErrorMessages from '@libs/common/constants/common-error-messages';
 import ROOM_ID_PARAM from '@libs/tldraw-sync/constants/roomIdParam';
+import WHITEBOARD_FILES_PATH from '@libs/whiteboard/constants/whiteboardFilesPath';
 import { createAttachmentUploadOptions } from '../filesystem/multer.utilities';
 import FilesystemService from '../filesystem/filesystem.service';
 import TLDrawSyncService from './tldraw-sync.service';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import CustomHttpException from '../common/CustomHttpException';
 import RequireAppAccess from '../common/decorators/requireAppAccess.decorator';
+import ValidatePathPipe from '../common/pipes/validatePath.pipe';
 
 @ApiTags(TLDRAW_SYNC_ENDPOINTS.BASE)
 @ApiBearerAuth()
@@ -79,12 +81,16 @@ class TLDrawSyncController {
   }
 
   @Get(`${TLDRAW_SYNC_ENDPOINTS.ASSETS}/*filename`)
-  serveFiles(@Param('filename') filename: string | string[], @Req() req: Request, @Res() res: Response) {
+  serveFiles(
+    @Param('filename', new ValidatePathPipe(WHITEBOARD_FILES_PATH)) filename: string | string[],
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     return this.filesystemService.serveFile(APPS.WHITEBOARD, FilesystemService.buildPathString(filename), req, res);
   }
 
   @Delete(`${TLDRAW_SYNC_ENDPOINTS.ASSETS}/*filename`)
-  deleteFile(@Param('filename') filename: string) {
+  deleteFile(@Param('filename', new ValidatePathPipe(WHITEBOARD_FILES_PATH)) filename: string) {
     return FilesystemService.deleteFile(
       `${APPS_FILES_PATH}/${APPS.WHITEBOARD}`,
       FilesystemService.buildPathString(filename),

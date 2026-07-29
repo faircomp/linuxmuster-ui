@@ -48,8 +48,14 @@ const frNestedKeys = flattenKeys(frTranslations);
 const missingNestedInEN = deNestedKeys.filter((key) => !enNestedKeys.includes(key));
 const missingNestedInDE = enNestedKeys.filter((key) => !deNestedKeys.includes(key));
 const missingNestedInFR = deNestedKeys.filter((key) => !frNestedKeys.includes(key));
+const extraNestedInFR = frNestedKeys.filter((key) => !deNestedKeys.includes(key));
 
-if (missingNestedInEN.length > 0 || missingNestedInDE.length > 0) {
+if (
+  missingNestedInEN.length > 0 ||
+  missingNestedInDE.length > 0 ||
+  missingNestedInFR.length > 0 ||
+  extraNestedInFR.length > 0
+) {
   console.error('Translation files do not contain the same keys!');
 
   if (missingNestedInEN.length > 0) {
@@ -59,7 +65,10 @@ if (missingNestedInEN.length > 0 || missingNestedInDE.length > 0) {
     console.error(`Missing nested keys in DE translation: ${missingNestedInDE.join(', ')}`);
   }
   if (missingNestedInFR.length > 0) {
-    console.info(`Missing nested keys in FR translation: ${missingNestedInFR.join(', ')}`);
+    console.error(`Missing nested keys in FR translation: ${missingNestedInFR.join(', ')}`);
+  }
+  if (extraNestedInFR.length > 0) {
+    console.error(`Extra nested keys in FR translation: ${extraNestedInFR.join(', ')}`);
   }
   process.exit(1);
 }

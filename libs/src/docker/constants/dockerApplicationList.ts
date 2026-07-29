@@ -30,6 +30,7 @@ const DOCKER_APPLICATION_LIST: Partial<DockerApplicationList> = {
   classmanagement: 'edulution-veyon',
   desktopdeployment: 'edulution-guacamole',
   filesharing: 'edulution-onlyoffice',
+  learningmanagement: 'edulution-moodle',
   [EDULUTION_MANAGER_APPLICATION_NAME]: EDULUTION_MANAGER_CONTAINER_NAME,
   wireguard: 'edulution-wireguard',
 } as const;

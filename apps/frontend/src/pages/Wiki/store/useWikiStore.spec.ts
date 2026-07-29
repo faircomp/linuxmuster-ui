@@ -1,0 +1,230 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (C) 2026 Kevin Stenzel
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import WIKI_ENDPOINTS from '@libs/wiki/constants/wikiEndpoints';
+import { HTTP_HEADERS } from '@libs/common/types/http-methods';
+import eduApi from '@/api/eduApi';
+import useWikiStore from './useWikiStore';
+
+vi.mock('@/api/eduApi', () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
+
+const mockedEduApi = eduApi as unknown as {
+  get: ReturnType<typeof vi.fn>;
+  post: ReturnType<typeof vi.fn>;
+  put: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+};
+
+const SHARES_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.SHARES}`;
+const TREE_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.TREE}`;
+const PAGE_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.PAGE}`;
+const FOLDER_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.FOLDER}`;
+const SEARCH_ENDPOINT = `${WIKI_ENDPOINTS.BASE}/${WIKI_ENDPOINTS.SEARCH}`;
+
+describe('useWikiStore', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useWikiStore.setState({
+      shares: [],
+      currentPage: null,
+      currentPageEtag: null,
+      treeVersion: 0,
+      searchResult: null,
+      isLoadingShares: false,
+      isLoadingPage: false,
+      isSaving: false,
+      isSearching: false,
+      error: null,
+    });
+  });
+
+  it('fetchShares requests the shares endpoint and stores the result', async () => {
+    mockedEduApi.get.mockResolvedValue({ data: [{ displayName: 'MyShare' }] });
+
+    await useWikiStore.getState().fetchShares();
+
+    expect(mockedEduApi.get).toHaveBeenCalledWith(SHARES_ENDPOINT);
+    expect(useWikiStore.getState().shares).toEqual([{ displayName: 'MyShare' }]);
+    expect(useWikiStore.getState().isLoadingShares).toBe(false);
+  });
+
+  it('fetchTree passes the path as a query param and returns the children', async () => {
+    const children = [{ type: 'folder', name: 'sub', path: 'MyShare/sub' }];
+    mockedEduApi.get.mockResolvedValue({ data: children });
+
+    const result = await useWikiStore.getState().fetchTree('MyShare/sub');
+
+    expect(mockedEduApi.get).toHaveBeenCalledWith(TREE_ENDPOINT, { params: { path: 'MyShare/sub' } });
+    expect(result).toEqual(children);
+  });
+
+  it('fetchPage carries the ETag from the response body', async () => {
+    mockedEduApi.get.mockResolvedValue({ data: { path: 'MyShare/p', title: 'P', content: 'c', etag: 'v1' } });
+
+    const page = await useWikiStore.getState().fetchPage('MyShare/p');
+
+    expect(mockedEduApi.get).toHaveBeenCalledWith(PAGE_ENDPOINT, { params: { path: 'MyShare/p' } });
+    expect(page?.etag).toBe('v1');
+    expect(useWikiStore.getState().currentPageEtag).toBe('v1');
+  });
+
+  it('createPage posts the DTO to the page endpoint', async () => {
+    const dto = { parentPath: 'MyShare', title: 'Hello' };
+    mockedEduApi.post.mockResolvedValue({ data: { path: 'MyShare/hello', title: 'Hello', content: '', etag: 'v1' } });
+
+    const result = await useWikiStore.getState().createPage(dto);
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(PAGE_ENDPOINT, dto);
+    expect(result?.path).toBe('MyShare/hello');
+  });
+
+  it('updatePage sends the ETag as an If-Match header and query path', async () => {
+    mockedEduApi.put.mockResolvedValue({ data: { path: 'MyShare/p', title: 'P', content: 'x', etag: 'v2' } });
+
+    await useWikiStore.getState().updatePage('MyShare/p', 'x', 'v1');
+
+    expect(mockedEduApi.put).toHaveBeenCalledWith(
+      PAGE_ENDPOINT,
+      { content: 'x', etag: 'v1' },
+      { params: { path: 'MyShare/p' }, headers: { [HTTP_HEADERS.IfMatch]: 'v1' } },
+    );
+    expect(useWikiStore.getState().currentPageEtag).toBe('v2');
+  });
+
+  it('updatePage omits the If-Match header when no ETag is known', async () => {
+    mockedEduApi.put.mockResolvedValue({ data: { path: 'MyShare/p', title: 'P', content: 'x', etag: 'v1' } });
+
+    await useWikiStore.getState().updatePage('MyShare/p', 'x', null);
+
+    expect(mockedEduApi.put).toHaveBeenCalledWith(
+      PAGE_ENDPOINT,
+      { content: 'x', etag: undefined },
+      { params: { path: 'MyShare/p' }, headers: undefined },
+    );
+  });
+
+  it('deletePage deletes with the path query param and reports success', async () => {
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    const result = await useWikiStore.getState().deletePage('MyShare/p');
+
+    expect(mockedEduApi.delete).toHaveBeenCalledWith(PAGE_ENDPOINT, { params: { path: 'MyShare/p' } });
+    expect(result).toBe(true);
+  });
+
+  it('createFolder posts the DTO to the folder endpoint', async () => {
+    const dto = { parentPath: 'MyShare', name: 'New' };
+    mockedEduApi.post.mockResolvedValue({ data: { path: 'MyShare/New' } });
+
+    await useWikiStore.getState().createFolder(dto);
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(FOLDER_ENDPOINT, dto);
+  });
+
+  it('deleteFolder deletes with the path query param and reports success', async () => {
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    const result = await useWikiStore.getState().deleteFolder('MyShare/sub');
+
+    expect(mockedEduApi.delete).toHaveBeenCalledWith(FOLDER_ENDPOINT, { params: { path: 'MyShare/sub' } });
+    expect(result).toBe(true);
+  });
+
+  it('records an error and clears the loading flag when a request fails', async () => {
+    mockedEduApi.get.mockRejectedValue(new Error('boom'));
+
+    await useWikiStore.getState().fetchShares();
+
+    expect(useWikiStore.getState().isLoadingShares).toBe(false);
+    expect(useWikiStore.getState().error).not.toBeNull();
+  });
+
+  it('search posts the query and scope to the search endpoint and stores the result', async () => {
+    const result = { hits: [], total: 0, status: 'ok', unavailableShares: [] };
+    mockedEduApi.post.mockResolvedValue({ data: result });
+
+    const returned = await useWikiStore.getState().search('hello', 'all');
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(SEARCH_ENDPOINT, {
+      query: 'hello',
+      scope: 'all',
+      shareId: undefined,
+      page: 0,
+      size: 20,
+    });
+    expect(useWikiStore.getState().searchResult).toEqual(result);
+    expect(returned).toEqual(result);
+  });
+
+  it('search forwards a shareId for a share-scoped query', async () => {
+    mockedEduApi.post.mockResolvedValue({ data: { hits: [], total: 0, status: 'ok', unavailableShares: [] } });
+
+    await useWikiStore.getState().search('term', 'share', 'ShareA');
+
+    expect(mockedEduApi.post).toHaveBeenCalledWith(SEARCH_ENDPOINT, {
+      query: 'term',
+      scope: 'share',
+      shareId: 'ShareA',
+      page: 0,
+      size: 20,
+    });
+  });
+
+  it('refreshTree bumps the tree version so expanded folders reload lazily', () => {
+    useWikiStore.getState().refreshTree();
+
+    expect(useWikiStore.getState().treeVersion).toBe(1);
+  });
+
+  it('clears the current page when that page is deleted', async () => {
+    useWikiStore.setState({
+      currentPage: { path: 'MyShare/p', title: 'P', content: 'c', etag: 'v1', mtime: 1, isIndex: false },
+    });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deletePage('MyShare/p');
+
+    expect(useWikiStore.getState().currentPage).toBeNull();
+  });
+
+  it('clears the current page when its containing folder is deleted', async () => {
+    useWikiStore.setState({
+      currentPage: { path: 'MyShare/sub/p', title: 'P', content: 'c', etag: 'v1', mtime: 1, isIndex: false },
+    });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deleteFolder('MyShare/sub');
+
+    expect(useWikiStore.getState().currentPage).toBeNull();
+  });
+
+  it('keeps the current page when an unrelated page is deleted', async () => {
+    const page = { path: 'MyShare/keep', title: 'K', content: 'c', etag: 'v1', mtime: 1, isIndex: false };
+    useWikiStore.setState({ currentPage: page });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deletePage('MyShare/other');
+
+    expect(useWikiStore.getState().currentPage).toEqual(page);
+  });
+
+  it('keeps the current page when a folder sharing only a name prefix is deleted', async () => {
+    const page = { path: 'MyShare/subtle/p', title: 'P', content: 'c', etag: 'v1', mtime: 1, isIndex: false };
+    useWikiStore.setState({ currentPage: page });
+    mockedEduApi.delete.mockResolvedValue({ data: { success: true } });
+
+    await useWikiStore.getState().deleteFolder('MyShare/sub');
+
+    expect(useWikiStore.getState().currentPage).toEqual(page);
+  });
+});

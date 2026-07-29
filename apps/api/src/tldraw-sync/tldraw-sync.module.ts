@@ -19,6 +19,7 @@
 
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import AuthModule from '../auth/auth.module';
 import { TldrawSyncRoom, TldrawSyncRoomSchema } from './tldraw-sync-room.schema';
 import TLDrawSyncService from './tldraw-sync.service';
 import TLDrawSyncGateway from './tldraw-sync.gateway';
@@ -27,6 +28,7 @@ import { TLDrawSyncLog, TLDrawSyncLogSchema } from './tldraw-sync-log.schema';
 
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([{ name: TldrawSyncRoom.name, schema: TldrawSyncRoomSchema }]),
     MongooseModule.forFeature([{ name: TLDrawSyncLog.name, schema: TLDrawSyncLogSchema }]),
   ],

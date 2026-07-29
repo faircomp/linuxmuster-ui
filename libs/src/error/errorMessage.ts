@@ -38,6 +38,10 @@ import TLDrawSyncErrorMessagesType from '@libs/tldraw-sync/types/tLDrawSyncError
 import PathValidationErrorMessages from '@libs/common/constants/path-validation-error-messages';
 import WireguardErrorMessages from '@libs/wireguard/types/wireguardErrorMessages';
 import WebhookErrorMessages from '@libs/webhook/types/webhookErrorMessages';
+import ChatErrorMessages from '@libs/chat/types/chatErrorMessages';
+import ParentChildPairingErrorMessagesType from '@libs/parent-child-pairing/types/parentChildPairingErrorMessagesType';
+import WikiErrorMessagesType from '@libs/wiki/types/wikiErrorMessagesType';
+import CalendarErrorMessages from '@libs/calendar/constants/calendar-error-messages';
 
 type ErrorMessage =
   | CommonErrorMessages
@@ -60,6 +64,10 @@ type ErrorMessage =
   | TGlobalSettingsErrorMessages
   | PathValidationErrorMessages
   | WireguardErrorMessages
-  | WebhookErrorMessages;
+  | WebhookErrorMessages
+  | ChatErrorMessages
+  | ParentChildPairingErrorMessagesType
+  | WikiErrorMessagesType
+  | CalendarErrorMessages;
 
 export default ErrorMessage;

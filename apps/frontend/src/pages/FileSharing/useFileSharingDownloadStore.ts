@@ -33,6 +33,7 @@ import ContentType from '@libs/filesharing/types/contentType';
 import formatTransferSpeed from '@libs/filesharing/utils/formatTransferSpeed';
 import formatEstimatedTimeRemaining from '@libs/filesharing/utils/formatEstimatedTimeRemaining';
 import SMOOTHING_ALPHA from '@libs/filesharing/constants/smoothingAlpha';
+import DOWNLOADS_PATH_SEGMENT from '@libs/common/constants/downloadsPathSegment';
 
 type FileSharingDownloadStore = {
   isCreatingBlobUrl: boolean;
@@ -96,7 +97,7 @@ const useFileSharingDownloadStore = create<FileSharingDownloadStore>((set, get) 
       if (isOnlyOfficeDocument(file.filename)) {
         const publicUrl = await get().getPublicDownloadUrl(file.filePath, file.filePath, share, signal);
         if (publicUrl) {
-          set({ publicDownloadLink: `${getFrontEndUrl()}/${EDU_API_ROOT}/downloads/${publicUrl}` });
+          set({ publicDownloadLink: `${getFrontEndUrl()}/${EDU_API_ROOT}/${DOWNLOADS_PATH_SEGMENT}/${publicUrl}` });
         }
       }
     } catch (error) {

@@ -35,6 +35,7 @@ import type UserDto from '@libs/user/types/user.dto';
 import processLdapGroups from '@libs/user/utils/processLdapGroups';
 import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
 import AUTH_PATHS from '@libs/auth/constants/auth-paths';
+import { QR_LOGIN_SESSION_TTL_MS } from '@libs/auth/constants/qrLoginSessionConfig';
 import QRCodeDisplay from '@/components/ui/QRCodeDisplay';
 import PageTitle from '@/components/PageTitle';
 import SSE_EDU_API_ENDPOINTS from '@libs/sse/constants/sseEndpoints';
@@ -50,7 +51,9 @@ import { getAssetUrl } from '@libs/appconfig/utils/getAppAsset';
 import ASSET_TYPES from '@libs/appconfig/constants/assetTypes';
 import useDeploymentTarget from '@/hooks/useDeploymentTarget';
 import useLmnApiStore from '@/store/useLmnApiStore';
-import getRandomUUID from '@/utils/getRandomUUID';
+import resolveQrToggleAction, { QR_TOGGLE_ACTION } from './resolveQrToggleAction';
+import LoginSourceOfferFooter from './LoginSourceOfferFooter';
+import isMobileLoginToggleVisible from './isMobileLoginToggleVisible';
 import getLoginFormSchema from './getLoginFormSchema';
 import TotpInput from './components/TotpInput';
 import useAppConfigsStore from '../Settings/AppConfig/useAppConfigsStore';
@@ -68,7 +71,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation() as { state: LocationState };
 
-  const { eduApiToken, totpIsLoading, isAuthenticated, createOrUpdateUser, setEduApiToken, getTotpStatus } =
+  const { eduApiToken, totpIsLoading, isAuthenticated, createOrUpdateUser, setEduApiToken, createQrLoginSession } =
     useUserStore();
   const { isLmn, isGeneric } = useDeploymentTarget();
   const { lmnApiToken, user: lmnUser } = useLmnApiStore();
@@ -96,7 +99,12 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  useAuthErrorHandler(auth.error, form, showQrCode);
+  const handleTotpRequired = () => {
+    setIsEnterTotpVisible(true);
+    setShowQrCode(false);
+  };
+
+  useAuthErrorHandler(auth.error, form, showQrCode, handleTotpRequired);
 
   const onSubmit = async () => {
     try {
@@ -212,14 +220,7 @@ const LoginPage: React.FC = () => {
         console.error('JSON parse error:', error);
       }
 
-      const handleEnterMfa = () => {
-        setIsEnterTotpVisible(true);
-        setShowQrCode(false);
-      };
-
-      void getTotpStatus(form.getValues('username')).then((isMfaEnabled) =>
-        isMfaEnabled ? handleEnterMfa() : form.handleSubmit(onSubmit)(),
-      );
+      void form.handleSubmit(onSubmit)();
     };
 
     eventSource.addEventListener(SSE_MESSAGE_TYPE.MESSAGE, handleLoginEvent, { signal });
@@ -236,14 +237,11 @@ const LoginPage: React.FC = () => {
       setShowQrCode(false);
     };
 
-    const timeoutId = setTimeout(
-      () => {
-        handleAbortConnection();
-        toast.info(t('login.infoQrCodeExpired'));
-        setShowQrCode(false);
-      },
-      3 * 60 * 1000,
-    );
+    const timeoutId = setTimeout(() => {
+      handleAbortConnection();
+      toast.info(t('login.infoQrCodeExpired'));
+      setShowQrCode(false);
+    }, QR_LOGIN_SESSION_TTL_MS);
 
     return () => {
       clearTimeout(timeoutId);
@@ -251,29 +249,33 @@ const LoginPage: React.FC = () => {
     };
   }, [showQrCode, sessionID]);
 
-  const handleCheckMfaStatus = async () => {
-    const isMfaEnabled = await getTotpStatus(form.getValues('username'));
-    if (!isMfaEnabled) {
-      await form.handleSubmit(onSubmit)();
-    } else {
-      setIsEnterTotpVisible(true);
-    }
-  };
-
   const onTotpCancelButtonClick = () => {
     form.clearErrors();
     form.setValue('totpValue', '');
     setIsEnterTotpVisible(false);
   };
 
-  const handleCancelOrToggleQrCode = () => {
-    if (isEnterTotpVisible) {
+  const handleCancelOrToggleQrCode = async () => {
+    const action = resolveQrToggleAction(isEnterTotpVisible, showQrCode);
+
+    if (action === QR_TOGGLE_ACTION.CANCEL_TOTP) {
       onTotpCancelButtonClick();
-    } else {
-      const newSessionID = getRandomUUID();
-      setSessionID(newSessionID);
-      setShowQrCode((prev) => !prev);
+      return;
     }
+
+    if (action === QR_TOGGLE_ACTION.HIDE) {
+      setShowQrCode(false);
+      return;
+    }
+
+    const newSessionID = await createQrLoginSession();
+
+    if (!newSessionID) {
+      return;
+    }
+
+    setSessionID(newSessionID);
+    setShowQrCode(true);
   };
 
   useEffect(() => {
@@ -381,7 +383,7 @@ const LoginPage: React.FC = () => {
             data-testid="test-id-login-page-form"
           >
             <form
-              onSubmit={form.handleSubmit(isEnterTotpVisible ? onSubmit : handleCheckMfaStatus)}
+              onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4"
               data-testid="test-id-login-page-form"
             >
@@ -400,27 +402,30 @@ const LoginPage: React.FC = () => {
                   {totpIsLoading || isLoading ? t('common.loading') : t('common.login')}
                 </Button>
               )}
-              <Button
-                className="mx-auto w-full justify-center border-none text-black shadow-xl hover:bg-ciGrey/10 hover:text-black"
-                type="button"
-                variant="btn-outline"
-                size="lg"
-                disabled={isLoading || totpIsLoading}
-                onClick={handleCancelOrToggleQrCode}
-              >
-                {isEnterTotpVisible || showQrCode ? (
-                  t('common.cancel')
-                ) : (
-                  <>
-                    {t('login.loginWithApp')}
-                    <QrCodeIcon className="h-6 w-6 text-black" />
-                  </>
-                )}
-              </Button>
+              {isMobileLoginToggleVisible(isEnterTotpVisible) && (
+                <Button
+                  className="mx-auto w-full justify-center border-none text-black shadow-xl hover:bg-ciGrey/10 hover:text-black"
+                  type="button"
+                  variant="btn-outline"
+                  size="lg"
+                  disabled={isLoading || totpIsLoading}
+                  onClick={handleCancelOrToggleQrCode}
+                >
+                  {isEnterTotpVisible || showQrCode ? (
+                    t('common.cancel')
+                  ) : (
+                    <>
+                      {t('login.loginWithApp')}
+                      <QrCodeIcon className="h-6 w-6 text-black" />
+                    </>
+                  )}
+                </Button>
+              )}
             </form>
           </Form>
         )}
       </Card>
+      <LoginSourceOfferFooter />
     </PageLayout>
   );
 };

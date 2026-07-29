@@ -68,7 +68,13 @@ export class WebdavShares {
   @Prop({ type: String, required: true, default: WEBDAV_SHARE_AUTHENTICATION_METHODS.BASIC })
   authentication: WebdavShareAuthenticationMethodsType;
 
-  @Prop({ default: 1 })
+  @Prop({ type: Array, default: [] })
+  wikiAccessGroups: MultipleSelectorGroup[];
+
+  @Prop({ type: Boolean, default: false })
+  wikiDisabled: boolean;
+
+  @Prop({ default: 2 })
   schemaVersion: number;
 }
 

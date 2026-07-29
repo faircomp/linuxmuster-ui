@@ -173,9 +173,13 @@ describe('AppConfigService', () => {
     it('should return app configs (non-admin strips OnlyOffice secret)', async () => {
       const ldapGroups = ['group1', 'group2']; // Non-Admin
 
-      const { [ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET]: omit, ...safeExtendedOptions } =
-        (mockAppConfig.extendedOptions ?? {}) as Record<string, unknown>;
-      void omit;
+      const {
+        [ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET]: omitJwt,
+        [ExtendedOptionKeys.COLLABORA_WOPI_SECRET]: omitWopi,
+        ...safeExtendedOptions
+      } = (mockAppConfig.extendedOptions ?? {}) as Record<string, unknown>;
+      void omitJwt;
+      void omitWopi;
       const expected = [
         {
           name: mockAppConfig.name,
@@ -191,6 +195,7 @@ describe('AppConfigService', () => {
       const configs = await service.getAppConfigs(ldapGroups);
       expect(configs).toEqual(expected);
       expect(configs[0].extendedOptions).not.toHaveProperty(ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET);
+      expect(configs[0].extendedOptions).not.toHaveProperty(ExtendedOptionKeys.COLLABORA_WOPI_SECRET);
     });
     it('should include OnlyOffice secret for admin', async () => {
       (getIsAdmin as jest.Mock).mockReturnValue(true);
@@ -214,6 +219,10 @@ describe('AppConfigService', () => {
         expect(configs[0].extendedOptions).toHaveProperty(
           ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET,
           mockAppConfig.extendedOptions[ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET],
+        );
+        expect(configs[0].extendedOptions).toHaveProperty(
+          ExtendedOptionKeys.COLLABORA_WOPI_SECRET,
+          mockAppConfig.extendedOptions[ExtendedOptionKeys.COLLABORA_WOPI_SECRET],
         );
       }
     });

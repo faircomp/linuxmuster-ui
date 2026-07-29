@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Kevin Stenzel
+#
+# Weekly trigger for dr-drill.service. Copy to /etc/systemd/system/dr-drill.timer
+# (drop the .example suffix) and enable with: systemctl enable --now dr-drill.timer
+
+[Unit]
+Description=Weekly linuxmuster-ui DR restore drill
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

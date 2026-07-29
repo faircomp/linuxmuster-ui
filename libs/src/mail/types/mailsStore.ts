@@ -20,14 +20,21 @@
 import { RowSelectionState } from '@tanstack/react-table';
 import MailDto from '@libs/mail/types/mail.dto';
 import MailProviderConfigDto from './mailProviderConfig.dto';
-import CreateSyncJobDto from './mailcow-create-sync-job.dto';
 import SyncJobDto from './mailcow-sync-job.dto';
+import MailcowMailboxDto from './mailcowMailbox.dto';
+import CreateMailboxDto from './createMailbox.dto';
+import UpdateMailboxDto from './updateMailbox.dto';
+import MailboxAclDto from './mailboxAcl.dto';
+import MailProviderPublicConfigDto from './mailProviderPublicConfig.dto';
+import CreateSyncJobRequestDto from './createSyncJobRequest.dto';
 
 interface MailsStore {
   mails: MailDto[];
   getMails: () => Promise<void>;
   externalMailProviderConfig: MailProviderConfigDto[];
   getExternalMailProviderConfig: () => Promise<void>;
+  publicMailProviderConfigs: MailProviderPublicConfigDto[];
+  getPublicMailProviderConfigs: () => Promise<void>;
   postExternalMailProviderConfig: (mailProviderConfig: MailProviderConfigDto) => Promise<void>;
   deleteExternalMailProviderConfig: (mailProviderId: string) => Promise<void>;
   error: Error | null;
@@ -39,8 +46,17 @@ interface MailsStore {
   setSelectedSyncJob: (selectedSyncJob: RowSelectionState) => void;
   syncJobs: SyncJobDto[];
   getSyncJob: () => Promise<void>;
-  postSyncJob: (createSyncJobDto: CreateSyncJobDto) => Promise<void>;
+  postSyncJob: (createSyncJobRequest: CreateSyncJobRequestDto) => Promise<void>;
   deleteSyncJobs: (syncJobIds: string[]) => Promise<void>;
+  mailcowDomains: string[];
+  mailcowMailboxes: MailcowMailboxDto[];
+  isMailcowLoading: boolean;
+  getMailcowDomains: () => Promise<void>;
+  getMailcowMailboxes: () => Promise<void>;
+  createMailcowMailbox: (createMailboxDto: CreateMailboxDto) => Promise<boolean>;
+  updateMailcowMailbox: (updateMailboxDto: UpdateMailboxDto) => Promise<boolean>;
+  deleteMailcowMailboxes: (mailboxes: string[]) => Promise<boolean>;
+  updateMailboxAcl: (mailboxAclDto: MailboxAclDto) => Promise<boolean>;
 }
 
 export default MailsStore;

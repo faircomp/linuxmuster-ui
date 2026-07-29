@@ -26,6 +26,7 @@ const errorMessageFilePath = 'libs/src/error/errorMessage.ts';
 const localesDir = 'apps/frontend/src/locales/';
 const deTranslationFilePath = join(localesDir, 'de/translation.json');
 const enTranslationFilePath = join(localesDir, 'en/translation.json');
+const frTranslationFilePath = join(localesDir, 'fr/translation.json');
 
 const readJsonFile = (filePath: string) => {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -90,14 +91,19 @@ const main = () => {
   const enumImportPaths = parseErrorMessageFile(errorMessageFilePath);
   const deJson = readJsonFile(deTranslationFilePath);
   const enJson = readJsonFile(enTranslationFilePath);
+  const frJson = readJsonFile(frTranslationFilePath);
   const deKeySet = buildJsonKeySet(deJson);
   const enKeySet = buildJsonKeySet(enJson);
+  const frKeySet = buildJsonKeySet(frJson);
   console.log('Checking German translation file...');
   checkFilePaths(enumImportPaths, deKeySet);
   console.log(chalk.green('✔ DE one is awesome!'));
   console.log('Checking English translation file...');
   checkFilePaths(enumImportPaths, enKeySet);
   console.log(chalk.green('✔ EN is awesome!'));
+  console.log('Checking French translation file...');
+  checkFilePaths(enumImportPaths, frKeySet);
+  console.log(chalk.green('✔ FR is awesome!'));
 };
 
 main();

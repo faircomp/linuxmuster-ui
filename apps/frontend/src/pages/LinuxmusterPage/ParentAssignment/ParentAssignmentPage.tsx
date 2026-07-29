@@ -1,0 +1,167 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (C) 2026 Kevin Stenzel
+ */
+
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import getTokenPayload from '@libs/common/utils/getTokenPayload';
+import PARENT_CHILD_PAIRING_STATUS from '@libs/parent-child-pairing/constants/parentChildPairingStatus';
+import PARENT_CHILD_PAIRING_STATUS_FILTER_ALL from '@libs/parent-child-pairing/constants/parentChildPairingStatusFilterAll';
+import type ParentChildPairingDto from '@libs/parent-child-pairing/types/parentChildPairingDto';
+import type FilterOption from '@libs/ui/types/filterOption';
+import { cn } from '@edulution-io/ui-kit';
+import APPS from '@libs/appconfig/constants/apps';
+import { LinuxmusterIcon } from '@/assets/icons';
+import { DropdownSelect } from '@/components';
+import PageLayout from '@/components/structure/layout/PageLayout';
+import ScrollableTable from '@/components/ui/Table/ScrollableTable';
+import TableFilterDropdown from '@/components/ui/Table/TableFilterDropdown';
+import CircleLoader from '@/components/ui/Loading/CircleLoader';
+import useLdapGroups from '@/hooks/useLdapGroups';
+import useClassManagementStore from '@/pages/ClassManagement/useClassManagementStore';
+import useUserStore from '@/store/UserStore/useUserStore';
+import useParentAssignmentStore from './useParentAssignmentStore';
+import getParentAssignmentColumns from './getParentAssignmentColumns';
+
+const ParentAssignmentPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { pairings, isLoading, statusFilter, fetchPairings, updateStatus, setStatusFilter, setSelectedSchool } =
+    useParentAssignmentStore();
+  const { isSuperAdmin, isAuthReady } = useLdapGroups();
+  const { selectedSchool: classManagementSchool, schools, getSchools } = useClassManagementStore();
+  const eduApiToken = useUserStore((s) => s.eduApiToken);
+
+  const userSchool = useMemo(() => {
+    if (!eduApiToken) return '';
+    return getTokenPayload(eduApiToken).school;
+  }, [eduApiToken]);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+    if (isSuperAdmin) {
+      void getSchools();
+      if (classManagementSchool) {
+        setSelectedSchool(classManagementSchool);
+      }
+    } else if (userSchool) {
+      setSelectedSchool(userSchool);
+    }
+  }, [isSuperAdmin, isAuthReady, classManagementSchool, userSchool, setSelectedSchool, getSchools]);
+
+  const schoolOptions = useMemo(() => {
+    if (isSuperAdmin) {
+      return schools
+        .map((s) => ({ id: s.ou, name: s.displayName || s.ou }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return userSchool ? [{ id: userSchool, name: userSchool }] : [];
+  }, [isSuperAdmin, schools, userSchool]);
+
+  useEffect(() => {
+    void fetchPairings();
+  }, [fetchPairings]);
+
+  const handleAccept = useCallback(
+    (pairing: ParentChildPairingDto) => {
+      void updateStatus(pairing.id, PARENT_CHILD_PAIRING_STATUS.ACCEPTED);
+    },
+    [updateStatus],
+  );
+
+  const handleReject = useCallback(
+    (pairing: ParentChildPairingDto) => {
+      void updateStatus(pairing.id, PARENT_CHILD_PAIRING_STATUS.REJECTED);
+    },
+    [updateStatus],
+  );
+
+  const columns = useMemo(
+    () => getParentAssignmentColumns({ onAccept: handleAccept, onReject: handleReject }),
+    [handleAccept, handleReject],
+  );
+
+  const filterOptions: FilterOption[] = useMemo(
+    () => [
+      {
+        key: 'all',
+        translationKey: 'parentChildPairing.statusAll',
+        checked: statusFilter === PARENT_CHILD_PAIRING_STATUS_FILTER_ALL,
+        onChange: (enabled: boolean) => {
+          if (enabled) {
+            setStatusFilter(PARENT_CHILD_PAIRING_STATUS_FILTER_ALL);
+          }
+        },
+      },
+      ...Object.values(PARENT_CHILD_PAIRING_STATUS).map((status) => ({
+        key: status,
+        translationKey: `parentChildPairing.status${status.charAt(0).toUpperCase()}${status.slice(1)}`,
+        checked: statusFilter === status,
+        onChange: (enabled: boolean) => {
+          if (enabled) {
+            setStatusFilter(status);
+          }
+        },
+      })),
+    ],
+    [statusFilter, setStatusFilter],
+  );
+
+  const statusFilterCount = statusFilter !== PARENT_CHILD_PAIRING_STATUS_FILTER_ALL ? 1 : 0;
+  const activeFilterCount = statusFilterCount + 1;
+
+  const handleResetFilters = useCallback(() => {
+    setStatusFilter(PARENT_CHILD_PAIRING_STATUS.PENDING);
+  }, [setStatusFilter]);
+
+  const nativeAppHeader = {
+    title: t('parentChildPairing.assignment'),
+    description: t('parentChildPairing.assignmentDescription'),
+    iconSrc: LinuxmusterIcon,
+  };
+
+  return (
+    <PageLayout nativeAppHeader={nativeAppHeader}>
+      <div className="relative flex h-full flex-col">
+        {isLoading && (
+          <div className="absolute right-0 top-0 z-10">
+            <CircleLoader />
+          </div>
+        )}
+        <ScrollableTable
+          columns={columns}
+          data={pairings}
+          filterKey="parent"
+          filterPlaceHolderText="parentChildPairing.filterPlaceholder"
+          applicationName={APPS.LINUXMUSTER}
+          getRowId={(row) => row.id}
+          searchBarAdditionalComponent={
+            <>
+              <TableFilterDropdown
+                filterOptions={filterOptions}
+                activeFilterCount={activeFilterCount}
+                onResetFilters={handleResetFilters}
+              />
+              <div className={cn('min-w-48', !isSuperAdmin && 'pointer-events-none opacity-70')}>
+                <DropdownSelect
+                  placeholder={t('classmanagement.selectSchool.placeholder')}
+                  options={schoolOptions}
+                  selectedVal={isSuperAdmin ? classManagementSchool : userSchool}
+                  handleChange={(value) => {
+                    if (isSuperAdmin) {
+                      useClassManagementStore.getState().setSelectedSchool(value);
+                    }
+                  }}
+                  translate={false}
+                />
+              </div>
+            </>
+          }
+          activeFilterCount={activeFilterCount}
+        />
+      </div>
+    </PageLayout>
+  );
+};
+
+export default ParentAssignmentPage;

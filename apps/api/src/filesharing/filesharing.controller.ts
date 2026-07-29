@@ -32,6 +32,8 @@ import {
   Req,
   Res,
   StreamableFile,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { HTTP_HEADERS, RequestResponseContentType } from '@libs/common/types/http-methods';
 import ContentType from '@libs/filesharing/types/contentType';
@@ -44,6 +46,7 @@ import CollectFileRequestDTO from '@libs/filesharing/types/CollectFileRequestDTO
 import { LmnApiCollectOperationsType } from '@libs/lmnApi/types/lmnApiCollectOperationsType';
 import PUBLIC_DOWNLOADS_PATH from '@libs/common/constants/publicDownloadsPath';
 import DuplicateFileRequestDto from '@libs/filesharing/types/DuplicateFileRequestDto';
+import CollaboraTokenBodyDto from '@libs/filesharing/types/collaboraTokenBodyDto';
 import PathChangeOrCreateDto from '@libs/filesharing/types/pathChangeOrCreateProps';
 import CreateOrEditPublicShareDto from '@libs/filesharing/types/createOrEditPublicShareDto';
 import PublicShareDto from '@libs/filesharing/types/publicShareDto';
@@ -51,6 +54,9 @@ import JWTUser from '@libs/user/types/jwt/jwtUser';
 import { pipeline } from 'stream/promises';
 import { randomUUID } from 'crypto';
 import APPS from '@libs/appconfig/constants/apps';
+import type { IConfig } from '@onlyoffice/document-editor-react';
+import ONLY_OFFICE_CALLBACK_PATH from '@libs/filesharing/constants/onlyOfficeCallbackPath';
+import ONLY_OFFICE_CALLBACK_STATUS from '@libs/filesharing/constants/onlyOfficeCallbackStatus';
 import GetCurrentUsername from '../common/decorators/getCurrentUsername.decorator';
 import FilesystemService from '../filesystem/filesystem.service';
 import FilesharingService from './filesharing.service';
@@ -184,8 +190,24 @@ class FilesharingController {
   }
 
   @Post(FileSharingApiEndpoints.ONLY_OFFICE_TOKEN)
-  getOnlyofficeToken(@Body() payload: string) {
-    return this.filesharingService.getOnlyOfficeToken(payload);
+  getOnlyofficeToken(
+    @Body() clientConfig: IConfig,
+    @Query('filePath') filePath: string,
+    @Query('fileName') fileName: string,
+    @GetCurrentUsername() username: string,
+  ) {
+    return this.filesharingService.getOnlyOfficeToken(clientConfig, {
+      canWrite: true,
+      username,
+      filePath,
+      fileName,
+    });
+  }
+
+  @Post(FileSharingApiEndpoints.COLLABORA_TOKEN)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  getCollaboraToken(@Body() body: CollaboraTokenBodyDto, @GetCurrentUsername() username: string) {
+    return this.filesharingService.getCollaboraToken(username, body.filePath, body.share);
   }
 
   @Post(FileSharingApiEndpoints.DUPLICATE)
@@ -231,7 +253,7 @@ class FilesharingController {
     return this.filesharingService.listPublicShares(currentUser);
   }
 
-  @Post('callback')
+  @Post(ONLY_OFFICE_CALLBACK_PATH)
   async handleCallback(
     @Req() req: Request,
     @Res() res: Response,
@@ -242,7 +264,7 @@ class FilesharingController {
   ) {
     try {
       const { status } = req.body as OnlyOfficeCallbackData;
-      if (status === 1) {
+      if (status === ONLY_OFFICE_CALLBACK_STATUS.EDITING) {
         return res.status(HttpStatus.OK).json({ error: 0 });
       }
 

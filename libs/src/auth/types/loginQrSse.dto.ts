@@ -17,13 +17,15 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { IsString } from 'class-validator';
+import { IsString, MinLength } from 'class-validator';
 
 class LoginQrSseDto {
   @IsString()
+  @MinLength(1)
   username: string;
 
   @IsString()
+  @MinLength(1)
   password: string;
 }
 

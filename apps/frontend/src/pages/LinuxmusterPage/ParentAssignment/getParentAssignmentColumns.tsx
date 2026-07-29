@@ -1,0 +1,123 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (C) 2026 Kevin Stenzel
+ */
+
+import React from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { faBan, faCheck } from '@fortawesome/free-solid-svg-icons';
+import type ParentChildPairingDto from '@libs/parent-child-pairing/types/parentChildPairingDto';
+import type TableAction from '@libs/common/types/tableAction';
+import PARENT_CHILD_PAIRING_STATUS from '@libs/parent-child-pairing/constants/parentChildPairingStatus';
+import sortString from '@libs/common/utils/sortString';
+import SortableHeader from '@/components/ui/Table/SortableHeader';
+import TableActionCell from '@/components/ui/Table/TableActionCell';
+import ParentChildPairingStatusBadge from '@/components/shared/ParentChildPairingStatusBadge';
+
+const COLUMN_IDS = {
+  PARENT: 'parent',
+  STUDENT: 'student',
+  SCHOOL: 'school',
+  STATUS: 'status',
+  CREATED_AT: 'createdAt',
+  ACTIONS: 'actions',
+} as const;
+
+interface ParentAssignmentColumnsProps {
+  onAccept: (pairing: ParentChildPairingDto) => void;
+  onReject: (pairing: ParentChildPairingDto) => void;
+}
+
+const getParentAssignmentColumns = ({
+  onAccept,
+  onReject,
+}: ParentAssignmentColumnsProps): ColumnDef<ParentChildPairingDto>[] => [
+  {
+    id: COLUMN_IDS.PARENT,
+    meta: { translationId: 'parentChildPairing.parent' },
+    header: ({ column }) => <SortableHeader<ParentChildPairingDto, unknown> column={column} />,
+    accessorFn: (row) => row.parent,
+    cell: ({ row }) => row.original.parent,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => sortString(rowA.original.parent, rowB.original.parent),
+  },
+  {
+    id: COLUMN_IDS.STUDENT,
+    meta: { translationId: 'parentChildPairing.student' },
+    header: ({ column }) => <SortableHeader<ParentChildPairingDto, unknown> column={column} />,
+    accessorFn: (row) => row.student,
+    cell: ({ row }) => row.original.student,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => sortString(rowA.original.student, rowB.original.student),
+  },
+  {
+    id: COLUMN_IDS.SCHOOL,
+    meta: { translationId: 'parentChildPairing.school' },
+    header: ({ column }) => <SortableHeader<ParentChildPairingDto, unknown> column={column} />,
+    accessorFn: (row) => row.school,
+    cell: ({ row }) => row.original.school,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => sortString(rowA.original.school, rowB.original.school),
+  },
+  {
+    id: COLUMN_IDS.STATUS,
+    meta: { translationId: 'parentChildPairing.statusColumn' },
+    header: ({ column }) => <SortableHeader<ParentChildPairingDto, unknown> column={column} />,
+    accessorFn: (row) => row.status,
+    size: 120,
+    cell: ({ row }) => <ParentChildPairingStatusBadge status={row.original.status} />,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => sortString(rowA.original.status, rowB.original.status),
+  },
+  {
+    id: COLUMN_IDS.CREATED_AT,
+    meta: { translationId: 'parentChildPairing.createdAt' },
+    header: ({ column }) => <SortableHeader<ParentChildPairingDto, unknown> column={column} />,
+    accessorFn: (row) => row.createdAt,
+    size: 160,
+    cell: ({ row }) => {
+      const dateStr = row.original.createdAt;
+      if (!dateStr) return '-';
+      return new Date(dateStr).toLocaleString();
+    },
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => sortString(rowA.original.createdAt, rowB.original.createdAt),
+  },
+  {
+    id: COLUMN_IDS.ACTIONS,
+    header: () => null,
+    enableSorting: false,
+    size: 50,
+    cell: ({ row }) => {
+      const { status } = row.original;
+      const actions: TableAction<ParentChildPairingDto>[] = [];
+
+      if (status !== PARENT_CHILD_PAIRING_STATUS.ACCEPTED) {
+        actions.push({
+          icon: faCheck,
+          translationId: 'parentChildPairing.accept',
+          onClick: () => onAccept(row.original),
+        });
+      }
+
+      if (status !== PARENT_CHILD_PAIRING_STATUS.REJECTED) {
+        actions.push({
+          icon: faBan,
+          translationId: 'parentChildPairing.reject',
+          onClick: () => onReject(row.original),
+        });
+      }
+
+      if (actions.length === 0) return null;
+
+      return (
+        <TableActionCell
+          actions={actions}
+          row={row}
+        />
+      );
+    },
+  },
+];
+
+export default getParentAssignmentColumns;

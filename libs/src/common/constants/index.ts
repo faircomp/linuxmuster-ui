@@ -18,3 +18,4 @@
  */
 
 export * from './urls';
+export * from './productInfo';

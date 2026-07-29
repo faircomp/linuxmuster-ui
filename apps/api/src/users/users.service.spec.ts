@@ -29,6 +29,7 @@ import LdapGroups from '@libs/groups/types/ldapGroups';
 import USER_DB_PROJECTION from '@libs/user/constants/user-db-projection';
 import { getDecryptedPassword } from '@libs/common/utils';
 import { ALL_USERS_CACHE_KEY } from '@libs/groups/constants/cacheKeys';
+import type CachedUser from '@libs/user/types/cachedUser';
 import { User, UserDocument } from './user.schema';
 import UsersService from './users.service';
 import GroupsService from '../groups/groups.service';
@@ -58,13 +59,13 @@ const mockUser: UserDocument = {
   totpSecret: '',
 } as UserDocument;
 
-const cachedUsers = [
+const cachedUsers: CachedUser[] = [
   {
     username: 'testuser',
     firstName: 'Test',
     lastName: 'User',
     school: 'agy',
-  },
+  } as CachedUser,
 ];
 
 const userModelMock = {

@@ -1,0 +1,49 @@
+{
+  "id": "d083794a-53be-425f-b5d4-da7e2a52f698",
+  "realm": "edulution",
+  "notBefore": 1719000000,
+  "passwordPolicy": "length(8)",
+  "smtpServer": {
+    "host": "smtp.example.org",
+    "user": "mailer",
+    "password": "clear-smtp-secret"
+  },
+  "clients": [
+    {
+      "id": "c-2",
+      "clientId": "edu-ui",
+      "publicClient": true,
+      "secret": "**********"
+    },
+    {
+      "id": "c-1",
+      "clientId": "edu-api",
+      "publicClient": false,
+      "secret": "super-secret-value",
+      "clientSecret": "another-secret"
+    }
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "id": "ldap-1",
+        "name": "ldap",
+        "config": {
+          "bindCredential": ["real-bind-password"],
+          "lastSync": ["1719000123"],
+          "connectionUrl": ["ldaps://server:636"]
+        }
+      }
+    ],
+    "org.keycloak.keys.KeyProvider": [
+      {
+        "id": "key-1",
+        "config": {
+          "privateKey": ["MIIEvQIBADANBgk..."],
+          "certificate": ["MIICmzCCAYMCBg..."],
+          "priority": ["100"]
+        }
+      }
+    ]
+  }
+}

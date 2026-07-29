@@ -15,17 +15,17 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ github.token }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v6.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 22.x
 
       - name: Cache Node.js modules
-        uses: actions/cache@v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         continue-on-error: true
         with:
           path: |
@@ -45,7 +45,7 @@ jobs:
       - name: Generate Frontend Docker Tags
         id: generate_docker_tags_fe
         run: |
-          docker_registry_path="ghcr.io/edulution-io/edulution-ui"
+          docker_registry_path="ghcr.io/faircomp/linuxmuster-ui"
           docker_tags_fe="$docker_registry_path:$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/-/gi')"
           if [[ ${{ github.ref }} = 'refs/heads/master' ]] || [[ ${{ github.ref }} =~ ^refs/tags/v.*$ ]]; then
             docker_tags_fe+=",$docker_registry_path:latest"
@@ -53,17 +53,17 @@ jobs:
           echo "docker_tags_fe=$docker_tags_fe" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ github.token }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v6.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 22.x
 
       - name: Restore cached Node.js modules
-        uses: actions/cache@v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         continue-on-error: true
         with:
           path: |
@@ -78,12 +78,12 @@ jobs:
           npm run build
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
         with:
           driver: docker-container
 
       - name: Build docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           build-args: |
             buildId=${{ github.sha }}
@@ -91,9 +91,18 @@ jobs:
           context: .
           file: apps/frontend/Dockerfile
           push: false
+          load: true
           tags: ${{ steps.generate_docker_tags_fe.outputs.docker_tags_fe }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Scan frontend image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.generate_docker_tags_fe.outputs.docker_tags_fe }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
 
   build-api:
     runs-on: ubuntu-24.04
@@ -103,7 +112,7 @@ jobs:
       - name: Generate API Docker Tags
         id: generate_docker_tags_api
         run: |
-          docker_registry_path="ghcr.io/edulution-io/edulution-api"
+          docker_registry_path="ghcr.io/faircomp/linuxmuster-api"
           docker_tags_api="$docker_registry_path:$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/-/gi')"
           if [[ ${{ github.ref }} = 'refs/heads/master' ]] || [[ ${{ github.ref }} =~ ^refs/tags/v.*$ ]]; then
             docker_tags_api+=",$docker_registry_path:latest"
@@ -111,17 +120,17 @@ jobs:
           echo "docker_tags_api=$docker_tags_api" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ github.token }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v6.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 22.x
 
       - name: Restore cached Node.js modules
-        uses: actions/cache@v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         continue-on-error: true
         with:
           path: |
@@ -134,12 +143,12 @@ jobs:
         run: npm run build:api
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
         with:
           driver: docker-container
 
       - name: Build docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           build-args: |
             buildId=${{ github.sha }}
@@ -147,9 +156,18 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
+          load: true
           tags: ${{ steps.generate_docker_tags_api.outputs.docker_tags_api }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Scan api image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.generate_docker_tags_api.outputs.docker_tags_api }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
 
   test:
     runs-on: ubuntu-24.04
@@ -157,17 +175,17 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ github.token }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v6.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 22.x
 
       - name: Restore cached Node.js modules
-        uses: actions/cache@v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         continue-on-error: true
         with:
           path: |
@@ -176,11 +194,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Run Checks and Tests
+      - name: Run Checks
         run: |
           npm run check-circular-deps
           npm run check-translations
           npm run check-error-message-translations
+          npm run check-external-references
+          npm run check-npm-audit
+          npm run check:pii-fixtures
+          npm run test:scripts
+          npm run check-spec-coverage
           npx pretty-quick --check
           npm run lint
-          npm run test
+
+      - name: Run API unit tests
+        run: npm run test:api:ci

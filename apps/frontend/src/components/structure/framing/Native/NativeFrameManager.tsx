@@ -18,12 +18,14 @@
  */
 
 import React, { useEffect } from 'react';
-import MailPage from '@/pages/Mail/MailPage';
+import NativeFrame from '@/components/structure/framing/Native/NativeFrame';
 import useAppConfigsStore from '@/pages/Settings/AppConfig/useAppConfigsStore';
 import useFrameStore from '@/components/structure/framing/useFrameStore';
 import type AppConfigDto from '@libs/appconfig/types/appConfigDto';
 import APP_INTEGRATION_VARIANT from '@libs/appconfig/constants/appIntegrationVariant';
 import APPS from '@libs/appconfig/constants/apps';
+import { ACTIVE_MAIL_CLIENT } from '@libs/mail/constants/activeMailClient';
+import getActiveMailClient from '@libs/mail/utils/getActiveMailClient';
 import { useLocation } from 'react-router-dom';
 import useUserStore from '@/store/UserStore/useUserStore';
 import findAppConfigByName from '@libs/common/utils/findAppConfigByName';
@@ -62,7 +64,12 @@ const NativeFrameManager = () => {
     .map((appConfig) => {
       switch (appConfig.name) {
         case APPS.MAIL:
-          return <MailPage key={appConfig.name} />;
+          return getActiveMailClient(appConfigs) === ACTIVE_MAIL_CLIENT.SOGO ? (
+            <NativeFrame
+              key={appConfig.name}
+              appName={APPS.MAIL}
+            />
+          ) : null;
         default:
           return null;
       }

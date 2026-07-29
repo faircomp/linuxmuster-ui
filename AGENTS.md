@@ -42,6 +42,7 @@
 - Only use @fortawesome/free-solid-svg-icons for icons
 - Many UI components are wrappers for shadcn/@radix-ui components (component/filename postfix with "SH"). We use our custom wrappers instead.
 - Instead of using manual URLSearchParams, build it with axios's built-in params option
+- Translations are trilingual: maintain every key in `de`, `en` **and** `fr` under `apps/frontend/src/locales/<lng>/translation.json`. `npm run check-translations` enforces exact key parity across all three and blocks the pre-commit if any of them drifts.
 
 ## Testing Guidelines
 

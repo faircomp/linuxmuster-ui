@@ -1,0 +1,17 @@
+# crabbox — Lease- & Sync-Konfiguration für die warme linuxmuster-ui Dev/Test-Box.
+# Ziel: EINE Box warm halten und über viele feature-build-Iterationen wiederverwenden.
+# Schwere Build-/Toolchain-Trees bleiben box-lokal (nicht syncen) → nach dem einmaligen
+# `npm ci` läuft `nx test/lint/build` inkrementell in Minuten statt Neuinstallation.
+slug: lmnui
+ttl: 8h
+idleTimeout: 4h
+sync:
+  # Diese Pfade NICHT mit-syncen (bleiben auf der Box erhalten / werden dort gebaut):
+  exclude:
+    - node_modules/
+    - dist/
+    - coverage/
+    - .nx/
+    - .crabbox/
+    - .git/
+    - .reference/

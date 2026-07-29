@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Kevin Stenzel
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: main
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: deps
+    labels:
+      - security
+      - dependencies
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: main
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: ci
+    labels:
+      - security
+      - dependencies
+
+  - package-ecosystem: docker
+    directory: /apps/api
+    schedule:
+      interval: weekly
+    target-branch: main
+    commit-message:
+      prefix: docker
+    labels:
+      - security
+      - dependencies
+
+  - package-ecosystem: docker
+    directory: /apps/frontend
+    schedule:
+      interval: weekly
+    target-branch: main
+    commit-message:
+      prefix: docker
+    labels:
+      - security
+      - dependencies

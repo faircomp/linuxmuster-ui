@@ -27,6 +27,23 @@ enum MailsErrorMessages {
   MailcowApiGetSyncJobsFailed = 'mails.errors.MailcowApiGetSyncJobsFailed',
   MailcowApiCreateSyncJobFailed = 'mails.errors.MailcowApiCreateSyncJobFailed',
   MailcowApiDeleteSyncJobsFailed = 'mails.errors.MailcowApiDeleteSyncJobsFailed',
+  SyncJobAccessDenied = 'mails.errors.SyncJobAccessDenied',
+  MailcowApiGetDomainsFailed = 'mails.errors.MailcowApiGetDomainsFailed',
+  MailcowApiGetMailboxesFailed = 'mails.errors.MailcowApiGetMailboxesFailed',
+  MailcowApiCreateMailboxFailed = 'mails.errors.MailcowApiCreateMailboxFailed',
+  MailcowApiUpdateMailboxFailed = 'mails.errors.MailcowApiUpdateMailboxFailed',
+  MailcowApiDeleteMailboxFailed = 'mails.errors.MailcowApiDeleteMailboxFailed',
+  MailcowApiUpdateMailboxAclFailed = 'mails.errors.MailcowApiUpdateMailboxAclFailed',
+  MailcowPasswordComplexity = 'mails.errors.MailcowPasswordComplexity',
+  MailcowPasswordMismatch = 'mails.errors.MailcowPasswordMismatch',
+  MailcowPasswordEmpty = 'mails.errors.MailcowPasswordEmpty',
+  MailcowUsernameInvalid = 'mails.errors.MailcowUsernameInvalid',
+  MailcowDomainInvalid = 'mails.errors.MailcowDomainInvalid',
+  MailcowDomainNotFound = 'mails.errors.MailcowDomainNotFound',
+  MailcowObjectExists = 'mails.errors.MailcowObjectExists',
+  MailcowMaxMailboxesExceeded = 'mails.errors.MailcowMaxMailboxesExceeded',
+  MailcowQuotaExceeded = 'mails.errors.MailcowQuotaExceeded',
+  MailcowAccessDenied = 'mails.errors.MailcowAccessDenied',
 }
 
 export default MailsErrorMessages;

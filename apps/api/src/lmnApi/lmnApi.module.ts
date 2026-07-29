@@ -22,11 +22,13 @@ import LmnApiService from './lmnApi.service';
 import { LmnApiController } from './lmnApi.controller';
 import LdapKeycloakSyncModule from '../ldap-keycloak-sync/ldap-keycloak-sync.module';
 import LmnApiRequestQueue from './queue/lmn-api-request.queue';
+import LinboService from './linbo/linbo.service';
+import LinboController from './linbo/linbo.controller';
 
 @Module({
-  providers: [LmnApiService, LmnApiRequestQueue],
+  providers: [LmnApiService, LmnApiRequestQueue, LinboService],
   imports: [LdapKeycloakSyncModule],
-  controllers: [LmnApiController],
+  controllers: [LmnApiController, LinboController],
   exports: [LmnApiService],
 })
 export default class LmnApiModule {}

@@ -63,6 +63,12 @@ class WebdavShareDto {
 
   @IsString()
   authentication: WebdavShareAuthenticationMethodsType;
+
+  @IsArray()
+  wikiAccessGroups: MultipleSelectorGroup[] = [];
+
+  @IsBoolean()
+  wikiDisabled: boolean = false;
 }
 
 export default WebdavShareDto;

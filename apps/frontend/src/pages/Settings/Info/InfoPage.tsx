@@ -23,6 +23,7 @@ import useDeploymentTarget from '@/hooks/useDeploymentTarget';
 import { SectionAccordion, SectionAccordionItem } from '@/components/ui/SectionAccordion';
 import LicenseOverview from '../components/LicenseOverview';
 import LmnVersionInfo from './LmnVersionInfo';
+import SourceOffer from './SourceOffer';
 
 const InfoPage = () => {
   const { t } = useTranslation();
@@ -35,6 +36,13 @@ const InfoPage = () => {
         label={t('settings.license.title')}
       >
         <LicenseOverview />
+      </SectionAccordionItem>
+
+      <SectionAccordionItem
+        id="sourceOffer"
+        label={t('settings.sourceOffer.title')}
+      >
+        <SourceOffer />
       </SectionAccordionItem>
 
       {isLmn && (

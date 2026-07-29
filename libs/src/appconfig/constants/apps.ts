@@ -23,6 +23,7 @@ const APPS = {
   NOTIFICATIONS_CENTER: 'notificationscenter',
   TICKET_SYSTEM: 'ticketsystem',
   MAIL: 'mail',
+  CALENDAR: 'calendar',
   CHAT: 'chat',
   CONFERENCES: 'conferences',
   SURVEYS: 'surveys',
@@ -55,6 +56,7 @@ const APPS = {
   APPSTORE: 'appstore',
   GENERAL_SETTINGS: 'generalsettings',
   WIREGUARD: 'wireguard',
+  WIKI: 'wiki',
 } as const;
 
 export default APPS;

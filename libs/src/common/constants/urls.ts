@@ -17,6 +17,7 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-export const EDU_APP_APPSTORE_URL = 'https://apps.apple.com/de/app/edulution-io/id6478116528';
-export const EDU_PLUGINS_GITHUB_URL = 'https://raw.githubusercontent.com/edulution-io/edulution-plugins/main/apps';
-export const EDU_DOCS_URL = 'https://docs.edulution.io';
+import { PRODUCT_DOCS_URL } from './productInfo';
+
+export const EDU_PLUGINS_GITHUB_URL = 'https://raw.githubusercontent.com/faircomp/linuxmuster-plugins/main/apps';
+export const EDU_DOCS_URL = PRODUCT_DOCS_URL;

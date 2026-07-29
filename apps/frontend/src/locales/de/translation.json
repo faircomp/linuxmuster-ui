@@ -1,4 +1,66 @@
 {
+  "mailcowAdmin": {
+    "title": "Mailcow-Verwaltung",
+    "domains": "Domains",
+    "noDomains": "Keine Domains gefunden",
+    "searchPlaceholder": "Postfächer durchsuchen",
+    "columns": {
+      "username": "Adresse",
+      "name": "Name",
+      "domain": "Domain",
+      "quota": "Speicher",
+      "active": "Status"
+    },
+    "activeStates": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "incomingOnly": "Nur eingehend"
+    },
+    "newMailbox": "Neues Postfach",
+    "manageAcl": "Berechtigungen",
+    "aclOptions": {
+      "spam_alias": "Temporäre Spam-Aliase",
+      "tls_policy": "TLS-Richtlinie",
+      "spam_score": "Spam-Bewertung",
+      "spam_policy": "Erlauben-/Sperrliste",
+      "delimiter_action": "Trennzeichen-Aktion",
+      "syncjobs": "Sync-Jobs",
+      "eas_reset": "ActiveSync-Geräte zurücksetzen",
+      "sogo_profile_reset": "SOGo-Profil zurücksetzen",
+      "pushover": "Pushover-Benachrichtigungen",
+      "quarantine": "Quarantäne",
+      "quarantine_attachments": "Quarantäne-Anhänge",
+      "quarantine_notification": "Quarantäne-Benachrichtigungen",
+      "quarantine_category": "Quarantäne-Kategorie",
+      "app_passwds": "App-Passwörter"
+    },
+    "dialog": {
+      "createTitle": "Postfach anlegen",
+      "editTitle": "Postfach bearbeiten",
+      "deleteTitle": "Postfach löschen",
+      "deleteMessage": "Möchten Sie dieses Postfach wirklich löschen?",
+      "passwordKeepCurrent": "Leer lassen, um das aktuelle Passwort beizubehalten",
+      "aclTitle": "Benutzer-Berechtigungen (ACL)",
+      "aclDescription": "Mailcow liefert die aktuellen Berechtigungen nicht zurück, daher sind alle Optionen vorausgewählt und entsprechen nicht dem Ist-Zustand. Speichern überschreibt die tatsächlichen Benutzer-Berechtigungen des Postfachs mit der Auswahl.",
+      "localPart": "Lokaler Teil",
+      "localPartHint": "Nur Buchstaben, Ziffern, . _ + - erlaubt",
+      "domain": "Domain",
+      "domainPlaceholder": "Domain wählen",
+      "name": "Anzeigename",
+      "quota": "Speicher (MB)",
+      "password": "Passwort",
+      "passwordHint": "Mindestens 8 Zeichen mit Ziffer und Sonderzeichen",
+      "passwordConfirmation": "Passwort bestätigen",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein",
+      "active": "Aktiv"
+    },
+    "notifications": {
+      "mailboxCreated": "Postfach erstellt",
+      "mailboxUpdated": "Postfach aktualisiert",
+      "mailboxDeleted": "Postfach gelöscht",
+      "aclUpdated": "Postfach-Berechtigungen aktualisiert"
+    }
+  },
   "welcome": "Willkommen in der Anwendung",
   "changeLang": "Sprache ändern",
   "heading": "Herzlich Willkommen {{givenName}} {{familyName}}",
@@ -135,7 +197,7 @@
   "appstore": {
     "title": "App-Store",
     "description": "Hier kannst du {{ applicationName }} Apps hinzufügen.",
-    "edulutionIcons": "edulution Icons",
+    "edulutionIcons": "linuxmuster Icons",
     "moreIcons": "Weitere Icons",
     "searchIcons": "Icons durchsuchen...",
     "searchIconsHint": "Tipp: Verwende englische Suchbegriffe (z.B. \"house\" statt \"Haus\")",
@@ -164,7 +226,7 @@
       "manual": "Anleitung",
       "setupWithQrCode": "Einrichtung via QR-Code",
       "content": "Du kannst von vielen mobilen Geräten aus auf den Schulserver zugreifen. Drücke auf Anleitung, um zu starten.",
-      "scanAccessInfo": "Um die Zugangsdaten zu übertragen, bitte folgenden QR-Code mit der edulution App scannen."
+      "scanAccessInfo": "Um die Zugangsdaten zu übertragen, bitte folgenden QR-Code mit der linuxmuster App scannen."
     },
     "quota": {
       "title": "Quotas",
@@ -187,7 +249,10 @@
       "TotpInvalid": "Totp ungültig.",
       "LmnConnectionFailed": "Verbindung zum Schulserver fehlgeschlagen.",
       "KeycloakConnectionFailed": "Verbindung zum Authentifizierungsserver fehlgeschlagen.",
-      "EdulutionConnectionFailed": "Verbindung zum edulution Server fehlgeschlagen. Bitte versuche es später noch einmal."
+      "EdulutionConnectionFailed": "Verbindung zum linuxmuster Server fehlgeschlagen. Bitte versuche es später noch einmal.",
+      "Forbidden": "Zugriff verweigert",
+      "TotpAlreadyUsed": "Dieser Einmalcode wurde bereits verwendet. Bitte warte auf den nächsten Code.",
+      "LogoutFailed": "Die Abmeldung konnte nicht vollständig durchgeführt werden."
     },
     "logout": {
       "success": "Erfolgreich abgemeldet"
@@ -229,7 +294,19 @@
       "GetManagementListFailed": "Abrufen der Verwaltungsliste fehlgeschlagen",
       "SaveManagementListFailed": "Speichern der Verwaltungsliste fehlgeschlagen",
       "SophomorixCheckFailed": "Sophomorix-Check fehlgeschlagen",
-      "SophomorixApplyFailed": "Sophomorix-Apply fehlgeschlagen"
+      "SophomorixApplyFailed": "Sophomorix-Apply fehlgeschlagen",
+      "AddParentToStudentFailed": "Hinzufügen des Elternteils zum Schüler fehlgeschlagen",
+      "DeleteParentFromStudentFailed": "Entfernen des Elternteils vom Schüler fehlgeschlagen",
+      "GetLinboHealthFailed": "Abrufen des LINBO-Systemstatus fehlgeschlagen.",
+      "GetLinboServerInfoFailed": "Abrufen der LINBO-Server-Informationen fehlgeschlagen.",
+      "GetLinboHostsFailed": "Abrufen der LINBO-Hosts fehlgeschlagen.",
+      "GetLinboGrubConfigsFailed": "Abrufen der LINBO-GRUB-Konfigurationen fehlgeschlagen.",
+      "GetLinboStartConfsFailed": "Abrufen der LINBO-Startkonfigurationen fehlgeschlagen.",
+      "GetLinboImagesManifestFailed": "Abrufen des LINBO-Image-Manifests fehlgeschlagen.",
+      "GetLinboChangesFailed": "Abrufen der LINBO-Änderungen fehlgeschlagen.",
+      "UploadLinboImageFailed": "Hochladen des LINBO-Images fehlgeschlagen.",
+      "DownloadLinboImageFailed": "Herunterladen des LINBO-Images fehlgeschlagen.",
+      "GetLinboDhcpExportFailed": "Abrufen des LINBO-DHCP-Exports fehlgeschlagen."
     }
   },
   "ticketsystem": {
@@ -237,6 +314,17 @@
     "sidebar": "Tickets"
   },
   "mail": {
+    "emptyState": {
+      "nativePlaceholder": "Der native Mail-Client ist noch in Vorbereitung."
+    },
+    "tabs": {
+      "native": "Nativ",
+      "sogo": "SOGo"
+    },
+    "openInSogo": {
+      "label": "In SOGo öffnen",
+      "tooltip": "Öffnet das SOGo-Webmail in einem neuen Tab"
+    },
     "title": "E-MAILS",
     "sidebar": "E-Mails",
     "configName": "Name der Konfiguration",
@@ -272,9 +360,102 @@
       "deleteProviderConfig": "E-Mail-Provider-Konfiguration löschen"
     }
   },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Heute",
+    "month": "Monat",
+    "week": "Woche",
+    "day": "Tag",
+    "allDay": "Ganztägig",
+    "noEvents": "Keine Termine in diesem Zeitraum.",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "newEvent": "Neuer Termin",
+    "editEvent": "Termin bearbeiten",
+    "endBeforeStart": "Das Ende muss nach dem Beginn liegen.",
+    "fields": {
+      "summary": "Titel",
+      "name": "Name",
+      "calendar": "Kalender",
+      "start": "Beginn",
+      "end": "Ende",
+      "allDay": "Ganztägig",
+      "location": "Ort",
+      "color": "Farbe",
+      "description": "Beschreibung",
+      "attendees": "Teilnehmer"
+    },
+    "recurrence": {
+      "none": "Keine Wiederholung",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "repeats": "Wiederholung",
+      "interval": "Alle",
+      "byday": "An Wochentagen",
+      "never": "Nie",
+      "until": "Bis",
+      "count": "Anzahl"
+    },
+    "scope": {
+      "title": "Serie bearbeiten",
+      "this": "Nur diesen Termin",
+      "thisAndFollowing": "Diesen und folgende",
+      "all": "Alle Termine"
+    },
+    "newCalendar": "Neuer Kalender",
+    "timetableTag": "Stundenplan-Kalender",
+    "share": {
+      "title": "Freigaben",
+      "add": "Freigabe hinzufügen",
+      "subject": "Benutzer oder Gruppe",
+      "subjectType": {
+        "user": "Benutzer",
+        "group": "Gruppe"
+      },
+      "permission": {
+        "none": "Keine",
+        "free_busy": "Frei/Belegt",
+        "view": "Ansehen",
+        "modify": "Bearbeiten",
+        "admin": "Administrator"
+      }
+    },
+    "errors": {
+      "CalDavConnectionFailed": "Verbindung zum CalDAV-Server fehlgeschlagen.",
+      "CalendarNotFound": "Kalender nicht gefunden.",
+      "EventNotFound": "Termin nicht gefunden.",
+      "CreateEventFailed": "Termin konnte nicht angelegt werden.",
+      "UpdateEventFailed": "Termin konnte nicht geändert werden.",
+      "DeleteEventFailed": "Termin konnte nicht gelöscht werden.",
+      "CreateCalendarFailed": "Kalender konnte nicht angelegt werden.",
+      "CalendarBackendNotConfigured": "Der Kalenderdienst ist nicht konfiguriert.",
+      "SetTagsFailed": "Kategorien konnten nicht gespeichert werden."
+    }
+  },
   "chat": {
     "title": "CHAT",
-    "sidebar": "Chat"
+    "sidebar": "Chat",
+    "schoolClasses": "Schulklassen",
+    "projects": "Projekte",
+    "selectConversation": "Konversation auswählen",
+    "selectConversationDescription": "Wähle links eine Klasse oder ein Projekt, um den Chat zu öffnen.",
+    "refreshGroups": "Gruppen aktualisieren",
+    "inputPlaceholder": "Nachricht schreiben...",
+    "send": "Senden",
+    "noMessages": "Noch keine Nachrichten",
+    "loadingMessages": "Nachrichten werden geladen...",
+    "schoolClass": "Schulklasse",
+    "project": "Projekt",
+    "startConversation": "Schreibe die erste Nachricht",
+    "error": "Fehler",
+    "errors": {
+      "conversationNotFound": "Konversation nicht gefunden.",
+      "groupNotFound": "Gruppe nicht gefunden.",
+      "unauthorizedAccess": "Kein Zugriff auf diese Konversation.",
+      "messageSendFailed": "Nachricht konnte nicht gesendet werden.",
+      "invalidGroupType": "Ungültiger Gruppentyp."
+    }
   },
   "errors": {
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
@@ -425,6 +606,7 @@
       "SaveFailed": "Speichern fehlgeschlagen",
       "DuplicateFailed": "Kopieren fehlgeschlagen",
       "AppNotProperlyConfigured": "OnlyOffice ist nicht korrekt konfiguriert, bitte kontaktiere den Systemadministrator.",
+      "WopiTokenInvalid": "Das WOPI-Zugriffstoken ist ungültig oder abgelaufen.",
       "CollectingFailed": "Einsammeln der Dateien fehlgeschlagen",
       "MissingCallbackURL": "Fehlende Callback-URL",
       "SharingFailed": "Austeilen der Dateien fehlgeschlagen",
@@ -435,7 +617,6 @@
       "title": "Geteilte Dateien",
       "description": "Hier findest du alle Dateien, die du geteilt hast. Beachte: Jeder, der den Freigabe-Link und ggf. das dazugehörige Passwort hat, kann diese Dateien herunterladen."
     },
-
     "progressBox": {
       "info": "Info",
       "titleSharing": "Dateien werden ausgeteilt",
@@ -475,7 +656,6 @@
       "NameExceedsCharacterLimit": "Der Dateiname darf maximal 30 Zeichen haben.",
       "NameMustNotEndWithDot": "Der Name darf nicht mit einem Punkt enden."
     },
-
     "publicFileSharing": {
       "fileName": "Dateiname",
       "selectedFile": "Ausgewählter Inhalt: ",
@@ -524,14 +704,12 @@
         "restrictedHint": "Nur die ausgewählten Gruppen oder Benutzer können diesen Inhalt herunterladen."
       }
     },
-
     "expiry": {
       "select": "Ablaufdatum auswählen",
       "selectedItemPrefix": "Ausgewählter Inhalt, welcher geteilt wird:",
       "noInviteesWarning": "⚠️  WARNUNG: Jeder, der den Link besitzt, kann diesen Inhalt herunterladen.",
       "inviteesWarning": "⚠️ WARNUNG: Jeder, der zu den ausgewählten Gruppen oder Benutzern gehört, kann diesen Inhalt herunterladen."
     },
-
     "eta": {
       "fewSeconds": "ein paar Sekunden verbleibend",
       "lessThanMinute": "weniger als eine Minute verbleibend",
@@ -547,7 +725,6 @@
       "moreThanDays_one": "mehr als {{count}} Tag verbleibend",
       "moreThanDays_other": "mehr als {{count}} Tage verbleibend"
     },
-
     "webdavInfo": {
       "title": "WebDAV-Zugang",
       "description": "Verwende diese URL, um dich mit deinen Dateien über WebDAV-Clients zu verbinden",
@@ -703,7 +880,6 @@
     "myRoom": "Mein Raum",
     "sharedMailBox": "Geteiltes Postfach",
     "enrolPageDescription": "Wähle die Klassen und Projekte aus, für die du dich einschreiben möchtest, indem du die Checkboxen aktivierst.",
-
     "copyOrCut": "Möchtest du die Dateien ausschneiden oder kopieren?",
     "filesShared": "Dateien geteilt",
     "filesSharingStarted": "Dateien werden geteilt",
@@ -1145,7 +1321,6 @@
   "roombooking": {
     "sidebar": "Raumbuchung"
   },
-
   "mobileAccessSetup": {
     "connectionTitle": "Verbindung einrichten",
     "pleaseEnterCredentials": "Bitte gib die Anmeldedaten zum Schulserver an",
@@ -1230,14 +1405,12 @@
         "edulution-binduser-dn": "Distinguished Name (DN)",
         "edulution-binduser-password": "Passwort"
       },
-
       "branding": {
         "title": "Branding"
       },
-
       "logo": {
         "title": "Logo",
-        "descriptionSchool": "Lade hier das Logo hoch. Es wird auf der Login-Seite und auf dem Ausweis in der edulution App angezeigt.",
+        "descriptionSchool": "Lade hier das Logo hoch. Es wird auf der Login-Seite und auf dem Ausweis in der linuxmuster App angezeigt.",
         "descriptionGeneric": "Lade hier das Logo hoch. Es wird auf der Login-Seite angezeigt.",
         "uploadLightLogo": "Helles Logo hochladen",
         "uploadDarkLogo": "Dunkles Logo hochladen",
@@ -1262,7 +1435,7 @@
       },
       "organisationInfo": {
         "title": "Organisationsinformationen",
-        "descriptionSchool": "Trage die offiziellen Angaben deiner Organisation ein. Diese Informationen werden in der edulution App angezeigt. Bitte gib den Namen, die Straße, die Postleitzahl und optional die Website der Schule an.",
+        "descriptionSchool": "Trage die offiziellen Angaben deiner Organisation ein. Diese Informationen werden in der linuxmuster App angezeigt. Bitte gib den Namen, die Straße, die Postleitzahl und optional die Website der Schule an.",
         "descriptionGeneric": "Trage die offiziellen Angaben deiner Organisation ein.",
         "name": "Organisation",
         "namePlaceholder": "Gemeinschaftsschule Musterstadt",
@@ -1304,7 +1477,9 @@
       "deleteSuccess": "Webhook-Client gelöscht",
       "filterPlaceholder": "Webhook-Clients filtern..."
     },
-    "lmnVersion": { "title": "Linuxmuster Versionsübersicht" },
+    "lmnVersion": {
+      "title": "Linuxmuster Versionsübersicht"
+    },
     "appconfig": {
       "position": {
         "title": "Sortierung",
@@ -1321,6 +1496,10 @@
         },
         "onlyOffice": {
           "title": "Only Office Integration",
+          "description": ""
+        },
+        "documentEditor": {
+          "title": "Dokumenteneditor",
           "description": ""
         },
         "imapMailFeed": {
@@ -1347,7 +1526,6 @@
           "title": "Proxy-Konfiguration",
           "description": "Hier kann eine eigene Proxy-Konfiguration für Traefik hinterlegt werden. Dabei kann entweder über die Eingabefelder mithilfe einer Vorlage gearbeitet werden, oder direkt im Expertenmodus eine Konfiguration im YAML-Format erstellt werden. <br/><strong>Achtung:</strong> Eine falsche Konfiguration könnte dazu führen, dass die Anwendung nicht mehr erreichbar ist."
         },
-
         "docker": {
           "title": "Docker Anwendungen",
           "description": "Um die erweiterten Dienste nutzen zu können, können hier die benötigten Container-Anwendungen installiert und gestartet werden.",
@@ -1479,11 +1657,74 @@
       "noLicenseRegistered": "Keine Lizenz registriert",
       "errors": {
         "signingFailed": "Registrierung fehlgeschlagen",
-        "verificationFailed": "Tokenverifizierung fehlgeschlagen"
-      }
+        "verificationFailed": "Tokenverifizierung fehlgeschlagen",
+        "communityMode": "Lizenzregistrierung ist im AGPL-Community-Modus nicht verfügbar."
+      },
+      "communityNotice": "Dieser Fork läuft im AGPL-Community-Modus. Eine kommerzielle Lizenzregistrierung ist nicht erforderlich; das Quellcode-Angebot findest du unter Info › Quellcode-Angebot."
+    },
+    "sourceOffer": {
+      "title": "Quellcode-Angebot",
+      "description": "Diese Software steht unter der GNU Affero General Public License v3. Gemäß §13 kannst du den vollständigen Quellcode der laufenden Version hier abrufen:",
+      "repositoryLink": "Quellcode-Repository öffnen",
+      "version": "Laufende Version: {{version}}"
+    }
+  },
+  "parentChildPairing": {
+    "assignment": "Elternzuweisung",
+    "assignmentDescription": "Eltern-Schüler-Zuweisungen verwalten.",
+    "filterPlaceholder": "Nach Elternteil oder Schüler suchen...",
+    "parent": "Elternteil",
+    "student": "Schüler",
+    "school": "Schule",
+    "statusColumn": "Status",
+    "createdAt": "Erstellt am",
+    "accept": "Akzeptieren",
+    "reject": "Ablehnen",
+    "statusAll": "Alle",
+    "statusPending": "Ausstehend",
+    "statusAccepted": "Akzeptiert",
+    "statusRejected": "Abgelehnt",
+    "statusUpdated": "Status erfolgreich aktualisiert.",
+    "errors": {
+      "codeNotFound": "Der Pairing-Code wurde nicht gefunden.",
+      "codeExpired": "Der Pairing-Code ist abgelaufen.",
+      "cannotPairWithSelf": "Du kannst dich nicht mit dir selbst verbinden.",
+      "pairingAlreadyExists": "Diese Verbindung existiert bereits.",
+      "pairingNotFound": "Die Verbindung wurde nicht gefunden.",
+      "invalidRole": "Deine Rolle erlaubt kein Pairing.",
+      "incompatibleRoles": "Du kannst dich mit keinem anderen Schüler verbinden."
     }
   },
   "usersettings": {
+    "parentChildPairing": {
+      "myParents": "Meine Eltern",
+      "myChildren": "Meine Kinder",
+      "description": "Verbinde dein Konto mit deinen Eltern oder Kindern.",
+      "myCode": "Mein Pairing-Code",
+      "myCodeDescription": "Teile diesen Code mit der Person, mit der du dich verbinden möchtest. Der Code ist 5 Minuten gültig.",
+      "enterCode": "Code eingeben",
+      "enterCodeDescription": "Gib den Pairing-Code ein, den du von deinem Elternteil oder Kind erhalten hast.",
+      "enterCodePlaceholder": "Pairing-Code eingeben",
+      "submitCode": "Verbinden",
+      "relationships": "Verbindungen",
+      "noRelationships": "Noch keine Verbindungen.",
+      "statusPending": "Ausstehend",
+      "statusAccepted": "Akzeptiert",
+      "statusRejected": "Abgelehnt",
+      "pairingSuccess": "Verbindungsanfrage erfolgreich gesendet!",
+      "codeRefreshed": "Neuer Pairing-Code generiert.",
+      "codeExpired": "Der Code ist abgelaufen. Bitte einen neuen Code anfordern.",
+      "parent": "Elternteil",
+      "student": "Schüler",
+      "statusColumn": "Status",
+      "createdAt": "Erstellt am",
+      "accept": "Akzeptieren",
+      "reject": "Ablehnen",
+      "statusUpdated": "Status erfolgreich aktualisiert.",
+      "assignment": "Elternzuweisung",
+      "assignmentDescription": "Eltern-Schüler-Zuweisungen verwalten.",
+      "filterPlaceholder": "Nach Elternteil oder Schüler suchen..."
+    },
     "title": "MEIN PROFIL",
     "sidebar": "Mein Profil",
     "rowSelected": "{{selected}} von {{total}} Konten ausgewählt",
@@ -1548,8 +1789,8 @@
     },
     "mobileAccess": {
       "title": "App-Zugriff",
-      "description": "Hier kannst du den mobilen Zugriff für die edulution App einrichten.",
-      "docsDescription": "Den Download-Link zur edulution App und wie du sie einrichtest findest in der edulution Doku.",
+      "description": "Hier kannst du den mobilen Zugriff für die linuxmuster App einrichten.",
+      "docsDescription": "Den Download-Link zur linuxmuster App und wie du sie einrichtest findest in der linuxmuster Doku.",
       "button": "Doku öffnen",
       "setup": "Einrichten mit QR-Code",
       "qrCode": "QR-Code"
@@ -1654,8 +1895,8 @@
     "remember_me": "Merken",
     "enterMultiFactorCode": "Zwei-Faktor-Authentisierung",
     "loginWithApp": "Anmelden mit QR-Login",
-    "loginWithQrDescription": "Öffne die edulution.io APP um dich einfach mit dem QR-Code anzumelden.",
-    "infoQrCodeExpired": "Zeit für Login mit edulution.io APP abgelaufen."
+    "loginWithQrDescription": "Öffne die linuxmuster APP um dich einfach mit dem QR-Code anzumelden.",
+    "infoQrCodeExpired": "Zeit für Login mit linuxmuster APP abgelaufen."
   },
   "common": {
     "more": "Mehr",
@@ -1689,6 +1930,7 @@
     "never": "Nie",
     "errors": {
       "dbAccessFailed": "Datenbankzugriff fehlgeschlagen",
+      "rateLimitExceeded": "Zu viele Anfragen. Bitte versuche es später erneut.",
       "directoryNotCreated": "Erstellen des Verzeichnisses fehlgeschlagen",
       "fileNotCreated": "Erstellen der Datei fehlgeschlagen",
       "fileUploadFailed": "Die Datei konnte nicht hochgeladen werden",
@@ -1935,6 +2177,66 @@
     "userManagement": "Benutzerverwaltung",
     "description": "Verwalte deine Schulserver-Einstellungen und Benutzer."
   },
+  "wiki": {
+    "description": "Kollaboratives Wiki für Ihre Freigaben",
+    "sidebar": "Wiki-Navigation",
+    "menu": {
+      "newPage": "Neue Seite",
+      "newFolder": "Neuer Ordner"
+    },
+    "metadata": {
+      "updatedAt": "Zuletzt geändert:"
+    },
+    "actions": {
+      "edit": "Bearbeiten"
+    },
+    "dialog": {
+      "location": "Speicherort:",
+      "noLocationSelected": "Kein Speicherort ausgewählt.",
+      "createPage": {
+        "title": "Neue Seite erstellen",
+        "titlePlaceholder": "Seitentitel",
+        "asIndex": "Als Ordner-Startseite (Index)",
+        "indexSlugReserved": "„index“ ist für die Ordner-Startseite reserviert – aktiviere „Als Ordner-Startseite“ oder wähle einen anderen Titel."
+      },
+      "createFolder": {
+        "title": "Neuen Ordner erstellen",
+        "namePlaceholder": "Ordnername"
+      },
+      "delete": {
+        "pageTitle": "Seite löschen",
+        "folderTitle": "Ordner löschen",
+        "pageMessage": "Diese Wiki-Seite wirklich löschen?",
+        "folderMessage": "Diesen Ordner und seinen gesamten Inhalt wirklich löschen?"
+      }
+    },
+    "notifications": {
+      "pageSaved": "Seite gespeichert",
+      "folderCreated": "Ordner erstellt",
+      "deleted": "Gelöscht"
+    },
+    "search": {
+      "placeholder": "Wiki durchsuchen …",
+      "action": "Suchen",
+      "scope": {
+        "all": "Alle",
+        "current": "Aktuelle Freigabe"
+      },
+      "empty": "Keine Treffer.",
+      "degraded": "Einige Freigaben konnten nicht durchsucht werden.",
+      "unavailable": "Die Suche ist derzeit nicht verfügbar.",
+      "reasons": {
+        "timeout": "Zeitüberschreitung",
+        "connection_error": "Verbindungsfehler",
+        "http_5xx": "Serverfehler",
+        "http_4xx": "Anfragefehler",
+        "health_check_down": "Freigabe offline"
+      }
+    },
+    "empty": {
+      "selectPageHint": "Wählen Sie links eine Seite aus, um sie anzuzeigen."
+    }
+  },
   "whiteboard": {
     "title": "WHITEBOARD",
     "sidebar": "Whiteboard",
@@ -2095,12 +2397,10 @@
     "copyFilesOrDirectoriesToDirectory": "Dateien oder Verzeichnisse in ein Verzeichnis kopieren",
     "copy": "Kopieren"
   },
-
   "fileSelectorDialogBody": {
     "title": "Wähle eine Datei zum Öffnen aus",
     "selectFile": "Ausgewählte Datei"
   },
-
   "saveExternalFileDialogBody": {
     "saveExternalFile": "Externe Datei speichern",
     "destinationFolder": "Zielordner",
@@ -2110,7 +2410,6 @@
     "fileSavedSuccessful": "Datei erfolgreich gespeichert",
     "fileSaveFailed": "Datei konnte nicht gespeichert werden"
   },
-
   "moveItemDialog": {
     "changeDirectory": "Verzeichnis wechseln",
     "currentDirectory": "Aktuelles Verzeichnis",
@@ -2124,12 +2423,10 @@
     "unknownErrorOccurred": "Ein unbekannter Fehler ist aufgetreten",
     "selectedItem": "Ausgewähltes Element"
   },
-
   "shareDialog": {
     "shareFilesOrDirectories": "Dateien teilen",
     "share": "Teilen"
   },
-
   "deleteDialog": {
     "areYouSure": "Bist du dir absolut sicher?",
     "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden. Dies wird die Dateien dauerhaft löschen:",
@@ -2226,7 +2523,24 @@
       "MailProviderNotFound": "E-Mail-Provider nicht gefunden",
       "MailcowApiGetSyncJobsFailed": "Sync-Jobs konnten nicht abgerufen werden",
       "MailcowApiCreateSyncJobFailed": "Sync-Job konnte nicht erstellt werden",
-      "MailcowApiDeleteSyncJobsFailed": "Sync-Jobs konnten nicht gelöscht werden"
+      "MailcowApiDeleteSyncJobsFailed": "Sync-Jobs konnten nicht gelöscht werden",
+      "MailcowApiGetDomainsFailed": "Domains konnten nicht geladen werden",
+      "MailcowApiGetMailboxesFailed": "Postfächer konnten nicht geladen werden",
+      "MailcowApiCreateMailboxFailed": "Postfach konnte nicht angelegt werden",
+      "MailcowApiUpdateMailboxFailed": "Postfach konnte nicht aktualisiert werden",
+      "MailcowApiDeleteMailboxFailed": "Postfach konnte nicht gelöscht werden",
+      "MailcowApiUpdateMailboxAclFailed": "Postfach-Berechtigungen konnten nicht aktualisiert werden",
+      "MailcowPasswordComplexity": "Das Passwort erfüllt die Komplexitätsanforderungen nicht",
+      "MailcowPasswordMismatch": "Die Passwörter stimmen nicht überein",
+      "MailcowPasswordEmpty": "Das Passwort darf nicht leer sein",
+      "MailcowUsernameInvalid": "Der Benutzername ist ungültig",
+      "MailcowDomainInvalid": "Die Domain ist ungültig",
+      "MailcowDomainNotFound": "Die Domain wurde nicht gefunden",
+      "MailcowObjectExists": "Das Objekt existiert bereits",
+      "MailcowMaxMailboxesExceeded": "Die maximale Anzahl an Postfächern ist erreicht",
+      "MailcowQuotaExceeded": "Das Speicherkontingent wurde überschritten",
+      "MailcowAccessDenied": "Zugriff verweigert",
+      "SyncJobAccessDenied": "Zugriff verweigert: Dieser Synchronisierungsauftrag gehört nicht zu Ihrem Konto."
     }
   },
   "licensing": {
@@ -2236,11 +2550,38 @@
     }
   },
   "appExtendedOptions": {
+    "activeMailClientTitle": "Mail-Client",
+    "activeMailClientDescription": "Wähle die Mail-Oberfläche für Endnutzer (SOGo-Webmail oder nativer Client).",
+    "activeMailClient": {
+      "native": "Nativer Client",
+      "sogo": "SOGo-Webmail"
+    },
+    "activeMailClientWarning": "SOGo-Filter und Abwesenheitsnotizen sind im nativen Client nicht enthalten.",
     "title": "Erweiterungen",
     "onlyOfficeUrl": "Gib hier die OnlyOffice-URL an",
     "onlyOfficeUrlTitle": "OnlyOffice-URL",
     "onlyOfficeJwtSecretTitle": "OnlyOffice JWT Secret",
     "onlyOfficeJwtSecretDescription": "Gib hier den OnlyOffice JWT Secret Key an",
+    "activeDocumentEditorTitle": "Dokumenteneditor",
+    "activeDocumentEditorDescription": "Wähle den Editor für Office-Dokumente (OnlyOffice oder Collabora).",
+    "activeDocumentEditor": {
+      "onlyoffice": "OnlyOffice",
+      "collabora": "Collabora Online"
+    },
+    "collaboraUrlTitle": "Collabora-URL",
+    "collaboraUrlDescription": "Gib die URL deiner Collabora-Online-Instanz an.",
+    "collaboraWopiSecretTitle": "Collabora-WOPI-Secret",
+    "collaboraWopiSecretDescription": "Gib das WOPI-Secret für Collabora an.",
+    "calendarCaldavBaseUrlTitle": "CalDAV-Basis-URL",
+    "calendarCaldavBaseUrlDescription": "Gib die Basis-URL des CalDAV-Servers an (z.B. 'https://sogo.example.com/SOGo/dav/').",
+    "calendarCaldavAuthModeTitle": "Authentifizierungsverfahren",
+    "calendarCaldavAuthModeDescription": "Wähle das Verfahren, mit dem sich der Server gegen den CalDAV-Dienst authentifiziert.",
+    "calendarCaldavAuthMode": {
+      "basic": "Basic",
+      "digest": "Digest"
+    },
+    "calendarCaldavRejectUnauthorizedTitle": "Nicht zertifizierte Verbindungen ablehnen",
+    "calendarCaldavRejectUnauthorizedDescription": "Soll eine Zertifikatsprüfung für die Verbindung zum CalDAV-Server durchgeführt werden?",
     "drawioUrlTitle": "Draw.io URL",
     "drawioUrlDescription": "Gib die URL der selbst gehosteten Draw.io-Instanz ein",
     "overrideDocumentVendorMSWithOOTitle": "OpenDocument als Standard-Dokumentenformat verwenden",
@@ -2290,7 +2631,7 @@
     },
     "EDULUTION_MAIL_HOSTNAME": {
       "title": "Hostname",
-      "description": "Hostname des Mailservers. Dieser kann von der edulution Domain abweichen."
+      "description": "Hostname des Mailservers. Dieser kann von der linuxmuster Domain abweichen."
     },
     "EDU_WG_IPNETWORK": {
       "title": "IP-Netzwerk",
@@ -2375,9 +2716,9 @@
   },
   "Invalid user credentials": "Benutzername oder Passwort falsch",
   "For more on this error consult the server log at the debug level.": "Verbindung zum AD-Server fehlgeschlagen. Bitte versuche es später noch einmal.",
-  "Failed to fetch": "Verbindung zum edulution Server fehlgeschlagen. Bitte versuche es später noch einmal.",
+  "Failed to fetch": "Verbindung zum linuxmuster Server fehlgeschlagen. Bitte versuche es später noch einmal.",
   "Invalid client or Invalid client credentials": "Ungültige Serverkonfiguration. Bitte überprüfe die Client-ID oder das Client-Secret.",
-  "Not Found (404)": "Verbindung zum edulution Server fehlgeschlagen. Bitte versuche es später noch einmal.",
+  "Not Found (404)": "Verbindung zum linuxmuster Server fehlgeschlagen. Bitte versuche es später noch einmal.",
   "NetworkError when attempting to fetch resource.": "Netzwerkfehler beim Abrufen der Website.",
   "deploymentTarget": {
     "title": "Auswahl",
@@ -2395,7 +2736,7 @@
       "title": "WebDAV Server Schema",
       "description": "Bestimmt das Schema welches für die Verbindung zum WebDAV-Server verwendet wird.",
       "linuxmuster": "Linuxmuster",
-      "edu-file-proxy": "edulution File Proxy",
+      "edu-file-proxy": "linuxmuster File Proxy",
       "generic": "Generisch"
     },
     "status": "Status",

@@ -19,6 +19,7 @@
 
 import { create, StateCreator } from 'zustand';
 import type SentryConfig from '@libs/common/types/sentryConfig';
+import { SENTRY_SEND_DEFAULT_PII, SENTRY_TRACES_SAMPLE_RATE } from '@libs/common/constants/sentryTelemetry';
 import eduApi from '@/api/eduApi';
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware';
 
@@ -50,8 +51,8 @@ const useSentryStore = create<UseSentryStore>(
         init({
           dsn: config.dsn,
           environment: tenant,
-          sendDefaultPii: true,
-          tracesSampleRate: 1.0,
+          sendDefaultPii: SENTRY_SEND_DEFAULT_PII,
+          tracesSampleRate: SENTRY_TRACES_SAMPLE_RATE,
           release: `edulution-ui@${APP_VERSION}`,
         });
 

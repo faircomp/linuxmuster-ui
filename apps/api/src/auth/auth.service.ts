@@ -17,7 +17,7 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import { Request } from 'express';
 import { from, Observable } from 'rxjs';
@@ -37,14 +37,27 @@ import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import type LoginQrSseDto from '@libs/auth/types/loginQrSse.dto';
 import { decodeBase64Api, encodeBase64Api } from '@libs/common/utils/getBase64StringApi';
 import GroupRoles from '@libs/groups/types/group-roles.enum';
+import type JWTUser from '@libs/user/types/jwt/jwtUser';
 import UserRoles from '@libs/user/constants/userRoles';
 import getIsAdmin from '@libs/user/utils/getIsAdmin';
+import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
+import AUTH_GRANT_TYPES from '@libs/auth/constants/authGrantTypes';
 import CustomHttpException from '../common/CustomHttpException';
 import { User, UserDocument } from '../users/user.schema';
 import SseService from '../sse/sse.service';
 import GlobalSettingsService from '../global-settings/global-settings.service';
+import SessionDenylistService from './session-denylist.service';
+import QrLoginSessionService from '../sse/qr-login-session.service';
 
 const { KEYCLOAK_EDU_UI_SECRET, KEYCLOAK_EDU_UI_CLIENT_ID, KEYCLOAK_EDU_UI_REALM, KEYCLOAK_API } = process.env;
+
+const KEYCLOAK_INVALID_GRANT_ERROR = 'invalid_grant';
+
+const CASE_INSENSITIVE_COLLATION = { locale: 'en', strength: 2 };
+
+const TOTP_VALIDATION_WINDOW = 1;
+
+const TOTP_SUFFIX_PATTERN = new RegExp(`:(\\d{${AUTH_TOTP_CONFIG.digits}})$`);
 
 @Injectable()
 class AuthService {
@@ -53,16 +66,38 @@ class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly sseService: SseService,
+    private readonly qrLoginSessionService: QrLoginSessionService,
     private readonly globalSettingsService: GlobalSettingsService,
+    private readonly sessionDenylistService: SessionDenylistService,
   ) {
     this.keycloakApi = axios.create({
       baseURL: `${KEYCLOAK_API}/realms/${KEYCLOAK_EDU_UI_REALM}`,
     });
   }
 
+  static validateTotp(token: string, username: string, secret: string): number | null {
+    const totp = new TOTP({ ...AUTH_TOTP_CONFIG, label: username, secret });
+    const delta = totp.validate({ token, window: TOTP_VALIDATION_WINDOW });
+
+    if (delta === null) {
+      return null;
+    }
+
+    return Math.floor(Date.now() / 1000 / AUTH_TOTP_CONFIG.period) + delta;
+  }
+
   static checkTotp(token: string, username: string, secret: string): boolean {
-    const newTotp = new TOTP({ ...AUTH_TOTP_CONFIG, label: username, secret });
-    return newTotp.validate({ token }) !== null;
+    return AuthService.validateTotp(token, username, secret) !== null;
+  }
+
+  static splitPasswordAndTotp(passwordString: string): { password: string; token: string | null } {
+    const match = TOTP_SUFFIX_PATTERN.exec(passwordString);
+
+    if (!match) {
+      return { password: passwordString, token: null };
+    }
+
+    return { password: passwordString.slice(0, match.index), token: match[1] };
   }
 
   authconfig(req: Request): Observable<OidcMetadata> {
@@ -116,59 +151,165 @@ class AuthService {
     }
   }
 
+  async revokeSession(refreshToken?: string): Promise<boolean> {
+    if (!refreshToken) {
+      return true;
+    }
+
+    try {
+      await this.keycloakApi.post(
+        AUTH_PATHS.AUTH_OIDC_LOGOUT_PATH,
+        new URLSearchParams({
+          client_id: KEYCLOAK_EDU_UI_CLIENT_ID ?? '',
+          client_secret: KEYCLOAK_EDU_UI_SECRET ?? '',
+          refresh_token: refreshToken,
+        }).toString(),
+        {
+          headers: {
+            [HTTP_HEADERS.ContentType]: RequestResponseContentType.APPLICATION_X_WWW_FORM_URLENCODED,
+          },
+        },
+      );
+      return true;
+    } catch (error) {
+      const isAlreadyInvalid =
+        error instanceof AxiosError &&
+        error.response?.status === HttpStatus.BAD_REQUEST &&
+        (error.response.data as ErrorResponse | undefined)?.error === KEYCLOAK_INVALID_GRANT_ERROR;
+
+      if (isAlreadyInvalid) {
+        Logger.debug('Refresh token was already invalid, its session is gone anyway', AuthService.name);
+        return true;
+      }
+
+      Logger.warn(`Failed to revoke session: ${(error as Error).message}`, AuthService.name);
+      return false;
+    }
+  }
+
+  async logout(refreshToken: string, session?: JWTUser): Promise<void> {
+    if (session && !session.sid) {
+      Logger.warn(
+        'Verified access token carries no sid, its session cannot be denied and stays usable until it expires',
+        AuthService.name,
+      );
+    }
+
+    const [isDenied, isRevoked] = await Promise.all([
+      this.sessionDenylistService.denySession(session?.sid, session?.exp),
+      this.revokeSession(refreshToken),
+    ]);
+
+    if (!isDenied || !isRevoked) {
+      throw new CustomHttpException(
+        AuthErrorMessages.LogoutFailed,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { isDenied, isRevoked },
+        AuthService.name,
+      );
+    }
+  }
+
+  private async signinOrNull(body: AuthRequestArgs, password?: string): Promise<SigninResponse | null> {
+    try {
+      return await this.signin(body, password);
+    } catch {
+      return null;
+    }
+  }
+
+  private async signinWithSuffixCostParity(body: AuthRequestArgs, passwordString: string): Promise<SigninResponse> {
+    const { password, token } = AuthService.splitPasswordAndTotp(passwordString);
+
+    if (token !== null) {
+      await this.signinOrNull(body, password);
+    }
+
+    return this.signin(body, passwordString);
+  }
+
   async authenticateUser(body: AuthRequestArgs): Promise<SigninResponse> {
     const { grant_type: grantType, password: encodedPassword, username: identifier } = body;
 
-    if (grantType === 'refresh_token') {
+    if (grantType === AUTH_GRANT_TYPES.REFRESH_TOKEN) {
       return this.signin(body);
     }
 
     const passwordString = decodeBase64Api(encodedPassword);
 
-    const user = await this.userModel
-      .findOne(
+    const candidates = await this.userModel
+      .find(
         identifier.includes('@') ? { email: identifier.toLowerCase() } : { username: identifier },
-        'mfaEnabled totpSecret username email',
+        'mfaEnabled totpSecret totpLastUsedCounter username email',
       )
+      .collation(CASE_INSENSITIVE_COLLATION)
       .lean();
 
-    if (!user) {
-      return this.signin(body, passwordString);
+    const mfaUser = candidates.find((candidate) => candidate.mfaEnabled);
+
+    if (!mfaUser) {
+      return this.signinWithSuffixCostParity(body, passwordString);
     }
 
-    const { mfaEnabled = false, totpSecret = '', username } = user;
+    const { totpSecret = '', username } = mfaUser;
+    const { password, token } = AuthService.splitPasswordAndTotp(passwordString);
 
-    if (!mfaEnabled) {
-      return this.signin(body, passwordString);
-    }
-
-    const lastColonIndex = passwordString.lastIndexOf(':');
-
-    if (lastColonIndex === -1) {
+    const throwTotpMissing = (refreshToken?: string): never => {
+      void this.revokeSession(refreshToken);
       throw new HttpException(
         { error: AuthErrorMessages.TotpMissing, error_description: AuthErrorMessages.TotpMissing },
         HttpStatus.UNAUTHORIZED,
       );
+    };
+
+    if (token === null) {
+      const passwordOnlyTokens = await this.signin(body, password);
+      return throwTotpMissing(passwordOnlyTokens.refresh_token);
     }
 
-    const password = passwordString.slice(0, lastColonIndex);
-    const token = passwordString.slice(lastColonIndex + 1);
+    let tokens: SigninResponse;
 
-    if (!token)
-      throw new HttpException(
-        { error: AuthErrorMessages.TotpMissing, error_description: AuthErrorMessages.TotpMissing },
-        HttpStatus.UNAUTHORIZED,
-      );
+    try {
+      tokens = await this.signin(body, password);
+    } catch (passwordError) {
+      const fullPasswordTokens = await this.signinOrNull(body, passwordString);
 
-    const isTotpValid = AuthService.checkTotp(token, username, totpSecret);
+      if (!fullPasswordTokens) {
+        throw passwordError;
+      }
 
-    if (!isTotpValid) {
+      return throwTotpMissing(fullPasswordTokens.refresh_token);
+    }
+
+    const counter = AuthService.validateTotp(token, username, totpSecret);
+
+    if (counter === null) {
+      void this.revokeSession(tokens.refresh_token);
       throw new HttpException(
         { error: AuthErrorMessages.TotpInvalid, error_description: AuthErrorMessages.TotpInvalid },
         HttpStatus.UNAUTHORIZED,
       );
     }
-    return this.signin(body, password);
+
+    const claimed = await this.userModel
+      .findOneAndUpdate(
+        {
+          username,
+          $or: [{ totpLastUsedCounter: { $lt: counter } }, { totpLastUsedCounter: { $exists: false } }],
+        },
+        { $set: { totpLastUsedCounter: counter } },
+      )
+      .lean();
+
+    if (!claimed) {
+      void this.revokeSession(tokens.refresh_token);
+      throw new HttpException(
+        { error: AuthErrorMessages.TotpAlreadyUsed, error_description: AuthErrorMessages.TotpAlreadyUsed },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return tokens;
   }
 
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this
@@ -187,20 +328,16 @@ class AuthService {
       const user = await this.userModel
         .findOneAndUpdate<User>(
           { username },
-          { $set: { mfaEnabled: true, totpSecret: secret, totpCreatedAt: new Date() } },
+          {
+            $set: { mfaEnabled: true, totpSecret: secret, totpCreatedAt: new Date() },
+            $unset: { totpLastUsedCounter: 1 },
+          },
           { new: true, projection: { totpSecret: 0, password: 0 } },
         )
         .lean();
       return user;
     }
     throw new CustomHttpException(AuthErrorMessages.TotpInvalid, HttpStatus.UNAUTHORIZED, undefined, AuthService.name);
-  }
-
-  async getTotpInfo(usernameOrEmail: string) {
-    const query = usernameOrEmail.includes('@') ? { email: usernameOrEmail } : { username: usernameOrEmail };
-
-    const user = await this.userModel.findOne(query, { mfaEnabled: 1 }).lean();
-    return user?.mfaEnabled ?? false;
   }
 
   async disableTotp(username: string) {
@@ -210,7 +347,7 @@ class AuthService {
           { username },
           {
             $set: { mfaEnabled: false },
-            $unset: { totpSecret: 1, totpCreatedAt: 1 },
+            $unset: { totpSecret: 1, totpCreatedAt: 1, totpLastUsedCounter: 1 },
           },
           { new: true, projection: { totpSecret: 0, password: 0 } },
         )
@@ -260,14 +397,23 @@ class AuthService {
     return { success: true, status: HttpStatus.OK };
   }
 
-  loginViaApp(body: LoginQrSseDto, sessionId: string) {
+  async createQrLoginSession(): Promise<{ sessionId: string; subscriberToken: string }> {
+    return this.qrLoginSessionService.create();
+  }
+
+  async loginViaApp(body: LoginQrSseDto, sessionId: string) {
     const { username, password } = body;
-    const isConnectionActive = this.sseService.getUserConnection(sessionId);
+    const channelId = `${LOGIN_SESSION_SSE_CHANNEL_PREFIX}${sessionId}`;
+    const isConnectionActive = this.sseService.getUserConnection(channelId);
 
     if (!isConnectionActive) throw new CustomHttpException(UserErrorMessages.NotFoundError, HttpStatus.NOT_FOUND);
 
+    const isSessionConsumed = await this.qrLoginSessionService.consume(sessionId);
+
+    if (!isSessionConsumed) throw new CustomHttpException(UserErrorMessages.NotFoundError, HttpStatus.NOT_FOUND);
+
     this.sseService.sendEventToUser(
-      sessionId,
+      channelId,
       encodeBase64Api(JSON.stringify({ username, password })),
       SSE_MESSAGE_TYPE.MESSAGE,
     );

@@ -69,17 +69,21 @@ const LicenseOverview: React.FC = () => {
         ) : (
           <div className="text-muted-foreground">{t('settings.license.noLicenseRegistered')}</div>
         )}
-        <div className="flex justify-end">
-          <Button
-            variant="btn-security"
-            size="lg"
-            onClick={handleOpenRegisterLicenseDialog}
-          >
-            {t('settings.license.register')}
-          </Button>
-        </div>
+        {licenseInfo?.isCommunity ? (
+          <div className="text-muted-foreground">{t('settings.license.communityNotice')}</div>
+        ) : (
+          <div className="flex justify-end">
+            <Button
+              variant="btn-security"
+              size="lg"
+              onClick={handleOpenRegisterLicenseDialog}
+            >
+              {t('settings.license.register')}
+            </Button>
+          </div>
+        )}
       </div>
-      <RegisterLicenseDialog />
+      {!licenseInfo?.isCommunity && <RegisterLicenseDialog />}
     </>
   );
 };

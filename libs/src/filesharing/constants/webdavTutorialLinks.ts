@@ -17,19 +17,21 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
+import { PRODUCT_DOCS_URL } from '@libs/common/constants/productInfo';
+
 const WEBDAV_TUTORIAL_LINKS = [
   {
     key: 'windows',
-    url: 'https://docs.edulution.io/docs/edulution-ui/features/dateien/webdav-windows/',
+    url: `${PRODUCT_DOCS_URL}/webdav-windows`,
   },
   {
     key: 'macos',
-    url: 'https://docs.edulution.io/docs/edulution-ui/features/dateien/webdav-macos',
+    url: `${PRODUCT_DOCS_URL}/webdav-macos`,
   },
   {
     key: 'linux',
-    url: 'https://docs.edulution.io/docs/edulution-ui/features/dateien/webdav-linux',
+    url: `${PRODUCT_DOCS_URL}/webdav-linux`,
   },
-] as const;
+];
 
 export default WEBDAV_TUTORIAL_LINKS;

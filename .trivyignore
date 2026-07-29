@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Kevin Stenzel
+#
+# Trivy ignore file — deliberately accepted (unfixable / base-image) CVEs.
+# One CVE ID per line, each annotated:
+#   CVE-XXXX-YYYYY  # <reason> — review-by <YYYY-MM-DD>
+#
+# A new accepted CVE requires a matching entry in docs/security/accepted-cves.md
+# (add both together). An expired review-by date forces re-evaluation.
+#
+# No CVEs are accepted yet — the allowlist is intentionally empty (strictest gate).

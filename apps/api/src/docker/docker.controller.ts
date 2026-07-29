@@ -18,6 +18,7 @@
  */
 
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type TDockerCommands from '@libs/docker/types/TDockerCommands';
 import {
@@ -30,6 +31,8 @@ import DockerService from './docker.service';
 import AdminGuard from '../common/guards/admin.guard';
 import Public from '../common/decorators/public.decorator';
 
+@ApiTags(EDU_API_DOCKER_ENDPOINT)
+@ApiBearerAuth()
 @Controller(EDU_API_DOCKER_ENDPOINT)
 @UseGuards(AdminGuard)
 class DockerController {

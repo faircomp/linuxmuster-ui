@@ -20,6 +20,7 @@
 import FileSharingApiEndpoints from '@libs/filesharing/types/fileSharingApiEndpoints';
 import getFrontEndUrl from '@libs/common/utils/URL/getFrontEndUrl';
 import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
+import ONLY_OFFICE_CALLBACK_PATH from '@libs/filesharing/constants/onlyOfficeCallbackPath';
 
 interface CallbackBaseUrlProps {
   fileName: string;
@@ -29,6 +30,6 @@ interface CallbackBaseUrlProps {
 }
 
 const getCallbackBaseUrl = ({ fileName, filePath, token, share }: CallbackBaseUrlProps): string =>
-  `${getFrontEndUrl()}/${EDU_API_ROOT}/${FileSharingApiEndpoints.BASE}/callback?path=${filePath}&filename=${fileName}&share=${share}&token=${token}`;
+  `${getFrontEndUrl()}/${EDU_API_ROOT}/${FileSharingApiEndpoints.BASE}/${ONLY_OFFICE_CALLBACK_PATH}?path=${filePath}&filename=${fileName}&share=${share}&token=${token}`;
 
 export default getCallbackBaseUrl;

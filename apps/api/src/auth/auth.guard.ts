@@ -28,6 +28,7 @@ import { PUBLIC_ROUTE_KEY } from '@libs/auth/constants/appAccessKeys';
 import JWTUser from '@libs/user/types/jwt/jwtUser';
 import CustomHttpException from '../common/CustomHttpException';
 import extractToken from '../common/utils/extractToken';
+import SessionDenylistService from './session-denylist.service';
 
 @Injectable()
 class AuthGuard implements CanActivate {
@@ -36,6 +37,7 @@ class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
+    private sessionDenylistService: SessionDenylistService,
   ) {
     this.pubKey = readFileSync(PUBLIC_KEY_FILE_PATH, 'utf8');
   }
@@ -46,18 +48,36 @@ class AuthGuard implements CanActivate {
     const request: Request = context.switchToHttp().getRequest();
     const token = extractToken(request);
 
+    let user: JWTUser | undefined;
+
     if (token) {
       try {
-        request.user = await this.jwtService.verifyAsync<JWTUser>(token, {
+        user = await this.jwtService.verifyAsync<JWTUser>(token, {
           publicKey: this.pubKey,
           algorithms: ['RS256'],
         });
-        request.token = token;
       } catch (err) {
         if (!isPublic) {
           throw new CustomHttpException(AuthErrorMessages.TokenExpired, HttpStatus.UNAUTHORIZED, err, AuthGuard.name);
         }
       }
+    }
+
+    if (user && (await this.sessionDenylistService.isSessionDenied(user.sid))) {
+      if (!isPublic) {
+        throw new CustomHttpException(
+          AuthErrorMessages.TokenExpired,
+          HttpStatus.UNAUTHORIZED,
+          'Session revoked',
+          AuthGuard.name,
+        );
+      }
+      user = undefined;
+    }
+
+    if (user) {
+      request.user = user;
+      request.token = token;
     }
 
     if (isPublic || request.user) {

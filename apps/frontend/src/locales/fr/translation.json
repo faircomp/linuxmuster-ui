@@ -1,8 +1,69 @@
 {
+  "mailcowAdmin": {
+    "title": "Administration Mailcow",
+    "domains": "Domaines",
+    "noDomains": "Aucun domaine trouvé",
+    "searchPlaceholder": "Rechercher des boîtes aux lettres",
+    "columns": {
+      "username": "Adresse",
+      "name": "Nom",
+      "domain": "Domaine",
+      "quota": "Stockage",
+      "active": "Statut"
+    },
+    "activeStates": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "incomingOnly": "Entrant uniquement"
+    },
+    "newMailbox": "Nouvelle boîte aux lettres",
+    "manageAcl": "Autorisations",
+    "aclOptions": {
+      "spam_alias": "Alias anti-spam temporaires",
+      "tls_policy": "Politique TLS",
+      "spam_score": "Score de spam",
+      "spam_policy": "Liste d'autorisation/blocage",
+      "delimiter_action": "Action de délimiteur",
+      "syncjobs": "Tâches de synchronisation",
+      "eas_reset": "Réinitialiser les appareils ActiveSync",
+      "sogo_profile_reset": "Réinitialiser le profil SOGo",
+      "pushover": "Notifications Pushover",
+      "quarantine": "Quarantaine",
+      "quarantine_attachments": "Pièces jointes en quarantaine",
+      "quarantine_notification": "Notifications de quarantaine",
+      "quarantine_category": "Catégorie de quarantaine",
+      "app_passwds": "Mots de passe d'application"
+    },
+    "dialog": {
+      "createTitle": "Créer une boîte aux lettres",
+      "editTitle": "Modifier la boîte aux lettres",
+      "deleteTitle": "Supprimer la boîte aux lettres",
+      "deleteMessage": "Voulez-vous vraiment supprimer cette boîte aux lettres ?",
+      "passwordKeepCurrent": "Laisser vide pour conserver le mot de passe actuel",
+      "aclTitle": "Autorisations utilisateur (ACL)",
+      "aclDescription": "Mailcow ne renvoie pas les autorisations actuelles ; toutes les options sont donc présélectionnées et ne reflètent pas l'état réel. L'enregistrement remplace les autorisations utilisateur réelles de la boîte aux lettres par la sélection.",
+      "localPart": "Partie locale",
+      "localPartHint": "Seuls les lettres, chiffres et . _ + - sont autorisés",
+      "domain": "Domaine",
+      "domainPlaceholder": "Sélectionner un domaine",
+      "name": "Nom d'affichage",
+      "quota": "Stockage (Mo)",
+      "password": "Mot de passe",
+      "passwordHint": "Au moins 8 caractères avec un chiffre et un caractère spécial",
+      "passwordConfirmation": "Confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "active": "Actif"
+    },
+    "notifications": {
+      "mailboxCreated": "Boîte aux lettres créée",
+      "mailboxUpdated": "Boîte aux lettres mise à jour",
+      "mailboxDeleted": "Boîte aux lettres supprimée",
+      "aclUpdated": "Autorisations de la boîte aux lettres mises à jour"
+    }
+  },
   "welcome": "Bienvenue dans l'application",
   "changeLang": "changer la langue",
   "heading": "Bienvenue {{givenName}} {{familyName}}",
-  "content": "Voici votre tableau de bord {{ applicationName }} personnel. L'endroit où toutes vos applications de cours numériques sont rassemblées.",
   "closeEditingWindow": "Voulez-vous vraiment fermer la fenêtre de modification ?",
   "framebufferImage": "Image tampon",
   "previewImage": "Aperçu de l'image",
@@ -80,7 +141,12 @@
       "visibleByUsersAndGroupsTitle": "Page d'accueil",
       "editableByUsersAndGroups": "Cette catégorie est éditable par les utilisateurs et les groupes de l'application Bulletin Board",
       "editableByUsersAndGroupsTitle": "Gérer les messages",
-      "accessGroupsOnlyHint": "Seuls les groupes d'accès peuvent être attribués."
+      "accessGroupsOnlyHint": "Seuls les groupes d'accès peuvent être attribués.",
+      "FULLY_VISIBLE": "Entièrement visible",
+      "FULLY_VISIBLE-short": "Entièrement",
+      "ONLY_TITLE": "Afficher uniquement le titre",
+      "ONLY_TITLE-short": "Titre uniquement",
+      "visibilityState": "Visibilité par défaut des annonces"
     },
     "errors": {
       "categoryNotFound": "Catégorie introuvable",
@@ -130,7 +196,7 @@
   "appstore": {
     "title": "App Store",
     "description": "Ici tu peux ajouter des applications {{ applicationName }}.",
-    "edulutionIcons": "edulution Icons",
+    "edulutionIcons": "linuxmuster Icons",
     "moreIcons": "Plus d'icônes",
     "searchIcons": "Rechercher des icônes...",
     "searchIconsHint": "Astuce: Utilisez des termes de recherche en anglais (p.ex. \"house\" au lieu de \"maison\")",
@@ -158,9 +224,7 @@
       "manual": "Instructions",
       "setupWithQrCode": "Configuration via un QR-code",
       "content": "Vous pouvez accéder au serveur scolaire à partir de nombreux appareils mobiles. Appuyez sur les instructions pour commencer.",
-      "scanAccessInfo": "Pour transférer les identifiants, veuillez scanner le QR-code suivant avec l'edulution App.",
-      "setup": "Configuration avec code QR",
-      "qrCode": "Code QR"
+      "scanAccessInfo": "Pour transférer les identifiants, veuillez scanner le QR-code suivant avec l'application linuxmuster."
     },
     "quota": {
       "title": "Quotas",
@@ -170,7 +234,8 @@
       "gbUsed": "{{used}} / {{total}} Go utilisé",
       "remainingLow": "Quota restant bas - {{free}} %",
       "remainingVeryLow": "Quota restant très bas - {{free}} %"
-    }
+    },
+    "description": "Voici ton tableau de bord {{ applicationName }} personnel. L'endroit où toutes tes applications pour l'enseignement numérique sont rassemblées."
   },
   "auth": {
     "errors": {
@@ -182,7 +247,11 @@
       "TotpInvalid": "TOTP invalide.",
       "LmnConnectionFailed": "La connexion au serveur scolaire a échoué.",
       "KeycloakConnectionFailed": "La connexion au serveur d'authentification a échoué.",
-      "EdulutionConnectionFailed": "La connexion au serveur Edulution a échoué. Veuillez réessayer plus tard."
+      "EdulutionConnectionFailed": "La connexion au serveur Edulution a échoué. Veuillez réessayer plus tard.",
+      "tokenIsNotActive": "La session n'est plus active.",
+      "Forbidden": "Accès refusé",
+      "TotpAlreadyUsed": "Ce code à usage unique a déjà été utilisé. Merci d'attendre le prochain code.",
+      "LogoutFailed": "La déconnexion n'a pas pu être effectuée entièrement."
     },
     "logout": {
       "success": "Avec succès"
@@ -219,7 +288,24 @@
       "PasswordChangeFailed": "Echec de modification du mot de passe",
       "GetUsersQuotaFailed": "L'appel du quota l'utilisateur a échoué.",
       "GetSchoolsFailed": "L'appel des écoles a échoué",
-      "GetLmnVersionFailed": "L'appel de la version Linuxmuster a échoué."
+      "GetLmnVersionFailed": "L'appel de la version Linuxmuster a échoué.",
+      "GetManagementListFailed": "Échec de la récupération de la liste de gestion",
+      "GetUsersByRoleFailed": "Échec de la récupération des utilisateurs par rôle",
+      "SaveManagementListFailed": "Échec de l'enregistrement de la liste de gestion",
+      "SophomorixApplyFailed": "Échec de l'application Sophomorix",
+      "AddParentToStudentFailed": "Échec de l'ajout du parent à l'élève",
+      "DeleteParentFromStudentFailed": "Échec de la suppression du parent de l'élève",
+      "GetLinboHealthFailed": "Échec de la récupération de l'état du système LINBO.",
+      "GetLinboServerInfoFailed": "Échec de la récupération des informations du serveur LINBO.",
+      "GetLinboHostsFailed": "Échec de la récupération des hôtes LINBO.",
+      "GetLinboGrubConfigsFailed": "Échec de la récupération des configurations GRUB de LINBO.",
+      "GetLinboStartConfsFailed": "Échec de la récupération des configurations de démarrage LINBO.",
+      "GetLinboImagesManifestFailed": "Échec de la récupération du manifeste d'images LINBO.",
+      "GetLinboChangesFailed": "Échec de la récupération des modifications LINBO.",
+      "UploadLinboImageFailed": "Échec du téléversement de l'image LINBO.",
+      "DownloadLinboImageFailed": "Échec du téléchargement de l'image LINBO.",
+      "GetLinboDhcpExportFailed": "Échec de la récupération de l'export DHCP de LINBO.",
+      "SophomorixCheckFailed": "Échec de la vérification Sophomorix"
     }
   },
   "ticketsystem": {
@@ -227,6 +313,17 @@
     "sidebar": "Système de tickets"
   },
   "mail": {
+    "emptyState": {
+      "nativePlaceholder": "Le client de messagerie natif n'est pas encore prêt."
+    },
+    "tabs": {
+      "native": "Natif",
+      "sogo": "SOGo"
+    },
+    "openInSogo": {
+      "label": "Ouvrir dans SOGo",
+      "tooltip": "Ouvre le webmail SOGo dans un nouvel onglet"
+    },
     "title": "E-mail",
     "sidebar": "E-mail",
     "configName": "Nom de la configuration",
@@ -262,9 +359,102 @@
       "deleteProviderConfig": "Supprimer la configuration du fournisseur de messagerie"
     }
   },
+  "calendar": {
+    "title": "Calendrier",
+    "today": "Aujourd'hui",
+    "month": "Mois",
+    "week": "Semaine",
+    "day": "Jour",
+    "allDay": "Toute la journée",
+    "noEvents": "Aucun événement dans cette période.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "newEvent": "Nouvel événement",
+    "editEvent": "Modifier l'événement",
+    "endBeforeStart": "La fin doit être postérieure au début.",
+    "fields": {
+      "summary": "Titre",
+      "name": "Nom",
+      "calendar": "Calendrier",
+      "start": "Début",
+      "end": "Fin",
+      "allDay": "Toute la journée",
+      "location": "Lieu",
+      "color": "Couleur",
+      "description": "Description",
+      "attendees": "Participants"
+    },
+    "recurrence": {
+      "none": "Aucune répétition",
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "repeats": "Répétition",
+      "interval": "Tous les",
+      "byday": "Les jours de la semaine",
+      "never": "Jamais",
+      "until": "Jusqu'au",
+      "count": "Nombre"
+    },
+    "scope": {
+      "title": "Modifier la série",
+      "this": "Cet événement uniquement",
+      "thisAndFollowing": "Celui-ci et les suivants",
+      "all": "Tous les événements"
+    },
+    "newCalendar": "Nouveau calendrier",
+    "timetableTag": "Calendrier d'emploi du temps",
+    "share": {
+      "title": "Partages",
+      "add": "Ajouter un partage",
+      "subject": "Utilisateur ou groupe",
+      "subjectType": {
+        "user": "Utilisateur",
+        "group": "Groupe"
+      },
+      "permission": {
+        "none": "Aucune",
+        "free_busy": "Libre/occupé",
+        "view": "Voir",
+        "modify": "Modifier",
+        "admin": "Administrateur"
+      }
+    },
+    "errors": {
+      "CalDavConnectionFailed": "Échec de la connexion au serveur CalDAV.",
+      "CalendarNotFound": "Calendrier introuvable.",
+      "EventNotFound": "Événement introuvable.",
+      "CreateEventFailed": "L'événement n'a pas pu être créé.",
+      "UpdateEventFailed": "L'événement n'a pas pu être modifié.",
+      "DeleteEventFailed": "L'événement n'a pas pu être supprimé.",
+      "CreateCalendarFailed": "Le calendrier n'a pas pu être créé.",
+      "CalendarBackendNotConfigured": "Le service de calendrier n'est pas configuré.",
+      "SetTagsFailed": "Les catégories n'ont pas pu être enregistrées."
+    }
+  },
   "chat": {
     "title": "Chat",
-    "sidebar": "Chat"
+    "sidebar": "Chat",
+    "schoolClasses": "Classes",
+    "projects": "Projets",
+    "selectConversation": "Sélectionner une conversation",
+    "selectConversationDescription": "Choisissez une classe ou un projet à gauche pour ouvrir le chat.",
+    "refreshGroups": "Actualiser les groupes",
+    "inputPlaceholder": "Écrire un message...",
+    "send": "Envoyer",
+    "noMessages": "Aucun message pour le moment",
+    "loadingMessages": "Chargement des messages...",
+    "schoolClass": "Classe",
+    "project": "Projet",
+    "startConversation": "Écrivez le premier message",
+    "error": "Erreur",
+    "errors": {
+      "conversationNotFound": "Conversation introuvable.",
+      "groupNotFound": "Groupe introuvable.",
+      "unauthorizedAccess": "Vous n'avez pas accès à cette conversation.",
+      "messageSendFailed": "Le message n'a pas pu être envoyé.",
+      "invalidGroupType": "Type de groupe invalide."
+    }
   },
   "errors": {
     "unexpectedError": "Une erreur inattendue s'est produite",
@@ -304,7 +494,6 @@
     "changeUser": "Modifier l'utilisateur",
     "joinAgain": "Rejoindre à nouveau",
     "passwordOfConference": "Mot de passe de la conférence",
-    "orContinueWithoutAccount": "Ou poursuivre sans compte",
     "conferenceIsNotStartedYet": "La conférence n'a pas encore commencé. Vous êtes actuellement dans la salle d'attente et vous serez redirigé automatiquement dès le début de la conférence.",
     "conferenceIsPasswordProtected": "Cette conférence est protégée par un mot de passe. Veuillez saisir le mot de passe pour participer.",
     "pleaseEnterYourFullName": "Entrez votre nom complet pour rejoindre la conférence.",
@@ -319,7 +508,6 @@
     "description": "L'outil de conférence permet des conférences audio et vidéo et prend en charge les présentations avec des fonctions de tableau blanc étendues.",
     "sidebar": "Conférences",
     "create": "Créer une conférence",
-    "creator": "Créateur",
     "delete": "Supprimer",
     "deleteConference": "Supprimer la conférence",
     "deleteConferences_other": "{{count}} Supprimer les conférences",
@@ -417,6 +605,7 @@
       "SaveFailed": "Échec de l'enregistrement",
       "DuplicateFailed": "La duplication a échoué",
       "AppNotProperlyConfigured": "OnlyOffice n'est pas correctement configuré, veuillez contacter l'administrateur système.",
+      "WopiTokenInvalid": "Le jeton d'accès WOPI est invalide ou a expiré.",
       "CollectingFailed": "Echec de la collecte des fichiers",
       "MissingCallbackURL": "Callback-URL manquante",
       "SharingFailed": "La distribution des fichiers a échoué",
@@ -426,8 +615,50 @@
     "publicFileSharing": {
       "sharedBy": "Partagé par",
       "errors": {
-        "PublicFileDownloadFailed": "Le téléchargement du fichier a échoué. Veuillez réessayer plus tard."
-      }
+        "PublicFileDownloadFailed": "Le téléchargement du fichier a échoué. Veuillez réessayer plus tard.",
+        "FileCouldNotBeFound": "Le lien de partage demandé est introuvable. Vérifie le lien ou contacte son créateur.",
+        "PublicFileDeletionFailed": "Le lien de partage n'a pas pu être supprimé.",
+        "PublicFileIsOnlyDeletableByOwner": "Le lien de partage ne peut être supprimé que par son propriétaire.",
+        "PublicFileIsRestricted": "Le lien de partage n'est accessible qu'à certains utilisateurs ou groupes.",
+        "PublicFileNotFound": "Lien de partage introuvable.",
+        "PublicFileWrongPassword": "Le mot de passe saisi est incorrect.",
+        "PublicIsRestrictedByInvalidToken": "Le lien de partage n'est pas accessible car le jeton est invalide."
+      },
+      "actions": "Actions",
+      "confirmDelete": "Ce lien de partage doit-il vraiment être supprimé ?",
+      "confirmDelete_other": "Ces {{count}} liens de partage doivent-ils vraiment être supprimés ?",
+      "createNewFileLink": "Créer un nouveau lien de partage",
+      "createdAt": "Créé le",
+      "deleteFileLink": "Supprimer le lien de partage",
+      "deleteFileLink_other": "Supprimer les liens de partage",
+      "downloadPublicFile": "Télécharger le contenu",
+      "editPublicShareFile": "Modifier le lien de partage",
+      "fileLink": "Lien de partage",
+      "fileName": "Nom du fichier",
+      "getFileAccess": "Saisis le mot de passe de ce partage pour accéder aux contenus.",
+      "invitedAttendees": "Invités",
+      "isAccessibleBy": "Accessible à",
+      "isActive": "Actif",
+      "isPasswordProtected": "Mot de passe",
+      "nameOfContent": "Nom du contenu :",
+      "publiclyAccessible": "Accessible publiquement",
+      "qrCodePublicShareFile": "QR-Code pour les liens de partage publics",
+      "scope": {
+        "public": "Public",
+        "publicHint": "Toute personne disposant du lien de partage peut télécharger ce contenu.",
+        "restricted": "Restreint",
+        "restrictedHint": "Seuls les groupes ou utilisateurs sélectionnés peuvent télécharger ce contenu."
+      },
+      "searchSharedFiles": "Rechercher parmi les liens de partage",
+      "selectPersonsOrGroupsWhoCanAccess": "Limite les personnes ou groupes ayant accès à ce contenu",
+      "selectedFile": "Contenu sélectionné : ",
+      "sharePublicFile": "Liens de partage publics",
+      "success": {
+        "PublicFileLinkCreated": "Lien de partage créé avec succès.",
+        "PublicFileLinkDeleted": "Lien de partage supprimé avec succès.",
+        "PublicFileLinkUpdated": "Lien de partage mis à jour avec succès."
+      },
+      "validUntil": "Valable jusqu'au"
     },
     "progressBox": {
       "info": "Informations",
@@ -440,7 +671,17 @@
       "fileInfoSharing": "Le fichier {{filename}} va être distribué à {{studentName}}",
       "fileInfoCollecting": "Le fichier {{filename}} va être collecté de {{studentName}}",
       "fileInfoDeleting": "Le fichier {{filename}} va être supprimé",
-      "errorInfo": "{{failed}} Les fichiers n'ont pas pu être distribués"
+      "errorInfo": "{{failed}} Les fichiers n'ont pas pu être distribués",
+      "downloadInfo": "Le fichier {{filename}} est en cours de téléchargement",
+      "fileInfoCopying": "Le fichier {{filename}} est en cours de copie",
+      "fileInfoMoving": "Le fichier {{filename}} est en cours de déplacement",
+      "fileIsUploading": "{{filename}} est en cours de téléversement",
+      "fileStructureIsCreating": "La structure des fichiers est en cours de création",
+      "processedCopyingInfo": "{{processed}} sur {{total}} fichiers copiés avec succès",
+      "processedMovingInfo": "{{processed}} sur {{total}} fichiers déplacés avec succès",
+      "titleCopying": "Copie des fichiers",
+      "titleMoving": "Déplacement des fichiers",
+      "zipFilesAreUploading": "Les fichiers sont téléversés dans la structure de dossiers"
     },
     "textEditor": {
       "unsavedChanges": "Modifications non enregistrées",
@@ -454,9 +695,10 @@
       "folderNameRequired": "Un nom de dossier est requis",
       "FileNameRequired": "Le nom du fichier est requis",
       "NewFileNameRequired": "Un nouveau nom de fichier est requis",
-      "NameRequired": "Nom requis"
+      "NameRequired": "Nom requis",
+      "NameExceedsCharacterLimit": "Le nom du fichier ne doit pas dépasser 30 caractères.",
+      "NameMustNotEndWithDot": "Le nom ne doit pas se terminer par un point."
     },
-
     "webdavInfo": {
       "title": "Accès WebDAV",
       "description": "Utilisez cette URL pour vous connecter à vos fichiers via des clients WebDAV",
@@ -471,6 +713,31 @@
         "macos": "Finder macOS",
         "linux": "Gestionnaire de fichiers Linux"
       }
+    },
+    "eta": {
+      "aboutDays_one": "environ {{count}} jour restant",
+      "aboutDays_other": "environ {{count}} jours restants",
+      "aboutHours_one": "environ {{count}} heure restante",
+      "aboutHours_other": "environ {{count}} heures restantes",
+      "aboutMinutes_one": "environ {{count}} minute restante",
+      "aboutMinutes_other": "environ {{count}} minutes restantes",
+      "aboutOneMinute": "environ une minute restante",
+      "fewSeconds": "quelques secondes restantes",
+      "lessThanMinute": "moins d'une minute restante",
+      "moreThanDays_one": "plus de {{count}} jour restant",
+      "moreThanDays_other": "plus de {{count}} jours restants",
+      "moreThanHours_one": "plus de {{count}} heure restante",
+      "moreThanHours_other": "plus de {{count}} heures restantes"
+    },
+    "expiry": {
+      "inviteesWarning": "⚠️ AVERTISSEMENT : toute personne appartenant aux groupes ou utilisateurs sélectionnés peut télécharger ce contenu.",
+      "noInviteesWarning": "⚠️  AVERTISSEMENT : toute personne disposant du lien peut télécharger ce contenu.",
+      "select": "Choisir une date d'expiration",
+      "selectedItemPrefix": "Contenu sélectionné à partager :"
+    },
+    "publicShareFilesPage": {
+      "description": "Tu trouveras ici tous les fichiers que tu as partagés. Remarque : toute personne disposant du lien de partage et, le cas échéant, du mot de passe correspondant peut télécharger ces fichiers.",
+      "title": "Fichiers partagés"
     }
   },
   "forums": {
@@ -813,7 +1080,6 @@
       },
       "templates": "Modèles",
       "templateMenu": {
-        "fetch": "Choisissez l'un des modèles disponibles.",
         "submit": "Enregistrez le sondage en tant que modèle.",
         "title": "Modèles d'enregistrement / charge",
         "emptyMessage": "Il n'y a pas encore de modèles",
@@ -826,7 +1092,9 @@
           "message": "Êtes-vous sûr de vouloir supprimer ce modèle ?",
           "success": "Modèle supprimé avec succès",
           "error": "Échec de la suppression du modèle"
-        }
+        },
+        "adminMessage": "Pour publier ton sondage actuel comme modèle, clique sur 'Enregistrer'. Les modèles existants peuvent être supprimés ou chargés ici.",
+        "userMessage": "Les modèles disponibles peuvent être chargés ici."
       },
       "questionSettings": {
         "settings": "Paramètres",
@@ -843,7 +1111,19 @@
         "addBackendLimiterForOtherItem": "Cela fixe à quelle fréquence les participants peuvent sélectionner ces options.",
         "upperLimit": "limite",
         "upperBackendLimiters": "Options de sélection avec limite supérieure",
-        "addChoice": "Ajouter"
+        "addChoice": "Ajouter",
+        "addColumn": "Ajouter une colonne",
+        "addRow": "Ajouter une ligne",
+        "columns": "Colonnes",
+        "filterPlaceHolderText": "Rechercher une option",
+        "imageWidth": "Largeur d'une image en pixels [px]",
+        "imageWidthPlaceholder": "0 signifie que la largeur n'est limitée que par l'espace disponible.",
+        "newColumn": "Nouvelle colonne",
+        "newRow": "Nouvelle ligne",
+        "removeColumn": "Supprimer la colonne",
+        "removeRow": "Supprimer la ligne",
+        "rows": "Lignes",
+        "rowsAndColumns": "Modifier les lignes et les colonnes"
       },
       "surveyLogo": {
         "title": "Logo de l'enquête",
@@ -861,13 +1141,22 @@
       }
     },
     "participate": {
-      "saveAnswerSuccess": "La réponse a été enregistrée."
+      "saveAnswerSuccess": "La réponse a été enregistrée.",
+      "completeMessage": "Merci beaucoup d'avoir participé au sondage",
+      "fileSizeExceeded": "Un fichier dépasse la taille maximale autorisée de {{size}} Mo.",
+      "idHeader": "Ton ID de participation",
+      "idParagraph": "Pour consulter ta réponse ou, si configuré, la modifier à nouveau, tu peux utiliser l'ID de participation ici.",
+      "idText": "Note bien :",
+      "invalidUsername": "Le nom d'utilisateur est invalide (les lettres, chiffres et [. -] sont autorisés)",
+      "pleaseEnterYourFullName": "Saisis ton nom complet pour participer au sondage. Ou utilise l'ID de participation pour modifier ta soumission.",
+      "username": "Nom d'utilisateur",
+      "usernameRequired": "Le nom d'utilisateur est obligatoire",
+      "yourFullName": "Nom"
     },
     "errors": {
       "submitAnswerError": "La réponse n'a pas pu être enregistrée.",
       "updateOrCreateError": "L'enquête ne pouvait ni être mise à jour ni créée.",
       "deleteError": "Les enquêtes n'ont pas pu être supprimées.",
-      "imageDeletionFailed": "Pas toutes les images des enquêtes n'ont pu être supprimées.",
       "noAnswerError": "Aucune réponse n'a encore été donnée.",
       "noFormulaError": "Le formulaire du sondage ne peut pas être lue.",
       "noBackendLimitersError": "Afin de pouvoir utiliser cette fonction, les valeurs limites doivent être définies dans l'éditeur.",
@@ -876,8 +1165,16 @@
       "participationErrorUserNotAssigned": "Vous n'êtes pas invité à ce sondage.",
       "participationErrorAlreadyParticipated": "Vous avez déjà participé.",
       "participationErrorSurveyExpired": "Le sondage a expiré.",
-      "idTypeError": "ID de sondage non valide.",
-      "missingAnswerError": "Veuillez remplir le sondage avant d'envoyer votre réponse."
+      "missingAnswerError": "Veuillez remplir le sondage avant d'envoyer votre réponse.",
+      "missingIdError": "ID de sondage manquant."
+    },
+    "export": {
+      "error": "Erreur lors de l'export",
+      "exportToPDF": "Exporter en PDF",
+      "processing": "Export en cours de traitement...",
+      "saveInPDF": "Enregistrer en PDF",
+      "success": "Export réussi",
+      "warning": "Certaines questions ne peuvent pas être affichées correctement dans l'export PDF. Cela inclut notamment le téléversement de fichiers, la sélection d'images et le champ de mot de passe."
     }
   },
   "survey-answer": {
@@ -887,7 +1184,8 @@
       "notAbleToUpdateSurveyAnswerError": "La réponse n'a pas pu être mise à jour.",
       "notAbleToCreateSurveyAnswerError": "La réponse n'a pas pu être créée.",
       "notAbleToDeleteSurveyAnswerError": "La réponse n'a pas pu être supprimée.",
-      "alreadyParticipated": "Vous avez déjà participé."
+      "alreadyParticipated": "Vous avez déjà participé.",
+      "notAbleToCountChoices": "Le nombre de choix n'a pas pu être déterminé."
     }
   },
   "surveys": {
@@ -950,7 +1248,9 @@
     },
     "resultTableDialog": {
       "title": "Résultats - Tableau"
-    }
+    },
+    "deletedSurvey": "Sondage supprimé avec succès",
+    "deletedSurveys": "{{count}} sondages supprimés avec succès"
   },
   "printer": {
     "title": "Imprimante",
@@ -1077,18 +1377,15 @@
       "title": "Paramètres globaux",
       "security": "Sécurité",
       "multiFactorAuthentication": "Authentification à deux facteurs",
-      "description": "Ici, vous pouvez déterminer pour quels groupes d'utilisateurs la double authentification à deux facteurs doit être forcée.",
       "selectUserGroups": "Sélectionnez des groupes d'utilisateurs pour lesquels la configuration MFA est forcée.",
       "updateSuccessful": "Configuration mise à jour avec succès.",
       "errors": {
         "updateError": "Les paramètres n'ont pas pu être mis à jour.",
         "notFoundError": "Les paramètres n'ont pas pu être chargés."
       },
-
       "branding": {
         "title": "Identité visuelle"
       },
-
       "logo": {
         "title": "Logo",
         "descriptionSchool": "Téléversez le logo. Il sera affiché sur l'écran de connexion et sur la carte d'identification de l'application Edulution.",
@@ -1128,19 +1425,18 @@
         "website": "Site web de l’organisation",
         "city": "Ville"
       },
-      "userAdministration": {
-        "title": "Administration des utilisateurs",
-        "resetMfaForm": "Réinitialiser l’authentification à deux facteurs",
-        "resetMfaFormDescription": "Ici, vous pouvez réinitialiser l’authentification à deux facteurs pour les utilisateurs.",
-        "selectUsersTitle": "Sélectionner les utilisateurs",
-        "selectUsersDescription": "Sélectionnez les utilisateurs pour lesquels vous souhaitez réinitialiser l’authentification à deux facteurs.",
-        "totpResetSuccess": "Le TOTP pour l’utilisateur {{username}} a été désactivé avec succès.",
-        "setAdminGroupTitle": "Définir le groupe d’administrateurs",
-        "setAdminGroupDescription": "Des administrateurs supplémentaires peuvent être définis ici. L’administrateur global reste inchangé.",
-        "setAdminGroupSelectDescription": "Les groupes peuvent être sélectionnés via le champ de recherche.",
-        "setAdminGroupWarning": "Au moins un groupe d’administrateurs doit être sélectionné."
+      "deploymentTarget": "Plate-forme cible de déploiement",
+      "defaultLandingPageDescription": "Tu peux définir ici quelle application doit être affichée par défaut aux utilisateurs après la connexion.",
+      "defaultLandingPageSwitchDescription": "Si activé, les utilisateurs sont redirigés après une connexion réussie non pas vers le tableau de bord, mais vers l'application configurée ici.",
+      "defaultLandingPageTitle": "Application par défaut après la connexion",
+      "general": "Général",
+      "ldap": {
+        "edulution-binduser-description": "Tu peux configurer ici les identifiants LDAP nécessaires à la synchronisation des groupes.",
+        "edulution-binduser-dn": "Distinguished Name (DN)",
+        "edulution-binduser-password": "Mot de passe",
+        "title": "LDAP"
       },
-      "deploymentTarget": "Plate-forme cible de déploiement"
+      "mfaDescription": "Tu peux définir ici pour quels groupes d'utilisateurs l'authentification à deux facteurs doit être imposée."
     },
     "info": {
       "title": "Informations"
@@ -1159,7 +1455,9 @@
       "deleteSuccess": "Client Webhook supprimé",
       "filterPlaceholder": "Filtrer les clients Webhook..."
     },
-    "lmnVersion": { "title": "Aperçu des versions de Linuxmuster" },
+    "lmnVersion": {
+      "title": "Aperçu des versions de Linuxmuster"
+    },
     "appconfig": {
       "deleteEntries": "Supprimer entrée",
       "deleteEntries_other": "Supprimer {{count}} entrées",
@@ -1172,6 +1470,10 @@
         },
         "onlyOffice": {
           "title": "Intégration OnlyOffice",
+          "description": ""
+        },
+        "documentEditor": {
+          "title": "Éditeur de documents",
           "description": ""
         },
         "imapMailFeed": {
@@ -1198,7 +1500,6 @@
           "title": "Configuration proxy",
           "description": "Une configuration proxy distincte pour Trafik peut être stockée ici. Vous pouvez soit utiliser un modèle à l'aide des champs d'entrée, soit une configuration au format YAML peut être créée directement en mode expert. <br/><strong>Danger:</strong> Une fausse configuration peut conduire à une application inaccessible."
         },
-
         "docker": {
           "title": "Applications Docker",
           "description": "Afin de pouvoir utiliser les services étendus, les applications de conteneurs requises peuvent être installées et démarrées ici.",
@@ -1291,6 +1592,10 @@
       "create": {
         "success": "L'application a été créée",
         "failed": "Echec de création de l'application"
+      },
+      "position": {
+        "description": "À quelle position l'application doit-elle être affichée dans la barre d'applications et dans les paramètres ?",
+        "title": "Tri"
       }
     },
     "errors": {
@@ -1303,7 +1608,8 @@
       "fieldRequired": "Ce champ est obligatoire",
       "maxChars": "Maximum {{count}} caractères",
       "nameAlreadyExists": "Une application avec ce nom existe déjà",
-      "webdavShareNameAlreadyExists": "Un partage WebDAV avec ce nom existe déjà"
+      "webdavShareNameAlreadyExists": "Un partage WebDAV avec ce nom existe déjà",
+      "nameIsNotAllowed": "Ce nom d'application n'est pas autorisé"
     },
     "yamleditor": {
       "invalidYaml": "Syntaxe YAML non valide",
@@ -1329,11 +1635,86 @@
       "noLicenseRegistered": "Aucune licence enregistrée",
       "errors": {
         "signingFailed": "L'inscription a échoué",
-        "verificationFailed": "La vérification des jetons a échoué"
-      }
+        "verificationFailed": "La vérification des jetons a échoué",
+        "communityMode": "L'enregistrement de licence n'est pas disponible en mode communautaire AGPL."
+      },
+      "communityNotice": "Ce fork fonctionne en mode communautaire AGPL. Aucun enregistrement de licence commerciale n'est requis ; l'offre de code source est disponible sous Info › Offre de code source."
+    },
+    "userAdministration": {
+      "resetMfaForm": "Réinitialiser l'authentification à deux facteurs",
+      "resetMfaFormDescription": "Tu peux réinitialiser ici l'authentification à deux facteurs pour un ou plusieurs utilisateurs.",
+      "selectUsersDescription": "Sélectionne ici les utilisateurs pour lesquels l'authentification à deux facteurs doit être réinitialisée.",
+      "selectUsersTitle": "Sélectionner des utilisateurs",
+      "setAdminGroupDescription": "Des administrateurs supplémentaires peuvent être définis ici. L'administrateur global reste conservé.",
+      "setAdminGroupSelectDescription": "Les groupes peuvent être sélectionnés via le champ de recherche.",
+      "setAdminGroupTitle": "Définir le groupe d'administrateurs",
+      "setAdminGroupWarning": "Au moins un groupe d'administrateurs doit être sélectionné.",
+      "title": "Gestion des utilisateurs",
+      "totpResetSuccess": "TOTP pour {{username}} a été réinitialisé avec succès."
+    },
+    "sourceOffer": {
+      "title": "Offre de code source",
+      "description": "Ce logiciel est sous licence GNU Affero General Public License v3. Conformément à l'article 13, le code source complet de la version en cours d'exécution est disponible ici :",
+      "repositoryLink": "Ouvrir le dépôt du code source",
+      "version": "Version en cours d'exécution : {{version}}"
+    }
+  },
+  "parentChildPairing": {
+    "assignment": "Attribution parentale",
+    "assignmentDescription": "Gérer les demandes d’association parent-élève.",
+    "filterPlaceholder": "Rechercher par parent ou élève...",
+    "parent": "Parent",
+    "student": "Élève",
+    "school": "École",
+    "statusColumn": "Statut",
+    "createdAt": "Créé le",
+    "accept": "Accepter",
+    "reject": "Rejeter",
+    "statusAll": "Tous",
+    "statusPending": "En attente",
+    "statusAccepted": "Accepté",
+    "statusRejected": "Rejeté",
+    "statusUpdated": "Statut mis à jour avec succès.",
+    "errors": {
+      "codeNotFound": "Le code d’appariement n’a pas été trouvé.",
+      "codeExpired": "Le code d’appariement a expiré.",
+      "cannotPairWithSelf": "Vous ne pouvez pas vous associer avec vous-même.",
+      "pairingAlreadyExists": "Cet appariement existe déjà.",
+      "pairingNotFound": "L'appariement n'a pas été trouvé.",
+      "invalidRole": "Votre rôle ne permet pas l’appariement.",
+      "incompatibleRoles": "Vous ne pouvez pas appairer un autre élève."
     }
   },
   "usersettings": {
+    "parentChildPairing": {
+      "myParents": "Mes Parents",
+      "myChildren": "Mes Enfants",
+      "description": "Connectez votre compte avec vos parents ou enfants.",
+      "myCode": "Mon Code d'Appariement",
+      "myCodeDescription": "Partagez ce code avec la personne avec laquelle vous souhaitez vous connecter. Le code est valide 5 minutes.",
+      "enterCode": "Saisir le Code",
+      "enterCodeDescription": "Saisissez le code d'appariement que vous avez reçu de votre parent ou enfant.",
+      "enterCodePlaceholder": "Saisir le code d'appariement",
+      "submitCode": "Connecter",
+      "relationships": "Connexions",
+      "noRelationships": "Pas encore de connexions.",
+      "statusPending": "En attente",
+      "statusAccepted": "Accepté",
+      "statusRejected": "Rejeté",
+      "pairingSuccess": "Demande de connexion envoyée avec succès!",
+      "codeRefreshed": "Nouveau code d'appariement généré.",
+      "codeExpired": "Le code a expiré. Veuillez demander un nouveau code.",
+      "parent": "Parent",
+      "student": "Élève",
+      "statusColumn": "Statut",
+      "createdAt": "Créé le",
+      "accept": "Accepter",
+      "reject": "Rejeter",
+      "statusUpdated": "Statut mis à jour avec succès.",
+      "assignment": "Attribution parentale",
+      "assignmentDescription": "Gérer les demandes d'association parent-élève.",
+      "filterPlaceholder": "Rechercher par parent ou élève..."
+    },
     "title": "Mon profil",
     "sidebar": "Mon profil",
     "rowSelected": "{{selected}} de {{total}} compte sélectionné",
@@ -1398,9 +1779,11 @@
     },
     "mobileAccess": {
       "title": "Accès à l'application",
-      "description": "Tu peux configurer ici l'accès mobile à l'application edulution.",
-      "docsDescription": "Tu trouveras le lien de téléchargement de l'application edulution et les instructions d'installation dans la documentation edulution.",
-      "button": "Ouvrir le documentaire"
+      "description": "Tu peux configurer ici l'accès mobile à l'application linuxmuster.",
+      "docsDescription": "Tu trouveras le lien de téléchargement de l'application linuxmuster et les instructions d'installation dans la documentation linuxmuster.",
+      "button": "Ouvrir le documentaire",
+      "qrCode": "QR-Code",
+      "setup": "Configurer avec un QR-Code"
     },
     "faq": "FAQ",
     "externalIntegration": "Connexion externe",
@@ -1458,7 +1841,8 @@
       "qrCodeInstructions": "Scannez le code QR avec une application Authenticator qui prend en charge TOTP (mot de passe unique basé sur le temps).",
       "totpCodeInstructions": "Entrez ensuite et enregistrez le mot de passe généré ici:",
       "mfaSetupRequired": "Les directives globales nécessitent la vue de l'authentification à deux facteurs:",
-      "mfaSetupSuccess": "L'authentification à deux facteurs a été établie avec succès."
+      "mfaSetupSuccess": "L'authentification à deux facteurs a été établie avec succès.",
+      "copyTotpSecretInstructions": "Si aucune caméra n'est disponible, le secret peut être copié ici :"
     },
     "errors": {
       "currentPasswordRequired": "Le mot de passe actuel est requis",
@@ -1498,8 +1882,11 @@
     "remember_me": "Mémoriser",
     "enterMultiFactorCode": "Authentification à deux facteurs",
     "loginWithApp": "Se connecter avec un code QR",
-    "loginWithQrDescription": "Ouvrez l'application edulution.io pour vous identifer simplement avec le code QR.",
-    "infoQrCodeExpired": "Le temps de connexion avec l'application edulution.io a expiré."
+    "loginWithQrDescription": "Ouvrez l'application linuxmuster pour vous identifer simplement avec le code QR.",
+    "infoQrCodeExpired": "Le temps de connexion avec l'application linuxmuster a expiré.",
+    "publicUsername_notExisting": "Il n'existe aucune soumission avec l'ID de participation indiqué",
+    "username_not_regex": "Nom d'utilisateur/ID de participation invalide",
+    "username_too_short": "Nom d'utilisateur trop court"
   },
   "common": {
     "more": "Plus",
@@ -1513,8 +1900,6 @@
     "confirm": "Confirmer",
     "validate": "Valider",
     "share": "Partager",
-    "savedToClipboard": "Copié dans le presse-papiers.",
-    "savedToClipboardError": "N'a pas pu être copié dans le presse-papiers.",
     "answers": "Répondre",
     "error": "Erreur",
     "entry": "Entrée {{index}}",
@@ -1527,8 +1912,8 @@
     "show": "Afficher",
     "never": "Jamais",
     "errors": {
-      "attachmentUploadFailed": "La pièce jointe n'a pas pu être téléversée",
       "dbAccessFailed": "L'accès à la base de données a échoué",
+      "rateLimitExceeded": "Trop de requêtes. Veuillez réessayer plus tard.",
       "directoryNotCreated": "La création du répertoire a échoué",
       "fileNotCreated": "Échec de la création du fichier",
       "fileDeletionFailed": "Echec de suppression du fichier",
@@ -1547,7 +1932,11 @@
         "invalidCharacters": "Le chemin contient des caractères non valides",
         "outsidePublicDirectory": "Le chemin est en dehors du répertoire public",
         "symlinkOutsidePublicDirectory": "Le chemin inclut un lien symbolique qui pointe en dehors du répertoire public"
-      }
+      },
+      "fileMoveFailed": "Échec du déplacement du fichier",
+      "fileUploadFailed": "Le fichier n'a pas pu être téléversé",
+      "invalidRequestData": "Données de requête invalides",
+      "wrongServerConfig": "Configuration du serveur incorrecte"
     },
     "cut": "Couper",
     "sortOrder": "Tri",
@@ -1671,9 +2060,16 @@
     "saveLocal": "Enregistrer sur l’appareil",
     "openLocal": "Ouvrir depuis l’appareil",
     "openFileFromEdu": "Ouvrir le fichier",
-    "saveFileToEdu": "Enregistrer dans les fichiers"
+    "saveFileToEdu": "Enregistrer dans les fichiers",
+    "creator": "Créateur",
+    "filename": "Nom du fichier",
+    "of": "sur",
+    "offline": "Hors ligne",
+    "orContinueWithoutAccount": "Ou continue sans compte",
+    "reset": "Réinitialiser",
+    "showMore": "Afficher plus",
+    "visibility": "Visibilité"
   },
-
   "saveExternalFileDialogBody": {
     "saveExternalFile": "Enregistrer un fichier externe",
     "destinationFolder": "Dossier de destination",
@@ -1683,7 +2079,6 @@
     "fileSavedSuccessful": "Fichier enregistré avec succès",
     "fileSaveFailed": "Le fichier n'a pas pu être enregistré"
   },
-
   "form": {
     "path": "Lien",
     "pathDescription": "Veuillez saisir une URL.",
@@ -1711,6 +2106,11 @@
         "timeSlot": "Heure",
         "placeholder": "DD/MM/YYYY HH:mm"
       }
+    },
+    "errors": {
+      "dateInvalid": "Format de date invalide",
+      "datePast": "La date doit être dans le futur",
+      "dateRequired": "La date est obligatoire"
     }
   },
   "fileOperationSuccessful": "Succès de l'opération sur le fichier",
@@ -1723,7 +2123,8 @@
     "type": "Type",
     "filesOrFoldersSelected": "{{selected}} de {{total}} fichiers/dossiers sélectionnés",
     "element": "Élément",
-    "elements": "Éléments"
+    "elements": "Éléments",
+    "isShared": "Partagé"
   },
   "currentDirectory": "Répertoire actuel",
   "filesharingUpload": {
@@ -1757,7 +2158,12 @@
       "directoryCreationFailed": "Échec de la création du répertoire",
       "fileUploadFailed": "Échec du téléchargement du fichier",
       "uploadError": "Erreur lors du téléchargement des fichiers"
-    }
+    },
+    "addFiles": "Ajouter des fichiers",
+    "addFolder": "Ajouter un dossier",
+    "folderTooLargeDescription": "Le dossier contient plus de 100 fichiers. Choisis un autre dossier ou réduis le nombre de fichiers.",
+    "folderTooLargeTitle": "Trop de fichiers dans le dossier",
+    "preparingFolder": "Préparation du dossier"
   },
   "linuxmuster": {
     "sidebarLmn": "Serveur scolaire",
@@ -1766,6 +2172,66 @@
     "items": "{{count}} utilisateurs",
     "userManagement": "Gestion des utilisateurs",
     "description": "Gérez les paramètres de votre serveur scolaire et les utilisateurs."
+  },
+  "wiki": {
+    "description": "Wiki collaboratif pour vos partages",
+    "sidebar": "Navigation du wiki",
+    "menu": {
+      "newPage": "Nouvelle page",
+      "newFolder": "Nouveau dossier"
+    },
+    "metadata": {
+      "updatedAt": "Dernière modification :"
+    },
+    "actions": {
+      "edit": "Modifier"
+    },
+    "dialog": {
+      "location": "Emplacement :",
+      "noLocationSelected": "Aucun emplacement sélectionné.",
+      "createPage": {
+        "title": "Créer une page",
+        "titlePlaceholder": "Titre de la page",
+        "asIndex": "Comme page d'index du dossier",
+        "indexSlugReserved": "« index » est réservé à la page d'index du dossier — activez l'option page d'index ou choisissez un autre titre."
+      },
+      "createFolder": {
+        "title": "Créer un dossier",
+        "namePlaceholder": "Nom du dossier"
+      },
+      "delete": {
+        "pageTitle": "Supprimer la page",
+        "folderTitle": "Supprimer le dossier",
+        "pageMessage": "Supprimer cette page de wiki ?",
+        "folderMessage": "Supprimer ce dossier et tout son contenu ?"
+      }
+    },
+    "notifications": {
+      "pageSaved": "Page enregistrée",
+      "folderCreated": "Dossier créé",
+      "deleted": "Supprimé"
+    },
+    "search": {
+      "placeholder": "Rechercher dans le wiki …",
+      "action": "Rechercher",
+      "scope": {
+        "all": "Tout",
+        "current": "Partage actuel"
+      },
+      "empty": "Aucun résultat.",
+      "degraded": "Certains partages n'ont pas pu être recherchés.",
+      "unavailable": "La recherche est actuellement indisponible.",
+      "reasons": {
+        "timeout": "Délai dépassé",
+        "connection_error": "Erreur de connexion",
+        "http_5xx": "Erreur serveur",
+        "http_4xx": "Erreur de requête",
+        "health_check_down": "Partage hors ligne"
+      }
+    },
+    "empty": {
+      "selectPageHint": "Sélectionnez une page à gauche pour l'afficher."
+    }
   },
   "whiteboard": {
     "title": "TABLEAU BLANC",
@@ -1779,7 +2245,11 @@
   },
   "whiteboard-collaboration": {
     "title": "Whiteboard",
-    "sidebar": "Whiteboard collaboratif"
+    "sidebar": "Whiteboard collaboratif",
+    "dropdownPlaceholder": "Choisis ici ta salle actuelle",
+    "historyNoMore": "Aucune autre entrée",
+    "historyTitle": "Historique",
+    "privateRoom": "Salle privée"
   },
   "wireguard": {
     "title": "WIREGUARD",
@@ -1961,7 +2431,9 @@
     "move": "Déplacer",
     "delete": "Supprimer",
     "download": "Télécharger",
-    "back": "Retour"
+    "back": "Retour",
+    "copy": "Copier",
+    "share": "Partager"
   },
   "response": {
     "successfully": "L'action a réussi",
@@ -2026,7 +2498,24 @@
       "MailProviderNotFound": "Fournisseur email non trouvé",
       "MailcowApiGetSyncJobsFailed": "Les tâches de synchronisation ne pouvaient pas être appelés",
       "MailcowApiCreateSyncJobFailed": "Le tâche de synchronisation n'a pas pu être créé",
-      "MailcowApiDeleteSyncJobsFailed": "Les tâches de synchronisation n'ont pas pu être supprimés"
+      "MailcowApiDeleteSyncJobsFailed": "Les tâches de synchronisation n'ont pas pu être supprimés",
+      "MailcowApiGetDomainsFailed": "Impossible de charger les domaines",
+      "MailcowApiGetMailboxesFailed": "Impossible de charger les boîtes aux lettres",
+      "MailcowApiCreateMailboxFailed": "Impossible de créer la boîte aux lettres",
+      "MailcowApiUpdateMailboxFailed": "Impossible de mettre à jour la boîte aux lettres",
+      "MailcowApiDeleteMailboxFailed": "Impossible de supprimer la boîte aux lettres",
+      "MailcowApiUpdateMailboxAclFailed": "Impossible de mettre à jour les autorisations de la boîte aux lettres",
+      "MailcowPasswordComplexity": "Le mot de passe ne respecte pas les exigences de complexité",
+      "MailcowPasswordMismatch": "Les mots de passe ne correspondent pas",
+      "MailcowPasswordEmpty": "Le mot de passe ne doit pas être vide",
+      "MailcowUsernameInvalid": "Le nom d'utilisateur est invalide",
+      "MailcowDomainInvalid": "Le domaine est invalide",
+      "MailcowDomainNotFound": "Le domaine est introuvable",
+      "MailcowObjectExists": "L'objet existe déjà",
+      "MailcowMaxMailboxesExceeded": "Le nombre maximal de boîtes aux lettres est atteint",
+      "MailcowQuotaExceeded": "Le quota de stockage a été dépassé",
+      "MailcowAccessDenied": "Accès refusé",
+      "SyncJobAccessDenied": "Accès refusé : cette tâche de synchronisation n'appartient pas à votre compte."
     }
   },
   "licensing": {
@@ -2036,11 +2525,38 @@
     }
   },
   "appExtendedOptions": {
+    "activeMailClientTitle": "Client de messagerie",
+    "activeMailClientDescription": "Choisissez l'interface de messagerie pour les utilisateurs (webmail SOGo ou client natif).",
+    "activeMailClient": {
+      "native": "Client natif",
+      "sogo": "Webmail SOGo"
+    },
+    "activeMailClientWarning": "Les filtres SOGo et les réponses d'absence ne sont pas disponibles dans le client natif.",
     "title": "Extensions",
     "onlyOfficeUrl": "Entrez l'URL d'OnlyOffice ici",
     "onlyOfficeUrlTitle": "URL OnlyOffice",
     "onlyOfficeJwtSecretTitle": "JWT OnlyOffice",
     "onlyOfficeJwtSecretDescription": "Entrez ici la clé secrète JWT OnlyOffice",
+    "activeDocumentEditorTitle": "Éditeur de documents",
+    "activeDocumentEditorDescription": "Choisissez l'éditeur pour les documents office (OnlyOffice ou Collabora).",
+    "activeDocumentEditor": {
+      "onlyoffice": "OnlyOffice",
+      "collabora": "Collabora Online"
+    },
+    "collaboraUrlTitle": "URL Collabora",
+    "collaboraUrlDescription": "Entrez l'URL de votre instance Collabora Online.",
+    "collaboraWopiSecretTitle": "Secret WOPI Collabora",
+    "collaboraWopiSecretDescription": "Entrez le secret WOPI pour Collabora.",
+    "calendarCaldavBaseUrlTitle": "URL de base CalDAV",
+    "calendarCaldavBaseUrlDescription": "Saisissez l'URL de base du serveur CalDAV (par ex. 'https://sogo.example.com/SOGo/dav/').",
+    "calendarCaldavAuthModeTitle": "Schéma d'authentification",
+    "calendarCaldavAuthModeDescription": "Choisissez la méthode d'authentification du serveur auprès du service CalDAV.",
+    "calendarCaldavAuthMode": {
+      "basic": "Basic",
+      "digest": "Digest"
+    },
+    "calendarCaldavRejectUnauthorizedTitle": "Rejeter les connexions non autorisées",
+    "calendarCaldavRejectUnauthorizedDescription": "Une vérification de certificat doit-elle être effectuée pour la connexion au serveur CalDAV?",
     "drawioUrlTitle": "URL Draw.io",
     "drawioUrlDescription": "Entrez l'URL de votre instance Draw.io auto-hébergée",
     "overrideDocumentVendorMSWithOOTitle": "Utilisez l'OpenDocument comme format de document standard",
@@ -2181,7 +2697,6 @@
     "linuxmuster": "Linuxmuster",
     "generic": "Générique"
   },
-
   "webdavShare": {
     "displayName": "Nom d'affichage",
     "accessGroups": {
@@ -2220,5 +2735,34 @@
     },
     "sharePath": "Chemin de partage",
     "pathPreview": "Aperçu du chemin"
+  },
+  "copyItemDialog": {
+    "copy": "Copier",
+    "copyFilesOrDirectoriesToDirectory": "Copier des fichiers ou des répertoires dans un répertoire"
+  },
+  "ctrlKey": "CTRL",
+  "enterKey": "Entrée",
+  "fileSelectorDialogBody": {
+    "selectFile": "Fichier sélectionné",
+    "title": "Choisis un fichier à ouvrir"
+  },
+  "launcher": {
+    "noSearchResults": "Aucune application trouvée",
+    "pressEnterToStartApp": "Ouvrir la première application avec",
+    "pressShortKey": "Ouvrir le lanceur avec",
+    "searchApps": "Tape pour filtrer les applications...",
+    "title": "Lanceur d'applications"
+  },
+  "not-set": "Non défini",
+  "shareDialog": {
+    "share": "Partager",
+    "shareFilesOrDirectories": "Partager des fichiers"
+  },
+  "version": {
+    "newVersionAvailable": "Une nouvelle version de {{ appName }} est disponible.",
+    "update": "Actualiser"
+  },
+  "warnings": {
+    "colorMayConflictWithTheme": "Le réglage manuel de la couleur peut à l'avenir entraîner des problèmes avec d'autres thèmes (clair/sombre). Il est recommandé de toujours définir la couleur de la police en même temps que la couleur d'arrière-plan."
   }
 }

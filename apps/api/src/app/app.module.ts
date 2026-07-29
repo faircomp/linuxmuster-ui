@@ -32,6 +32,7 @@ import { Response } from 'express';
 import EDU_API_ROOT from '@libs/common/constants/eduApiRoot';
 import PUBLIC_DOWNLOADS_PATH from '@libs/common/constants/publicDownloadsPath';
 import PUBLIC_ASSET_PATH from '@libs/common/constants/publicAssetPath';
+import DOWNLOADS_PATH_SEGMENT from '@libs/common/constants/downloadsPathSegment';
 import LoggingInterceptor from '../logging/logging.interceptor';
 import AppConfigModule from '../appconfig/appconfig.module';
 import UsersModule from '../users/users.module';
@@ -59,6 +60,10 @@ import WebdavSharesModule from '../webdav/shares/webdav-shares.module';
 import LdapKeycloakSyncModule from '../ldap-keycloak-sync/ldap-keycloak-sync.module';
 import redisConnection from '../common/redis.connection';
 import NotificationsModule from '../notifications/notifications.module';
+import ChatModule from '../chat/chat.module';
+import ParentChildPairingModule from '../parent-child-pairing/parent-child-pairing.module';
+import WikiModule from '../wiki/wiki.module';
+import CalendarModule from '../calendar/calendar.module';
 import MobileAppModule from '../mobileAppModule/mobileApp.module';
 import UserPreferencesModule from '../user-preferences/user-preferences.module';
 import DevCacheFlushService from '../common/cache/dev-cache-flush.service';
@@ -103,7 +108,7 @@ import WebhookClientsModule from '../webhook-clients/webhook-clients.module';
     EventEmitterModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: PUBLIC_DOWNLOADS_PATH,
-      serveRoot: `/${EDU_API_ROOT}/downloads`,
+      serveRoot: `/${EDU_API_ROOT}/${DOWNLOADS_PATH_SEGMENT}`,
     }),
     ServeStaticModule.forRoot({
       rootPath: PUBLIC_ASSET_PATH,
@@ -139,6 +144,10 @@ import WebhookClientsModule from '../webhook-clients/webhook-clients.module';
     BulletinCategoryModule,
     BulletinBoardModule,
     NotificationsModule,
+    ChatModule,
+    ParentChildPairingModule,
+    WikiModule,
+    CalendarModule,
     MobileAppModule,
     SseModule,
     TLDrawSyncModule,

@@ -17,7 +17,7 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-import { Inject, Injectable, MessageEvent, OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, MessageEvent, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Observable, Subject } from 'rxjs';
@@ -25,6 +25,9 @@ import { map } from 'rxjs/operators';
 import { Response } from 'express';
 import { Interval } from '@nestjs/schedule';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import LOGIN_SESSION_SSE_CHANNEL_PREFIX from '@libs/sse/constants/loginSessionSseChannelPrefix';
+import PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX from '@libs/sse/constants/publicConferenceSseChannelPrefix';
+import AuthErrorMessages from '@libs/auth/constants/authErrorMessages';
 import { Cache } from 'cache-manager';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import type SseStatus from '@libs/common/types/sseMessageType';
@@ -35,9 +38,12 @@ import {
   SSE_PERSIST_DEBOUNCE_MS,
 } from '@libs/sse/constants/sseConfig';
 import EVENT_EMITTER_EVENTS from '@libs/appconfig/constants/eventEmitterEvents';
+import CustomHttpException from '../common/CustomHttpException';
 import type UserConnections from '../types/userConnections';
 import type SseEvent from '../types/sseEvent';
 import type SseEventData from '../types/sseEventData';
+
+const NON_USER_SSE_CHANNEL_PREFIXES = [LOGIN_SESSION_SSE_CHANNEL_PREFIX, PUBLIC_CONFERENCE_SSE_CHANNEL_PREFIX];
 
 @Injectable()
 class SseService implements OnModuleInit {
@@ -55,8 +61,12 @@ class SseService implements OnModuleInit {
     await this.restoreUserConnectionsFromCache();
   }
 
+  private static isNonUserChannel(key: string): boolean {
+    return NON_USER_SSE_CHANNEL_PREFIXES.some((prefix) => key.startsWith(prefix));
+  }
+
   private async persistUserConnectionsToCache(): Promise<void> {
-    const usernames = Array.from(this.userConnections.keys());
+    const usernames = Array.from(this.userConnections.keys()).filter((key) => !SseService.isNonUserChannel(key));
     await this.cacheManager.set(SSE_USER_CONNECTIONS_CACHE_KEY, usernames, 0);
   }
 
@@ -98,6 +108,16 @@ class SseService implements OnModuleInit {
 
   public subscribe(username: string, res: Response): Observable<MessageEvent> {
     let subject = this.userConnections.get(username);
+
+    if (subject && username.startsWith(LOGIN_SESSION_SSE_CHANNEL_PREFIX)) {
+      throw new CustomHttpException(
+        AuthErrorMessages.Forbidden,
+        HttpStatus.FORBIDDEN,
+        { username },
+        SseService.name,
+      );
+    }
+
     const isNewConnection = !subject;
     if (!subject) {
       subject = new Subject<SseEvent>();

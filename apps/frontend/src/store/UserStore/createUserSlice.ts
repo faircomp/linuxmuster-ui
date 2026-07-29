@@ -27,6 +27,7 @@ import UserDto from '@libs/user/types/user.dto';
 import AttendeeDto from '@libs/user/types/attendee.dto';
 import { EDU_API_USERS_ENDPOINT, EDU_API_USERS_SEARCH_ENDPOINT } from '@libs/user/constants/usersApiEndpoints';
 import UserLanguageType from '@libs/user/types/userLanguageType';
+import AUTH_PATHS from '@libs/auth/constants/auth-paths';
 
 const initialState = {
   isAuthenticated: false,
@@ -44,8 +45,17 @@ const createUserSlice: StateCreator<UserStore, [], [], UserSlice> = (set, get) =
 
   setEduApiToken: (eduApiToken) => set({ eduApiToken }),
 
-  logout: async () => {
+  logout: async (refreshToken) => {
     set({ isPreparingLogout: true });
+
+    if (refreshToken) {
+      try {
+        await eduApi.post(AUTH_PATHS.AUTH_LOGOUT_ENDPOINT, { refresh_token: refreshToken });
+      } catch (error) {
+        handleApiError(error, set);
+      }
+    }
+
     await delay(200);
     set({ isAuthenticated: false });
   },

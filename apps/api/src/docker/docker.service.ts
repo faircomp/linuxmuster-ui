@@ -21,10 +21,12 @@ import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@
 import Docker from 'dockerode';
 import { fromEvent, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { ensureDirSync, writeFileSync } from 'fs-extra';
+import { ensureDirSync, existsSync, moveSync, readFileSync, writeFileSync } from 'fs-extra';
+import { parse } from 'yaml';
 import { join } from 'path';
 import SSE_MESSAGE_TYPE from '@libs/common/constants/sseMessageType';
 import getErrorMessage from '@libs/common/utils/getErrorMessage';
+import generateSecureToken from '@libs/common/utils/generateSecureToken';
 import type DockerEvent from '@libs/docker/types/dockerEvents';
 import type TDockerCommands from '@libs/docker/types/TDockerCommands';
 import DockerErrorMessages from '@libs/docker/constants/dockerErrorMessages';
@@ -37,12 +39,24 @@ import CONTAINER from '@libs/docker/constants/container';
 import type PullEvent from '@libs/docker/types/pullEvent';
 import APPS_FILES_PATH from '@libs/common/constants/appsFilesPath';
 import type CreateContainerDto from '@libs/docker/types/create-container.dto';
-import { injectEnvIntoCompose, parseDockerEnv } from '@libs/docker/utils/createComposeFile';
+import {
+  injectEnvIntoCompose,
+  normalizeEnvironment,
+  parseDockerEnv,
+  type ComposeFile,
+} from '@libs/docker/utils/createComposeFile';
 import { EDULUTION_MANAGER_CONTAINER_NAME } from '@libs/docker/constants/edulution-manager';
+import DOCKER_APPLICATION_LIST from '@libs/docker/constants/dockerApplicationList';
+import MOODLE_GENERATE_SECRETS from '@libs/docker/constants/moodleGenerateSecrets';
+import DOCKER_COMPOSE_ENV_VAR_PATTERN from '@libs/docker/constants/dockerComposeEnvVarPattern';
+import FILESHARING_DOCKER_CONTAINERS from '@libs/docker/constants/filesharingDockerContainers';
+import ActiveDocumentEditor, { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocumentEditor';
 import APPS from '@libs/appconfig/constants/apps';
+import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import CustomHttpException from '../common/CustomHttpException';
 import SseService from '../sse/sse.service';
 import AppConfigService from '../appconfig/appconfig.service';
+import ensureKeycloakClient from './utils/ensureKeycloakClient';
 
 @Injectable()
 class DockerService implements OnModuleInit, OnModuleDestroy {
@@ -58,12 +72,46 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
     private readonly appConfigService: AppConfigService,
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
+    await this.migrateDockerComposeFiles();
     this.listenToDockerEvents();
   }
 
   onModuleDestroy() {
     this.closeEventStream();
+  }
+
+  async resolveContainerName(applicationName: string): Promise<string> {
+    if (applicationName === APPS.FILE_SHARING) {
+      const fileSharingConfig = await this.appConfigService.getAppConfigByName(APPS.FILE_SHARING);
+      const activeEditor =
+        (fileSharingConfig?.extendedOptions?.[ExtendedOptionKeys.ACTIVE_DOCUMENT_EDITOR] as
+          | ActiveDocumentEditor
+          | undefined) ?? ACTIVE_DOCUMENT_EDITOR.ONLY_OFFICE;
+      return FILESHARING_DOCKER_CONTAINERS[activeEditor];
+    }
+    return (DOCKER_APPLICATION_LIST as Record<string, string | undefined>)[applicationName] ?? applicationName;
+  }
+
+  async migrateDockerComposeFiles() {
+    const applicationNames = Object.keys(DOCKER_APPLICATION_LIST);
+    await Promise.all(
+      applicationNames.map(async (applicationName) => {
+        const oldFilePath = join(APPS_FILES_PATH, applicationName, 'docker-compose.yml');
+        if (!existsSync(oldFilePath)) {
+          return;
+        }
+        const containerName = await this.resolveContainerName(applicationName);
+        const newDir = join(APPS_FILES_PATH, applicationName, containerName);
+        const newFilePath = join(newDir, 'docker-compose.yml');
+        if (existsSync(newFilePath)) {
+          return;
+        }
+        ensureDirSync(newDir);
+        moveSync(oldFilePath, newFilePath);
+        Logger.log(`Migrated docker-compose.yml: ${oldFilePath} -> ${newFilePath}`, DockerService.name);
+      }),
+    );
   }
 
   private listenToDockerEvents() {
@@ -212,13 +260,67 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  static readSavedEnvValues(applicationName: string, containerName: string, keys: string[]): Record<string, string> {
+    const filePath = join(APPS_FILES_PATH, applicationName, containerName, 'docker-compose.yml');
+    if (!existsSync(filePath)) {
+      return {};
+    }
+    try {
+      const content = readFileSync(filePath, 'utf-8');
+      const doc = parse(content) as ComposeFile;
+      if (!doc.services) {
+        return {};
+      }
+      const allEnvs = Object.values(doc.services).reduce<Record<string, string>>(
+        (acc, service) => ({ ...acc, ...normalizeEnvironment(service.environment) }),
+        {},
+      );
+      return keys.reduce<Record<string, string>>((acc, key) => {
+        if (key in allEnvs) {
+          acc[key] = allEnvs[key];
+        }
+        return acc;
+      }, {});
+    } catch (error) {
+      Logger.debug(
+        `Failed to read saved env values for ${applicationName}: ${getErrorMessage(error)}`,
+        DockerService.name,
+      );
+      return {};
+    }
+  }
+
   async replaceEnvVariables(
     createContainersDto: Docker.ContainerCreateOptions[],
     applicationName: string,
+    containerName: string,
   ): Promise<Docker.ContainerCreateOptions[]> {
     const appConfigValues: Record<string, string> = {};
 
     switch (applicationName) {
+      case APPS.LEARNING_MANAGEMENT: {
+        const savedValues = DockerService.readSavedEnvValues(applicationName, containerName, [
+          ...MOODLE_GENERATE_SECRETS,
+        ]);
+        MOODLE_GENERATE_SECRETS.forEach((key) => {
+          appConfigValues[key] = savedValues[key] || generateSecureToken();
+        });
+        const moodleClientId = DOCKER_APPLICATION_LIST.learningmanagement;
+        if (!moodleClientId) {
+          throw new CustomHttpException(
+            DockerErrorMessages.DOCKER_CREATION_ERROR,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            undefined,
+            DockerService.name,
+          );
+        }
+        appConfigValues.KEYCLOAK_MOODLE_CLIENT_ID = moodleClientId;
+        appConfigValues.KEYCLOAK_MOODLE_CLIENT_SECRET = await ensureKeycloakClient(
+          moodleClientId,
+          appConfigValues.KEYCLOAK_MOODLE_CLIENT_SECRET,
+        );
+        break;
+      }
       case APPS.WIREGUARD: {
         const wireguardConfig = await this.appConfigService.getAppConfigByName(APPS.WIREGUARD);
         if (wireguardConfig?.options?.apiKey) {
@@ -230,23 +332,47 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
         break;
     }
 
-    const newCreateContainersDto: Docker.ContainerCreateOptions[] = createContainersDto.map((service) => ({
-      ...service,
-      Env: service.Env?.map((env) =>
-        env.replace(/\${([^}]+)}/g, (match, varName: string) => {
-          if (appConfigValues[varName]) {
-            return appConfigValues[varName];
-          }
-          return process.env[varName] || match;
-        }),
-      ),
-    }));
+    const resolveVar = (match: string, expr: string): string => {
+      const separatorIndex = expr.indexOf(':-');
+      const varName = separatorIndex === -1 ? expr : expr.slice(0, separatorIndex);
+      const defaultValue = separatorIndex === -1 ? undefined : expr.slice(separatorIndex + 2);
+      if (varName in appConfigValues) {
+        return appConfigValues[varName];
+      }
+      const envValue = process.env[varName];
+      if (envValue !== undefined) {
+        return envValue;
+      }
+      if (defaultValue !== undefined) {
+        return defaultValue;
+      }
+      return match;
+    };
 
-    return newCreateContainersDto;
+    const resolveVarsInValue = (value: unknown): unknown => {
+      if (typeof value === 'string') {
+        return value.replace(DOCKER_COMPOSE_ENV_VAR_PATTERN, resolveVar);
+      }
+      if (Array.isArray(value)) {
+        return value.map(resolveVarsInValue);
+      }
+      if (value && typeof value === 'object') {
+        return Object.fromEntries(
+          Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+            key,
+            resolveVarsInValue(entryValue),
+          ]),
+        );
+      }
+      return value;
+    };
+
+    return createContainersDto.map((service) => resolveVarsInValue(service) as Docker.ContainerCreateOptions);
   }
 
   private static saveDockerCompose(
     applicationName: string,
+    containerName: string,
     containers: Docker.ContainerCreateOptions[],
     originalComposeConfig: string,
   ): void {
@@ -255,7 +381,7 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
     const finalComposeConfig = injectEnvIntoCompose(originalComposeConfig, mergedEnvs);
 
     try {
-      const fileDir = join(APPS_FILES_PATH, applicationName);
+      const fileDir = join(APPS_FILES_PATH, applicationName, containerName);
       ensureDirSync(fileDir);
 
       const filePath = join(fileDir, 'docker-compose.yml');
@@ -270,8 +396,9 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
 
   async createContainer(createContainerDto: CreateContainerDto) {
     const { applicationName, containers, originalComposeConfig } = createContainerDto;
+    const containerName = createContainerDto.containerName ?? (await this.resolveContainerName(applicationName));
 
-    const newContainers = await this.replaceEnvVariables(containers, applicationName);
+    const newContainers = await this.replaceEnvVariables(containers, applicationName, containerName);
 
     try {
       await Promise.all(
@@ -283,21 +410,20 @@ class DockerService implements OnModuleInit, OnModuleDestroy {
         }),
       );
 
-      await Promise.all(
-        newContainers.map(async (containerDto) => {
-          this.sseService.sendEventToUsers(
-            [SPECIAL_USERS.GLOBAL_ADMIN],
-            { progress: 'docker.events.creatingContainer', from: `${containerDto.name}` } as DockerEvent,
-            SSE_MESSAGE_TYPE.CONTAINER_PROGRESS,
-          );
-          const container = await this.docker.createContainer(containerDto);
-          await container.start();
-          Logger.log(`Container ${containerDto.name} created and started.`, DockerService.name);
-        }),
-      );
+      await newContainers.reduce(async (prev, containerDto) => {
+        await prev;
+        this.sseService.sendEventToUsers(
+          [SPECIAL_USERS.GLOBAL_ADMIN],
+          { progress: 'docker.events.creatingContainer', from: `${containerDto.name}` } as DockerEvent,
+          SSE_MESSAGE_TYPE.CONTAINER_PROGRESS,
+        );
+        const container = await this.docker.createContainer(containerDto);
+        await container.start();
+        Logger.log(`Container ${containerDto.name} created and started.`, DockerService.name);
+      }, Promise.resolve());
 
       if (applicationName && newContainers && originalComposeConfig) {
-        DockerService.saveDockerCompose(applicationName, newContainers, originalComposeConfig);
+        DockerService.saveDockerCompose(applicationName, containerName, newContainers, originalComposeConfig);
       }
 
       this.sseService.sendEventToUsers(

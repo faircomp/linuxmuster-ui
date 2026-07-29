@@ -33,6 +33,8 @@ import getIsAdmin from '@libs/user/utils/getIsAdmin';
 import APPS from '@libs/appconfig/constants/apps';
 import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
 import MultipleSelectorGroup from '@libs/groups/types/multipleSelectorGroup';
+import PUBLIC_EXTENDED_OPTION_KEYS from '@libs/appconfig/constants/publicExtendedOptionKeys';
+import pickSafeExtendedOptions from '@libs/appconfig/utils/pickSafeExtendedOptions';
 import CustomHttpException from '../common/CustomHttpException';
 import { AppConfig } from './appconfig.schema';
 import initializeCollection from './initializeCollection';
@@ -254,8 +256,7 @@ class AppConfigService implements OnModuleInit {
           .lean();
 
         appConfigDto = appConfigObjects.map((config) => {
-          const extendedOptions = { ...(config.extendedOptions ?? {}) };
-          delete extendedOptions.ONLY_OFFICE_JWT_SECRET;
+          const extendedOptions = pickSafeExtendedOptions(config.extendedOptions);
 
           return {
             name: config.name,
@@ -291,6 +292,23 @@ class AppConfigService implements OnModuleInit {
     return appConfig;
   }
 
+  static pickPublicExtendedOptions(appConfig: AppConfigDto): AppConfigDto {
+    const extendedOptions = appConfig.extendedOptions as Record<string, unknown> | undefined;
+
+    if (!extendedOptions) {
+      return appConfig;
+    }
+
+    const safeExtendedOptions = PUBLIC_EXTENDED_OPTION_KEYS.reduce<Record<string, unknown>>((acc, key) => {
+      if (key in extendedOptions) {
+        acc[key] = extendedOptions[key];
+      }
+      return acc;
+    }, {});
+
+    return { ...appConfig, accessGroups: [], extendedOptions: safeExtendedOptions as AppConfigDto['extendedOptions'] };
+  }
+
   async getPublicAppConfigByName(name: string): Promise<AppConfigDto | undefined> {
     const appConfig = await this.appConfigModel
       .findOne({ name, [`extendedOptions.${ExtendedOptionKeys.EMBEDDED_PAGE_IS_PUBLIC}`]: true })
@@ -298,7 +316,7 @@ class AppConfigService implements OnModuleInit {
     if (!appConfig) {
       return undefined;
     }
-    return appConfig;
+    return AppConfigService.pickPublicExtendedOptions(appConfig);
   }
 
   async getPublicAppConfigs(): Promise<AppConfigDto[]> {
@@ -306,7 +324,7 @@ class AppConfigService implements OnModuleInit {
       .find({ [`extendedOptions.${ExtendedOptionKeys.EMBEDDED_PAGE_IS_PUBLIC}`]: true })
       .lean();
 
-    return appConfig;
+    return appConfig.map((config) => AppConfigService.pickPublicExtendedOptions(config));
   }
 
   async deleteConfig(configName: string, ldapGroups: string[]): Promise<AppConfigDto[]> {

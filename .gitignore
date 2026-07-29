@@ -387,3 +387,23 @@ $RECYCLE.BIN/
 !/data/public/assets/generalsettings/generalsettings-default-background-dark.webp
 !/data/public/assets/generalsettings/generalsettings-default-background-light.webp
 !/data/public/assets/generalsettings/generalsettings-default-logo.webp
+.reference/
+
+# Keycloak realm raw exports (cleartext secrets/key material — scrub via normalize-realm.mjs first)
+/scratchpad/
+*.raw.json
+
+# Security scanner binaries installed on demand by scripts/security/scanImages.sh
+/bin/
+
+# DR backup bundles / plaintext dumps — never commit (contain the master key + secrets)
+scripts/ops/**/*.tar*
+*.age
+*.gpg
+scripts/ops/out/
+dr-out/
+
+# crabbox harness state (lease/VM identifiers) and remote run logs
+.crabbox/
+
+__pycache__/

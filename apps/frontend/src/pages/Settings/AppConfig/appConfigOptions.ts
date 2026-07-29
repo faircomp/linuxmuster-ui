@@ -26,6 +26,7 @@ import {
   FrameIcon,
   FileSharingIcon,
   ForwardIcon,
+  CalendarIcon,
   LinuxmusterIcon,
   MailIcon,
   EmbeddedIcon,
@@ -37,6 +38,7 @@ import type AppConfigOption from '@libs/appconfig/types/appConfigOption';
 import APPS from '@libs/appconfig/constants/apps';
 import AppConfigSectionsKeys from '@libs/appconfig/constants/appConfigSectionsKeys';
 import ONLY_OFFICE_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/onlyOffice';
+import COLLABORA_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/collabora';
 import MAIL_IMAP_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/imapMailFeed';
 import BULLETIN_BOARD_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/bulletinBoardExtendedOptions';
 import FILE_SHARING_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/fileSharing';
@@ -55,6 +57,7 @@ import URL_SYNC_EXTENDED_OPTIONS, {
 import APP_LOGO_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/appLogoExtendedOptions';
 import { ALL_DISPLAY_LOCATIONS } from '@libs/appconfig/constants/appDisplayLocations';
 import WIREGUARD_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/wireguardExtendedOptions';
+import CALENDAR_CALDAV_EXTENDED_OPTIONS from '@libs/appconfig/constants/extendedOptions/calendarCaldavExtendedOptions';
 
 const APP_CONFIG_OPTIONS: AppConfigOption[] = [
   {
@@ -110,6 +113,7 @@ const APP_CONFIG_OPTIONS: AppConfigOption[] = [
     extendedOptions: {
       [AppConfigSectionsKeys.fileSharing]: FILE_SHARING_EXTENDED_OPTIONS,
       [AppConfigSectionsKeys.onlyOffice]: ONLY_OFFICE_EXTENDED_OPTIONS,
+      [AppConfigSectionsKeys.documentEditor]: COLLABORA_EXTENDED_OPTIONS,
       [AppConfigSectionsKeys.drawio]: DRAWIO_EXTENDED_OPTIONS,
       [AppConfigSectionsKeys.docker]: DOCKER_CONTAINER_EXTENDED_OPTIONS,
       [AppConfigSectionsKeys.webdavShare]: WEBDAV_SHARE_TABLE_EXTENDED_OPTIONS,
@@ -147,6 +151,15 @@ const APP_CONFIG_OPTIONS: AppConfigOption[] = [
     id: APPS.WHITEBOARD,
     icon: WhiteBoardIcon,
     isNativeApp: true,
+    defaultDisplayLocations: [...ALL_DISPLAY_LOCATIONS],
+  },
+  {
+    id: APPS.CALENDAR,
+    icon: CalendarIcon,
+    isNativeApp: true,
+    extendedOptions: {
+      [AppConfigSectionsKeys.calendar]: CALENDAR_CALDAV_EXTENDED_OPTIONS,
+    },
     defaultDisplayLocations: [...ALL_DISPLAY_LOCATIONS],
   },
   {

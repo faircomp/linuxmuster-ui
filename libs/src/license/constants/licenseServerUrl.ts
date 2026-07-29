@@ -17,6 +17,6 @@
  * If you are uncertain which license applies to your use case, please contact us at info@netzint.de for clarification.
  */
 
-const LICENSE_SERVER_URL = 'https://license.edulution.io/api/v1';
+const LICENSE_SERVER_URL = process.env.LICENSE_SERVER_URL || '';
 
 export default LICENSE_SERVER_URL;

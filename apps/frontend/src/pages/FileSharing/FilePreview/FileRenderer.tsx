@@ -21,6 +21,13 @@ import React, { FC, MutableRefObject, ReactNode, useEffect } from 'react';
 import ImageComponent from '@/components/ui/ImageComponent';
 import MediaComponent from '@/components/ui/MediaComponent';
 import OnlyOffice from '@/pages/FileSharing/FilePreview/OnlyOffice/OnlyOffice';
+import Collabora from '@/pages/FileSharing/FilePreview/Collabora/Collabora';
+import resolveOfficeEditorPreviewType from '@/pages/FileSharing/FilePreview/resolveOfficeEditorPreviewType';
+import useAppConfigsStore from '@/pages/Settings/AppConfig/useAppConfigsStore';
+import getExtendedOptionsValue from '@libs/appconfig/utils/getExtendedOptionsValue';
+import ExtendedOptionKeys from '@libs/appconfig/constants/extendedOptionKeys';
+import APPS from '@libs/appconfig/constants/apps';
+import { ACTIVE_DOCUMENT_EDITOR } from '@libs/filesharing/constants/activeDocumentEditor';
 import DrawioViewer from '@/pages/FileSharing/FilePreview/DrawioViewer/DrawioViewer';
 import { t } from 'i18next';
 import isImageExtension from '@libs/filesharing/utils/isImageExtension';
@@ -75,6 +82,7 @@ const FileRenderer: FC<FileRendererProps> = ({
   const { setFileIsCurrentlyDisabled } = useFileSharingStore();
   const { fileContent, isLoadingContent, fetchFileContent, reset: resetContentPreview } = useFileContentPreviewStore();
   const { editedContent, setEditedContent, setOriginalContent } = useFileEditorContentStore();
+  const { appConfigs } = useAppConfigsStore();
 
   const fileExtension = currentlyEditingFile ? getFileExtension(currentlyEditingFile.filePath) : undefined;
   const isMarkdown = fileExtension === TEXT_EXTENSIONS.MD || fileExtension === TEXT_EXTENSIONS.MARKDOWN;
@@ -124,7 +132,20 @@ const FileRenderer: FC<FileRendererProps> = ({
     if (isPdfExtension(fileExtension)) return FILE_PREVIEW_TYPE.PDF;
 
     const isOnlyOfficeDoc = isOnlyOfficeDocument(currentlyEditingFile.filePath);
-    if (isOnlyOfficeDoc && isOnlyOfficeConfigured) return FILE_PREVIEW_TYPE.ONLY_OFFICE;
+    if (isOnlyOfficeDoc) {
+      const activeEditor =
+        getExtendedOptionsValue(appConfigs, APPS.FILE_SHARING, ExtendedOptionKeys.ACTIVE_DOCUMENT_EDITOR) ??
+        ACTIVE_DOCUMENT_EDITOR.ONLY_OFFICE;
+      const isCollaboraConfigured = Boolean(
+        getExtendedOptionsValue(appConfigs, APPS.FILE_SHARING, ExtendedOptionKeys.COLLABORA_URL),
+      );
+      const officeEditorType = resolveOfficeEditorPreviewType({
+        activeEditor,
+        isCollaboraConfigured,
+        isOnlyOfficeConfigured: Boolean(isOnlyOfficeConfigured),
+      });
+      if (officeEditorType) return officeEditorType;
+    }
 
     if (isDrawioExtension(fileExtension)) return FILE_PREVIEW_TYPE.DRAWIO;
     if (isImageExtension(fileExtension)) return FILE_PREVIEW_TYPE.IMAGE;
@@ -157,6 +178,15 @@ const FileRenderer: FC<FileRendererProps> = ({
             mode={editMode ? 'edit' : 'view'}
             type={isMobileView ? 'mobile' : 'desktop'}
             isOpenedInNewTab={isOpenedInNewTab}
+          />
+        );
+
+      case FILE_PREVIEW_TYPE.COLLABORA:
+        if (isBaseLoading) return <CircleLoader className="mx-auto mt-5" />;
+        return (
+          <Collabora
+            fileName={currentlyEditingFile.filename}
+            filePath={currentlyEditingFile.filePath}
           />
         );
 

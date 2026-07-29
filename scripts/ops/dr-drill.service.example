@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Kevin Stenzel
+#
+# Recurring DR restore-drill (oneshot, triggered by dr-drill.timer).
+# Copy both files to /etc/systemd/system/ (drop the .example suffix), adjust
+# WorkingDirectory and the DR_* environment, then: systemctl enable --now dr-drill.timer
+#
+# NOTE: dr-drill.sh destroys and rebuilds ./data — only ever run it against a
+# drill/staging stack, never production.
+
+[Unit]
+Description=linuxmuster-ui DR restore drill
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/linuxmuster-ui
+Environment=DR_STACK_DIR=/srv/docker/edulution-ui-drill
+# Set the backup/restore crypto to your real values — do NOT commit secrets:
+# Environment=DR_AGE_RECIPIENT=age1yourrecipient
+# Environment=DR_AGE_IDENTITY=/etc/linuxmuster-ui/dr-age.key
+ExecStart=/bin/bash scripts/ops/dr-drill.sh

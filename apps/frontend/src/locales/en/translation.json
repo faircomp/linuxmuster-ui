@@ -1,4 +1,66 @@
 {
+  "mailcowAdmin": {
+    "title": "Mailcow administration",
+    "domains": "Domains",
+    "noDomains": "No domains found",
+    "searchPlaceholder": "Search mailboxes",
+    "columns": {
+      "username": "Address",
+      "name": "Name",
+      "domain": "Domain",
+      "quota": "Storage",
+      "active": "Status"
+    },
+    "activeStates": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "incomingOnly": "Incoming only"
+    },
+    "newMailbox": "New mailbox",
+    "manageAcl": "Permissions",
+    "aclOptions": {
+      "spam_alias": "Temporary spam aliases",
+      "tls_policy": "TLS policy",
+      "spam_score": "Spam score",
+      "spam_policy": "Allow/deny list",
+      "delimiter_action": "Delimiter action",
+      "syncjobs": "Sync jobs",
+      "eas_reset": "Reset ActiveSync devices",
+      "sogo_profile_reset": "Reset SOGo profile",
+      "pushover": "Pushover notifications",
+      "quarantine": "Quarantine",
+      "quarantine_attachments": "Quarantine attachments",
+      "quarantine_notification": "Quarantine notifications",
+      "quarantine_category": "Quarantine category",
+      "app_passwds": "App passwords"
+    },
+    "dialog": {
+      "createTitle": "Create mailbox",
+      "editTitle": "Edit mailbox",
+      "deleteTitle": "Delete mailbox",
+      "deleteMessage": "Do you really want to delete this mailbox?",
+      "passwordKeepCurrent": "Leave empty to keep the current password",
+      "aclTitle": "User permissions (ACL)",
+      "aclDescription": "Mailcow does not return the current permissions, so all options are pre-selected and do not reflect the actual state. Saving overwrites the mailbox's real user permissions with the selection.",
+      "localPart": "Local part",
+      "localPartHint": "Only letters, digits and . _ + - are allowed",
+      "domain": "Domain",
+      "domainPlaceholder": "Select a domain",
+      "name": "Display name",
+      "quota": "Storage (MB)",
+      "password": "Password",
+      "passwordHint": "At least 8 characters with a digit and a special character",
+      "passwordConfirmation": "Confirm password",
+      "passwordMismatch": "The passwords do not match",
+      "active": "Active"
+    },
+    "notifications": {
+      "mailboxCreated": "Mailbox created",
+      "mailboxUpdated": "Mailbox updated",
+      "mailboxDeleted": "Mailbox deleted",
+      "aclUpdated": "Mailbox permissions updated"
+    }
+  },
   "welcome": "Welcome to the application",
   "changeLang": "Change Language",
   "heading": "Welcome {{givenName}} {{familyName}}",
@@ -144,7 +206,7 @@
   "appstore": {
     "title": "App Store",
     "description": "Here you can add {{ applicationName }} apps.",
-    "edulutionIcons": "edulution Icons",
+    "edulutionIcons": "linuxmuster Icons",
     "moreIcons": "More icons",
     "searchIcons": "Search icons...",
     "searchIconsHint": "Tip: Use English search terms",
@@ -173,7 +235,7 @@
       "manual": "Setup",
       "setupWithQrCode": "Setup with QR code",
       "content": "You can access the school server from many mobile devices. Click on Manual to start.",
-      "scanAccessInfo": "To transfer the access data, please scan the following QR code with the edulution App."
+      "scanAccessInfo": "To transfer the access data, please scan the following QR code with the linuxmuster App."
     },
     "quota": {
       "title": "Quotas",
@@ -196,7 +258,10 @@
       "TotpInvalid": "Totp invalid.",
       "LmnConnectionFailed": "Connection to school server failed.",
       "KeycloakConnectionFailed": "Connection to authentication server failed.",
-      "EdulutionConnectionFailed": "Connection to edulution server failed. Please try again later."
+      "EdulutionConnectionFailed": "Connection to linuxmuster server failed. Please try again later.",
+      "Forbidden": "Access denied",
+      "TotpAlreadyUsed": "This one-time code has already been used. Please wait for the next code.",
+      "LogoutFailed": "The logout could not be completed fully."
     },
     "logout": {
       "success": "Logout successful"
@@ -238,7 +303,19 @@
       "GetManagementListFailed": "Failed to get management list",
       "SaveManagementListFailed": "Failed to save management list",
       "SophomorixCheckFailed": "Sophomorix check failed",
-      "SophomorixApplyFailed": "Sophomorix apply failed"
+      "SophomorixApplyFailed": "Sophomorix apply failed",
+      "AddParentToStudentFailed": "Adding parent to student failed",
+      "DeleteParentFromStudentFailed": "Removing parent from student failed",
+      "GetLinboHealthFailed": "Failed to fetch the LINBO system status.",
+      "GetLinboServerInfoFailed": "Failed to fetch the LINBO server information.",
+      "GetLinboHostsFailed": "Failed to fetch the LINBO hosts.",
+      "GetLinboGrubConfigsFailed": "Failed to fetch the LINBO GRUB configurations.",
+      "GetLinboStartConfsFailed": "Failed to fetch the LINBO start configurations.",
+      "GetLinboImagesManifestFailed": "Failed to fetch the LINBO image manifest.",
+      "GetLinboChangesFailed": "Failed to fetch the LINBO changes.",
+      "UploadLinboImageFailed": "Failed to upload the LINBO image.",
+      "DownloadLinboImageFailed": "Failed to download the LINBO image.",
+      "GetLinboDhcpExportFailed": "Failed to fetch the LINBO DHCP export."
     }
   },
   "ticketsystem": {
@@ -246,6 +323,17 @@
     "sidebar": "Tickets"
   },
   "mail": {
+    "emptyState": {
+      "nativePlaceholder": "The native mail client is not ready yet."
+    },
+    "tabs": {
+      "native": "Native",
+      "sogo": "SOGo"
+    },
+    "openInSogo": {
+      "label": "Open in SOGo",
+      "tooltip": "Opens SOGo webmail in a new tab"
+    },
     "title": "E-MAILS",
     "sidebar": "E-Mails",
     "configName": "Configuration name",
@@ -281,9 +369,102 @@
       "deleteProviderConfig": "Delete Mail Provider Configuration"
     }
   },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "allDay": "All day",
+    "noEvents": "No events in this period.",
+    "previous": "Previous",
+    "next": "Next",
+    "newEvent": "New event",
+    "editEvent": "Edit event",
+    "endBeforeStart": "The end must be after the start.",
+    "fields": {
+      "summary": "Title",
+      "name": "Name",
+      "calendar": "Calendar",
+      "start": "Start",
+      "end": "End",
+      "allDay": "All day",
+      "location": "Location",
+      "color": "Color",
+      "description": "Description",
+      "attendees": "Attendees"
+    },
+    "recurrence": {
+      "none": "No repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "repeats": "Repeat",
+      "interval": "Every",
+      "byday": "On weekdays",
+      "never": "Never",
+      "until": "Until",
+      "count": "Count"
+    },
+    "scope": {
+      "title": "Edit series",
+      "this": "This event only",
+      "thisAndFollowing": "This and following",
+      "all": "All events"
+    },
+    "newCalendar": "New calendar",
+    "timetableTag": "Timetable calendar",
+    "share": {
+      "title": "Shares",
+      "add": "Add share",
+      "subject": "User or group",
+      "subjectType": {
+        "user": "User",
+        "group": "Group"
+      },
+      "permission": {
+        "none": "None",
+        "free_busy": "Free/busy",
+        "view": "View",
+        "modify": "Modify",
+        "admin": "Administrator"
+      }
+    },
+    "errors": {
+      "CalDavConnectionFailed": "Could not connect to the CalDAV server.",
+      "CalendarNotFound": "Calendar not found.",
+      "EventNotFound": "Event not found.",
+      "CreateEventFailed": "The event could not be created.",
+      "UpdateEventFailed": "The event could not be updated.",
+      "DeleteEventFailed": "The event could not be deleted.",
+      "CreateCalendarFailed": "The calendar could not be created.",
+      "CalendarBackendNotConfigured": "The calendar service is not configured.",
+      "SetTagsFailed": "The tags could not be saved."
+    }
+  },
   "chat": {
     "title": "CHAT",
-    "sidebar": "Chat"
+    "sidebar": "Chat",
+    "schoolClasses": "School Classes",
+    "projects": "Projects",
+    "selectConversation": "Select conversation",
+    "selectConversationDescription": "Choose a class or project on the left to open the chat.",
+    "refreshGroups": "Refresh groups",
+    "inputPlaceholder": "Write a message...",
+    "send": "Send",
+    "noMessages": "No messages yet",
+    "loadingMessages": "Loading messages...",
+    "schoolClass": "School class",
+    "project": "Project",
+    "startConversation": "Write the first message",
+    "error": "Error",
+    "errors": {
+      "conversationNotFound": "Conversation not found.",
+      "groupNotFound": "Group not found.",
+      "unauthorizedAccess": "You don't have access to this conversation.",
+      "messageSendFailed": "The message could not be sent.",
+      "invalidGroupType": "Invalid group type."
+    }
   },
   "errors": {
     "automaticLoginFailed": "Automatic login failed",
@@ -426,6 +607,7 @@
       "SaveFailed": "Save failed",
       "DuplicateFailed": "Duplicate failed",
       "AppNotProperlyConfigured": "OnlyOffice is not properly configured, contact your system administrator.",
+      "WopiTokenInvalid": "The WOPI access token is invalid or has expired.",
       "CollectingFailed": "Collecting files failed",
       "MissingCallbackURL": "Missing callback URL",
       "SharingFailed": "Sharing files failed",
@@ -471,12 +653,10 @@
       "saveSuccess": "File saved successfully",
       "saveError": "Failed to save file"
     },
-
     "publicShareFilesPage": {
       "title": "Shared Files",
       "description": "Here you will find all the files you have shared. Please note: Anyone who has the share link and the corresponding password can download these files."
     },
-
     "publicFileSharing": {
       "fileName": "Filename",
       "selectedFile": "Selected file: ",
@@ -525,14 +705,12 @@
         "restrictedHint": "Only selected users or groups can access this content."
       }
     },
-
     "expiry": {
       "select": "Select expiry time",
       "selectedItemPrefix": "Selected content that is shared:",
       "noInviteesWarning": "⚠️  WARNING: Anyone with the share link will be able to download this content.",
       "inviteesWarning": "⚠️  WARNING: Anyone within the selected groups or users will be able to download this content."
     },
-
     "eta": {
       "fewSeconds": "a few seconds remaining",
       "lessThanMinute": "less than a minute remaining",
@@ -548,7 +726,6 @@
       "moreThanDays_one": "more than {{count}} day remaining",
       "moreThanDays_other": "more than {{count}} days remaining"
     },
-
     "webdavInfo": {
       "title": "WebDAV Access",
       "description": "Use this URL to connect to your files via WebDAV clients",
@@ -1227,14 +1404,12 @@
         "edulution-binduser-dn": "Distinguished Name (DN)",
         "edulution-binduser-password": "Password"
       },
-
       "branding": {
         "title": "Branding"
       },
-
       "logo": {
         "title": "Logo",
-        "descriptionSchool": "Upload your logo. It will be shown on the login screen and on the edulution app ID card.",
+        "descriptionSchool": "Upload your logo. It will be shown on the login screen and on the linuxmuster app ID card.",
         "descriptionGeneric": "Upload your logo. It will be shown on the login screen.",
         "uploadLightLogo": "Upload light logo",
         "uploadDarkLogo": "Upload dark logo",
@@ -1259,7 +1434,7 @@
       },
       "organisationInfo": {
         "title": "Organisational information",
-        "descriptionSchool": "Enter your organization’s official details. This information may be displayed in the edulution app. Please provide the name, street, postal code, and optionally the school website.",
+        "descriptionSchool": "Enter your organization’s official details. This information may be displayed in the linuxmuster app. Please provide the name, street, postal code, and optionally the school website.",
         "descriptionGeneric": "Enter your organization's official details.",
         "name": "Organization name",
         "namePlaceholder": "Sampletown Organization",
@@ -1301,7 +1476,9 @@
       "deleteSuccess": "Webhook client deleted",
       "filterPlaceholder": "Filter webhook clients..."
     },
-    "lmnVersion": { "title": "Linuxmuster version overview" },
+    "lmnVersion": {
+      "title": "Linuxmuster version overview"
+    },
     "appconfig": {
       "position": {
         "title": "Sorting",
@@ -1318,6 +1495,10 @@
         },
         "onlyOffice": {
           "title": "Only Office Integration",
+          "description": ""
+        },
+        "documentEditor": {
+          "title": "Document editor",
           "description": ""
         },
         "imapMailFeed": {
@@ -1344,7 +1525,6 @@
           "title": "Proxy Configuration",
           "description": "You can store your own proxy configuration for Traefik here. You can either work via the input fields using a template or create a configuration in YAML format directly in expert mode. <br/><strong>Warning:</strong> A wrong configuration could lead to the application being unreachable."
         },
-
         "docker": {
           "title": "Docker Applications",
           "description": "To be able to use the extended services, the required container applications must be started here.",
@@ -1476,11 +1656,74 @@
       "noLicenseRegistered": "No license registered",
       "errors": {
         "signingFailed": "Registration failed",
-        "verificationFailed": "Token verification failed"
-      }
+        "verificationFailed": "Token verification failed",
+        "communityMode": "License registration is unavailable in AGPL community mode."
+      },
+      "communityNotice": "This fork runs in AGPL community mode. Commercial license registration is not required; the source code offer is available under Info › Source code offer."
+    },
+    "sourceOffer": {
+      "title": "Source code offer",
+      "description": "This software is licensed under the GNU Affero General Public License v3. In accordance with section 13, the complete source code of the running version is available here:",
+      "repositoryLink": "Open source code repository",
+      "version": "Running version: {{version}}"
+    }
+  },
+  "parentChildPairing": {
+    "assignment": "Parent Assignment",
+    "assignmentDescription": "Manage parent-student pairing requests.",
+    "filterPlaceholder": "Search by parent or student...",
+    "parent": "Parent",
+    "student": "Student",
+    "school": "School",
+    "statusColumn": "Status",
+    "createdAt": "Created at",
+    "accept": "Accept",
+    "reject": "Reject",
+    "statusAll": "All",
+    "statusPending": "Pending",
+    "statusAccepted": "Accepted",
+    "statusRejected": "Rejected",
+    "statusUpdated": "Status updated successfully.",
+    "errors": {
+      "codeNotFound": "The pairing code was not found.",
+      "codeExpired": "The pairing code has expired.",
+      "cannotPairWithSelf": "You cannot pair with yourself.",
+      "pairingAlreadyExists": "This pairing already exists.",
+      "pairingNotFound": "The pairing was not found.",
+      "invalidRole": "Your role does not allow pairing.",
+      "incompatibleRoles": "You cannot pair another student."
     }
   },
   "usersettings": {
+    "parentChildPairing": {
+      "myParents": "My Parents",
+      "myChildren": "My Children",
+      "description": "Connect your account with your parents or children.",
+      "myCode": "My Pairing Code",
+      "myCodeDescription": "Share this code with the person you want to connect with. The code is valid for 5 minutes.",
+      "enterCode": "Enter Code",
+      "enterCodeDescription": "Enter the pairing code you received from your parent or child.",
+      "enterCodePlaceholder": "Enter pairing code",
+      "submitCode": "Connect",
+      "relationships": "Connections",
+      "noRelationships": "No connections yet.",
+      "statusPending": "Pending",
+      "statusAccepted": "Accepted",
+      "statusRejected": "Rejected",
+      "pairingSuccess": "Connection request sent successfully!",
+      "codeRefreshed": "New pairing code generated.",
+      "codeExpired": "The code has expired. Please request a new code.",
+      "parent": "Parent",
+      "student": "Student",
+      "statusColumn": "Status",
+      "createdAt": "Created at",
+      "accept": "Accept",
+      "reject": "Reject",
+      "statusUpdated": "Status updated successfully.",
+      "assignment": "Parent Assignment",
+      "assignmentDescription": "Manage parent-student pairing requests.",
+      "filterPlaceholder": "Search by parent or student..."
+    },
     "title": "MY PROFILE",
     "sidebar": "My Profile",
     "rowSelected": "{{selected}} of {{total}} accounts selected",
@@ -1545,8 +1788,8 @@
     },
     "mobileAccess": {
       "title": "Mobile Access",
-      "description": "Here you can set up the edulution app for mobile access.",
-      "docsDescription": "You can find the download link for the edulution app and instructions on how to set it up in the edulution documentation.",
+      "description": "Here you can set up the linuxmuster app for mobile access.",
+      "docsDescription": "You can find the download link for the linuxmuster app and instructions on how to set it up in the linuxmuster documentation.",
       "button": "Open Docs",
       "setup": "Setup with QR Code",
       "qrCode": "QR Code"
@@ -1651,8 +1894,8 @@
     "remember_me": "Remember me",
     "enterMultiFactorCode": "Two-Factor Authentication",
     "loginWithApp": "Login with QR-Login",
-    "loginWithQrDescription": "Open the edulution.io APP to simply log in with the QR code.",
-    "infoQrCodeExpired": "Time for login with edulution.io APP expired."
+    "loginWithQrDescription": "Open the linuxmuster APP to simply log in with the QR code.",
+    "infoQrCodeExpired": "Time for login with linuxmuster APP expired."
   },
   "edit": "Edit",
   "common": {
@@ -1687,6 +1930,7 @@
     "never": "Never",
     "errors": {
       "dbAccessFailed": "Database access failed",
+      "rateLimitExceeded": "Too many requests. Please try again later.",
       "directoryNotCreated": "Failed to create directory",
       "fileNotCreated": "Failed to create file",
       "fileUploadFailed": "Failed to upload the file",
@@ -1932,6 +2176,66 @@
     "userManagement": "User Management",
     "description": "Manage your school server settings and users."
   },
+  "wiki": {
+    "description": "Collaborative wiki for your shares",
+    "sidebar": "Wiki navigation",
+    "menu": {
+      "newPage": "New page",
+      "newFolder": "New folder"
+    },
+    "metadata": {
+      "updatedAt": "Last updated:"
+    },
+    "actions": {
+      "edit": "Edit"
+    },
+    "dialog": {
+      "location": "Location:",
+      "noLocationSelected": "No location selected.",
+      "createPage": {
+        "title": "Create a new page",
+        "titlePlaceholder": "Page title",
+        "asIndex": "As the folder index page",
+        "indexSlugReserved": "\"index\" is reserved for the folder index page — enable the index-page option or choose a different title."
+      },
+      "createFolder": {
+        "title": "Create a new folder",
+        "namePlaceholder": "Folder name"
+      },
+      "delete": {
+        "pageTitle": "Delete page",
+        "folderTitle": "Delete folder",
+        "pageMessage": "Delete this wiki page?",
+        "folderMessage": "Delete this folder and all of its contents?"
+      }
+    },
+    "notifications": {
+      "pageSaved": "Page saved",
+      "folderCreated": "Folder created",
+      "deleted": "Deleted"
+    },
+    "search": {
+      "placeholder": "Search the wiki …",
+      "action": "Search",
+      "scope": {
+        "all": "All",
+        "current": "Current share"
+      },
+      "empty": "No results.",
+      "degraded": "Some shares could not be searched.",
+      "unavailable": "Search is currently unavailable.",
+      "reasons": {
+        "timeout": "Timed out",
+        "connection_error": "Connection error",
+        "http_5xx": "Server error",
+        "http_4xx": "Request error",
+        "health_check_down": "Share offline"
+      }
+    },
+    "empty": {
+      "selectPageHint": "Select a page on the left to view it."
+    }
+  },
   "whiteboard": {
     "title": "WHITEBOARD",
     "sidebar": "Whiteboard",
@@ -2093,7 +2397,6 @@
     "unknownErrorOccurred": "An unknown error occurred"
   },
   "currentDirectory": "Current directory",
-
   "saveExternalFileDialogBody": {
     "saveExternalFile": "Save external file",
     "destinationFolder": "Destination folder",
@@ -2103,12 +2406,10 @@
     "fileSavedSuccessful": "File saved successfully",
     "fileSaveFailed": "File could not be saved"
   },
-
   "fileSelectorDialogBody": {
     "title": "Select a file to open",
     "selectFile": "Selected file"
   },
-
   "moveItemDialog": {
     "changeDirectory": "Change directory",
     "currentDirectory": "Current directory",
@@ -2122,12 +2423,10 @@
     "unknownErrorOccurred": "An unknown error occurred",
     "selectedItem": "selected item"
   },
-
   "shareDialog": {
     "shareFilesOrDirectories": "Share files",
     "share": "Share"
   },
-
   "deleteDialog": {
     "areYouSure": "Are you absolutely sure?",
     "actionCannotBeUndone": "This action cannot be undone. This will permanently delete the files:",
@@ -2215,11 +2514,38 @@
     "selectGroupsDescription": "Select the user groups that should have access to the app."
   },
   "appExtendedOptions": {
+    "activeMailClientTitle": "Mail client",
+    "activeMailClientDescription": "Choose the end-user mail interface (SOGo webmail or the native client).",
+    "activeMailClient": {
+      "native": "Native client",
+      "sogo": "SOGo webmail"
+    },
+    "activeMailClientWarning": "SOGo filters and out-of-office replies are not available in the native client.",
     "title": "Extensions",
     "onlyOfficeUrl": "Enter the OnlyOffice URL",
     "onlyOfficeUrlTitle": "OnlyOffice URL",
     "onlyOfficeJwtSecretTitle": "OnlyOffice JWT Secret",
     "onlyOfficeJwtSecretDescription": "Enter the OnlyOffice JWT Secret",
+    "activeDocumentEditorTitle": "Document editor",
+    "activeDocumentEditorDescription": "Choose the editor for office documents (OnlyOffice or Collabora).",
+    "activeDocumentEditor": {
+      "onlyoffice": "OnlyOffice",
+      "collabora": "Collabora Online"
+    },
+    "collaboraUrlTitle": "Collabora URL",
+    "collaboraUrlDescription": "Enter the URL of your Collabora Online instance.",
+    "collaboraWopiSecretTitle": "Collabora WOPI secret",
+    "collaboraWopiSecretDescription": "Enter the WOPI secret for Collabora.",
+    "calendarCaldavBaseUrlTitle": "CalDAV base URL",
+    "calendarCaldavBaseUrlDescription": "Enter the base URL of the CalDAV server (e.g. 'https://sogo.example.com/SOGo/dav/').",
+    "calendarCaldavAuthModeTitle": "Authentication scheme",
+    "calendarCaldavAuthModeDescription": "Choose how the server authenticates against the CalDAV service.",
+    "calendarCaldavAuthMode": {
+      "basic": "Basic",
+      "digest": "Digest"
+    },
+    "calendarCaldavRejectUnauthorizedTitle": "Reject unauthorized connections",
+    "calendarCaldavRejectUnauthorizedDescription": "Should a certificate check be carried out for the connection to the CalDAV server?",
     "drawioUrlTitle": "Draw.io URL",
     "drawioUrlDescription": "Enter the URL of your self-hosted Draw.io instance",
     "overrideDocumentVendorMSWithOOTitle": "Use OpenDocument as the standard document format",
@@ -2267,7 +2593,24 @@
       "MailProviderNotFound": "E-Mail provider not found",
       "MailcowApiGetSyncJobsFailed": "Not able to get sync jobs",
       "MailcowApiCreateSyncJobFailed": "Not able to create sync job",
-      "MailcowApiDeleteSyncJobsFailed": "Not able to delete sync jobs"
+      "MailcowApiDeleteSyncJobsFailed": "Not able to delete sync jobs",
+      "MailcowApiGetDomainsFailed": "Not able to load domains",
+      "MailcowApiGetMailboxesFailed": "Not able to load mailboxes",
+      "MailcowApiCreateMailboxFailed": "Not able to create the mailbox",
+      "MailcowApiUpdateMailboxFailed": "Not able to update the mailbox",
+      "MailcowApiDeleteMailboxFailed": "Not able to delete the mailbox",
+      "MailcowApiUpdateMailboxAclFailed": "Not able to update the mailbox permissions",
+      "MailcowPasswordComplexity": "The password does not meet the complexity requirements",
+      "MailcowPasswordMismatch": "The passwords do not match",
+      "MailcowPasswordEmpty": "The password must not be empty",
+      "MailcowUsernameInvalid": "The username is invalid",
+      "MailcowDomainInvalid": "The domain is invalid",
+      "MailcowDomainNotFound": "The domain was not found",
+      "MailcowObjectExists": "The object already exists",
+      "MailcowMaxMailboxesExceeded": "The maximum number of mailboxes has been reached",
+      "MailcowQuotaExceeded": "The storage quota was exceeded",
+      "MailcowAccessDenied": "Access denied",
+      "SyncJobAccessDenied": "Access denied: this sync job does not belong to your account."
     }
   },
   "licensing": {
@@ -2288,7 +2631,7 @@
     },
     "EDULUTION_MAIL_HOSTNAME": {
       "title": "Hostname",
-      "description": "Hostname of the mail server. This could be different from the edulution domain name."
+      "description": "Hostname of the mail server. This could be different from the linuxmuster domain name."
     },
     "EDU_WG_IPNETWORK": {
       "title": "IP Network",
@@ -2373,9 +2716,9 @@
   },
   "Invalid user credentials": "Username or password incorrect.",
   "For more on this error consult the server log at the debug level.": "Connection to AD server failed. Please try again later.",
-  "Failed to fetch": "Connection to edulution server failed. Please try again later.",
+  "Failed to fetch": "Connection to linuxmuster server failed. Please try again later.",
   "Invalid client or Invalid client credentials": "Invalid server configuration. Please check the client ID or the client secret.",
-  "Not Found (404)": "Connection to edulution server failed. Please try again later.",
+  "Not Found (404)": "Connection to linuxmuster server failed. Please try again later.",
   "NetworkError when attempting to fetch resource.": "Network error when attempting to fetch resource.",
   "deploymentTarget": {
     "title": "Selection",
@@ -2393,7 +2736,7 @@
       "title": "WebDAV Server Schema",
       "description": "Here you can select the type of WebDAV server schema.",
       "linuxmuster": "Linuxmuster",
-      "edu-file-proxy": "edulution File Proxy",
+      "edu-file-proxy": "linuxmuster File Proxy",
       "generic": "Generic"
     },
     "status": "Status",

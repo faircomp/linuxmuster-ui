@@ -29,13 +29,18 @@ import handleApiError from '@/utils/handleApiError';
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware';
 import { DirectoryFileDTO } from '@libs/filesharing/types/directoryFileDTO';
 import delay from '@libs/common/utils/delay';
+import type OnlyOfficeTokenResponseDto from '@libs/filesharing/types/onlyOfficeTokenResponseDto';
 
 type FileEditorStore = {
   isFilePreviewDocked: boolean;
   setIsFilePreviewDocked: (isFilePreviewDocked: boolean) => void;
   isFilePreviewVisible: boolean;
   setIsFilePreviewVisible: (isVisible: boolean) => void;
-  getOnlyOfficeJwtToken: (config: IConfig) => Promise<string>;
+  getOnlyOfficeConfigAndToken: (
+    config: IConfig,
+    filePath: string,
+    fileName: string,
+  ) => Promise<OnlyOfficeTokenResponseDto | null>;
   deleteFileAfterEdit: (url: string) => Promise<void>;
   reset: () => void;
   error: Error | null;
@@ -82,12 +87,13 @@ const useFileEditorStore = create<FileEditorStore>(
         return Promise.resolve();
       },
 
-      getOnlyOfficeJwtToken: async (config) => {
+      getOnlyOfficeConfigAndToken: async (config, filePath, fileName) => {
         try {
-          const response = await eduApi.post<string>(
+          const response = await eduApi.post<OnlyOfficeTokenResponseDto>(
             `${FileSharingApiEndpoints.FILESHARING_ACTIONS}/${FileSharingApiEndpoints.ONLY_OFFICE_TOKEN}`,
-            JSON.stringify(config),
+            config,
             {
+              params: { filePath, fileName },
               headers: {
                 'Content-Type': RequestResponseContentType.APPLICATION_JSON,
               },
@@ -97,7 +103,7 @@ const useFileEditorStore = create<FileEditorStore>(
         } catch (error) {
           handleApiError(error, set);
         }
-        return Promise.resolve('');
+        return null;
       },
 
       addFileToOpenInNewTab: (file) => {

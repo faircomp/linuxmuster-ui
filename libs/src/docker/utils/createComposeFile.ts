@@ -23,7 +23,7 @@ interface ComposeService {
   environment?: Record<string, unknown> | string[];
 }
 
-interface ComposeFile {
+export interface ComposeFile {
   services?: Record<string, ComposeService>;
 }
 
@@ -45,7 +45,7 @@ export const parseDockerEnv = (envList: string[] | undefined): Record<string, st
   }, {});
 };
 
-const normalizeEnvironment = (env: Record<string, unknown> | string[] | undefined): Record<string, string> => {
+export const normalizeEnvironment = (env: Record<string, unknown> | string[] | undefined): Record<string, string> => {
   if (!env) return {};
 
   if (Array.isArray(env)) {

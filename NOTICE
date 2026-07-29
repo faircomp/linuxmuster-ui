@@ -1,0 +1,25 @@
+linuxmuster UI
+Copyright (C) 2026 Kevin Stenzel and linuxmuster-ui contributors
+
+This product is an independent fork of edulution (Community Edition) by
+Netzint GmbH / edulution-io.
+
+Fork basis:                 edulution-ui v1.6.266 (commit 36050641d)
+Behavioral/design reference: edulution 2.0.200 container image (rev 7356c68)
+
+Licensing
+---------
+The original edulution software is dual-licensed under either the GNU Affero
+General Public License, version 3 or later (AGPL-3.0-or-later), OR a commercial
+license agreement with Netzint GmbH.
+
+This fork is distributed EXCLUSIVELY under the AGPL-3.0-or-later arm. New code
+contributed to this fork is offered under AGPL-3.0-or-later only and is NOT
+available under the Netzint commercial license. A copy of the license is in
+LICENSE; the full text is at https://www.gnu.org/licenses/agpl-3.0.html.
+
+Trademarks
+----------
+"edulution", its logos and branding, are trademarks of Netzint GmbH. This fork
+does not use the name or logo "edulution" as its product identity. See
+TRADEMARK.md.

@@ -56,6 +56,7 @@ export const mockAppConfig: AppConfigDto = {
   extendedOptions: {
     [ExtendedOptionKeys.ONLY_OFFICE_URL]: 'https://example.com/2/',
     [ExtendedOptionKeys.ONLY_OFFICE_JWT_SECRET]: 'secret-key',
+    [ExtendedOptionKeys.COLLABORA_WOPI_SECRET]: 'wopi-secret-key',
   },
   position: 1,
 };

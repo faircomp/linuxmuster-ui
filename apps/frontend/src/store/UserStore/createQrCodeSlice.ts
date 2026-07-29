@@ -34,6 +34,18 @@ const initialState = {
 const createQrCodeSlice: StateCreator<UserStore, [], [], QrCodeSlice> = (set) => ({
   ...initialState,
 
+  createQrLoginSession: async () => {
+    try {
+      const { data } = await eduApi.post<{ sessionId: string }>(
+        `${AUTH_PATHS.AUTH_ENDPOINT}/${AUTH_PATHS.AUTH_QR_SESSION}`,
+      );
+      return data.sessionId;
+    } catch (error) {
+      handleApiError(error, set);
+      return undefined;
+    }
+  },
+
   getQrCode: async () => {
     set({ qrCodeIsLoading: true });
     try {

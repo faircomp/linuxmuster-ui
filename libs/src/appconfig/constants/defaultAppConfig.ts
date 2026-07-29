@@ -24,6 +24,7 @@ import {
   InfoBoardIcon,
   SurveysIcon,
   WhiteboardIcon,
+  WikiIcon,
 } from '@libs/assets';
 import getImageUrl from '@libs/assets/getImageUrl';
 import type AppConfigDto from '@libs/appconfig/types/appConfigDto';
@@ -31,7 +32,7 @@ import APPS from './apps';
 import APP_INTEGRATION_VARIANT from './appIntegrationVariant';
 import { ALL_DISPLAY_LOCATIONS } from './appDisplayLocations';
 
-const { BULLETIN_BOARD, DASHBOARD, FILE_SHARING, SURVEYS, CLASS_MANAGEMENT, WHITEBOARD } = APPS;
+const { BULLETIN_BOARD, DASHBOARD, FILE_SHARING, SURVEYS, CLASS_MANAGEMENT, WHITEBOARD, WIKI } = APPS;
 const { NATIVE } = APP_INTEGRATION_VARIANT;
 
 const defaultAppConfig: AppConfigDto[] = [
@@ -95,6 +96,16 @@ const defaultAppConfig: AppConfigDto[] = [
     accessGroups: [],
     extendedOptions: {},
     position: 6,
+    displayLocations: [...ALL_DISPLAY_LOCATIONS],
+  },
+  {
+    name: WIKI,
+    icon: getImageUrl(WikiIcon),
+    appType: NATIVE,
+    options: {},
+    accessGroups: [],
+    extendedOptions: {},
+    position: 7,
     displayLocations: [...ALL_DISPLAY_LOCATIONS],
   },
 ];

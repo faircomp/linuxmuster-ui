@@ -46,6 +46,7 @@ import MenuBarEntry from '@libs/menubar/menuBarEntry';
 import APPS from '@libs/appconfig/constants/apps';
 import useAppConfigsStore from '@/pages/Settings/AppConfig/useAppConfigsStore';
 import findAppConfigByName from '@libs/common/utils/findAppConfigByName';
+import { MOBILE_APP_ENABLED } from '@libs/common/constants/productInfo';
 
 const useUserSettingsMenu = () => {
   const navigate = useNavigate();
@@ -89,12 +90,16 @@ const useUserSettingsMenu = () => {
           icon: LanguageIcon,
           action: () => navigate(USER_SETTINGS_USER_INTERFACE_PATH),
         },
-        {
-          id: MOBILE_ACCESS_PATH,
-          label: 'usersettings.mobileAccess.title',
-          icon: MobileDevicesIcon,
-          action: () => navigate(USER_SETTINGS_MOBILE_ACCESS_PATH),
-        },
+        ...(MOBILE_APP_ENABLED
+          ? [
+              {
+                id: MOBILE_ACCESS_PATH,
+                label: 'usersettings.mobileAccess.title',
+                icon: MobileDevicesIcon,
+                action: () => navigate(USER_SETTINGS_MOBILE_ACCESS_PATH),
+              },
+            ]
+          : []),
         ...(isWireguardConfigured
           ? [
               {

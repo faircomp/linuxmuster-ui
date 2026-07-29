@@ -21,12 +21,26 @@ import { create } from 'zustand';
 import { RowSelectionState } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
-import type { MailDto, MailsStore, MailProviderConfigDto, CreateSyncJobDto, SyncJobDto } from '@libs/mail/types';
+import type {
+  MailDto,
+  MailsStore,
+  MailProviderConfigDto,
+  SyncJobDto,
+  MailcowMailboxDto,
+} from '@libs/mail/types';
+import type CreateMailboxDto from '@libs/mail/types/createMailbox.dto';
+import type UpdateMailboxDto from '@libs/mail/types/updateMailbox.dto';
+import type MailboxAclDto from '@libs/mail/types/mailboxAcl.dto';
+import type MailProviderPublicConfigDto from '@libs/mail/types/mailProviderPublicConfig.dto';
+import type CreateSyncJobRequestDto from '@libs/mail/types/createSyncJobRequest.dto';
 import MAIL_ENDPOINT from '@libs/mail/constants/mail-endpoint';
+import MAIL_ENDPOINT_PATHS from '@libs/mail/constants/mailEndpointPaths';
 import eduApi from '@/api/eduApi';
 import handleApiError from '@/utils/handleApiError';
 import MailStoreInitialState from '@libs/mail/constants/mailsStoreInitialState';
 import { MAILS_PATH } from '@libs/userSettings/constants/user-settings-endpoints';
+
+const MAILCOW_MAILBOXES_PATH = `${MAILS_PATH}/${MAIL_ENDPOINT_PATHS.MAILCOW_MAILBOXES}`;
 
 const useMailsStore = create<MailsStore>((set) => ({
   ...MailStoreInitialState,
@@ -40,6 +54,18 @@ const useMailsStore = create<MailsStore>((set) => ({
       set({ mails: data });
     } catch (error) {
       handleApiError(error, set);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  getPublicMailProviderConfigs: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await eduApi.get<MailProviderPublicConfigDto[]>(`${MAILS_PATH}/provider-config/public`);
+      set({ publicMailProviderConfigs: response.data });
+    } catch (error) {
+      handleApiError(error, set, 'mailProviderConfigError');
     } finally {
       set({ isLoading: false });
     }
@@ -93,10 +119,10 @@ const useMailsStore = create<MailsStore>((set) => ({
     }
   },
 
-  postSyncJob: async (createSyncJobDto: CreateSyncJobDto) => {
+  postSyncJob: async (createSyncJobRequest: CreateSyncJobRequestDto) => {
     set({ isEditSyncJobLoading: true });
     try {
-      const response = await eduApi.post<SyncJobDto[]>(`${MAILS_PATH}/sync-job`, createSyncJobDto);
+      const response = await eduApi.post<SyncJobDto[]>(`${MAILS_PATH}/sync-job`, createSyncJobRequest);
       set({ syncJobs: response.data });
       toast.success(i18n.t('mail.importer.syncAccountAdded'));
     } catch (error) {
@@ -116,6 +142,93 @@ const useMailsStore = create<MailsStore>((set) => ({
       handleApiError(error, set, 'mailProviderConfigError');
     } finally {
       set({ isEditSyncJobLoading: false });
+    }
+  },
+
+  getMailcowDomains: async () => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.get<string[]>(`${MAILCOW_MAILBOXES_PATH}/${MAIL_ENDPOINT_PATHS.DOMAINS}`);
+      set({ mailcowDomains: data });
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  getMailcowMailboxes: async () => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.get<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH);
+      set({ mailcowMailboxes: data });
+    } catch (error) {
+      handleApiError(error, set);
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  createMailcowMailbox: async (createMailboxDto: CreateMailboxDto): Promise<boolean> => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.post<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, createMailboxDto);
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.mailboxCreated'));
+      return true;
+    } catch (error) {
+      handleApiError(error, set);
+      return false;
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  updateMailcowMailbox: async (updateMailboxDto: UpdateMailboxDto): Promise<boolean> => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.patch<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, updateMailboxDto);
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.mailboxUpdated'));
+      return true;
+    } catch (error) {
+      handleApiError(error, set);
+      return false;
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  deleteMailcowMailboxes: async (mailboxes: string[]): Promise<boolean> => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.delete<MailcowMailboxDto[]>(MAILCOW_MAILBOXES_PATH, { data: { items: mailboxes } });
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.mailboxDeleted'));
+      return true;
+    } catch (error) {
+      handleApiError(error, set);
+      return false;
+    } finally {
+      set({ isMailcowLoading: false });
+    }
+  },
+
+  updateMailboxAcl: async (mailboxAclDto: MailboxAclDto): Promise<boolean> => {
+    set({ isMailcowLoading: true });
+    try {
+      const { data } = await eduApi.post<MailcowMailboxDto[]>(
+        `${MAILCOW_MAILBOXES_PATH}/${MAIL_ENDPOINT_PATHS.ACL}`,
+        mailboxAclDto,
+      );
+      set({ mailcowMailboxes: data });
+      toast.success(i18n.t('mailcowAdmin.notifications.aclUpdated'));
+      return true;
+    } catch (error) {
+      handleApiError(error, set);
+      return false;
+    } finally {
+      set({ isMailcowLoading: false });
     }
   },
 }));

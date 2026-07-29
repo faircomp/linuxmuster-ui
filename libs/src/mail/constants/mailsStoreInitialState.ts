@@ -23,10 +23,14 @@ const MailStoreInitialState = {
   isGetSyncJobLoading: false,
   isEditSyncJobLoading: false,
   externalMailProviderConfig: [],
+  publicMailProviderConfigs: [],
   error: null,
   reset: () => {},
   syncJobs: [],
   selectedSyncJob: {},
+  mailcowDomains: [],
+  mailcowMailboxes: [],
+  isMailcowLoading: false,
 };
 
 export default MailStoreInitialState;

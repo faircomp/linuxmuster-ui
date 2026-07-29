@@ -25,6 +25,7 @@ import PageLayout from '@/components/structure/layout/PageLayout';
 import { Dashboard } from '@/assets/icons';
 import APPLICATION_NAME from '@libs/common/constants/applicationName';
 import PageTitle from '@/components/PageTitle';
+import { MOBILE_APP_ENABLED } from '@libs/common/constants/productInfo';
 import MobileFileAccessCard from './MobileFileAccess/MobileFileAccessCard';
 import AccountInformation from './AccountInformation';
 import QuotaCard from './QuotaCard';
@@ -48,9 +49,11 @@ const DashboardPage: React.FC = () => {
         >
           <Groups />
         </div>
-        <div className="flex-1">
-          <MobileFileAccessCard />
-        </div>
+        {MOBILE_APP_ENABLED && (
+          <div className="flex-1">
+            <MobileFileAccessCard />
+          </div>
+        )}
       </div>
 
       <QuotaCard />
