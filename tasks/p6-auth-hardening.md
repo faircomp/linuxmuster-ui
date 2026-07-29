@@ -489,6 +489,17 @@ Abhängt von: T14
 >    **einmal** eigene Zugangsdaten unterschieben (Forced Login) — `getUserConnection` trägt, `consume` gelingt,
 >    die Seite submittet. Gehört in die Security-Doku (T34).
 
+> **Voll-Stack-Abnahme des QR-Kanals (2026-07-29, deployter Stack, eigene Images):** sechs Prüfungen, alle
+> bestanden — ohne Cookie `auth.errors.Forbidden` · fremde sessionId `Forbidden` · unsinnige sessionId abgewiesen
+> (UuidPipe) · mit Cookie kein Fehler · erste Einlösung 201 · **zweite Einlösung 404** (Single-Use greift real).
+> Dazu der eigentliche Beweis, dass nichts leckt: **Zwei-Verbindungs-Test.** Ein Client mit Cookie und einer ohne
+> abonnieren dieselbe Session, dann werden Credentials eingespeist. Der legitime Client bekommt
+> `event: message` mit dem base64-Payload, der Angreifer `event: error / data: auth.errors.Forbidden` — die
+> Zugangsdaten tauchen in seinem Stream **nicht** auf.
+> **Verify-Fallstrick, der mich fast in die Irre geführt hat:** bei `@Sse()` sendet Nest `200` +
+> `text/event-stream`, **bevor** der Handler läuft. Ein Status-Code-Check liefert deshalb immer `200` und meldete
+> drei Fehlschläge für eine Absicherung, die tatsächlich greift. Steht als Regel 12 im Master-Plan.
+
 ### T33 — api: Auth-Contract-Specs auf den neuen Routenstand ziehen  [~] TEILWEISE — der wertvollste Teil ist gebaut: **erschöpfende** Bypass-Assertion (Menge der @Public-Routen == PUBLIC_ROUTES) plus Vollständigkeitsnetz (beide Listen zusammen decken jeden Handler). Beide mutationsgeprüft: eine eingeschmuggelte @Public-Route und eine umgedrehte geschützte Route werden erkannt — vorher war beides für die Handlisten unsichtbar. **T30 ist inzwischen gebaut** und hat `getTotpInfo` aus den Listen gezogen — die erschöpfende Assertion hat das erzwungen, genau wie vorgesehen. **T25 ist gebaut** und hat `createQrLoginSession` in `PUBLIC_ROUTES` gezogen — die erschöpfende Assertion hat es erzwungen (zwei Tests wurden rot). Damit ist T33 inhaltlich vollständig.
 Komponente: apps/api · Dateien: `apps/api/src/auth/auth.controller.spec.ts`, `apps/api/src/auth/authThrottle.spec.ts`
 Soll: Ergebnis von T14/T20/T25/T30 — die Spec ist das Bypass-Regressionsnetz (siehe `p1-port-api-specs-ci`, `check-spec-coverage` im `.husky/pre-commit` + CI)

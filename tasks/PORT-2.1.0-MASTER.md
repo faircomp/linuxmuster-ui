@@ -95,7 +95,14 @@ Jede dieser Fallen hat mindestens ein Ledger falsch-grün gemacht. Vor dem Schre
     Spec ist damit **unsichtbar** — jede Ledger-Zeile „tsc fehlerfrei" belegt für Spec-Arbeit nichts.
     Am 2026-07-27 lagen so 15 echte Typfehler im Baum. Gate dafür ist jetzt **`npm run check-spec-types`**
     (`tsconfig.spec-check.json`); bei Spec-Arbeit mitlaufen lassen.
-12. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
+12. **Bei `@Sse()`-Routen ist der HTTP-Status kein Gate.** NestJS sendet `200` und `content-type: text/event-stream`,
+    **bevor** der Handler läuft; ein Wurf im Handler kommt danach als `event: error` **im Stream** an. Ein
+    `curl -o /dev/null -w '%{http_code}'` liefert deshalb immer `200`, egal ob die Absicherung greift oder nicht —
+    in beide Richtungen falsch. Am 2026-07-29 sah eine funktionierende Token-Prüfung dadurch nach drei
+    Fehlschlägen aus. **Gate ist der Stream-Inhalt**, und der Beweis, dass nichts leckt, ist ein Zwei-Verbindungs-Test:
+    ein Client mit Cookie und einer ohne abonnieren dieselbe Session, dann Credentials einspeisen und prüfen,
+    wer sie bekommt.
+13. **`nx run api:test -- --testPathPattern=X`** narrowt korrekt (bewiesen), aber: jest 29.7 → **Singular**;
     **nie** eine `|`-Alternation (nx reicht den Wert ungequotet an eine Shell); **nie** `--listTests` als Gate
     (endet bei 0 Treffern mit Exit 0). Frontend: Pfad **relativ zu `apps/frontend`**.
 
